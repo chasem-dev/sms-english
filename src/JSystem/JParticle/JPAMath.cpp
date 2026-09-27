@@ -53,7 +53,27 @@ void JPAGetXYRotateMtx(s16 x, s16 y, MtxPtr dst)
 	*ptr++ = 0.0f;
 }
 
-void JPAGetScaleXYRotateMtx(JGeometry::TVec3<f32>&, s16, s16, MtxPtr) { }
+// UNUSED (0x174): JPAGetXYRotateMtx with each column scaled.
+void JPAGetScaleXYRotateMtx(JGeometry::TVec3<f32>& scale, s16 x, s16 y,
+                            MtxPtr dst)
+{
+	f32* ptr = &dst[0][0];
+
+	*ptr++ = scale.x * JMASCos(y);
+	*ptr++ = scale.y * (JMASSin(y) * JMASSin(x));
+	*ptr++ = scale.z * (JMASSin(y) * JMASCos(x));
+	*ptr++ = 0.0f;
+
+	*ptr++ = 0.0f;
+	*ptr++ = scale.y * JMASCos(x);
+	*ptr++ = scale.z * -JMASSin(x);
+	*ptr++ = 0.0f;
+
+	*ptr++ = scale.x * -JMASSin(y);
+	*ptr++ = scale.y * (JMASCos(y) * JMASSin(x));
+	*ptr++ = scale.z * (JMASCos(y) * JMASCos(x));
+	*ptr++ = 0.0f;
+}
 
 void JPAGetYZRotateMtx(s16 y, s16 z, MtxPtr dst)
 {
@@ -75,7 +95,27 @@ void JPAGetYZRotateMtx(s16 y, s16 z, MtxPtr dst)
 	*ptr++ = 0.0f;
 }
 
-void JPAGetScaleYZRotateMtx(JGeometry::TVec3<f32>&, s16, s16, MtxPtr) { }
+// UNUSED (0x174): JPAGetYZRotateMtx with each column scaled.
+void JPAGetScaleYZRotateMtx(JGeometry::TVec3<f32>& scale, s16 y, s16 z,
+                            MtxPtr dst)
+{
+	f32* ptr = &dst[0][0];
+
+	*ptr++ = scale.x * (JMASCos(z) * JMASCos(y));
+	*ptr++ = scale.y * -JMASSin(z);
+	*ptr++ = scale.z * (JMASCos(z) * JMASSin(y));
+	*ptr++ = 0.0f;
+
+	*ptr++ = scale.x * (JMASSin(z) * JMASCos(y));
+	*ptr++ = scale.y * JMASCos(z);
+	*ptr++ = scale.z * (JMASSin(z) * JMASSin(y));
+	*ptr++ = 0.0f;
+
+	*ptr++ = scale.x * -JMASSin(y);
+	*ptr++ = 0.0f;
+	*ptr++ = scale.z * JMASCos(y);
+	*ptr++ = 0.0f;
+}
 
 void JPAGetYRotateMtx(s16 y, MtxPtr dst)
 {
@@ -102,11 +142,11 @@ void JPAGetZRotateMtx(s16 z, MtxPtr dst)
 	f32* ptr = &dst[0][0];
 
 	*ptr++ = JMASCos(z);
-	*ptr++ = JMASSin(z);
+	*ptr++ = -JMASSin(z);
 	*ptr++ = 0.0f;
 	*ptr++ = 0.0f;
 
-	*ptr++ = -JMASSin(z);
+	*ptr++ = JMASSin(z);
 	*ptr++ = JMASCos(z);
 	*ptr++ = 0.0f;
 	*ptr++ = 0.0f;
@@ -199,7 +239,14 @@ f32 JPAConvertFixToFloat(s16 param_1)
 	return (float)r5 * 1e-05f;
 }
 
-s16 JPAConvertFloatToFix(f32) { }
+// UNUSED (0x34): the inverse of JPAConvertFixToFloat. Retail's .sdata2 has
+// no 32768.0f, so the scale is the pooled 1/32768 divided out.
+s16 JPAConvertFloatToFix(f32 param_1)
+{
+	if (param_1 == 1.0f)
+		return 0x7fff;
+	return param_1 / (1.0f / 32768.0f);
+}
 
 void JPAConvertFixVecToFloatVec(JGeometry::TVec3<f32>& param_1,
                                 const JGeometry::TVec3<s16>& param_2)
@@ -217,9 +264,13 @@ void JPAConvertFixVecToFloatVec(JGeometry::TVec3<f32>& param_1,
 	param_1.z = JPAConvertFixToFloat(param_2.z);
 }
 
-void JPAConvertFloatVecToFixVec(JGeometry::TVec3<s16>&,
-                                const JGeometry::TVec3<f32>&)
+// UNUSED (0x9c).
+void JPAConvertFloatVecToFixVec(JGeometry::TVec3<s16>& param_1,
+                                const JGeometry::TVec3<f32>& param_2)
 {
+	param_1.x = JPAConvertFloatToFix(param_2.x);
+	param_1.y = JPAConvertFloatToFix(param_2.y);
+	param_1.z = JPAConvertFloatToFix(param_2.z);
 }
 
 void JPABound(JGeometry::TVec3<f32>&, const JGeometry::TVec3<f32>&,
@@ -338,6 +389,9 @@ void JPAGetRMtxElement(MtxPtr param_1, MtxPtr param_2)
 
 void JPAGetRTMtxElement(MtxPtr, MtxPtr) { }
 
+// TODO: UNUSED (0x58). Three scaled f32-to-s16 conversions fit the size
+// (a literal 32768/pi does), but retail's .sdata2 has no constant after
+// std::sqrtf's pair, so the multiplier must come from somewhere else.
 void JPARadVecToSVec(JGeometry::TVec3<f32>&, JGeometry::TVec3<s16>&) { }
 
 f32 JPAGetKeyFrameValue(f32 time, u16 frame_num, f32* frames)
