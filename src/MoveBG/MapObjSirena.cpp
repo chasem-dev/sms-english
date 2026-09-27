@@ -1375,10 +1375,8 @@ static inline f32 PictureTelesaSquaredDist(const JGeometry::TVec3<f32>& a,
 	return sx + sy + dz;
 }
 
-// TODO: 99.9%, instruction- and register-exact; the frame is 0x30 against
-// retail's 0x28 (the helper's named products cost 8). Inert: gpMSound for
-// SMSGetMSound(), pointer, `Vec&` or THitActor* parameters, a named result,
-// the products written out in this body (frame exact but 99.3).
+// The six-argument sound call (no two-argument wrapper's `sound` local) is
+// what gives retail's 0x28 frame.
 void TPictureTelesa::touchActor(THitActor* actor)
 {
 	TWaterHitPictureHideObj::touchActor(actor);
@@ -1389,7 +1387,7 @@ void TPictureTelesa::touchActor(THitActor* actor)
 		    < 200.0f) {
 			startStateTimer(60);
 			SMSGetMSound()->startSoundActor(
-			    MSD_SE_BS_TELESA_DISAPPEAR, &mPosition);
+			    MSD_SE_BS_TELESA_DISAPPEAR, &mPosition, 0, nullptr, 0, 4);
 			unk174 = true;
 		}
 	}
