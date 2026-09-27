@@ -125,9 +125,10 @@ void TMapObjGeneral::put()
 
 // TODO: 99.5%, frame exact. The accessors (Mario position, angles, one
 // speed, getMapObjData, getVelocity) give retail's unshared sin/cos shifts
-// and its 0x90 frame. Left: r5/r6 on the cosine index vs the throw-power
-// pointer and f1/f4/f5 on y/z/rate. Inert: component stores in either
-// order, named x/y/z locals, both speed accessors, rate operand order.
+// and its 0x90 frame; the named throw power gives retail's r5/r6. Left:
+// f1/f4/f5 on y/z/rate. Inert: component stores in either order, named
+// x/y/z locals (with or without the power), a named rate, both speed
+// accessors, rate operand order.
 void TMapObjGeneral::thrown()
 {
 	mPosition.set(SMS_GetMarioPos().x, SMS_GetMarioPos().y, SMS_GetMarioPos().z);
@@ -137,14 +138,15 @@ void TMapObjGeneral::thrown()
 	unk138        = 0;
 	mHolder       = nullptr;
 
+	f32 power = *gpMarioThrowPower;
 	mVelocity.set(JMASSin(SMS_GetMarioAngleY())
 	                      * getMapObjData()->mPhysical->unk4->unk2C
-	                      * *gpMarioThrowPower
+	                      * power
 	                  + (mNormalThrowSpeedRate * SMS_GetMarioSpeedX()),
 	              getMapObjData()->mPhysical->unk4->unk30,
 	              JMASCos(SMS_GetMarioAngleY())
 	                      * getMapObjData()->mPhysical->unk4->unk2C
-	                      * *gpMarioThrowPower
+	                      * power
 	                  + (mNormalThrowSpeedRate * *gpMarioSpeedZ));
 
 	offLiveFlag(LIVE_FLAG_UNK10);
