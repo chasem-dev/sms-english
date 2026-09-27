@@ -168,67 +168,30 @@ int getWarpPointNo(const char* name)
 	return point_name_table[needle].mNo;
 }
 
-void loadWarpPointPos(JSUMemoryInputStream& stream, int no, Vec* positions)
+void loadWarpPointPos(JSUMemoryInputStream& stream, int num, Vec* positions)
 {
-	Vec& pos = positions[no];
-	stream >> pos.x >> pos.y >> pos.z;
+	for (int i = 0; i < num; ++i) {
+		const char* name = stream.readString();
+		int no = getWarpPointNo(name);
+		Vec& pos = positions[no];
+		stream >> pos.x >> pos.y >> pos.z;
 
-	u32 dummy;
-	stream >> dummy >> dummy >> dummy;
-	stream >> dummy >> dummy >> dummy;
+		u32 dummy;
+		stream >> dummy >> dummy >> dummy;
+		stream >> dummy >> dummy >> dummy;
+	}
 }
 
-// TODO: 98.3%, frame and every stack slot exact. Closure
-// batch 136 found three constructs. (1) The three stack arrays are declared in
-// the order positions/warp/dest, not the reverse: named locals descend from
-// the top of the local area with the first declared highest, so this is what
-// puts them at 0x68/0xb8/0x108 as retail does. (2) The four pre-loop reads
-// share one slot at 0x1f8 *above* the arrays, which only happens if they go
-// through one named `u32 data` and `operator>>`; `stream.readU32()` gives each
-// expansion its own low-region temp (four slots, 32 bytes too few overall).
-// (3) `loadWarpPointPos` chains its reads: `stream >> x >> y >> z;` and two
-// `stream >> dummy >> dummy >> dummy;`. Each chained `>>` continuation is 8
-// bytes of low region and one hoisted `addi rN, rStream, 0` outside the name
-// loop, so retail's five copies and frame 0x238 both pin the count at six
-// continuations. "4,2" and "5,1" groupings are indistinguishable from "3,3",
-// so only the count is evidence.
-// Re-pass II (batch 178) paid the 4 bytes batch 136 could not and every r1
-// displacement now matches (dummy 0x64, arrays 0x68/0xb8/0x108, `data` 0x1f8,
-// `stmw r19, 0x204`, frame 0x238). Retail's low region is 0x5c = 92 bytes:
-// 48 for the six `>>` continuations, 16 that loadWarpPointPos's inlined
-// parameters cost, 4 for `Vec& pos = positions[no];`, 4 for the SMSGetMarDirector()
-// global fork (+4 per read, the Map.hpp SMSGetMap() rung again) and 16 for two
-// `getUnk8()` accessor sites (+8 each, measured by deleting them: three sites
-// is frame 0x238+4, none is 0x220). Three measurements pin that split:
-//   * the `pos` binding is +4 and is *needed* -- without it MWCC keeps the
-//     element base in one callee-saved register and folds `+4`/`+8` into the
-//     `addi r4` at each call, losing retail's hoisted `addi r20, r5, 8` /
-//     `addi r23, r5, 4`. `Vec* pos = &positions[no];` is identical; a TU-local
-//     direct-return fork used at the three read sites is also +4 *per site*;
-//     `positions += no` costs a register (205 instructions, 94.3%).
-//   * `const char* str = stream.readString();` must NOT be named: the extra
-//     named local rotates seven callee-saved registers (97.2 -> 98.1 for the
-//     naming alone, frame unchanged).
-//   * six continuations is confirmed, not just inferred: the "3,3,1,2"
-//     grouping (five continuations) drops both the pool 8 bytes *and* one
-//     callee-saved register (`stmw r20`), 96.8%.
-// Which two of the three negation components read through `getUnk8()` is not
-// determined by the binary -- the accessor is instruction-neutral there, only
-// its site count is priced. The alternative accounting (three accessors, no
-// `pos` binding, no fork) also gives 92 bytes exactly but loses the two
-// hoisted `addi`s (96.4%), so the binary prefers this one.
-// Residue: a zero-frame callee-saved permutation with every instruction and
-// every displacement identical (retail `this` r31 / stream r25 / array base
-// and cnt sharing r24, ours r24 / r27 / r25+r26). Inert on it: `cnt` in the
-// for-init scope, the `Vec*` spelling. Worse: `cnt` declared before the arrays
-// (205 instructions). loadWarpPointPos's own UNUSED copy is still 0xc4 against
-// the map's 0x12c, so its body is still 26 instructions short of retail's --
-// the standalone copy is the remaining lead.
-// cc28: moving the name lookup into loadWarpPointPos (`int no =
-// getWarpPointNo(stream.readString());` inside, the int parameter left as the
-// loop index) keeps init byte-identical and grows the standalone copy to 0x108
-// of 0x12c, but leaves an unused parameter, so not adopted. The third loop in
-// a TU-local `MapWarpSetInfo(this, ...)` level is worse (60 -> 81).
+// TODO: 99.8%, frame and every instruction exact. The name loop is
+// loadWarpPointPos's own body (its UNUSED map size 0x12c pins the loop, the
+// readString and the getWarpPointNo lookup inside it; `name` and `no` named,
+// `cnt` named at the call). The stack arrays go positions/warp/dest; the four
+// pre-loop reads share the named `u32 data`; six chained `>>` continuations.
+// Residue: the third loop's reused values (retail local_180[i] r19 /
+// local_1d0[i] r12, ours swapped) and the negations' `add r8, r8, r5` (ours
+// r9). All-raw negations fix the r8 but lose 0x10 of frame, which the two
+// getUnk8() sites were filling; retail's 0x10 has another source (not the
+// other accessor placements, nor named u32 copies of the two values).
 void TMapWarp::init(JSUMemoryInputStream& stream)
 {
 	u32 data;
@@ -253,10 +216,7 @@ void TMapWarp::init(JSUMemoryInputStream& stream)
 	}
 
 	int cnt = unk0 * 2;
-	for (int i = 0; i < cnt; ++i) {
-		loadWarpPointPos(
-		    stream, getWarpPointNo(stream.readString()), local_130);
-	}
+	loadWarpPointPos(stream, cnt, local_130);
 
 	for (int i = 0; i < unk0; ++i) {
 		unk4[2 * i].unk8.x = local_130[2 * i].x - local_130[2 * i + 1].x;
