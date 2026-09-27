@@ -713,19 +713,16 @@ int TGuide::checkPoint(int x, int y)
 	return hit;
 }
 
-// TODO: frame 0x28 against retail's 0xf8 with no stack use, and the
-// callee-saved ranking differs (retail stage r31, this r30, stage*8 r29).
-// A named `TStageScore&` and a split -1/10 guard were worse.
 void TGuide::changeBotStatus(int stage)
 {
 	if (stage == -1 || stage >= 10) {
-		mStageNameBox->mVisible = false;
+		mStageNameBox->hide();
 		return;
 	}
 
 	if (mScores[stage].unk0 == 0) {
-		mStageNameBox->mVisible = true;
-		mShineIcon->mVisible    = true;
+		mStageNameBox->show();
+		mShineIcon->show();
 		strncpy(mStageNameBox->getStringPtr(),
 		        SMSGetMessageData(mStageNameBmg, stage), 26);
 
@@ -735,29 +732,29 @@ void TGuide::changeBotStatus(int stage)
 		if (shines > 99)
 			shines = 99;
 		if (shines < 10) {
-			mShineDigits[1]->mVisible = false;
+			mShineDigits[1]->hide();
 			mShineDigits[0]->changeTexture(
-			    mNumberTextures[shines]->mTexInfo, 0);
+			    mNumberTextures[shines]->getTexInfo(), 0);
 		} else {
-			mShineDigits[1]->mVisible = true;
+			mShineDigits[1]->show();
 			mShineDigits[0]->changeTexture(
-			    mNumberTextures[shines / 10]->mTexInfo, 0);
+			    mNumberTextures[shines / 10]->getTexInfo(), 0);
 			mShineDigits[1]->changeTexture(
-			    mNumberTextures[shines % 10]->mTexInfo, 0);
+			    mNumberTextures[shines % 10]->getTexInfo(), 0);
 		}
 
 		if (stage == 0 || stage == 1 || mScores[stage].mEtcShineNum == 0) {
-			mEtcShineIcon->mVisible     = false;
-			mEtcShineMarks[0]->mVisible = false;
-			mEtcShineMarks[1]->mVisible = false;
+			mEtcShineIcon->hide();
+			mEtcShineMarks[0]->hide();
+			mEtcShineMarks[1]->hide();
 		} else if (mScores[stage].mEtcShineNum == 1) {
-			mEtcShineIcon->mVisible     = true;
-			mEtcShineMarks[0]->mVisible = true;
-			mEtcShineMarks[1]->mVisible = false;
+			mEtcShineIcon->show();
+			mEtcShineMarks[0]->show();
+			mEtcShineMarks[1]->hide();
 		} else {
-			mEtcShineIcon->mVisible     = true;
-			mEtcShineMarks[0]->mVisible = true;
-			mEtcShineMarks[1]->mVisible = true;
+			mEtcShineIcon->show();
+			mEtcShineMarks[0]->show();
+			mEtcShineMarks[1]->show();
 		}
 
 		int coins = mScores[stage].mCoinNum;
@@ -766,27 +763,27 @@ void TGuide::changeBotStatus(int stage)
 		if (coins > 999)
 			coins = 999;
 		if (coins < 100) {
-			mCoinDigits[2]->mVisible = false;
+			mCoinDigits[2]->hide();
 			mCoinDigits[0]->changeTexture(
-			    mNumberTextures[coins / 10]->mTexInfo, 0);
+			    mNumberTextures[coins / 10]->getTexInfo(), 0);
 			mCoinDigits[1]->changeTexture(
-			    mNumberTextures[coins % 10]->mTexInfo, 0);
+			    mNumberTextures[coins % 10]->getTexInfo(), 0);
 		} else {
-			int hundreds             = coins / 100;
-			mCoinDigits[2]->mVisible = true;
+			mCoinDigits[2]->show();
+			int hundreds = coins / 100;
 			mCoinDigits[0]->changeTexture(
-			    mNumberTextures[hundreds]->mTexInfo, 0);
+			    mNumberTextures[hundreds]->getTexInfo(), 0);
 			coins -= hundreds * 100;
 			mCoinDigits[1]->changeTexture(
-			    mNumberTextures[coins / 10]->mTexInfo, 0);
+			    mNumberTextures[coins / 10]->getTexInfo(), 0);
 			mCoinDigits[2]->changeTexture(
-			    mNumberTextures[coins % 10]->mTexInfo, 0);
+			    mNumberTextures[coins % 10]->getTexInfo(), 0);
 		}
 
 		if (mScores[stage].mHasFirstEtcShine)
-			mCoinIcon->mVisible = true;
+			mCoinIcon->show();
 		else
-			mCoinIcon->mVisible = false;
+			mCoinIcon->hide();
 
 		int blueCoins = mScores[stage].mBlueCoinNum;
 		if (blueCoins < 0)
@@ -803,19 +800,19 @@ void TGuide::changeBotStatus(int stage)
 		}
 
 		if (blueCoins < 10) {
-			mBlueCoinDigits[1]->mVisible = false;
+			mBlueCoinDigits[1]->hide();
 			mBlueCoinDigits[0]->changeTexture(
-			    mNumberTextures[blueCoins % 10]->mTexInfo, 0);
+			    mNumberTextures[blueCoins % 10]->getTexInfo(), 0);
 		} else {
-			mBlueCoinDigits[1]->mVisible = true;
+			mBlueCoinDigits[1]->show();
 			mBlueCoinDigits[0]->changeTexture(
-			    mNumberTextures[blueCoins / 10]->mTexInfo, 0);
+			    mNumberTextures[blueCoins / 10]->getTexInfo(), 0);
 			mBlueCoinDigits[1]->changeTexture(
-			    mNumberTextures[blueCoins % 10]->mTexInfo, 0);
+			    mNumberTextures[blueCoins % 10]->getTexInfo(), 0);
 		}
 	} else {
-		mStageNameBox->mVisible = true;
-		mShineIcon->mVisible    = false;
+		mStageNameBox->show();
+		mShineIcon->hide();
 
 		int blueCoins = mScores[stage].mBlueCoinNum;
 		if (blueCoins < 0)
@@ -823,15 +820,15 @@ void TGuide::changeBotStatus(int stage)
 		if (blueCoins > 99)
 			blueCoins = 99;
 		if (blueCoins < 10) {
-			mBlueCoinDigits[1]->mVisible = false;
+			mBlueCoinDigits[1]->hide();
 			mBlueCoinDigits[0]->changeTexture(
-			    mNumberTextures[blueCoins % 10]->mTexInfo, 0);
+			    mNumberTextures[blueCoins % 10]->getTexInfo(), 0);
 		} else {
-			mBlueCoinDigits[1]->mVisible = true;
+			mBlueCoinDigits[1]->show();
 			mBlueCoinDigits[0]->changeTexture(
-			    mNumberTextures[blueCoins / 10]->mTexInfo, 0);
+			    mNumberTextures[blueCoins / 10]->getTexInfo(), 0);
 			mBlueCoinDigits[1]->changeTexture(
-			    mNumberTextures[blueCoins % 10]->mTexInfo, 0);
+			    mNumberTextures[blueCoins % 10]->getTexInfo(), 0);
 		}
 
 		mScreen->search('sb_i')->show();
