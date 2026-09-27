@@ -101,11 +101,11 @@ When a size-matched UNUSED function is called instead of inlined, look for a che
 
 **Call-target detector pass (c-h5, 2026-09-27): a `bl` retail has and we lack is a missing level at that site.**
 Comparing each non-exact function's multiset of `R_PPC_REL24` targets (retail split object vs ours, `objdump -dr`) flags 30 of 871 functions.
-Four gained from one TU-local level directly above the refused callee at exactly that site, the `TKoopaFlame::attack_` lever:
-`TSandCastle::expanded` 90.7 -> 100 (a direct-return `getMActor()` forwarder under `SandBombAddFrame`, reached through the inlined `TSandBombBase::expanded`; the old "binders inert" note was right only for binders with a named local),
-`TMapObjGrowTree::touchWater`/`control` 98.9 -> 99.9 (the interpolated height as a helper over the same forwarder, plus a frame-add helper; frames still short),
+One gained from a TU-local level with real content directly above the refused callee, the `TKoopaFlame::attack_` lever:
 `TKukku::dropCoins` 86.5 -> 96.6 (`forward` built in a `(length, rot_y)` helper: `set<f>` becomes the `bl` while the sine/cosine lookups expand, which resolves Kukku's missing weak `set<f>`).
-In each, one extra level flips a 1- or 3-statement callee at a site the depth table says should expand, so the table's depth-4 row is too generous for real callers: treat the per-site `bl` as the ground truth and add levels until it appears.
+`TSandCastle::expanded` (90.7 -> 100) and `TMapObjGrowTree::touchWater`/`control` (98.9 -> 99.9) also flip to retail's `getMActor` `bl` under a bare `return actor->getMActor();` forwarder, but a forwarder with no content of its own is an identity helper, so the orchestrator reverted both; without it GrowTree's content helpers gain only 0.13.
+Finding the real enclosing level (an existing accessor or a helper that computes something) is the open task for those sites.
+In each, one extra level flips a small callee at a site the depth table says should expand, so the table's depth-4 row is too generous for real callers: treat the per-site `bl` as the ground truth and add levels until it appears.
 Not resolved this way: the `set<f>` / `TPathNode` zero-init sites (pakkun, BeeHive, Kumokun), `MsGetRotFromZaxisY` (bossgesso, igaiga), `TUtil::sqrt` (EventWatcher), `TGraphTracer` accessors (NpcNerve), `setMtx` (MapObjBase, bosswanwan; four spellings inert), the `TVec3` copy-ctor `bl`s inside `operator-` (Tongue), and the `calcMomentum` pair (a short body plus one level at both nerves gives GraphWander 97.0 and RecoverGraph 99.8 but drops the out-of-line body to 49).
 bossgesso's guard site needs only the position fetch one level deeper than its copy; no spelling found.
 
