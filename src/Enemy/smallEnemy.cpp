@@ -172,7 +172,8 @@ static inline TMActorKeeper* SmallEnemyMActorKeeper(const TSmallEnemy* p)
 	return mActorKeeper;
 }
 
-// Binder over SMSGetMarDirector(); priced on TSmallEnemy::init's two tests.
+// Binder over SMSGetMarDirector(); priced on TSmallEnemy::init's map test
+// (the stage test reads SMSGetMarDirector() directly).
 static inline TMarDirector* SmallEnemyMarDirector()
 {
 	TMarDirector* director = SMSGetMarDirector();
@@ -194,7 +195,7 @@ void TSmallEnemy::init(TLiveManager* param_1)
 
 	onLiveFlag(LIVE_FLAG_DEAD);
 	if (SmallEnemyMarDirector()->getCurrentMap() == 2
-	    && SmallEnemyMarDirector()->getCurrentStage() == 0)
+	    && SMSGetMarDirector()->getCurrentStage() == 0)
 		onLiveFlag(LIVE_FLAG_UNK2000);
 	onHitFlag(HIT_FLAG_NO_COLLISION);
 	unk158 = 1.0f;
@@ -218,10 +219,14 @@ void TSmallEnemy::init(TLiveManager* param_1)
 	             damageHeight * mBodyScale);
 
 	mGroundPlane = TMap::getIllegalCheckData();
-	if (!unk124->getGraph() || unk124->getGraph()->isDummy())
+	if (unk124->getGraph() == nullptr || getTracer()->getGraph()->isDummy())
 		unk124->init(gpConductor->getGraphByName("main"));
 
-	setGoalPathMario();
+	// Retail builds the goal node here, bound to a const reference, rather
+	// than going through setGoalPathMario(): that puts the node in the upper
+	// block at 0xbc.
+	const TPathNode& node = TPathNode((THitActor*)gpMarioAddress);
+	setGoalPath(node);
 	initAnmSound();
 }
 
