@@ -7,16 +7,16 @@ Per-batch history through batch 69 is archived in [docs/progress/history.md](doc
 
 ## Current numbers
 
-Measured from `build/GMSE01/report.json` on 2026-09-23.
+Measured from `build/GMSE01/report.json` on 2026-09-27.
 
 | | Fuzzy match | Perfect match | Fully linked | Linked units |
 | --- | ---: | ---: | ---: | ---: |
-| Game | 99.36% | 64.00% | 16.98% | 193 / 385 |
-| JSystem | 99.89% | 93.15% | 81.22% | 186 / 198 |
+| Game | 99.39% | 65.68% | 16.98% | 193 / 385 |
+| JSystem | 99.89% | 93.40% | 81.22% | 186 / 198 |
 | SDK | 100.00% | 99.71% | 99.54% | 148 / 149 |
-| All | 99.48% | 70.57% | 31.73% | 527 / 732 |
+| All | 99.50% | 71.94% | 31.73% | 527 / 732 |
 
-11,876 of 12,904 functions match. The rebuilt DOL remains byte-identical to the original.
+11,943 of 12,904 functions match. The rebuilt DOL remains byte-identical to the original.
 
 ## What recent batches have done
 
