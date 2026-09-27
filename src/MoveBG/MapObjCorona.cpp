@@ -921,12 +921,10 @@ void TBathtub::removeCollisions_()
 		unk164[i]->remove();
 }
 
-// TODO: instructions match; retail's frame is 0x10 larger (0x88) in the low
-// inline-temporary region below getLocalPos's return temporary.
 bool TBathtub::allowsTumble() const
 {
-	JGeometry::TVec3<f32> pos = SMS_GetMarioPos();
 	f32 angle;
+	JGeometry::TVec3<f32> pos = SMS_GetMarioPos();
 	if (getNearGrip(pos, 18.0f, &angle)) {
 		JGeometry::TVec3<f32> local = mBathtubData.getLocalPos(pos);
 		local.y = 0.0f;
@@ -934,7 +932,7 @@ bool TBathtub::allowsTumble() const
 		if (distance < 4200.0f)
 			return false;
 		if (4700.0f < distance) {
-			if (mBathtubData.unk18.at(1, 1) > 0.99f) {
+			if (getBathtubData().unk18.at(1, 1) > 0.99f) {
 				TBathtubKillerManager* manager
 				    = JDrama::TNameRefGen::search<TBathtubKillerManager>(
 			        "バスタブキラーマネージャー");
@@ -945,7 +943,7 @@ bool TBathtub::allowsTumble() const
 					return false;
 				if (status == MARIO_STATUS_ROCKET_LANDING)
 					return false;
-				const TWaterGun* gun = gpMarioOriginal->mWaterGun;
+				const TWaterGun* gun = gpMarioOriginal->getFludd();
 				if (gun) {
 					TNozzleTrigger* nozzle
 					    = (TNozzleTrigger*)gun->getCurrentNozzle();
