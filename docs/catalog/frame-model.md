@@ -448,3 +448,12 @@ Marker method: `int mk; extp(&mk);` declared first sits right above the dead reg
   - `TPoiHana::init`: the pair 4 high is inliner order, not IRO: our bottom region below 0x58 already equals retail's, and the two-line `group` form loses one P at the bottom *and* one inliner word above the pair.
   - `currentStateFinalize`: each chained `search<T>(name)->unkC` costs 2 inliner words and 5 IRO words (3 F, 2 P); retail's 36 extra words would be nine per search site if they all came from there.
   - `lenFromToeToMario` (loop unrolled by two): retail has five more words below `tipPos` and one above it; ours has only two dead F there.
+
+## Refinements (unit agent c-i1, 2026-09-27)
+
+- **A `switch` on a narrow accessor result is not a condition.** `switch (f())` with `f` returning `u8` still leaves one dead F word: the operand is promoted to `int` first, so the forced load is a value.
+  Closed with it: `MSoundSE::startSoundActorInner` (0x50 to 0x58), an inline `unkCD` read at the `switch` and at the `== 8` test (one F each), while the two `checkSoundArea` arguments stay raw (an accessor there lives in a register as the call's argument, and costs another 0x8 anyway).
+- **An inlined body cannot carry words its out-of-line copy lacks.** `JAIBasic::getData()` at `checkMonoSound`'s info read adds three IRO words to `startSoundNpcActor` (byte-exact there) and four to `checkMonoSound` itself (0x38 to 0x48); every raw/accessor spelling inside the body moves both frames together.
+  So the NpcActor residue comes from the call site or the `JAIActor` ctor, not from the checkMonoSound body.
+- `goToDirectedNextGraphNode`: naming the else arm's `getTracer()->getGraph()` lands the frame (0x98), but setGoalPathFromGraph's block stays 0x14 low, since the four tracer bindings are still created before it.
+  Retail's order needs the node choice's receivers created after that block, which the one-level helper gives only at the cost of the `mr` copies.

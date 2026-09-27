@@ -847,6 +847,8 @@ u32 MSoundSE::getNewIDBySurfaceCode(u32 id, JAIActor* actor)
 // in checkMonoSound, alone or paired (only shrink NpcActor); a named actor ptr.
 // Retail has 4 bytes above actor (a named `u32 ground = ground_no` takes 8
 // there) and 0xc more low region below the info slot; no carrier found yet.
+// JAIBasic::getData() at checkMonoSound's getInfoPointer read makes NpcActor
+// byte-exact (+3 IRO words) but costs the out-of-line checkMonoSound 0x10.
 void MSoundSE::startSoundNpcActor(u32 id, const Vec* position, u32 ground_no,
                                   JAISoundHandle* out_handle, u32 fade,
                                   u8 camera_idx)

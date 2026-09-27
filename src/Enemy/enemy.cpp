@@ -439,6 +439,8 @@ void TSpineEnemy::goToExclusiveNextGraphNode()
 // TODO: frame 0x90 vs 0x98; retail has none of our 4 tracer bindings above
 // setGoalPathFromGraph's block. The node choice as a this-taking inline
 // lands the block 8 low and drops the two `mr` copies of currIdx and idx.
+// A named `TGraphWeb* graph` in the else arm lands the 0x98 frame, but the
+// block stays 0x14 low (the tracer bindings are still created above it).
 void TSpineEnemy::goToDirectedNextGraphNode(
     const JGeometry::TVec3<f32>& param_1)
 {
