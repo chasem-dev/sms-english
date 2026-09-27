@@ -642,36 +642,29 @@ DEFINE_NERVE(TNerveBombHeiPickUp, TLiveActor)
 	return FALSE;
 }
 
+// Fabricated name, after the other SMS_GetMario* accessors in
+// MarioAccess.hpp; kept TU-local until that shared header grows it.
+static inline f32 SMS_GetMarioThrowPower() { return *gpMarioThrowPower; }
+
 DEFINE_NERVE(TNerveBombHeiThrown, TLiveActor)
 {
 	TBombHei* bombHei = (TBombHei*)spine->getBody();
 
 	if (spine->getTime() == 0) {
-		// TODO: 96.9%, frame closed. Reading the two params through
-		// `mSLFoo.get()` rather than the class's `getSLFoo()` wrapper is
-		// one inline level shallower and takes the frame from 0x70 to the
-		// ROM's 0x68 with every stack displacement exact. What is left is
-		// one volatile-FPR block rotation (ours f3/f1 for the throw power
-		// and the cosine, the ROM's f2/f3, with the matching r5/r6 swap
-		// on the table index) plus the ROM loading `mSLThrownVY` *late*,
-		// into the register the x store has just freed, where we load it
-		// ahead of the two products. Retried at the new depth and still
-		// worse: three separate component assignments (84.7%) and
-		// `velocity.set(x, y, z)` (identical to the ctor, 96.2%).
-		// Naming `rate` then `power` (in that order) fixes the table-index
-		// rotation and the rate/cosine registers (96.9%). Left: the ROM loads
-		// `mSLThrownVY` after the x store and so holds `power` in f2; ours
-		// hoists it into f2 and pushes `power` to f5. Inert at this level:
-		// power-then-rate, the class getters, named x/z/s/c/angle (frame
-		// -8), `setVelocity(TVec3(...))`, raw `*gpMarioAngleY`, `sin * power`.
+		// The same shape as TNerveMameGessoThrown: the throw power comes
+		// through an inline accessor (an IR-optimiser temporary, created
+		// ahead of the cosine's, so it takes f2), then component stores of
+		// named z/x put the VY load after the x store as in the ROM.
 		TBombHeiSaveLoadParams* params = bombHei->getSaveParams();
+		f32 power = SMS_GetMarioThrowPower();
 		f32 rate  = params->mSLThrownRateXZ.get();
-		f32 power = *gpMarioThrowPower;
-		JGeometry::TVec3<f32> velocity(
-		    rate * (power * JMASSin(SMS_GetMarioAngleY())),
-		    params->mSLThrownVY.get(),
-		    rate * (power * JMASCos(SMS_GetMarioAngleY())));
-		bombHei->mVelocity = velocity;
+		JGeometry::TVec3<f32> velocity;
+		f32 z = rate * (power * JMASCos(SMS_GetMarioAngleY()));
+		f32 x = rate * (power * JMASSin(SMS_GetMarioAngleY()));
+		velocity.x = x;
+		velocity.y = params->mSLThrownVY.get();
+		velocity.z = z;
+		bombHei->setVelocity(velocity);
 		bombHei->mPosition.y += 2.0f;
 		bombHei->onLiveFlag(LIVE_FLAG_AIRBORNE);
 	}
