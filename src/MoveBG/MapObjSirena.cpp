@@ -604,17 +604,15 @@ u32 TItemSlotDrum::touchWater(THitActor* water)
 	return 1;
 }
 
-// TODO: 94.5%. Retail keeps &m of the coin loop in r25 across iterations and
-// its frame is 0x18 larger; Mtx scope and `off` placement are inert.
-// Every named slot (both `m`s, both `off`s, the TMsRange) sits 0x14 higher in
-// retail, so the missing 20 bytes are inline temporaries below 0x54, plus the
-// r25 save; the instruction stream is otherwise right.
+// TODO: 96.1%, frame size agrees. Left: the Telesa arm's MsMtxSetRotY loads
+// its 0.0f/1.0f/300.0f literals late in retail (the MathUtil.hpp header note);
+// every named slot sits 4 lower than retail's; and the GPR colouring differs
+// (retail: this r29, getSlotResult's temps r25/r26/r30, coin-loop &m r25).
 // Both rotations go through a named MtxPtr for MsMtxSetRotY and MTXMultVec
 // (94.5 -> 96.0); either site alone is 95.6/94.9, and a TMtx34f or passing
 // the array to MTXMultVec is inert.
-// Separately, the UNUSED getSlotResult below compiles to 0xe4 against the
-// map's 0x8c: ours inlines getResultFromAng through getDrumResult and unrolls
-// the loop; a `result = -1; break;` spelling is 0xe8.
+// getDrumResult naming the angle keeps getResultFromAng a `bl` here and in
+// getSlotResult (both now at their map sizes), as in retail.
 void TItemSlotDrum::generateItem()
 {
 	if (getSlotResult() == 0) {
@@ -677,7 +675,11 @@ int TItemSlotDrum::getSlotResult()
 	return result;
 }
 
-int TItemSlotDrum::getDrumResult(int i) { return getResultFromAng(unk13C[i]); }
+int TItemSlotDrum::getDrumResult(int i)
+{
+	f32 ang = unk13C[i];
+	return getResultFromAng(ang);
+}
 
 int TItemSlotDrum::getForcastResult(int idx)
 {
