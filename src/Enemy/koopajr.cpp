@@ -569,6 +569,8 @@ void TKoopaJr::checkNerve()
 	// the demo/wait nerve compares, the `*gpMarioPos` binding) is created
 	// after the copy in retail. getSpine() at one nerve compare adds a word
 	// below the copy instead of moving one.
+	// Also inert (c-m22): toMario from SMS_GetMarioPos() or getPosition(),
+	// a copy-then-subtract; dropping `dir` or `angle` is -8 of frame.
 	TDirectionCalc toMarioDir(toMario);
 	f32 dir     = toMarioDir.get();
 	f32 angle   = TDirectionCalc::r2d(dir);

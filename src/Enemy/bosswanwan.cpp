@@ -870,6 +870,8 @@ static inline J3DJoint* WanwanJointNode(u16 idx)
 // Inert: cos first, no roll, named s/c declared early, sin/cos as set() args,
 // ref() stores instead of set(), a named angle, JMASSin/JMASCos.
 // Also inert: dropping `roll` for scratch at MTXConcat, or taking it after set().
+// Also inert (c-m22): s/c computed before the scratch declaration or before
+// zero(), cos before sin, a named angle read ahead of zero().
 void TBossWanwanMtxCalc::calc(u16 joint)
 {
 	// While airborne the root joint's translation is thrown away so the boss
@@ -1199,6 +1201,8 @@ bool TBossWanwan::isMarioInSight() { return true; }
 // `sq < limit ? FALSE : TRUE` gets the bge arm order right but adds a
 // `b; li r0, 0` for the isTaken() miss (+2 in Stun, control, GraphWander),
 // whether spelled as an early return, a nested ternary, a BOOL local or &&.
+// Re-measured (c-m22) in control and Stun: `a && !(sq < l)`, early-return
+// FALSE then `!(sq < l)`/`>=`, a BOOL result local; none beats this spelling.
 BOOL TBossWanwan::isHeadPulled()
 {
 	if (mPicket->isTaken()) {
