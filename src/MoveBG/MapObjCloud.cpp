@@ -204,10 +204,13 @@ void TRideCloud::control()
 
 	unk160        = MsClamp<f32>(unk160 + fVar8, 1.0f, 3.0f);
 	unk168        = MsClamp<f32>(unk168 + fVar8, 1.0f, 3.0f);
-	// TODO: f1/f2 swap here (retail holds 300.0f in f2 and unk160 in f1, then
-	// `prod * unk160`). Inert or worse: operand orders, named sx/scale/product,
-	// raw mScaling.x, `*=` split, a TU-local multiply helper, chained unk160.
-	mDamageRadius = getScaling().x * 300.0f * unk160;
+	// TODO: retail's `prod * unk160` order needs both operands leaves (the
+	// literal-first product in a chain puts the leaf unk160 left). Left: an
+	// f0/f1 swap of scaling.x and unk160 (regalloc: x needs a higher vreg,
+	// i.e. unk160 generated first); inert: a named unk160 before or after.
+	f32 radius = 300.0f;
+	radius *= getScaling().x;
+	mDamageRadius = radius * unk160;
 	mDamageHeight = 50.0f;
 	calcEntryRadius();
 	if (!calcRecycle() && !RideCloudRailFlag(this, 0x2)) {

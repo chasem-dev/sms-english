@@ -208,33 +208,30 @@ void TModelWaterManager::load(JSUMemoryInputStream& stream)
 	gpModelWaterManager = this;
 }
 
-// TODO: 24 bytes of low region short (0x58 vs 0x70) plus one `fmadds` operand
-// swap -- retail makes fVar1 (in f2) the *first* multiply operand and the
-// 24000.0f literal the second, ours the reverse. Source term order does not
-// steer it (`24000.0f * fVar1` and `8000.0f + fVar1 * 24000.0f` both unchanged),
-// so it is probably downstream of the frame. Frame levers measured: forking
-// both gpMarDirector reads to SMSGetMarDirector() +8, a named
-// TFlagManager::getInstance() result +8 (SMSGetFlagManager() identical), a
-// named TScreenTexture* -8, splitting the division +0. The best combination is
-// 0x68, still 8 short, so none of them is committed.
+// The fmadds reads fVar1 before 24000.0f, so the range is a named non-const
+// local (a literal is always the left operand at parse); the named base and
+// flag manager and the SMSGetMarDirector() reads make up the 0x70 frame.
 void TModelWaterManager::loadAfter()
 {
 	unk5D34
 	    = JDrama::TNameRefGen::search<TScreenTexture>("スクリーンテクスチャ")
 	          ->getTexture();
 
-	int flag = TFlagManager::getInstance()->getFlag(0x40000);
+	TFlagManager* flagManager = TFlagManager::getInstance();
+	int flag = flagManager->getFlag(0x40000);
 	if (flag > 60)
 		flag = 60;
 
 	f32 fVar1 = flag / 60.0f;
+	f32 range = 24000.0f;
+	f32 base = 8000.0f;
 
-	if (gpMarDirector->getCurrentMap() == 1
-	    && gpMarDirector->getCurrentStage() == 2)
+	if (SMSGetMarDirector()->getCurrentMap() == 1
+	    && SMSGetMarDirector()->getCurrentStage() == 2)
 		fVar1 = 1.0f;
 
 	if (fVar1 < 1.0f)
-		unk5E0C = fVar1 * 24000.0f + 8000.0f;
+		unk5E0C = fVar1 * range + base;
 	else
 		unk5D60 &= ~0x100;
 }
