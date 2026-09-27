@@ -500,6 +500,8 @@ void TKoopaFlame::fire(const JGeometry::TVec3<f32>& position,
 	mHeight    = height;
 }
 
+// TODO: retail schedules the pos.z load (0x80) after the x fmadds and gives
+// the y result f3 / radius f2 (ours f2 / f3). Inert: radius or position first.
 void TKoopaFlame::control()
 {
 	if (!isAlive()) {
@@ -509,16 +511,10 @@ void TKoopaFlame::control()
 
 	mLength += mSpeed;
 
-	f32 length = mLength;
 	JGeometry::TVec3<f32> position;
-	position.x = mDirection.x * length + mStartPos.x;
-	position.y = mDirection.y * length + mStartPos.y;
-	position.z = mDirection.z * length + mStartPos.z;
+	position.scaleAdd(mLength, mDirection, mStartPos);
 	f32 radius = mRadius;
-	f32 height = mHeight;
-	if (height <= 0.0f)
-		height = 2.0f * radius;
-
+	f32 height = mHeight <= 0.0f ? 2.0f * radius : mHeight;
 	set(position, radius, height);
 }
 
