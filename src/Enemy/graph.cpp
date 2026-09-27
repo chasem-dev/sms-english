@@ -625,7 +625,27 @@ int TGraphWeb::findNearestNodeIndex(const JGeometry::TVec3<f32>& param_1,
 	return result;
 }
 
-int TGraphWeb::findFarthestNodeIndex(const JGeometry::TVec3<f32>&, u32) const {
+// UNUSED (0xfc): findNearestNodeIndex with the comparison reversed.
+int TGraphWeb::findFarthestNodeIndex(const JGeometry::TVec3<f32>& param_1,
+                                     u32 param_2) const
+{
+	int i;
+	int result  = -1;
+	f32 maxDist = -1.0f;
+	for (i = 0; i < unk8; ++i) {
+		if (param_2 != 0xffffffff && getGraphNode(i).checkFlag(param_2))
+			continue;
+
+		JGeometry::TVec3<f32> pos;
+		getGraphNode(i).getPoint(&pos);
+		pos -= param_1;
+		f32 dist = pos.squared();
+		if (maxDist < 0.0f || dist > maxDist) {
+			maxDist = dist;
+			result  = i;
+		}
+	}
+	return result;
 }
 
 int TGraphWeb::findNearestVisibleIndex(const JGeometry::TVec3<f32>& param_1,
