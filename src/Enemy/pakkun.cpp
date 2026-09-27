@@ -1096,6 +1096,11 @@ DEFINE_NERVE(TNervePakkunGenerate, TLiveActor)
 // 0x68 high, the lob goal and the liner dir are allocated in the opposite
 // order to retail, and the low region is 0x38-0x40 deep. Inert: dir built by
 // set(), the lob goal declared above the if, a raw *gpMarioPos copy.
+// c-r11: retail multiplies SearchHeight and SearchAware by `rate` value-first,
+// so both are raw `.value` reads (an accessor is a call at parse time and
+// the frontend moves the leaf `rate` left of it): 0x328. Each further raw
+// ShootRange/WaitTime/ReadyTime/LimitMove/MoveDist/MarioCircle/GiveUpLength
+// read is -0x10 (three give 0x2d8, four 0x2c8), so 0x2d0 needs an -8 rung.
 DEFINE_NERVE(TNervePakkunStay, TLiveActor)
 {
 	TPakkun* self = (TPakkun*)spine->getBody();

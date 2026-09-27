@@ -151,7 +151,10 @@ Both were read from `dbg.sh` dumps (`frontend-00-ast-initial-code.txt`, `backend
 
 - **The frontend canonicalises `+` and `*` at parse time; nothing later re-sorts them.**
   In `x + 200.0f`, `200.0f + x`, `x * k`, `(f32)i * k`, `call() * k` and `(a - b) * k` the literal is the left child already in `frontend-00` (touchWater's `EADD(EFLOATCONST 200, throwY)`), so the `fadds`/`fmuls` reads the constant first.
-  A leaf (variable, parameter, `p->m`) moves left of a binary subtree (`a - b`), an indexed load `q[i]` or a call, inline accessor calls included (they are still calls at parse time); two leaves, a leaf and a unary `-x` or conversion, or two subtrees keep source order.
+  Otherwise the right operand moves left only when it is simple and the left one is not.
+  Simple: a leaf (variable, parameter, `p->m`), a leaf plus an integer constant (`p->n + 2`), a unary `-x`, a conversion.
+  Not simple: a binary node of two values (`a - b`), an indexed load `q[i]`, a call, inline accessors included (they are still calls at parse time).
+  So `(p->n + 2) * d` keeps its order while `(num() + 2) * d` becomes `d * (...)` (the MapObjMonte board-number fork), and two simple or two complex operands keep source order.
   The PCode keeps AST order (`fadds rD, left, right`; jpb-mwcc `docs/SCHEDULER.md`: "FADDS operand order = materialization order"), and mwcc-rs records the same leaf-first canonicalisation empirically (`expressions/arithmetic.rs`, a scaled subscript "canonicalizes it to the SECOND operand of a commutative op").
 - **So retail's value-first `x * K` or `x + K` means the constant was not a literal when the expression was built.**
   Three spellings keep source order: a compound assignment (`t += K`, `t *= K`: the result lands in `t`'s own web), an inline parameter bound to the literal (`throwObjToFront(obj, 200.0f, ...)` makes touchWater's `mPosition.y + y_offset` read `y` first), or a non-`const` named local holding the literal (`f32 k = K; x * k`: IRO propagates it, but the dead local keeps a 4-byte home in a non-leaf function).
