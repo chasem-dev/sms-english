@@ -95,3 +95,14 @@ A web whose degree is still at least K when its sweep reaches it is pushed in a 
   Their register residue cannot close before the frame does.
   With an equal frame and a single-move replay fix, only `startAppearStar`, `TShellCup::perform` (Mtx 8 low), `calcEmitterGlobalParams` (the `ref()` fix is -8 frame) and `TBossHanachan::init` (slots) remain.
 - Batch triage: running `dbg.sh` and `regalloc.py --search` over a whole list in one sequential background job (about 1 min per big TU) ranks the targets before any edit.
+
+## Additions (c-e5)
+
+- **A header wrapper overload adds ghost degree** (closed `TTinKoopaPartsBase::perform`).
+  `curAnmEndsNext()` (which forwards `ANM_TYPE_BCK, nullptr`) instead of spelling the constants makes argument-copy webs coalesced into r4/r5; they lift `this`/`cue`/`graphics` to degree K, so the arguments are pushed in a later sweep and the joint index, live across `getModel()`, is coloured after them (r28 instead of r31).
+  Tell: a callee-saved temporary numbered *below* the arguments in retail, same instructions.
+- **Non-simple arguments into an UNUSED inline keep the value in a callee-saved binding** (closed `TTinKoopa::checkTinKoopaKillerApproachingMessage`).
+  `calcCoasterDistanceInOrder(killer->getPathIdx(), graph->findNearestNodeIndex(pos, -1))` instead of two named node locals: the `to` binding is compared from r28 (retail) rather than from the call's r3, and the two bindings are the dead words retail has under the by-value `pos`.
+- **`mr rX, rY` between two registers both holding `1`** is a nested `||` result copied from the outer one: `return a || b || c;` (closed `TOptionControl::isChangedSetting`), not a `bool r = result` local.
+- **A constant multiplicand coloured first** (open: `TPaneScalingControl::update` in the three Option `update()`s, `TBathtub::getNearGrip`): our pcode generates the constant's `lfs` before the value's loads, retail after them; `f32 a = v; a *= K;` flips the `fmuls` operand order but recolours the block.
+- **A named local cannot be coloured before an `@` object** (`TTinKoopaLaunchOrder::checkOrder`, partial): with the receiver named, mDirection's CSE temp (or makeKillerQueue's s8 binding) takes r4 first; retail's receiver must be an `@` object created earlier.
