@@ -10,6 +10,14 @@ extern bool gParticleFlagLoaded[0x201];
 extern JPAResourceManager* gpResourceManager;
 
 // fabricated
+// Loop callers (tinkoopa/bossManta loadAfter): retail passes the masked id to
+// load and keeps the sum in r0; here the u16 argument is passed unmasked.
+// A u16 local (or u32/int copy) is still passed unmasked or grows the frame;
+// only an int binding holding `(u16)x` passes it masked, and then the sum and
+// the mask share one register. A named `bool* flag = &gParticleFlagLoaded[id]`
+// (or bool&) fixes the flag-pointer GPR in bossManta (~28 -> ~6) and
+// TMapStaticObj::init (~11 -> ~5), but with constant ids it dies into a slot:
+// loadParticleMario 0x18 -> 0x20 and the DOL no longer matches (2026-09-27).
 inline static void SMS_LoadParticle(const char* path, u16 id)
 {
 	if (!gParticleFlagLoaded[id]) {

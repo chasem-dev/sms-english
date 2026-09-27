@@ -125,6 +125,11 @@ public:
 		this->w = c;
 	}
 
+	// A `f32 halfAngle = pAngle * 0.5f` local for sinf/cosf (c-h13) fixes
+	// Amenbo/Kumokun Search and calcBathtubData instructions, but keeps a
+	// constant angle in f31 where retail reloads it (TNerveKazekunAttack
+	// 99.95 -> 99.02, doAttackPose, makeQuat, makeKillerVelocity,
+	// moveCoaster); census 2026-09-27: exact count unchanged, not taken.
 	void setRotate(const TVec3<T>& pVec, f32 pAngle)
 	{
 		this->xyz().scale(sinf(pAngle * 0.5f), pVec);
@@ -198,6 +203,14 @@ public:
 	// split source/destination, scope and declaration order, and a
 	// `const TQuat4& cur = mQuat` binder. As a two-level forwarder to rotateQ
 	// it inlines at Kumokun's Wait nerve, where retail `bl`s rotate.
+	// 2026-09-27 (c-h14), per rotate expansion: building q with the 4-float
+	// ctor adds 16 dead bytes (makeQuat frame exact at 0x1e0, colouring left)
+	// but rotate then inlines at the Wait nerve and rotateGoalDirToLocal,
+	// exact at 0x60 with no such object, grows to 0x70; q.set(...) keeps the
+	// weak copy but reorders it (38 -> 81.8%); a q2 product adds 0x18; a
+	// conj TQuat4 (-x,-y,-z,w) adds fnegs. Only makeQuat fits "+16 per
+	// rotate" (doAttackPose wants +0x20 over 3 sites, bindBody +0x38 over 1),
+	// so the dead words are likely caller-side, not in this body.
 	void rotateQ(const TVec3<T>& v, TVec3<T>& rDest) const
 	{
 		// clang-format off
