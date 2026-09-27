@@ -22,13 +22,15 @@ void TMario::rumbleStart(int channelDataIdx, int repeatCount)
 	}
 }
 
-// TODO: 99.9%, instruction-exact, frame 0x50 against our 0x30 (0x20 of low
-// region). A TU-local binder over `SMSGetMSound()` is the only shape that
-// moves it without adding markers, but its rungs are +0x10 (one call site),
-// +0x18 (both sites, or one site two levels deep), +0x28 (one site one level,
-// the other two) and +0x30 (both sites two levels): 0x20 is not on the ladder.
-// Binders on `mMaxAir` or `mDeParams.mHPMax.get()` are +0x18 but each adds two
-// register markers.
+// Binding level over SMSGetMSound(); with getHealth() at the clamp it gives
+// incHP retail's 0x20 of low region (neither alone does: the binder's rungs
+// are +0x10/+0x18/+0x28/+0x30, getHealth() +8).
+static inline MSound* MarioCollisionGetMSound()
+{
+	MSound* sound = SMSGetMSound();
+	return sound;
+}
+
 void TMario::incHP(int hp)
 {
 	if (isUnderWater() || checkFlag(MARIO_FLAG_HELMET_FLW_CAMERA)) {
@@ -36,17 +38,18 @@ void TMario::incHP(int hp)
 		if (mAir > mMaxAir) {
 			mAir = mMaxAir;
 		} else {
-			SMSGetMSound()->startSoundSystemSE(MSD_SE_SY_HP_RECOVER, 0, nullptr,
-			                                   0);
+			MarioCollisionGetMSound()->startSoundSystemSE(MSD_SE_SY_HP_RECOVER,
+			                                              0, nullptr, 0);
 		}
 		return;
 	}
 
 	mHealth += hp;
-	if (mHealth > mDeParams.mHPMax.get()) {
+	if (getHealth() > mDeParams.mHPMax.get()) {
 		mHealth = mDeParams.mHPMax.get();
 	} else {
-		SMSGetMSound()->startSoundSystemSE(MSD_SE_SY_HP_RECOVER, 0, nullptr, 0);
+		MarioCollisionGetMSound()->startSoundSystemSE(MSD_SE_SY_HP_RECOVER, 0,
+		                                              nullptr, 0);
 	}
 }
 
