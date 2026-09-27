@@ -107,10 +107,12 @@ TLensGlow::TLensGlow(bool param_1, const char* name)
 // only frame-exact assignment; naming the loop's second read changes the
 // `addi` pair, and a plain `return gpSunModel;` accessor prices ~+4).
 // Left: (a) closed (isInBounds names its `x`, c-m6); (b) getUnk194 in
-// f31 instead of f29, rotating f27-f31; (c) the two int -> float conversion
-// temporaries of `t` swapped (0x128/0x130); (d) the named block (c, mtx,
-// scaleV) sits 4 low with 4 extra bytes above scaleV; (e) r4/r5 in the avg
-// walk and r26/r27/r31 in the colour loop. Measured and rejected on top of
+// f31 instead of f29, rotating f27-f31 (regalloc: cx/cy must colour before
+// dispRatio's IRO temp @574; top declarations of cx/cy and a TVec2 centre
+// are inert); (c) closed by `t *= ...` (value-first product, c-m27);
+// (d) the named block (c, mtx, scaleV) sits 4 low with 4 extra bytes above
+// scaleV; (e) avg's f5/f6 closed by avg.zero(); r4/r5 in the avg walk and
+// r26/r27/r31 in the colour loop remain. Measured and rejected on top of
 // the accessors: `u32 inBounds` (+3 instructions), `1.0f / n` as a returning
 // helper (+8 frame, swap kept), a named `inv` local (+8), a named `sun`
 // receiver for isInBounds (named block exact but upper region +8 with the
@@ -132,7 +134,8 @@ void TLensGlow::perform(u32 cue, JDrama::TGraphics* graphics)
 		if (thing <= unk5D) {
 			unk4C = 0.0f;
 		} else {
-			f32 t   = ((f32)(thing - unk5D)) * (1.0f / (f32)(17 - unk5D));
+			f32 t   = (f32)(thing - unk5D);
+			t *= 1.0f / (f32)(17 - unk5D);
 			f32 lin = CLBLinearInbetween(0.0f, 1.0f, t);
 			unk4C   = CLBEaseOutInbetween(0.0f, (f32)unk5C, lin);
 		}
@@ -166,7 +169,8 @@ void TLensGlow::perform(u32 cue, JDrama::TGraphics* graphics)
 				unk8C = 0.0f;
 				unk88 = 0.0f;
 			} else {
-				JGeometry::TVec2<f32> avg(0.0f, 0.0f);
+				JGeometry::TVec2<f32> avg;
+				avg.zero();
 
 				const JGeometry::TVec2<f32>* it2 = lgSunN()->unkF8;
 				const bool* it1                  = lgSunN()->unk180;

@@ -123,15 +123,67 @@ static inline TCameraKindParam* CNParams(const CPolarSubCamera* p)
 }
 
 // Case helper for the back-angle ratio; see item 3 above.
-static inline f32 CNBackRatio(const CPolarSubCamera* cam, s16 angle)
+static inline f32 CNBackRatio(const CPolarSubCamera* cam, int angle)
 {
 	switch (cam->mMode) {
 	case CAMERA_MODE_DIVING:
 	case CAMERA_MODE_HOVERING:
-		return CLBAbs<int>((s16)(angle - cam->unk258)) * (2.0f / 65536.0f);
+		return CLBAbs<int>((s16)((s16)angle - cam->unk258)) * (2.0f / 65536.0f);
 	default:
 		return (1.0f - JMASCos((angle - cam->unk258) * 2)) * 0.5f;
 	}
+}
+
+// The behind-Mario chase. Retail keeps the raw `*gpMarioAngleY - 0x8000` in
+// r31 and narrows it only at its uses, which is an s16 parameter of an
+// inlined callee: with this block as that callee the f29/f30 pair (item 2)
+// closes (98.3 -> 98.8). Left: the diving arm narrows the difference lazily
+// in both CLBAbs arms, and the default arm reads r31 raw where the int
+// binding of CNBackRatio narrows it first; the camera-Mario `Vec v` slot is
+// 8 high (0x78 vs 0x70) at the same frame. Inert here: CLBAbs<s16>, a named
+// `s16 d`, the switch written in this body, an int parameter on this level.
+static inline void CNChaseBack(CPolarSubCamera* cam, s16 angle)
+{
+	f32 f29;
+	f32 f30;
+
+	f30 = CNBackRatio(cam, angle);
+
+	f29 = 1.0f;
+	if (cam->unk2CA != -1) {
+		f29 = CLBLinearInbetween(
+		    CNParams(cam)->mInHouseMaginfXmin,
+		    CNParams(cam)->mInHouseMaginfXmax,
+		    cam->mCurrentTarget.unk28);
+	} else if (SMS_CheckMarioFlag(MARIO_FLAG_OCCLUDED)) {
+		f29 = CLBLinearInbetween(
+		    CNParams(cam)->mObstructMaginfXmin,
+		    CNParams(cam)->mObstructMaginfXmax,
+		    cam->mCurrentTarget.unk28);
+	}
+
+	int uVar1 = cam->unk120->mCompSPos[2];
+	if (uVar1 & 0xff) {
+		f29 *= CLBLinearInbetween(
+		    CNParams(cam)->mLFollowMaginfXmin,
+		    CNParams(cam)->mLFollowMaginfXmax,
+		    cam->mCurrentTarget.unk28);
+	}
+	f32 fVar4;
+	switch (cam->mMode) {
+	case CAMERA_MODE_DIVING:
+	case CAMERA_MODE_HOVERING:
+		fVar4 = 100.0f;
+		break;
+	default:
+		fVar4 = SMSGetCameraMario()->mFrameMoveDistHorizontal;
+		break;
+	}
+	f32 kek = cam->unk250 * f30 * f29 * fVar4 * cam->unk288;
+	if (kek > 32766.998f)
+		kek = 32766.998f;
+	CLBChaseGeneralConstantSpecifySpeed<s16>(
+	    &cam->mCurrentTarget.mYaw, angle, CLBRoundf<s16>(kek));
 }
 
 void CPolarSubCamera::ctrlNormalOrTowerCamera_()
@@ -194,47 +246,7 @@ void CPolarSubCamera::ctrlNormalOrTowerCamera_()
 						                      *gpMarioAngleY - 0x8000, uVar9);
 					}
 				} else {
-					f32 f29;
-					f32 f30;
-
-					s16 sVar9 = *gpMarioAngleY - 0x8000;
-					f30 = CNBackRatio(this, sVar9);
-
-					f29 = 1.0f;
-					if (unk2CA != -1) {
-						f29 = CLBLinearInbetween(
-						    CNParams(this)->mInHouseMaginfXmin,
-						    CNParams(this)->mInHouseMaginfXmax,
-						    mCurrentTarget.unk28);
-					} else if (SMS_CheckMarioFlag(MARIO_FLAG_OCCLUDED)) {
-						f29 = CLBLinearInbetween(
-						    CNParams(this)->mObstructMaginfXmin,
-						    CNParams(this)->mObstructMaginfXmax,
-						    mCurrentTarget.unk28);
-					}
-
-					int uVar1 = unk120->mCompSPos[2];
-					if (uVar1 & 0xff) {
-						f29 *= CLBLinearInbetween(
-						    CNParams(this)->mLFollowMaginfXmin,
-						    CNParams(this)->mLFollowMaginfXmax,
-						    mCurrentTarget.unk28);
-					}
-					f32 fVar4;
-					switch (mMode) {
-					case CAMERA_MODE_DIVING:
-					case CAMERA_MODE_HOVERING:
-						fVar4 = 100.0f;
-						break;
-					default:
-						fVar4 = SMSGetCameraMario()->mFrameMoveDistHorizontal;
-						break;
-					}
-					f32 kek = unk250 * f30 * f29 * fVar4 * unk288;
-					if (kek > 32766.998f)
-						kek = 32766.998f;
-					CLBChaseGeneralConstantSpecifySpeed<s16>(
-					    &mCurrentTarget.mYaw, sVar9, CLBRoundf<s16>(kek));
+					CNChaseBack(this, *gpMarioAngleY - 0x8000);
 				}
 			}
 		}
