@@ -517,6 +517,8 @@ void TLeafBoat::touchActor(THitActor* other)
 // Inert or worse (cc48): the raw normal or plane distance at single sites,
 // a declare-then-assign reflected copy, re-reading mResultWalls[i];
 // c-mbg: no `num` local, a non-const wall, raw mVelocity at either copy (-8).
+// regalloc: the mResultWalls[i] CSE web takes r8 because the dot line's
+// getNormal() pointer temp holds r7; raw mNormal at any site is worse.
 void TLeafBoat::touchWall(JGeometry::TVec3<f32>* pos,
                           TBGWallCheckRecord* record)
 {

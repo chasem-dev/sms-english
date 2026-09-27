@@ -530,7 +530,8 @@ bool TSandCastle::withering()
 
 // TODO: 90.7%, frame-exact. Retail inlines TSandBombBase::expanded but calls
 // TLiveActor::getMActor() out of line at both of SandBombAddFrame's sites
-// (inline depth 3 here); ours expands it. Inert: TU-local getMActor binders.
+// (inline depth 3 here); ours expands it. A binder inside SandBombAddFrame
+// gets both bl's (99.8%) but costs +8 here and +0x18/+0x30 in the other users.
 void TSandCastle::expanded()
 {
 	TSandBombBase::expanded();

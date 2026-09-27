@@ -411,6 +411,9 @@ void TRailBlock::calcRootMatrix()
 	model->setBaseScale(mScaling);
 }
 
+// TODO: every instruction matches; frame 0x158 vs retail 0x1b0. Slot anchors:
+// retail's point copy sits 0x3c higher (15 more low-region words) and zDir
+// 0x58 higher (7 more words between them). TVec3 ctor/set() for the columns: worse.
 void TRailBlock::control()
 {
 	TMapObjBase::control();
