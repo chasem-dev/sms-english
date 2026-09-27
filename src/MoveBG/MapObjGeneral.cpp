@@ -326,13 +326,15 @@ void TMapObjGeneral::touchPlayer(THitActor* player)
 	}
 }
 
-// TODO: frame 0x28 short (0x28 vs 0x50) and the hit radius loads into f5
-// where ours takes f3. Inert: getMapObjData(), raw gpPollution, a named or
-// helper-converted u16 size, a table pointer, SMSGetPollution() forks.
+// TODO: every instruction matches; the frame is 0x28 short (0x28 vs 0x50):
+// retail's two conversion temporaries sit at 0x38/0x40 over 0x30 of dead low
+// region. The named table pointer (setObjHitData's spelling) gives the radius
+// retail's f5. Inert: named radius/size/divisor/coordinates.
 void TMapObjGeneral::recover()
 {
+	const TMapObjHitDataTable* table = &mMapObjData->mHit->unkC[2];
 	SMSGetPollution()->clean(mPosition.x, unk144, mPosition.z,
-	                         (u16)(mMapObjData->mHit->unkC[2].unk0 / 6.0f));
+	                         (u16)(table->unk0 / 6.0f));
 
 	setUpMapCollision(1);
 	startAnim(6);
