@@ -92,9 +92,8 @@ TDirectionCalc::TDirectionCalc(f32 direction) { mDirection = direction; }
 
 TDirectionCalc::TDirectionCalc(JGeometry::TVec3<f32> dir)
 {
-	// The ROM's callers (makeRelativeAngle, checkNerve, TKoopaJr::checkNerve)
-	// copy the vector once, which is a default-constructed TDirectionCalc
-	// plus makeDirection(); this constructor would copy it twice.
+	// Inlined at the ROM's call sites with a single copy of the vector (the
+	// caller's parameter copy is propagated into makeDirection's).
 	makeDirection(dir);
 }
 
@@ -190,12 +189,9 @@ f32 TDirectionCalc::calcTurnDirection(f32 dir, f32 step)
 
 void TDirectionCalc::makeDirection(JGeometry::TVec3<f32> dir)
 {
-	// TODO: the two locals only exist to load z before x, as the original
-	// does; atan2f(dir.x, dir.z) loads them the other way round.
-	JGeometry::TVec3<f32>* pDir = &dir;
-	f32 z                       = pDir->z;
-	f32 x                       = pDir->x;
-	mDirection                  = atan2f(x, z);
+	// The C++ float overload of atan2 from math.h: its argument bindings load
+	// z before x and its result object is this function's one dead word.
+	mDirection = atan2(dir.x, dir.z);
 }
 
 // The by-value read of the stored direction: the fork puts sinf's argument
@@ -428,8 +424,7 @@ void TKoopaJr::resetKoopaJr()
 	mTimers[KOOPAJR_TIMER_FAST_LAUNCH] = 0;
 }
 
-// TODO: 99.9%. The timers now match; the frame is 0x18 short of retail's
-// 0x150, which shifts every stack slot of the inlined nerve checks.
+// TODO: 99.98%, frame exact; one slot pair left in checkNerve's expansion.
 void TKoopaJr::perform(u32 cue, JDrama::TGraphics* graphics)
 {
 	if (mSubmarine == nullptr) {
@@ -564,9 +559,16 @@ void TKoopaJr::checkNerve()
 	JGeometry::TVec3<f32> toMario;
 	toMario.sub(*gpMarioPos, mPosition);
 	toMario.y = 0.0f;
-	TDirectionCalc toMarioDir;
-	toMarioDir.makeDirection(toMario);
-	mRotation.y = TDirectionCalc::r2d(toMarioDir.get());
+	// TODO: frame exact; toMario sits 4 above retail's slot and the
+	// makeDirection copy 4 below, so one of the depth-2 objects between them
+	// (the two search<> bindings, checkSubmarineSwing's two TParamT bindings,
+	// the demo/wait nerve compares, the `*gpMarioPos` binding) is created
+	// after the copy in retail. getSpine() at one nerve compare adds a word
+	// below the copy instead of moving one.
+	TDirectionCalc toMarioDir(toMario);
+	f32 dir     = toMarioDir.get();
+	f32 angle   = TDirectionCalc::r2d(dir);
+	mRotation.y = angle;
 }
 
 void TKoopaJr::checkNerveKillerLaunchNormal()
@@ -1186,8 +1188,7 @@ void TKoopaJrSubmarine::makeRelativeAngle()
 	toMario.sub(*gpMarioPos, mKoopaJr->mBathtub->getPosition());
 	toMario.y = 0.0f;
 	// The by-value TVec3 parameter is the copy the ROM makes before atan2f.
-	TDirectionCalc toMarioDir;
-	toMarioDir.makeDirection(toMario);
+	TDirectionCalc toMarioDir(toMario);
 	f32 marioDir    = toMarioDir.get();
 	f32 nearerMario = mDirection.calcNearerDirection(marioDir);
 	f32 target      = mDirection.get();
