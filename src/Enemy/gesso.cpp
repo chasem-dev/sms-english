@@ -1034,18 +1034,22 @@ void TGessoPolluteObj::set()
 	TEnemyAttachment::set();
 
 	if (GessoUnk160(this)->checkLiveFlag(LIVE_FLAG_CLIPPED_OUT)) {
-		mPosition.x = unk160->mPosition.x;
+		mPosition.x = GessoUnk160(this)->mPosition.x;
 		mPosition.y = unk160->mPosition.y + 200.0f;
 		mPosition.z = unk160->mPosition.z;
 	} else {
 		MtxPtr mtx = unk16C->getModel()->getAnmMtx(TGesso::mMouthJntIndex);
 
-		JGeometry::TVec3<f32> local_54 = getVelocity();
+		JGeometry::TVec3<f32> local_54 = mVelocity;
 
 		// Retail tests two fresh copies of the velocity (the same
 		// `TVec3(getVelocity())` shape as TMapObjBianco's wall test).
-		// TODO: frame 0x78 against retail's 0x70 (8 long); a named copy
-		// tested twice is 84.5%.
+		// The raw mVelocity copy and GessoUnk160 on the x read land the
+		// 0x70 frame and local_54's slot.
+		// TODO: both test copies sit 0xc high (0x48/0x3c vs 0x3c/0x30):
+		// retail has a 12-byte hole under local_54. A named copy tested
+		// twice is 84.5%; local_54 assigned later, or built from an explicit
+		// TVec3 temporary, or declared above mtx is worse.
 		if (JGeometry::TVec3<f32>(getVelocity()).x != 0.0f
 		    || JGeometry::TVec3<f32>(getVelocity()).z != 0.0f)
 			MsVECNormalize(&local_54, &local_54);
