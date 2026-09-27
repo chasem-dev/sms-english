@@ -213,6 +213,9 @@ void MSBgmXFade::xFadeBgmForce(f32 param_1)
 // (xFadeBgm passes nullptr, so the stores fold away), so there is no
 // evidence for its contents; spelling it as two null-checked stores also
 // pushes the body out of line, which the UNUSED marker forbids.
+// c-m2 measured guarded-store bodies out of line: one `if (param_2)` store per
+// return 0x88, plus a store before `return 0xff` 0x98, a dir/ret-local form
+// 0x88, `*param_2 = i`/`17 - i` 0x8c; none of them inlines into xFadeBgm.
 u8 MSBgmXFade::getTiming(f32 param_1, u32* param_2)
 {
 	f32 f1 = unk0;
