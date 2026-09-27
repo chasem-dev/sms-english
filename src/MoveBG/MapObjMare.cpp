@@ -159,7 +159,9 @@ TCogwheelScale::TCogwheelScale(const char* name)
 // an unused 8-byte slot sits above the texture. Block-scoping the color or
 // the texture, a const color, and passing color without TColor are inert or
 // worse; a named TColor lands the frame but moves the copy into the named
-// block (see TSwingBoard::initDraw in MapObjMonte).
+// block (see TSwingBoard::initDraw in MapObjMonte). THangingBridge's
+// TColor-returning helper, a GXColor-returning one, a void setter helper and
+// a (GXColor){} literal all trade the named slot for 8 of low region or worse.
 void TCogwheel::initDraw() const
 {
 	GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_F32, 0);
@@ -359,22 +361,20 @@ static inline void CogwheelRotY(JGeometry::TVec3<f32>* v, f32 deg)
 	v->z    = x * s + z * c;
 }
 
-// TODO: 96.7%, frame exact. Retail's named slots sit 8 higher (pos at 0x50,
-// ours 0x48) and it keeps offsetX in f31, offsetZ in f30 where we swap them.
-// Inert: sin/cos or x/z read order in the helper, offsetZ named first, raw
-// mRotation, the helper taking the rotation vector or f32 outputs, `pos`
-// declared before the offset.
+// TODO: 96.8%, frame and every slot exact (no named offsetX/offsetZ, the two
+// getPosition().y reads fill retail's low region). Retail keeps offset.x in
+// f31 and offset.z in f30 (ours swapped) and computes each call's scale
+// address before the rotation address. Inert: x/z read or store order in the
+// helper, named nx/nz, operand order, set(), offset built by set() or stores.
 void TCogwheel::initMapObj()
 {
 	TMapObjBase::initMapObj();
 
 	JGeometry::TVec3<f32> offset(sRadius, 0.0f, 0.0f);
 	CogwheelRotY(&offset, getRotation().y);
-	f32 offsetX = offset.x;
-	f32 offsetZ = offset.z;
 
-	JGeometry::TVec3<f32> pos(mPosition.x + offsetX, mPosition.y,
-	                          mPosition.z - offsetZ);
+	JGeometry::TVec3<f32> pos(mPosition.x + offset.x, mPosition.y,
+	                          mPosition.z - offset.z);
 	JGeometry::TVec3<f32> scale(1.0f, 1.0f, 1.0f);
 	TCogwheelScale* plate = (TCogwheelScale*)TMapObjBaseManager::newAndRegisterObj(
 	    "cogwheel_plate", pos, mRotation, scale);
@@ -383,9 +383,9 @@ void TCogwheel::initMapObj()
 	mPlate->mCogwheel = this;
 	plate->appear();
 
-	mPlateRopePos.set(pos.x, mPosition.y, pos.z);
+	mPlateRopePos.set(pos.x, getPosition().y, pos.z);
 
-	pos.set(mPosition.x - offsetX, mPosition.y, mPosition.z + offsetZ);
+	pos.set(mPosition.x - offset.x, getPosition().y, mPosition.z + offset.z);
 	JGeometry::TVec3<f32> potScale(1.0f, 1.0f, 1.0f);
 	TCogwheelScale* pot = (TCogwheelScale*)TMapObjBaseManager::newAndRegisterObj(
 	    "cogwheel_pot", pos, getRotation(), potScale);

@@ -846,11 +846,16 @@ void TBossWanwanMtxCalc::joinAnm(int index)
 	        index));
 }
 
-// TODO: named block sits 4 bytes low (scratch 0x64/info 0x94 vs 0x68/0x98)
-// and retail schedules the jma table loads above scratch.zero()'s stores.
-// Same 4-byte-low J3DTransformInfo class as THino2MtxCalc::calc. Inert or
-// worse: a named angle (f32/s16/int, -0x10), JMASSin/JMASCos, cos first,
-// roll after zero(), no roll, raw j3dSys.mModel (-8), a named J3DJoint*.
+static inline J3DJoint* WanwanJointNode(u16 idx)
+{
+	return j3dSys.getModel()->getModelData()->getJointNodePointer(idx);
+}
+
+// TODO: frame and slots exact since the joint-node helper (the
+// THino2MtxCalc::calc shape); retail still hoists the 1/sin-factor constants
+// and the jma table loads above scratch.zero()'s stores, ours emits them after.
+// Inert: cos first, no roll, named s/c declared early, sin/cos as set() args,
+// ref() stores instead of set(), a named angle, JMASSin/JMASCos.
 void TBossWanwanMtxCalc::calc(u16 joint)
 {
 	// While airborne the root joint's translation is thrown away so the boss
@@ -862,10 +867,7 @@ void TBossWanwanMtxCalc::calc(u16 joint)
 		if (mNewAnm) {
 			mNewAnm->getTransform(joint, &info);
 		} else {
-			info = j3dSys.getModel()
-			           ->getModelData()
-			           ->getJointNodePointer(joint)
-			           ->getTransformInfo();
+			info = WanwanJointNode(joint)->getTransformInfo();
 		}
 
 		info.mTranslate.x = 0.0f;
