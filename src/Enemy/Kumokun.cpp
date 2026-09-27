@@ -967,7 +967,7 @@ bool TKumokun::isFindOutMario(JGeometry::TVec3<f32>* param_1) const
 	if (!isOnSamePlaneWithMario())
 		return false;
 
-	param_1->set(rotateGoalDirToLocal(SMS_GetMarioPos()));
+	param_1->set(rotateGoalDirToLocal(*gpMarioPos));
 
 	f32 range = getSaveParam2()->mSearchRange.get();
 
@@ -1194,6 +1194,9 @@ DEFINE_NERVE(TNerveKumokunSearch, TLiveActor)
 // `*param_1 = rotate...` (89.1) and an if/return split (94.7) are worse, and
 // reading the result through `const Vec&` into set(const Vec&) reaches 97.4
 // here but frames 0x138, drops the weak getQuat and costs Search 0.6.
+// Raw *gpMarioPos in isFindOutMario aligns every slot (~76 -> ~52); left: x
+// reloads (f2) instead of taking f28, which costs retail's f27 save (the +8).
+// Inert on that: set(x,y,z), fabsf, dot(*this), if/return, a named dir.
 DEFINE_NERVE(TNerveKumokunWait, TLiveActor)
 {
 	TKumokun* self = (TKumokun*)spine->getBody();
