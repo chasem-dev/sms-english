@@ -35,13 +35,29 @@ extern JPAEmitterManager* gpEmitterManager4D2;
 #include <MSound/MSoundBGM.hpp>
 #include <System/DummyStrings.hpp>
 
-// fabricated
+// fabricated: the draw switch, inlined at each perform site (retail lays the
+// two orthographs of each site out in reverse source order).
 void TPauseMenu2::draw(JDrama::TGraphics* gfx)
 {
-	J2DOrthoGraph graph(gfx->getViewport());
-	graph.setup2D();
-	mScreen->draw(0, 0, &graph);
-	gfx->setScissor(gfx->getScissor());
+	switch (mState) {
+	case MENU_APPEARING: {
+		J2DOrthoGraph graph(gfx->getViewport());
+		graph.setup2D();
+		mScreen->draw(0, 0, &graph);
+		gfx->setScissor(gfx->getScissor());
+	} break;
+	case MENU_OPEN:
+	case UNK2:
+	case MENU_SAVING:
+	case MENU_DISAPPEARING: {
+		J2DOrthoGraph graph(gfx->getViewport());
+		graph.setup2D();
+		mScreen->draw(0, 0, &graph);
+		gfx->setScissor(gfx->getScissor());
+	} break;
+	default:
+		break;
+	}
 }
 
 TPauseMenu2::TPauseMenu2(const char* pName)
@@ -343,16 +359,169 @@ inline void TPauseMenu2::disappearWindow()
 	mFadeAnim += 0.5f;
 }
 
-// fabricated: the level that keeps the inline window bodies out of perform().
-static inline void PauseAppear(TPauseMenu2* m) { m->appearWindow(); }
-static inline void PauseDisappear(TPauseMenu2* m) { m->disappearWindow(); }
+// fabricated: the move half of perform, inlined there. Its stack objects are
+// laid out as one callee's (reverse source order), and appearWindow and
+// disappearWindow, reached at depth 2, stay out of line as in the map.
+inline void TPauseMenu2::move()
+{
+	switch (mState) {
+	case MENU_APPEARING:
+		appearWindow();
+		break;
+	case MENU_OPEN: {
+		s32 curSelectedItem = mSelectedItem;
+		if (mGamePad->checkFrameMeaning(0x21)) {
+			// Confirm currently selected item.
+			switch (curSelectedItem) {
+			case 0:
+				mSelectionConfirmed = true;
+				SMSRumbleMgr->finishPause();
+				gpMSound->pauseOff(0);
+				SMSGetMarDirector()->getConsole()->pauseOut();
+				mFadeAnim = 0.0f;
+				mState    = MENU_DISAPPEARING;
+				break;
+			case 2:
+				mSelectionConfirmed = true;
+				setDrawEnd();
+				break;
+			case 3:
+				mSelectionConfirmed = true;
+				setDrawEnd();
+				break;
+			case 1:
+				SMSGetMSound()->startSoundSystemSE(
+				    MSD_SE_SY_PAUSE_ON, 0, nullptr, 0);
 
-// TODO: frame 0x568 vs retail 0x5f8; the only instruction difference is the
-// createEmitter id's `li` scheduled earlier. Retail's four draw orthographs
-// sit 0xf4 apart and ascend within each draw switch, with the saving branch's
-// pair above the MENU_OPEN temps; ours are 0xf0 apart and descend, and retail's
-// dead low region is 0xa4 larger. Named vec / set() / named x,y spellings of
-// the emitter position are inert or worse.
+				mSelectionConfirmed = true;
+				mCardSave->init(0);
+				mState = MENU_SAVING;
+			default:
+				break;
+			}
+		} else if (mGamePad->checkFrameMeaning(0x40)) {
+			// Close pause menu by pressing B.
+			mPressedB = true;
+			mFadeAnim = 0.0f;
+			setDrawEnd();
+		} else if (mGamePad->checkFrameMeaning(0x4)) {
+			// Select the next item.
+			if (mNumItems > 2) {
+				mSelectedItem = curSelectedItem < (mNumItems - 1)
+				                    ? curSelectedItem + 1
+				                    : 0;
+			} else {
+				// don't loop back around with less than three items
+				mSelectedItem = mNumItems - 1;
+			}
+			if (mSelectedItem != curSelectedItem) {
+				SMSGetMSound()->startSoundSystemSE(MSD_SE_SY_CURSOR,
+				                                   0, nullptr, 0);
+
+				JUTRect& bounds = mOrigItemBounds[curSelectedItem];
+				mMenuItems[mSelectedItem]->mWhite = mItemColor;
+				mMenuItems[curSelectedItem]->mWhite
+				    = JUtility::TColor();
+				mMenuItems[curSelectedItem]->setBounds(bounds);
+
+				mBounceAnim = 0.0f; // reset animation
+
+				// Remove spark particles.
+				if (mEmitter != nullptr) {
+					gpEmitterManager4D2->forceDeleteEmitter(
+					    mEmitter);
+				}
+			}
+		} else if (mGamePad->checkFrameMeaning(0x2)) {
+			// Select the previous item.
+			if (mNumItems > 2) {
+				mSelectedItem = (curSelectedItem == 0u)
+				                    ? mNumItems - 1
+				                    : curSelectedItem - 1;
+			} else {
+				mSelectedItem = 0;
+			}
+
+			if (mSelectedItem != curSelectedItem) {
+				SMSGetMSound()->startSoundSystemSE(MSD_SE_SY_CURSOR,
+				                                   0, nullptr, 0);
+
+				JUTRect& bounds = mOrigItemBounds[curSelectedItem];
+				mMenuItems[mSelectedItem]->mWhite = mItemColor;
+				mMenuItems[curSelectedItem]->mWhite
+				    = JUtility::TColor();
+				mMenuItems[curSelectedItem]->setBounds(bounds);
+
+				mBounceAnim = 0.0f;
+
+				if (mEmitter != nullptr) {
+					gpEmitterManager4D2->forceDeleteEmitter(
+					    mEmitter);
+				}
+			}
+		}
+
+		JUTRect animItemBounds = mOrigItemBounds[mSelectedItem];
+		if (mBounceAnim == mEffectKeyFrame) {
+			// Spawn a "spark" effect from the selected item.
+			f32 width = mMenuItems[mSelectedItem]->getWidth();
+			f32 emitterWidth = width / mEffectStretch;
+
+			JUTRect itemBounds
+			    = mMenuItems[mSelectedItem]->getGlobalBounds();
+
+			// TODO: This doesn't fully match.
+			gpEmitterManager4D2->createEmitter(
+			    JGeometry::TVec3<f32>(
+			        itemBounds.x1 + 0.5f * itemBounds.getWidth(),
+			        itemBounds.y1 + 0.5f * itemBounds.getHeight(),
+			        0.0f),
+			    0x1FA, nullptr, nullptr);
+
+			mEmitter = gpEmitterManager4D2->unkC8[0][0];
+			mEmitter->setEmitterScale(
+			    JGeometry::TVec3<f32>(4.0f * emitterWidth, 1.0f, 1.0f));
+		}
+
+		if (mBounceAnim < 18.0f) {
+			s32 hw = mBounceAnim;
+			s32 hh = 0.5f * mBounceAnim;
+			animItemBounds.reform(-hw, -hh, hw, hh);
+			mMenuItems[mSelectedItem]->setBounds(animItemBounds);
+
+			s32 colorShift = 10.0f * mBounceAnim;
+			mMenuItems[mSelectedItem]->mWhite
+			    = mItemColor + (colorShift << 24);
+		} else if (mBounceAnim < 35.0f) {
+			s32 hw = mBounceAnim - 35.0f;
+			s32 hh = 0.5f * (mBounceAnim - 35.0f);
+			animItemBounds.reform(hw, hh, -hw, -hh);
+			mMenuItems[mSelectedItem]->setBounds(animItemBounds);
+
+			s32 colorShift = (35.0f - mBounceAnim) * 10.0f;
+			mMenuItems[mSelectedItem]->mWhite
+			    = mItemColor + (colorShift << 24);
+		} else {
+			// Loop animation.
+			mBounceAnim = -0.5f;
+			unkFC *= -1;
+		}
+
+		mBounceAnim += 0.5f;
+	} break;
+	case MENU_DISAPPEARING:
+		disappearWindow();
+		break;
+	default:
+		break;
+	}
+}
+
+// TODO: frame 0x570 vs retail 0x5f8; the only instruction difference is the
+// createEmitter position's schedule (retail loads the id early and converts
+// the width before x1). Every stack object but that TVec3 temporary is in
+// retail's order; retail's sits below itemBounds, as a named `pos` declared
+// after it would, but that spelling reschedules the conversions differently.
 void TPauseMenu2::perform(u32 cue, JDrama::TGraphics* graphics)
 {
 	if (SMSGetMarDirector()->mState == TMarDirector::STATE_UNK5) {
@@ -373,189 +542,14 @@ void TPauseMenu2::perform(u32 cue, JDrama::TGraphics* graphics)
 				mMenuPane->setAlpha(alpha);
 			}
 			if (cue & CUE_DRAW) {
-				switch (mState) {
-
-				case MENU_APPEARING:
-					draw(graphics);
-					break;
-				case MENU_OPEN:
-				case UNK2:
-				case MENU_SAVING:
-				case MENU_DISAPPEARING:
-					draw(graphics);
-					break;
-				default:
-					break;
-				}
+				draw(graphics);
 			}
 		} else {
-			if (cue & CUE_MOVE) {
-				switch (mState) {
-				case MENU_APPEARING:
-					PauseAppear(this);
-					break;
-				case MENU_OPEN: {
-					s32 curSelectedItem = mSelectedItem;
-					if (mGamePad->checkFrameMeaning(0x21)) {
-						// Confirm currently selected item.
-						switch (curSelectedItem) {
-						case 0:
-							mSelectionConfirmed = true;
-							SMSRumbleMgr->finishPause();
-							gpMSound->pauseOff(0);
-							SMSGetMarDirector()->getConsole()->pauseOut();
-							mFadeAnim = 0.0f;
-							mState    = MENU_DISAPPEARING;
-							break;
-						case 2:
-							mSelectionConfirmed = true;
-							setDrawEnd();
-							break;
-						case 3:
-							mSelectionConfirmed = true;
-							setDrawEnd();
-							break;
-						case 1:
-							SMSGetMSound()->startSoundSystemSE(
-							    MSD_SE_SY_PAUSE_ON, 0, nullptr, 0);
-
-							mSelectionConfirmed = true;
-							mCardSave->init(0);
-							mState = MENU_SAVING;
-						default:
-							break;
-						}
-					} else if (mGamePad->checkFrameMeaning(0x40)) {
-						// Close pause menu by pressing B.
-						mPressedB = true;
-						mFadeAnim = 0.0f;
-						setDrawEnd();
-					} else if (mGamePad->checkFrameMeaning(0x4)) {
-						// Select the next item.
-						if (mNumItems > 2) {
-							mSelectedItem = curSelectedItem < (mNumItems - 1)
-							                    ? curSelectedItem + 1
-							                    : 0;
-						} else {
-							// don't loop back around with less than three items
-							mSelectedItem = mNumItems - 1;
-						}
-						if (mSelectedItem != curSelectedItem) {
-							SMSGetMSound()->startSoundSystemSE(MSD_SE_SY_CURSOR,
-							                                   0, nullptr, 0);
-
-							JUTRect& bounds = mOrigItemBounds[curSelectedItem];
-							mMenuItems[mSelectedItem]->mWhite = mItemColor;
-							mMenuItems[curSelectedItem]->mWhite
-							    = JUtility::TColor();
-							mMenuItems[curSelectedItem]->setBounds(bounds);
-
-							mBounceAnim = 0.0f; // reset animation
-
-							// Remove spark particles.
-							if (mEmitter != nullptr) {
-								gpEmitterManager4D2->forceDeleteEmitter(
-								    mEmitter);
-							}
-						}
-					} else if (mGamePad->checkFrameMeaning(0x2)) {
-						// Select the previous item.
-						if (mNumItems > 2) {
-							mSelectedItem = (curSelectedItem == 0u)
-							                    ? mNumItems - 1
-							                    : curSelectedItem - 1;
-						} else {
-							mSelectedItem = 0;
-						}
-
-						if (mSelectedItem != curSelectedItem) {
-							SMSGetMSound()->startSoundSystemSE(MSD_SE_SY_CURSOR,
-							                                   0, nullptr, 0);
-
-							JUTRect& bounds = mOrigItemBounds[curSelectedItem];
-							mMenuItems[mSelectedItem]->mWhite = mItemColor;
-							mMenuItems[curSelectedItem]->mWhite
-							    = JUtility::TColor();
-							mMenuItems[curSelectedItem]->setBounds(bounds);
-
-							mBounceAnim = 0.0f;
-
-							if (mEmitter != nullptr) {
-								gpEmitterManager4D2->forceDeleteEmitter(
-								    mEmitter);
-							}
-						}
-					}
-
-					JUTRect animItemBounds = mOrigItemBounds[mSelectedItem];
-					if (mBounceAnim == mEffectKeyFrame) {
-						// Spawn a "spark" effect from the selected item.
-						f32 width = mMenuItems[mSelectedItem]->getWidth();
-						f32 emitterWidth = width / mEffectStretch;
-
-						JUTRect itemBounds
-						    = mMenuItems[mSelectedItem]->getGlobalBounds();
-
-						// TODO: This doesn't fully match.
-						gpEmitterManager4D2->createEmitter(
-						    JGeometry::TVec3<f32>(
-						        itemBounds.x1 + 0.5f * itemBounds.getWidth(),
-						        itemBounds.y1 + 0.5f * itemBounds.getHeight(),
-						        0.0f),
-						    0x1FA, nullptr, nullptr);
-
-						mEmitter = gpEmitterManager4D2->unkC8[0][0];
-						setEmitterScale(4.0f * emitterWidth, 1.0f, 1.0f);
-					}
-
-					if (mBounceAnim < 18.0f) {
-						s32 hw = mBounceAnim;
-						s32 hh = 0.5f * mBounceAnim;
-						animItemBounds.reform(-hw, -hh, hw, hh);
-						mMenuItems[mSelectedItem]->setBounds(animItemBounds);
-
-						s32 colorShift = 10.0f * mBounceAnim;
-						mMenuItems[mSelectedItem]->mWhite
-						    = mItemColor + (colorShift << 24);
-					} else if (mBounceAnim < 35.0f) {
-						s32 hw = mBounceAnim - 35.0f;
-						s32 hh = 0.5f * (mBounceAnim - 35.0f);
-						animItemBounds.reform(-hw, -hh, hw, hh);
-						mMenuItems[mSelectedItem]->setBounds(animItemBounds);
-
-						s32 colorShift = (35.0f - mBounceAnim) * 10.0f;
-						mMenuItems[mSelectedItem]->mWhite
-						    = mItemColor + (colorShift << 24);
-					} else {
-						// Loop animation.
-						mBounceAnim = -0.5f;
-						unkFC *= -1;
-					}
-
-					mBounceAnim += 0.5f;
-				} break;
-				case MENU_DISAPPEARING:
-					PauseDisappear(this);
-					break;
-				default:
-					break;
-				}
-			}
+			if (cue & CUE_MOVE)
+				move();
 
 			if (cue & CUE_DRAW) {
-				switch (mState) {
-				case MENU_APPEARING:
-					draw(graphics);
-					break;
-				case MENU_OPEN:
-				case UNK2:
-				case MENU_SAVING:
-				case MENU_DISAPPEARING:
-					draw(graphics);
-					break;
-				default:
-					break;
-				}
+				draw(graphics);
 			}
 		}
 	}
