@@ -208,6 +208,8 @@ void TRideCloud::control()
 	// literal-first product in a chain puts the leaf unk160 left). Left: an
 	// f0/f1 swap of scaling.x and unk160 (regalloc: x needs a higher vreg,
 	// i.e. unk160 generated first); inert: a named unk160 before or after.
+	// Also inert (c-m24): raw mScaling.x (+18), a two-argument product inline
+	// taking (300 * x, unk160), `radius *= unk160`, `unk160 * radius`.
 	f32 radius = 300.0f;
 	radius *= getScaling().x;
 	mDamageRadius = radius * unk160;

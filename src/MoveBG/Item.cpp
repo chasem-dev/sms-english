@@ -637,6 +637,8 @@ void TShine::movingDown()
 // 2026-09-22: MSound binder/raw-global forks over any subset of the six
 // startSoundActor sites (pool rungs to frame 0xd8, the 0xc gap never moves),
 // and `trans`/`mtx`/`model` declared at function top (inert).
+// c-m24: retail has only two words above the GXColor (ours: the four named
+// locals); unnamed color/model/trans or a TVec3(x, y, z) all shrink the frame.
 void TShine::control()
 {
 	if (!isState(0x10))
