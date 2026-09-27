@@ -645,7 +645,8 @@ void TIgaiga::moveObject()
 	mBodyScale = MsClamp(unk1E4 * base, base, 3.0f * mBodyScale);
 	// TODO: frame-exact; the two MsClamp products sit in f6/f7 swapped
 	// and the getCurrent tracer/web pair is r3/r4 swapped. Naming the
-	// unk1E4*base product made the first clamp worse.
+	// unk1E4*base product made the first clamp worse. Also inert: a named
+	// swell clamp or product, the clamp-first product, a named 3x limit.
 
 	f32 ratio         = mBodyScale / unk154;
 	mScaledBodyRadius = 8.0f * (mBodyScale * mBodyRadius)
