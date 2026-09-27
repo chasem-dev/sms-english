@@ -1496,21 +1496,13 @@ void TBossMantaManager::setupEfbAlpha(JDrama::TGraphics* graphics)
 	GXSetProjection(graphics->mProjMtx.mMtx, GX_PERSPECTIVE);
 }
 
-// Binding level worth +8 of low region, landing
-// TBossMantaManager::createEnemies's frame at 0xb0 (batch 121).
-static inline int BossMantaGetObjNum(const TBossMantaManager* p)
-{
-	int objNum = p->getObjNum();
-	return objNum;
-}
-
 void TBossMantaManager::createEnemies(int num)
 {
-	if (num + BossMantaGetObjNum(this) > getCapacity())
+	if (num + getObjNum() > getCapacity())
 		num = getCapacity() - getObjNum();
 
-	if (unk38 != nullptr) {
-		u8 limit = unk38->mSLInstanceNum.get();
+	if (getSaveParam()) {
+		u8 limit = getSaveParam()->mSLInstanceNum.get();
 		if (num + getObjNum() > limit)
 			num = limit - getObjNum();
 	}
@@ -1554,15 +1546,16 @@ void TBossMantaManager::spawn(int gen, const JGeometry::TVec3<f32>& pos)
 	}
 }
 
-void TBossMantaManager::createEnemy()
+bool TBossMantaManager::createEnemy()
 {
 	TSpineEnemy* enemy = createEnemyInstance();
-	if (enemy != nullptr) {
-		TIdxGroupObj* group
-		    = JDrama::TNameRefGen::search<TIdxGroupObj>("オブジェクトグループ");
-		group->getChildren().push_back(enemy);
-		enemy->init(this);
-	}
+	if (enemy == nullptr)
+		return false;
+	TIdxGroupObj* group
+	    = JDrama::TNameRefGen::search<TIdxGroupObj>("オブジェクトグループ");
+	group->getChildren().push_back(enemy);
+	enemy->init(this);
+	return true;
 }
 
 void TBossMantaManager::initAdditionalCollision()

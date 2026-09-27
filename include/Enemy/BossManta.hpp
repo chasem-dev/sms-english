@@ -168,7 +168,7 @@ public:
 	void drawMantaShadow(JDrama::TGraphics*);
 
 	void initAdditionalCollision();
-	void createEnemy();
+	bool createEnemy();
 	const JUtility::TColor& getMantaColor();
 	void loadEffects();
 	void adaptAdditionalCollision(TBossManta*);
