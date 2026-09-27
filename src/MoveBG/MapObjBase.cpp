@@ -368,8 +368,13 @@ static inline J3DFrameCtrl* MOBMoveCtrl(TMapObjBase* p)
 }
 
 // TODO: frame exact (the two sound binders and the move-ctrl binder); the
-// else arm's col->setMtx(mtx) is a `bl` in retail (the RULES.md "in-class
-// method retail always bls" dead end) and its Mtx sits 0x24 lower.
+// else arm's col->setMtx(mtx) is a `bl` in retail and its Mtx sits 0x24 lower.
+// The collision block is setUpMapCollision(0) inlined: calling it is
+// instruction-exact once setUpUnk8TRS reaches setUpMtx through one more
+// TMapCollisionManager level (`setUpUnk8Mtx(mtx) { unk8->setUpMtx(mtx); }`,
+// which also lands the `bl setMtx` and keeps setUpMapCollision exact), but
+// the frame is then 0xd0 (Mtx at 0x4c, retail 0x44) and the header level
+// costs TNerveBWDie::execute 99.13 -> 99.01, so neither is committed.
 void TMapObjBase::makeObjAppeared()
 {
 	offLiveFlag(LIVE_FLAG_DEAD | LIVE_FLAG_UNK8);
