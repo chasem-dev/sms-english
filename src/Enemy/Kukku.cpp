@@ -563,17 +563,21 @@ void TKukku::shotBall()
 	                          4);
 }
 
+// `forward` is built one inline level down: that is what makes retail `bl`
+// TVec3::set<f> (the unit's weak copy) while the sine/cosine lookups expand,
+// and the argument order puts mRotation.y in f26 before getDropSpeed().
+static inline JGeometry::TVec3<f32> KukkuVecFromRotY(f32 length, f32 rot_y)
+{
+	f32 x = length * JMASin(rot_y);
+	f32 z = length * JMACos(rot_y);
+	return JGeometry::TVec3<f32>(x, 0.0f, z);
+}
+
 // The rotates are rotateQ(), the one-level member-read body JGQuat4.hpp's
 // TODO proposes for rotate(v, rDest): frame 0x1f0 -> 0x168 (retail 0x158),
 // 86.4 -> 86.5. Spell them rotate() again once that header change lands.
-// TODO: retail calls TVec3::set<f>(f, f, f) out of line for `forward` (the
-// unit's missing weak set<f>, depth 4). Inert or worse: one-argument
-// rotate(), rotating `forward` straight into `velocity`, `forward.set(...)`,
-// a named `angle = mRotation.y` before dropSpeed (frame exact, 85.4),
-// getDropSpeed() read at each product (80.6).
-// Retail also loads mRotation.y into f26 before the dropSpeed getSaveParams()
-// call and looks up the cosine before the sine (the out-of-line set's
-// right-to-left arguments), so `forward` is built one inline level down.
+// TODO: 96.6%. The frame is 0x10 too big and the coin loop keeps
+// &mPosition in r28 (retail r27 = 0); see the rotateQ note above.
 void TKukku::dropCoins()
 {
 	if (mDroppedCoins > 10)
@@ -610,9 +614,8 @@ void TKukku::dropCoins()
 	JGeometry::TQuat4<f32> pitch;
 	pitch.setEulerX(3.1415927f * getSaveParams()->getDropAngleX());
 
-	f32 dropSpeed = getSaveParams()->getDropSpeed();
-	JGeometry::TVec3<f32> forward(dropSpeed * JMASin(mRotation.y), 0.0f,
-	                              dropSpeed * JMACos(mRotation.y));
+	JGeometry::TVec3<f32> forward
+	    = KukkuVecFromRotY(getSaveParams()->getDropSpeed(), mRotation.y);
 
 	JGeometry::TVec3<f32> velocity(forward);
 	pitch.rotateQ(velocity, velocity);
