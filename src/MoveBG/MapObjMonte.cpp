@@ -744,6 +744,9 @@ void TSwingBoard::initDraw() const
 	// residue as TCogwheel/TWireBell::initDraw; a named TColor lands the
 	// frame but parks the color copy in the named block. The 4-arg
 	// TColor(0,0,100,255) ctor is byte stores and drops to 92.9%.
+	// MonteRopeColor() (which closed THangingBridge::initDraw) removes the
+	// named slot here but adds 8 of low region (0x88, copies at 0x24/0x28);
+	// void helpers taking/declaring the GXColor swap the copy order.
 	GXColor color = { 0, 0, 100, 255 };
 	GXSetChanMatColor(GX_COLOR0A0, JUtility::TColor(color));
 	GXSetNumTexGens(1);

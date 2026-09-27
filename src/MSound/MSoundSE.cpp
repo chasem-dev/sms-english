@@ -146,6 +146,9 @@ MSRandPlay::MSRandPlay(u32 sound_id, s32 wait_min, s32 wait_max,
 
 // TODO: `actor` sits at 0x18 vs retail 0x14. Inert: fVar3 at function scope
 // (either order), a braced default arm, a named s32 wait, an s32 fVar3.
+// Retail's 4-byte slot at 0x24 (between actor and the fctiwz temp) is what a
+// named `u32 id = mSoundID;` switch operand takes; with `const Vec* trans`
+// for the actor arguments (-8 low) actor lands at 0x10, 4 short of 0x14.
 void MSRandPlay::randPlay(u32 vec_idx)
 {
 	MSRandPlayVec* vec = &mRandPlayVecs[vec_idx];
@@ -843,6 +846,8 @@ u32 MSoundSE::getNewIDBySurfaceCode(u32 id, JAIActor* actor)
 // actor is +0x20.
 // Also inert (2026-09-23): raw basic/getID/getNextSound/getAct/stop/category
 // in checkMonoSound, alone or paired (only shrink NpcActor); a named actor ptr.
+// Retail has 4 bytes above actor (a named `u32 ground = ground_no` takes 8
+// there) and 0xc more low region below the info slot; no carrier found yet.
 void MSoundSE::startSoundNpcActor(u32 id, const Vec* position, u32 ground_no,
                                   JAISoundHandle* out_handle, u32 fade,
                                   u8 camera_idx)
