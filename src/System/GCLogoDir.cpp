@@ -132,6 +132,8 @@ static inline TMarioGamePad* TGCLogoDirGetGamePad(TGCLogoDir* p)
 
 TGCLogoDir::~TGCLogoDir() { TGCLogoDirGetGamePad(this)->offFlag(0x1); }
 
+// TODO: frame 0x48 against 0x78 with every instruction right (low region
+// 0x30 short); TGCLogoDirGetGamePad at the pad test is +8, a named rect -8.
 int TGCLogoDir::direct()
 {
 	int desiredAppState = TApplication::APP_STATE_DEFAULT;

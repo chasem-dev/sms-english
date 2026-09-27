@@ -910,6 +910,9 @@ void TOptionControl::load()
 	mStickNeutral = true;
 }
 
+// TODO: frame 0xe8 against 0x100, and case 0 of the subtitle switch holds the
+// unit in r28 (retail) instead of r3. getSubtitleOption() at both subtitle sites
+// is +8 frame only; rumble accessors, named units, adjust() in setValue inert.
 void TOptionControl::loadSetting()
 {
 	switch (TFlagManager::getInstance()->getFlag(0xA0000)) {
@@ -1095,6 +1098,8 @@ void TOptionControl::toggleCurType()
 	}
 }
 
+// TODO: frame 0x70 against retail 0xc8 with every instruction right; a
+// 0x58 dead low region, most likely a missing inline level.
 void TOptionControl::checkInput()
 {
 	f32 fVar1       = gpMarDirector->unk18[0]->getMainStickInDir(0.0f, 1.0f);
