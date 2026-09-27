@@ -58,3 +58,16 @@ A web whose degree is still at least K when its sweep reaches it is pushed in a 
 - `TBaseNPC::npcWetting`: the switch value is an IRO CSE temporary (`@2278`) created after the first case's `mActorType` temporary; retail colours it first.
 - `TNerveTabePukuFound::execute`: not colouring; retail coalesces getZDir's `_x` with the scaled component.
 - `TMapObjTurn::touchWater`, `J3DSkinDeform::initMtxIndexArray`: commutative operand order, not colouring.
+
+## Additions (c-g4, list B)
+
+- **Extend a call argument's register across a block by naming it early** (closed `TAmiNoko::isHitValid`).
+  The volatile block that retail starts two registers higher (f5/f4/f3 against our f3/f1/f2) needs f1/f2 as neighbours: `f32 upZ = mUp.z; f32 upX = mUp.x;` before or right after the dx/dz subtractions, then `matan(upZ, upX)`, coalesces the named copies into f1/f2 from their loads to the call.
+  A web that needs a *physical* argument register as a neighbour ("as if f1/f2 were reserved for the pending call") is this lever, not colouring order: `--search` finds nothing for it.
+- **The scheduler runs before colouring** (`backend-*-after-scheduling` precedes `before-regalloc`), so interference is taken from the scheduled order.
+  `MSHandle::setSeDistanceVolume`: get_thing's `>> 30` takes r3 because the pre-regalloc schedule already consumed getSwBit's r3; retail's r5 needs r3 live across it in that first schedule.
+- **Blocked pushes rank by cost/degree.** When no web is below K, the lowest `adjusted cost` (cost / remaining degree in `regalloc-*-assigned.txt`) is pushed first and coloured last.
+  `TRKSuppAccessFile` (dumped with GC/1.1p1 and the unit's own C flags): done 91/28 against replyBuffer 88/28 colours done first; declaration order does not reach it.
+- **Deferral by one degree.** `JPAVortexField::affect`: thing3.z (IRO temp) reaches the first sweep with remaining degree 31 and is pushed there, so fVar2 (deferred) is coloured before it; retail defers both. Count remaining degree at the sweep, not the total.
+- **Mapping limits.** `regalloc.py` needs the pcode row count to equal the diff's; matan, Hxs2_Circle, xFadeBgm, walkAnmRateChange_ and several big functions differ by one or two rows and their "retail" registers are misaligned. C units need the unit's own flags without `-lang=c++` (`hx_wiper.c`: game flags plus `-inline noauto`).
+- Readings recorded as TODOs: `TGraphTracer::traceSpline` (rail/web IRO CSE temps created in the wrong order), `TMapObjTree::initMapObj` (the new[] count is the first-created parse-time object), `evSetGraffitoMultiplied` (liveness, not order), `TGorogoro::behaveToWater` (depth-2 locals created in declaration order, retail reverse).
