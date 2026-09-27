@@ -358,7 +358,12 @@ void TApplication::initialize_bootAfter()
 // 0x54) and the name-ref stream's ctor temp at 0x48 vs 0x4c. Tried:
 // status/outputMode hoisted, lVar3 inlined, a default-ctor stream spelled
 // (nullptr, 0). An identity binder over gpCardManager in the status loop
-// supplies the 8 bytes but is a fabricated level (refused).
+// supplies the 8 bytes but is a fabricated level (refused). Measured (c-d8):
+// without the `this_00` name and with the stage-archive search behind a
+// TU-local binder (`{ TNameRef* ref = TNameRefGen::search2(name); return
+// ref; }`) the frame is 0xa0 and every slot lands except the option stream's
+// ctor binding (0x44 vs 0x40): retail has one more depth-1 object between the
+// two stream constructions and one fewer below them. Not committed.
 void TApplication::initialize_nlogoAfter()
 {
 	JKRMemArchive* arch = (JKRMemArchive*)JKRFileLoader::getVolume("nintendo");
@@ -854,21 +859,23 @@ int TApplication::drawDVDErr()
 		if (gpSystemFont != nullptr)
 			font = gpSystemFont;
 		J2DPrint print(font, 0);
-		// TODO: frame is exact (0x318) after Mtx44; the J2DPrint/Mtx44
-		// block sits 4 bytes low (0x50/0xb4 vs 0x54/0xb8) and the
-		// `(600-width)*0.5` FPRs are swapped (retail 600 in f0, 0.5 in f2).
+		// TODO: frame is exact (0x318); the J2DPrint/Mtx44 block sits 4
+		// bytes low (0x50/0xb4 vs 0x54/0xb8). Retail has no dead `video`
+		// slot, and its second copy of the colour pair is one 8-byte object
+		// at 0x2c with 8 bytes between it and the by-value parameter at
+		// 0x3c, where ours has the two TColor conversion temporaries apart.
 		// Named `display`, `getVideo()`, and a caller-side pointer local
-		// all grow the frame. Need a +4 low-region temp that does not.
-		// Tried (cc50): the pair as a compound-literal argument, assigned
-		// later, const, or compound-initialised; TColor/named amb colour; the
-		// render-mode read without the `mode` reference.
+		// all grow the frame. Tried (cc50): the pair as a compound-literal
+		// argument, assigned later, const, or compound-initialised;
+		// TColor/named amb colour; the render-mode read without the `mode`
+		// reference. Tried (c-d8): unnamed or getVideo() video crossed with
+		// per-colour TColor/GXColor setters, a pair-copying inner setter and
+		// a local pair copy (all +8 or worse).
 		J2DPrint::TColorPair colors
 		    = { { 0xff, 0xff, 0, 0xff }, { 0xff, 0xff, 0, 0xff } };
 		print.setEscapeColors(colors);
 		f32 msgWidth = print.getWidth(message);
-		f32 x        = 600.0f;
-		x -= msgWidth;
-		x *= 0.5f;
+		f32 x        = (600.0f - msgWidth) * 0.5f;
 		print.print(x, 230, message);
 	}
 
