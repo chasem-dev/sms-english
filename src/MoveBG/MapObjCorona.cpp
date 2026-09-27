@@ -1012,8 +1012,10 @@ static inline const TPosition3f& MapObjCoronaMatrix(MtxPtr mtx)
 }
 
 namespace {
-/// Yaw of `pos` inside the frame of `mtx`, measured about the matrix's Y axis.
-s16 getDir(MtxPtr mtx, const JGeometry::TVec3<f32>& pos)
+/// Yaw of `pos` inside the frame of `mtx` about the matrix's Y axis, in
+/// degrees. The scale belongs here (the map's 0x9c): `call() * k` generates
+/// the constant after the conversion, which an inlined s16 result cannot.
+f32 getDir(MtxPtr mtx, const JGeometry::TVec3<f32>& pos)
 {
 	const TPosition3f& matrix = *(TPosition3f*)mtx;
 	JGeometry::TVec3<f32> x, z, origin, relative;
@@ -1023,13 +1025,13 @@ s16 getDir(MtxPtr mtx, const JGeometry::TVec3<f32>& pos)
 	relative.sub(pos, origin);
 	f32 dz = z.dot(relative);
 	f32 dx = x.dot(relative);
-	return matan(dz, dx);
+	return matan(dz, dx) * (360.0f / 65536.0f);
 }
 
 /// Same, but the point is first pushed sideways by the part of `offset` that
 /// is tangential to the radius, so a moving target leads the grip it will
 /// reach rather than the one it stands on.
-s16 getDir(MtxPtr mtx, const JGeometry::TVec3<f32>& pos,
+f32 getDir(MtxPtr mtx, const JGeometry::TVec3<f32>& pos,
            const JGeometry::TVec3<f32>& offset)
 {
 	const TPosition3f& matrix = MapObjCoronaMatrix(mtx);
@@ -1041,15 +1043,14 @@ s16 getDir(MtxPtr mtx, const JGeometry::TVec3<f32>& pos,
 	radial.setLength(relative, 1.0f);
 	tangent.scaleAdd(-radial.dot(offset), radial, offset);
 	relative.add(tangent);
-	return matan(z.dot(relative), x.dot(relative));
+	return matan(z.dot(relative), x.dot(relative)) * (360.0f / 65536.0f);
 }
 }
 
 // Unused
 f32 TBathtub::getNearJuncture(const JGeometry::TVec3<f32>& pos) const
 {
-	s16 dir     = getDir(*getRootJointMtx(), pos);
-	f32 angle   = (360.0f / 65536.0f) * dir;
+	f32 angle   = getDir(*getRootJointMtx(), pos);
 	f32 nearest = 360.0f;
 	int index   = 0;
 	for (int i = 0; i < 5; ++i) {
@@ -1062,18 +1063,13 @@ f32 TBathtub::getNearJuncture(const JGeometry::TVec3<f32>& pos) const
 	return unk13C[index];
 }
 
-// TODO: 99.9%, frame exact. Retail converts dir into a volatile and lands
-// only the product `k * dir` in angle's f28; `angle *= k` converts straight
-// into f28. Every product spelling (`k * dir`, `dir * k`, `angle = angle * k`,
-// `k * angle`, an unnamed getDir, an f32 dir) gets that shape but numbers the
-// magic double, constant and conversion f1/f2/f0 against retail's f2/f0/f1
-// (5 differences), so the compound spelling stays.
+// The named matrix keeps this body one statement over allowsTumble's inline
+// budget, as retail calls it there.
 bool TBathtub::getNearGrip(const JGeometry::TVec3<f32>& pos, f32 tolerance,
                           f32* gripAngle) const
 {
-	s16 dir     = getDir(*getRootJointMtx(), pos);
-	f32 angle   = dir;
-	angle *= 360.0f / 65536.0f;
+	MtxPtr mtx  = *getRootJointMtx();
+	f32 angle   = getDir(mtx, pos);
 	f32 nearest = 360.0f;
 	int index = 0;
 	for (int i = 0; i < 5; ++i) {
@@ -1090,16 +1086,14 @@ bool TBathtub::getNearGrip(const JGeometry::TVec3<f32>& pos, f32 tolerance,
 	return false;
 }
 
-// TODO: 99.5%, frame exact. Retail computes the z dot (0xbc block) before the
-// x dot inside the inlined getDir, and converts dir into f1 before scaling
-// into f28 (getNextGrip too). Inert: named dz/dx (breaks inlining), x/z
-// declaration and getter order, relative.dot(v), `k * dir`.
+// TODO: 99.6%, frame exact. Retail computes the z dot (0xbc block) before the
+// x dot inside the inlined getDir (getNextGrip too); this getDir is 0x154
+// against the map's 0x168. Inert: named dz/dx (breaks inlining), x/z
+// declaration and getter order, relative.dot(v).
 f32 TBathtub::getNextJuncture(const JGeometry::TVec3<f32>& pos,
                               const JGeometry::TVec3<f32>& offset) const
 {
-	s16 dir     = getDir(*getRootJointMtx(), pos, offset);
-	f32 angle   = dir;
-	angle *= 360.0f / 65536.0f;
+	f32 angle   = getDir(*getRootJointMtx(), pos, offset);
 	f32 nearest = 360.0f;
 	int index   = 0;
 	for (int i = 0; i < 5; ++i) {
@@ -1116,9 +1110,7 @@ u8 TBathtub::getNextGrip(const JGeometry::TVec3<f32>& pos,
                          const JGeometry::TVec3<f32>& offset, f32 tolerance,
                          f32* gripAngle) const
 {
-	s16 dir     = getDir(*getRootJointMtx(), pos, offset);
-	f32 angle   = dir;
-	angle *= 360.0f / 65536.0f;
+	f32 angle   = getDir(*getRootJointMtx(), pos, offset);
 	f32 nearest = 360.0f;
 	int index   = 0;
 	for (int i = 0; i < 5; ++i) {
