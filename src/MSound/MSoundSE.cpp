@@ -662,19 +662,18 @@ static u32 get_thing(u32 param_1)
 	return 0xffffffff;
 }
 
-// TODO: instruction-exact; frame is 0x50 vs retail 0x58 (8 bytes of
-// inline temporaries, no stack traffic). Inert: get_thing inline/named
-// call result, uVar3 at top, unkCD local, && condition merge; a result
-// local in get_thing is +0x10 (one slot per expansion). Also inert
-// (2026-09-23): getTranslation() at either checkSoundArea site, `if (out_handle)`,
-// `uVar3 != 0`, a u32 actor compare, a braced getRandomID, `id == -1`.
+// The switch and the `== 8` test read unkCD through an inline accessor: each
+// leaves one dead forced-load word at the bottom of the frame (0x58), while
+// the two checkSoundArea arguments read it raw.
+static inline u8 MSoundSEUnkCD(const MSound* p) { return p->unkCD; }
+
 JAISound* MSoundSE::startSoundActorInner(u32 id, JAISoundHandle* out_handle,
                                          JAIActor* actor, u32 fade,
                                          u8 camera_idx)
 {
 	u32 uVar2 = MSound::getBstSwitch(id);
 	if (actor != (JAIActor*)0xffffffff) {
-		switch (MSGMSound->unkCD) {
+		switch (MSoundSEUnkCD(MSGMSound)) {
 		case 7:
 			if (!checkSoundArea(MSGMSound->unkCD, *actor->mTranslation)) {
 				if (get_thing(id) != 1 && get_thing(id) != 0)
@@ -746,7 +745,7 @@ JAISound* MSoundSE::startSoundActorInner(u32 id, JAISoundHandle* out_handle,
 	if (uVar2 & MSSeSwBit_RandomID)
 		id = getRandomID(id);
 
-	if (MSGMSound->unkCD == 8 && id >= MSD_SE_MA_WALK_METALNET_LH1
+	if (MSoundSEUnkCD(MSGMSound) == 8 && id >= MSD_SE_MA_WALK_METALNET_LH1
 	    && id <= MSD_SE_MA_WALK_METALNET_RT2) {
 		id -= 8;
 	}
