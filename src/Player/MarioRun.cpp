@@ -88,10 +88,12 @@ void TMario::changePlayerPower(f32, u32, u32) { }
 
 BOOL TMario::isRunningSlipStart()
 {
-	if ((mInput & 0x8) && (mForwardVel <= 0.1f || isFrontSlip(0)))
-		return true;
-	else
-		return false;
+	if (mInput & 0x8) {
+		f32 speed = mForwardVel;
+		if (speed <= 0.1f || isFrontSlip(0))
+			return true;
+	}
+	return false;
 }
 
 BOOL TMario::isRunningTurnning()
@@ -1109,9 +1111,7 @@ BOOL TMario::walkEnd()
 		break;
 	}
 
-	// TODO: considerRotateStart()'s inlined `direction` still lands at 0x10,
-	// retail's at 0xc; the low pool is short one 8-byte reference temporary.
-	f32 rate = getForwardVel() / 4.0f;
+	f32 rate = mForwardVel / 4.0f;
 	if (rate < 0.1f)
 		rate = 0.1f;
 	setAnimation(ANIM_RUN1, rate);
