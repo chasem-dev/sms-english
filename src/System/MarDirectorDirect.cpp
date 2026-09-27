@@ -242,35 +242,37 @@ static bool checkDefeatShadowMarioAll()
 	return true;
 }
 
-// TODO: 98.7%, frame 0x18 vs retail 0x30 (a dead 0x18 low region) and
-// retail hoists `li r3, 0` above the first beq. The switch gives retail's
-// shared `return 0` tail; inert (k5, c-sys1): `return scenario` first, an
-// uncast compare, nested ifs with else-ifs, a `default:` arm, a `for` loop
-// or result flag in checkDefeatShadowMarioAll, getInstance() reads.
+// TODO: instruction-exact; frame 0x18 vs retail 0x30 (5-7 dead words with no
+// stack access, none of them in ours). The result variable gives retail's
+// `li r3, 0` hoisted above the first branch and the separate final zero.
+// Inert: TFlagManager::getInstance()/SMSGetFlagManager() receivers at every
+// site (call receivers keep their register), a compared shadow-Mario result.
 static int decideNextScenario(u8 param_1)
 {
+	int scenario = 0;
 	switch (param_1) {
 	case 1:
 		if (TFlagManager::smInstance->getBool(0x103AE))
-			return 2;
-		if (checkDefeatShadowMarioAll())
-			return 9;
-		if (TFlagManager::smInstance->getBool(0x10389))
-			return 8;
-		if (TFlagManager::smInstance->getBool(0x10386)
+			scenario = 2;
+		else if (checkDefeatShadowMarioAll())
+			scenario = 9;
+		else if (TFlagManager::smInstance->getBool(0x10389))
+			scenario = 8;
+		else if (TFlagManager::smInstance->getBool(0x10386)
 		    && TFlagManager::smInstance->getBool(0x10387)) {
 			if (TFlagManager::smInstance->getFlag(0x40000) >= 10)
-				return 7;
+				scenario = 7;
 			else
-				return 6;
-		}
-		if (TFlagManager::smInstance->getBool(0x10385))
-			return 5;
-		if (TFlagManager::smInstance->getBool(0x10384))
-			return 1;
+				scenario = 6;
+		} else if (TFlagManager::smInstance->getBool(0x10385))
+			scenario = 5;
+		else if (TFlagManager::smInstance->getBool(0x10384))
+			scenario = 1;
+		else
+			scenario = 0;
 		break;
 	}
-	return 0;
+	return scenario;
 }
 
 // fabricated: retail forms &gpApplication.mNextArea as a pointer before the
