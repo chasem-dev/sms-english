@@ -158,8 +158,9 @@ inline void TLensFlare::calcAnim()
 	l.add(d1);
 	// TODO: the lerp is two scaled difference vectors added to grid[4]
 	// (products and sums as separate fmuls/fadds, no fmadds); the sun
-	// position is a plain `Vec` copy (lwz/stw). Left: (a) the isInBounds
-	// f0/f1 swap shared with TLensGlow::perform; (b) r3/r4/r5 rotation in
+	// position is a plain `Vec` copy (lwz/stw). Left: (a) in move()'s
+	// isInBounds expansion the result/pointer GPRs rotate (retail r4/r5/r3,
+	// ours r3/r4/r5; the f0/f1 swap closed by naming `x`); (b) r3/r4/r5 rotation in
 	// the hidden-count loop; (c) in the MsMtxSetTRS tail retail loads the
 	// 0.0f and conversion constants before `unk18`'s z; (d) the frame is
 	// 0xa0 short (0x218 vs 0x2b8): retail's near-nine-pos argument

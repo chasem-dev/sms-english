@@ -55,7 +55,8 @@ public:
 	bool isInBounds(f32 bounds)
 	{
 		const JGeometry::TVec2<f32>& position = unkF8[0];
-		return -bounds <= position.x && position.x <= bounds
+		f32 x = position.x;
+		return -bounds <= x && x <= bounds
 		               && -bounds <= position.y && position.y <= bounds
 		           ? true
 		           : false;

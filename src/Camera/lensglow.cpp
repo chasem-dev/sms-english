@@ -106,7 +106,7 @@ TLensGlow::TLensGlow(bool param_1, const char* name)
 // retail's frame (a 2187-way per-site raw/named/plain sweep found this as the
 // only frame-exact assignment; naming the loop's second read changes the
 // `addi` pair, and a plain `return gpSunModel;` accessor prices ~+4).
-// Left: (a) an f0/f1 swap inside the isInBounds expansion; (b) getUnk194 in
+// Left: (a) closed (isInBounds names its `x`, c-m6); (b) getUnk194 in
 // f31 instead of f29, rotating f27-f31; (c) the two int -> float conversion
 // temporaries of `t` swapped (0x128/0x130); (d) the named block (c, mtx,
 // scaleV) sits 4 low with 4 extra bytes above scaleV; (e) r4/r5 in the avg
