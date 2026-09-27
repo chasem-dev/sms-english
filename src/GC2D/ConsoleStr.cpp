@@ -555,6 +555,11 @@ bool TConsoleStr::processGo(f32 param_1)
 // TODO: frame 0x168 vs 0x158: retail gives each bounds centre its own four
 // int-to-float slots (x pair, then y pair 0x10 higher) where we reuse two,
 // and converts x1 before the width; same residue as processMiss below.
+// c-e1: the frame gap is one dead word between the first vec and the second
+// rect plus three below the second vec (a temporary probe landing exactly
+// those makes every slot exact), but the <8 >8 conversion schedule stays, so
+// the schedule is not a slot effect. Each getWidth()/getHeight() expansion is
+// one dead word (raw x2 - x1 is -0x10); unnamed vecs get hoisted.
 bool TConsoleStr::processShineGet(int param_1)
 {
 	bool result = true;

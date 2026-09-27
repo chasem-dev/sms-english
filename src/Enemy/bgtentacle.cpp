@@ -1403,6 +1403,11 @@ void TBGTentacle::calcAttackGuideAnm()
 	//     (4 per expansion), which is the one lever found; the remaining 24
 	//     are unattributed.  `getFirstNode()->mPosition` for the copy cannot
 	//     be tried without making TNode::mPosition public.
+	//     c-e1 (debugger): the 32 bytes are exactly the four branches' dead
+	//     named `s`/`c` slots. MsMtxSetRotZ(local_a8, zangle[mIndex]) per
+	//     branch (or an equivalent TU-local body) drops them but leaves every
+	//     slot 0x10 low (frame 0x140): retail has 4 more bytes per branch in
+	//     the low region. A named s16 angle in the helper is +0x40.
 	// (3) The four zangle tables must stay `static const`: as plain const
 	//     locals MWCC copies each one to the stack (76.4%, +42 instructions).
 	//
