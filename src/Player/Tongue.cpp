@@ -448,19 +448,18 @@ void TYoshiTongue::calcAnim(MtxPtr mtx)
 
 		mTipModel->getModelData()->offFlag1OnAllShapes();
 
-		// TODO: retail's frame is 0x20 larger (0x120): its low pool sits
-		// 0x20 higher and `dir` 4 closer to the matrix, and the joint-count
-		// block loads mModel into r5 where ours uses r6. The expanded
-		// shape loops (named model data plus `u16 i`) land the frame but
-		// swap the loop registers; onFlag1OnAllShapes() is the loop order.
+		// TODO: frame 8 short (0x118 vs 0x120), every slot uniformly 8 low,
+		// and the cross product's 0.0f/1.0f land in f3/f4 where retail has
+		// f5/f6. The joint count is not a named local in retail (only a and
+		// b sit between the matrix and `dir`; naming it swapped r5/r6).
+		// Inert here: up declared before dir, up via set() or member stores.
 		JGeometry::TVec3<f32> tip = mTipPos;
 		Mtx modelMtx;
 		tip.y += 50.0f;
 		SMS_MakeJointsToArc(mModel, mHeadPos, mHeadDir, tip);
 
-		u16 jointNum = mModel->getModelData()->getJointNum();
-		MtxPtr a     = mModel->getAnmMtx(jointNum - 2);
-		MtxPtr b     = mModel->getAnmMtx(jointNum - 1);
+		MtxPtr a = mModel->getAnmMtx(mModel->getModelData()->getJointNum() - 2);
+		MtxPtr b = mModel->getAnmMtx(mModel->getModelData()->getJointNum() - 1);
 
 		JGeometry::TVec3<f32> dir;
 		dir.x = b[0][3] - a[0][3];

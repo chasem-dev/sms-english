@@ -400,6 +400,9 @@ void TBathtubKiller::bind()
 // and the sound call where retail rematerialises it; every raw/accessor
 // combination over the five mPosition sites is inert or shrinks the frame by
 // 8/0x10.
+// c-m16: raw `mPosition.distance(SMS_GetMarioPos())` plus `&mPosition` for
+// the sound fixes the registers (98.6, only a load/fmuls swap left) but the
+// frame is then 0x10 short; `*gpMarioPos` there is 0x18 short.
 void TBathtubKiller::perform(u32 cue, JDrama::TGraphics* graphics)
 {
 	TSmallEnemy::perform(cue, graphics);
