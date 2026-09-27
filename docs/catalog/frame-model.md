@@ -26,6 +26,10 @@ Diagnose a frame-only or slots-only function with `tools/mwcc-stack/dbg.sh` befo
    Proof (v1.cpp): `off = p - pos; ...; ride();` puts operator-'s by-value copy above ride()'s `Mtx`; `off = diff(p, pos)` with `diff` an inline wrapper puts the same copy below the `Mtx`.
 8. **Non-additivity ("saturation").** IRO temps are part of the dead set, and a frontend binding that names an expression removes the IRO temp that CSE would otherwise have made for it.
    moveRequest: stock header has 3 dead IRO temps + the `const TVec3&` result pointer; with a by-value `operator-` the IRO temps vanish.
+8a. **Named locals first, then temporaries.** The list holds every named local of the function (declaration order) before any compiler object, whatever the source position.
+   A parse-time temporary (`TMsRange<f32>(a, b).rand()`, an implicit `TPathNode(pos)`, a by-value parameter copy) therefore sits below the whole named block, and an inline object below every parse-time one.
+   A retail temporary at the top of the frame means retail named it and declared it first (c-d2: `TCannon::setKillerGoalPoint`, `bombSet`).
+8b. **Inlined callee locals are created last-declared first.** In willFall's `setSafeGoal` expansion the TPathNode `goal` (declared last) sits highest, then `point`, `index`, `range`: the reverse of the caller's own named block.
 9. **All-or-nothing.** A function with no locals area (no frame beyond the link area) shows none of this; add one saved register or one slot and all dead objects materialise (cc12).
 
 10. **Offsets count what was created later.** Allocation starts at the bottom, so an object's offset is the size of everything created after it (plus the floor).
@@ -59,3 +63,13 @@ Marker method: `int mk; extp(&mk);` declared first sits right above the dead reg
   Building Mario through a static inline (its `mario` becomes a depth-1 callee local) is that move; the same level around MLight (whose inline ctor then expands one level deeper) moves every later slot and the frame.
 - `evSetAttentionTime` (EventWatcher, open): the push slice is 0x10 low and frame 0x18 short. Moving the dead pop one inline level down (`static inline int f(interp) { return TSpcSlice(interp->pop()).getDataInt(); }`) lands the slice and every object below it; the frame is then 8 short (one or two words above the slice), and no spelling found adds only those.
 - `evStartMontemanBGM` (open): retail = ours plus one object created after the push slice (the frame bound leaves no room above it); every sound-receiver spelling tried adds that word only together with two above.
+- c-d2 closes (all instruction-exact before, one dead object each way):
+  `TChorobei::perform`: retail one word short below the Mtx; `mCannon->checkLiveFlag(...)` binds the loaded receiver (rule 5, `if (ga->get())` 1), the raw `mCannon->mLiveFlag & ...` does not.
+  `TCannon::setKillerGoalPoint`: the `TMsRange` temporary is retail's topmost object (rule 8a: named `range` declared first), and retail has one more named word below `pos`: a named constant `f32 radius = 500.0f;` used twice is propagated away and keeps a dead 4-byte slot.
+- Partial, not committed: `bombSet` with a named `range` and `getSaveParams()->` lands `range` and the low region, leaving one named scalar too many (retail has one of `r`/`rate`, but both named statements are needed for the schedule).
+  `wireMove` with a named `f32 ratio = mWirePosRatio;` for the first compare lands `start`/`end`/`dir`; the operator- by-value copy stays 8 high (header class).
+  `TNerveBPTumbleOut`: reading the frame directly instead of through `BosspakkunBckFrame` removes the one depth-1 object above `mouth` that retail lacks, but retail then has one more object below it (frame 0x98 vs 0xa0).
+- chuuhana `setSafeGoal` family: retail's `reset()` ends in `setSafeGoal()` (its tail is that body verbatim), and with `ChuuHanaGraphNode(ChuuHanaGraphOf(this), index)` / `ChuuHanaGraphNodeNum(ChuuHanaGraphOf(this))` in setSafeGoal instead of the SafeNode/SafeNodeNum binders, `reset` is byte-exact and isCollidMove's frame lands (0x118).
+  That spelling has six fewer inner dead words, which ForceJumped (exact today) needs from its own later code: it drops to 0x10 short, so it is not committed.
+  Per rule 8b the block stacks goal, point, index, range from the top in every caller; willFall/KeepBalance then need six more depth-1 words before the expansion.
+- Tool note: GC/1.1 rejects some TUs that 1.2.5 accepts (chuuhana: incomplete `J3DJoint`); prepend the missing `#include` to a scratch copy of the .cpp and pass that to `dbg.sh`.
