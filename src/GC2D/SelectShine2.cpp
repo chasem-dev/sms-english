@@ -336,6 +336,7 @@ TSelectShine::TSelectShine(J3DModelData* model_data, J3DAnmColor* anm_color,
 
 // TODO: the inlined middle product multiplies 0.9f first (retail: the
 // height first, four sites) and the frame is 0x140, retail 0x158.
+// c-h18 inert: `0.9f * h`, `(f32)0.9`; a named `height` local is worse (96.0).
 void TSelectShine::move()
 {
 	f32 newY;

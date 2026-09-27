@@ -70,6 +70,14 @@ void TCardSector::clearData()
 // s->mCheckSum)` in a helper) gives cmdLoop every instruction and its 0x58
 // frame, but read-inlining callers gain +8/+0x10 frame; read and set are the
 // next thing to fix.
+// c-h18: that level spelled in read as `criteria->set(Ok(this) ? VALID : BAD, ...)`
+// (no named `eq`) compiles read to the map's 0xc8 and keeps getBookmarkInfos_
+// exact, with setCheckSum = the two-line body above (0x50) and the cheap loop.
+// Every slot then matches except a missing low-region object per setCheckSum
+// expansion (writeOptionBlock_/readBlock_ +2 words, writeBlock_/filledInitData_
+// +4, cmdLoop +1): a named sum, a size-typed argument or an extra level are inert.
+// clearData through getData()/getDataSize() adds cmdLoop's word (0x58) but
+// costs getWriteStream/getOptionWriteStream ~7.
 void TCardSector::setCheckSum(u32 write_count)
 {
 	mWriteCount = write_count;

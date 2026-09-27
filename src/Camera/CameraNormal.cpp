@@ -109,6 +109,8 @@ inline void CPolarSubCamera::calcTowerCenterPos_(Vec* result)
 //      `CLBAbs<s16>` gets the in-arm `extsh`s but adds a materialised copy
 //      and a trailing `extsh` (97.0); an `int` parameter, a named `s16 d`,
 //      and re-reading the global in the default arm are all worse.
+//      c-h18: an `int f(s16 d)` inline called with `angle - unk258` gives
+//      retail's `extsh r3, r31` first but materialises d once (98.2), inert.
 //      The f29/f30 pair (item 2 and the two block locals) is inert to
 //      declaration order, C-style declarations and initialised declarations.
 // The 4-byte `Vec v` slot (0x74 vs retail's 0x70) is CLOSED by reading the
