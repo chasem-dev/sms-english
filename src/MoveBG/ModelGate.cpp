@@ -318,12 +318,15 @@ BOOL TModelGate::receiveMessage(THitActor* sender, u32 message)
 // Retail keeps the three squares apart (three `fmuls`, two `fadds`), so the
 // level names them as CameraNoticeSquaredDist does; `v.squared()` contracts
 // into an `fmadds`, which shifts the @3054 jump table's targets by one word.
-// TODO: retail squares x into f1 and y into f0; ours swaps the two.
+// Declared z, y, x, the squares take retail's f2/f0/f1.
+// TODO: ours still loads y before x and adds `y*y + x*x` where retail loads x
+// first and adds `x*x + y*y`; every other declaration order and sum grouping
+// is worse.
 static inline f32 ModelGateLength(JGeometry::TVec3<f32> v)
 {
-	f32 sqX = v.x * v.x;
-	f32 sqY = v.y * v.y;
 	f32 sqZ = v.z * v.z;
+	f32 sqY = v.y * v.y;
+	f32 sqX = v.x * v.x;
 	return JGeometry::TUtil<f32>::sqrt(sqX + sqY + sqZ);
 }
 
