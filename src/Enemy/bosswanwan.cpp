@@ -1253,9 +1253,13 @@ void TBossWanwan::reverseNextGraphNode()
 	unk12C = 0.0f;
 }
 
-// UNUSED, 0x150 in the map: TNerveBWGraphWander::execute spells this out.
-// TODO: 0x160 here. The balloon guard is part of it -- without it the body is
-// 0x100, a good 0x50 short -- but four instructions are still unaccounted for.
+// UNUSED, 0x150 in the map: inlined into TNerveBWGraphWander::execute, which
+// only reaches MsGetVecFromRotY's sin/cos and the out-of-line TVec3::set with
+// this level in between and the vector passed straight to
+// getEscapeDirLimited (a named `facing` adds a copy).
+// TODO: 0x148 here, two instructions short. In the nerve retail loads prev,
+// curr, graph and ours prev, graph, curr; declaration order and raw members
+// are inert.
 void TBossWanwan::rollNextGraphNode()
 {
 	TGraphTracer* tracer   = getTracer();
@@ -1270,10 +1274,9 @@ void TBossWanwan::rollNextGraphNode()
 	    && gpMarDirector->unk58 >= 14400)
 		showMessage(BALLOON_MSG_BWANWAN_LEAD_TO_HOT);
 
-	JGeometry::TVec3<f32> facing = MsGetVecFromRotY(mRotation.y, 1.0f);
-
-	getTracer()->moveTo(
-	    graph->getEscapeDirLimited(curr, prev, facing, mPosition, 100.0f, -1));
+	unk124->moveTo(graph->getEscapeDirLimited(
+	    curr, prev, MsGetVecFromRotY(mRotation.y, 1.0f), mPosition, 100.0f,
+	    -1));
 
 	setGoalPathFromGraph();
 	unk128 = 0;
@@ -1676,25 +1679,7 @@ DEFINE_NERVE(TNerveBWGraphWander, TLiveActor)
 		} else {
 			spine->pushAfterCurrent(&TNerveBWGraphWander::theNerve());
 
-			TGraphTracer* tracer   = boss->getTracer();
-			int prev               = tracer->getPrevIndex();
-			int curr               = tracer->getCurGraphIndex();
-			const TGraphWeb* graph = tracer->getGraph();
-
-			if (prev >= 0
-			    && graph->getGraphNode(prev).getRailNode()->mConnectionNum >= 2
-			    && gpMarDirector->unk58 >= 14400)
-				boss->showMessage(BALLOON_MSG_BWANWAN_LEAD_TO_HOT);
-
-			JGeometry::TVec3<f32> facing
-			    = MsGetVecFromRotY(boss->mRotation.y, 1.0f);
-			int next = graph->getEscapeDirLimited(
-			    curr, prev, facing, boss->mPosition, 100.0f, -1);
-			boss->unk124->moveTo(next);
-
-			boss->setGoalPathFromGraph();
-			boss->unk128 = 0;
-			boss->unk12C = 0.0f;
+			boss->rollNextGraphNode();
 		}
 		return TRUE;
 	}
@@ -1716,8 +1701,9 @@ DEFINE_NERVE(TNerveBWGraphWander, TLiveActor)
 		toBoss -= gpMarioOriginal->getPosition();
 		VECNormalize(toBoss, toBoss);
 
-		f32 pull = (f32)((f64)(gpMarioOriginal->mIntendedMag / 32.0f) * 0.75)
-		           * -toBoss.dot(marioDir);
+		f32 pull = gpMarioOriginal->mIntendedMag / 32.0f;
+		pull *= 0.75;
+		pull *= -toBoss.dot(marioDir);
 		f32 rate = 1.0f - pull;
 		if (rate < 0.0f)
 			rate = 0.0f;
