@@ -151,7 +151,8 @@ void TMirrorCamera::calcEffectMtx(MtxPtr param_1)
 // C_MTXLookAt address pair the other way. Forks on the image pointer and the
 // format reproduce the order (99.6) but add 0x18 of frame; a named ResTIMG*,
 // casts on the pointer, a whole-call helper and the six orders of the three
-// Vec literals are inert or worse.
+// Vec literals are inert or worse. Also inert (c-m5): the pointer as
+// `(u32)unk94 + offset`, `offset + (u8*)unk94` or `&((u8*)unk94)[offset]`.
 TMirrorCamera::TMirrorCamera(const char* name)
     : JDrama::TCamera(10.0f, 300000.0f, name)
     , unk80(1.3f)
