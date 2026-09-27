@@ -33,6 +33,7 @@
     "Enemy/SleepBossHanachan.cpp",
     "Enemy/areacylinder.cpp",
     "Enemy/bgpoldrop.cpp",
+    "Enemy/bombhei.cpp",
     "Enemy/effectEnemy.cpp",
     "Enemy/egggen.cpp",
     "Enemy/enemyinterp.cpp",
