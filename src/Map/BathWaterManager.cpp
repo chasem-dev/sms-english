@@ -243,6 +243,17 @@ public:
 			unk4C = 0;
 		}
 
+		// Its own level: inlined, the zeroing's box addresses are
+		// expressions again, so extend()'s `this` is `addi rX, rY, 0`.
+		void move()
+		{
+			unk0.add(unkC);
+			unk18.i.zero();
+			unk18.f.zero();
+			unk30.i.zero();
+			unk30.f.zero();
+		}
+
 		void doThing(f32 damp)
 		{
 			unk0.add(unk18.i);
@@ -356,21 +367,13 @@ public:
 
 			if (data.unk18.at(1, 1) > 0.0f) {
 				for (TDrop* drop = bw->unk88; drop < end2; ++drop) {
-					drop->unk0.add(drop->unkC);
-					drop->unk18.i.zero();
-					drop->unk18.f.zero();
-					drop->unk30.i.zero();
-					drop->unk30.f.zero();
+					drop->move();
 					drop->calcBathtub(data, dropRadius, gravVec1, gravVec2,
 					                  count, accum);
 				}
 			} else {
 				for (TDrop* drop = bw->unk88; drop < end2; ++drop) {
-					drop->unk0.add(drop->unkC);
-					drop->unk18.i.zero();
-					drop->unk18.f.zero();
-					drop->unk30.i.zero();
-					drop->unk30.f.zero();
+					drop->move();
 					drop->unk30.extend(gravVec2);
 					accum.add(drop->unk0);
 					count++;
@@ -1037,6 +1040,43 @@ public:
 	/* 0x2C */ TBathWaterGlobalParams* unk2C;
 };
 
+// The drop billboards in their own level: the loop then starts `li; mr` as in
+// the ROM (written in render() it gets two `li`).
+// TODO: the ROM gives the six row loads f31-f26 and the up-vector products
+// before the right-vector ones; as callee locals here they number upwards
+// from f20 (in render() with ux declared first the FPRs match, but not the
+// loop start).
+static inline void drawDropQuads(MtxPtr mtx, TBathWater** waters,
+                                  TBathWaterParams** params, int num)
+{
+	f32 r0 = mtx[0][0];
+	f32 r1 = mtx[0][1];
+	f32 r2 = mtx[0][2];
+	f32 u0 = mtx[1][0];
+	f32 u1 = mtx[1][1];
+	f32 u2 = mtx[1][2];
+
+	for (int i = 0; i < num; ++i) {
+		TBathWaterParams* p = params[i];
+		f32 size            = p->texScale.get() * p->dropRadius.get();
+		f32 rx = r0 * size, ry = r1 * size, rz = r2 * size;
+		f32 ux = u0 * size, uy = u1 * size, uz = u2 * size;
+		GXBegin(GX_QUADS, GX_VTXFMT0, (waters[i]->unk74 * 4) & 0xfffc);
+		for (TBathWater::TDrop* d = waters[i]->unk88;
+		     d < waters[i]->unk88 + waters[i]->unk74; ++d) {
+			GXPosition3f32(d->unk0.x + rx, d->unk0.y + ry, d->unk0.z + rz);
+			GXTexCoord2u8(0, 0);
+			GXPosition3f32(d->unk0.x + ux, d->unk0.y + uy, d->unk0.z + uz);
+			GXTexCoord2u8(0, 0x80);
+			GXPosition3f32(d->unk0.x - rx, d->unk0.y - ry, d->unk0.z - rz);
+			GXTexCoord2u8(0x80, 0x80);
+			GXPosition3f32(d->unk0.x - ux, d->unk0.y - uy, d->unk0.z - uz);
+			GXTexCoord2u8(0x80, 0);
+		}
+		GXEnd();
+	}
+}
+
 class TBathWaterMeshRenderer : public TBathWaterRenderer {
 public:
 	TBathWaterMeshRenderer(TBathWaterGlobalParams* params,
@@ -1229,7 +1269,12 @@ public:
 	                    TBathWater** waters, TBathWaterParams** params, int num)
 	{
 		CPolarSubCamera* cam = gpCamera;
-		MtxPtr r30           = cam->getUnk1EC();
+		// A reference: each use converts through `operator MtxPtr`, so the
+		// ROM copies `r30 + 0` with addi into setViewMtx's argument.
+		// TODO: the ROM computes the address into r0 and then `mr r30, r0`
+		// (`SMSGetCamera()->getUnk1EC()` does that, but then setViewMtx
+		// gets a plain `mr`).
+		TPosition3f& r30     = cam->unk1EC;
 		MtxPtr r22           = cam->unk16C;
 		s16 r28              = SMSGetGameRenderWidth();
 		s16 r29              = SMSGetGameRenderHeight();
@@ -1278,32 +1323,7 @@ public:
 		GXLoadPosMtxImm(mtx, GX_PNMTX0);
 		GXSetCurrentMtx(GX_PNMTX0);
 
-		f32 r0 = mtx[0][0];
-		f32 r1 = mtx[0][1];
-		f32 r2 = mtx[0][2];
-		f32 u0 = mtx[1][0];
-		f32 u1 = mtx[1][1];
-		f32 u2 = mtx[1][2];
-
-		for (int i = 0; i < num; ++i) {
-			TBathWaterParams* p = params[i];
-			f32 size            = p->texScale.get() * p->dropRadius.get();
-			f32 rx = r0 * size, ry = r1 * size, rz = r2 * size;
-			f32 ux = u0 * size, uy = u1 * size, uz = u2 * size;
-			GXBegin(GX_QUADS, GX_VTXFMT0, (waters[i]->unk74 * 4) & 0xfffc);
-			for (TBathWater::TDrop* d = waters[i]->unk88;
-			     d < waters[i]->unk88 + waters[i]->unk74; ++d) {
-				GXPosition3f32(d->unk0.x + rx, d->unk0.y + ry, d->unk0.z + rz);
-				GXTexCoord2u8(0, 0);
-				GXPosition3f32(d->unk0.x + ux, d->unk0.y + uy, d->unk0.z + uz);
-				GXTexCoord2u8(0, 0x80);
-				GXPosition3f32(d->unk0.x - rx, d->unk0.y - ry, d->unk0.z - rz);
-				GXTexCoord2u8(0x80, 0x80);
-				GXPosition3f32(d->unk0.x - ux, d->unk0.y - uy, d->unk0.z - uz);
-				GXTexCoord2u8(0x80, 0);
-			}
-			GXEnd();
-		}
+		drawDropQuads(mtx, waters, params, num);
 
 		if (unk80134->showsCap.get() && !data.unk65)
 			drawBathtubCap(data);

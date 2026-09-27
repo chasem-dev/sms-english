@@ -446,8 +446,11 @@ void TModelWaterManager::move()
 	// gWaterManagerPlaneInfo and the splash-argument temporary in saved
 	// registers from the prologue; retail reads `local_248->mActor` and
 	// `local_b4->mActor` through an `lwzu` address it reloads after the
-	// mStaticHitActor stores (getActor(), inline cast and const_cast are
-	// inert); and the merge distance fuses `x*x + y*y` into an fmadds
+	// mStaticHitActor stores, which a named `const TLiveActor* const&`
+	// reproduces (getActor(), inline cast, const_cast and a helper taking
+	// the plane by value are inert), but retail still does not hoist
+	// `&mStaticHitActor.mPosition` (ours: r27) and copies the source through
+	// the particle's address register; and the merge distance fuses `x*x + y*y` into an fmadds
 	// where TVec3::length() keeps three fmuls.
 	// UNUSED-helper sizes: a `[9]` newSplash + splashSound body is 0xcc (the
 	// map's splashGround/splashWall size), sound-then-`[8]` splash 0xc4 (not
@@ -586,11 +589,11 @@ void TModelWaterManager::move()
 				}
 
 				unk2914[i] = local_248;
-				if (local_248->mActor != nullptr) {
+				const TLiveActor* const& actor = local_248->mActor;
+				if (actor != nullptr) {
 					mStaticHitActor.mPosition = mParticlePositionSOA[i];
 					mStaticHitActor.mParticleIndex = i;
-					THitActor* hit            = (THitActor*)local_248->mActor;
-					if (hit->receiveMessage(&mStaticHitActor,
+					if (((THitActor*)actor)->receiveMessage(&mStaticHitActor,
 					                        HIT_MESSAGE_SPRAYED_BY_WATER))
 						mParticleLifetimeSOA[i] = 0.0f;
 				}
@@ -672,11 +675,11 @@ void TModelWaterManager::move()
 				    mParticlePositionSOA[i].x, mParticlePositionSOA[i].y,
 				    mParticlePositionSOA[i].z, &local_b4);
 				if (local_b4) {
-					if (local_b4->mActor != nullptr) {
+					const TLiveActor* const& actor = local_b4->mActor;
+					if (actor != nullptr) {
 						mStaticHitActor.mPosition = mParticlePositionSOA[i];
 						mStaticHitActor.mParticleIndex = i;
-						THitActor* hit = (THitActor*)local_b4->mActor;
-						hit->receiveMessage(&mStaticHitActor,
+						((THitActor*)actor)->receiveMessage(&mStaticHitActor,
 						                    HIT_MESSAGE_SPRAYED_BY_WATER);
 					}
 
