@@ -200,6 +200,18 @@ s16 matan(f32 param_1, f32 param_2)
 	return result;
 }
 
+// Converts a matan() short angle to degrees. Only the yaw's else arm goes
+// through it in retail: its `f32` parameter binds the s16 result, and that
+// binding (plus the result) are the three words MsGetRotFromZaxis's frame
+// holds below MsSqrtf's volatile; routing the other two sites through it
+// overshoots the frame. `angle = k * angle` keeps retail's operand order
+// (constant first) and puts the product in the constant's register.
+static inline f32 MsShortAngleToDegree(f32 angle)
+{
+	angle = (360.0f / 65536.0f) * angle;
+	return angle;
+}
+
 static inline void MsGetRotFromZaxisY2(const JGeometry::TVec3<f32>& axis,
                                        f32* out)
 {
@@ -216,24 +228,16 @@ static inline void MsGetRotFromZaxisY2(const JGeometry::TVec3<f32>& axis,
 	if (axis.z > 0.0f) {
 		*out = (360.0f / 65536.0f) * matan(axis.z, axis.x);
 	} else {
-		f32 theta = matan(-axis.z, axis.x) * (360.0f / 65536.0f);
+		f32 theta = MsShortAngleToDegree(matan(-axis.z, axis.x));
 		*out      = 180.0f - theta;
 	}
 }
 
-// TODO: 99.7%, instruction- and register-exact; retail's frame is 0x58 and
-// ours 0x48. The pitch is spelled in this body (the `.sdata2` pair @1673 =
-// 90.0f / @1674 = -90.0f puts -90 on the y == 1 arm): through a void helper
-// taking `&result.x` (the old MsGetRotFromZaxisX2) MsSqrtf expanded one level
-// deeper, after normalize()'s setLength binding, which cost the load swap at
-// 0x86c and the f3/f4 choice. Spelled here, MsSqrtf's volatile sits directly
-// under `axis` as in retail, and every slot is uniformly 12 bytes low: retail
-// has three more words created after that volatile, i.e. in the yaw helper's
-// depth-1 expansion or deeper. Measured: a named `f32 angle = 180.0f - theta;
-// *out = angle;` in the else arm supplies one; named z/x components take
-// registers (+0); a by-value or local TVec3 copy of the axis supplies all
-// twelve bytes but keeps its lwz/stw copy (95.7%). Nothing found supplies the
-// three words with no code.
+// The pitch is spelled in this body (the `.sdata2` pair @1673 = 90.0f /
+// @1674 = -90.0f puts -90 on the y == 1 arm): through a void helper taking
+// `&result.x` MsSqrtf expanded one level deeper, after normalize()'s setLength
+// binding, which swapped two loads and an FPR. Spelled here, MsSqrtf's
+// volatile sits directly under `axis`, as in retail.
 JGeometry::TVec3<f32> MsGetRotFromZaxis(const JGeometry::TVec3<f32>& param_1)
 {
 	JGeometry::TVec3<f32> result;
