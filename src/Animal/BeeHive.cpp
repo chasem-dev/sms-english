@@ -190,8 +190,8 @@ void TBeeHive::initCollision()
 
 void TBeeHive::initBoids()
 {
-	for (int i = 0; i < unk150->getBoidNum(); ++i) {
-		TRealoidActor* bee = unk154[i];
+	for (int i = 0; i < getBoidNum(); ++i) {
+		TRealoidActor* bee = getRealoid(i);
 		bee->init();
 		bee->onFlag(TRealoidActor::FLAG_UNK2);
 	}
@@ -288,11 +288,11 @@ void TBeeHive::loadCoin(JSUMemoryInputStream& stream)
 	mDropItem
 	    = TMapObjBaseManager::newAndRegisterObjByEventID(dropEventId, "");
 
-	mCoins = new TMapObjBase*[unk150->getBoidNum()];
+	mCoins = new TMapObjBase*[getBoidNum()];
 
 	TMapObjBase** it  = mCoins;
-	TMapObjBase** end = mCoins + unk150->getBoidNum() - 1;
-	for (; it != end; ++it)
+	TMapObjBase** end = mCoins + getBoidLeader()->getBoidNum();
+	for (; it != end - 1; ++it)
 		*it = TMapObjBaseManager::newAndRegisterObj("coin");
 
 	*it = TMapObjBaseManager::newAndRegisterObjByEventID(lastEventId, "");
