@@ -40,8 +40,9 @@ void MAnmSound::setSpeedModifySound(JAISound* sound,
 }
 
 // Fabricated name; fully inlined into MAnmSoundMario::startAnimSound, which is
-// its only user, so the map has no symbol for it.
-static u32 get_thing(u32 param_1)
+// its only user, so the map has no symbol for it. It is `inline` so no local
+// out-of-line copy is emitted either (the map's .text has none).
+static inline u32 get_thing(u32 param_1)
 {
 	u32 uVar1 = param_1 >> 30;
 	u32 uVar2 = param_1 >> 12 & 0xF;
