@@ -380,6 +380,8 @@ void TCardSave::init(int param_1)
 // Register model: `graphics` has degree 30 with two lower neighbours, so it is
 // pushed in the first sweep and coloured after the scissor reference; one more
 // interfering argument copy would defer it. A TU-local draw level is worse.
+// c-m1: getScissor() after the graph scope fixes the registers (~2) but drops
+// the self-copy (<9); raw mScissorRect/mViewportRect are worse.
 void TCardSave::perform(u32 cue, JDrama::TGraphics* graphics)
 {
 	if (unk2DF)

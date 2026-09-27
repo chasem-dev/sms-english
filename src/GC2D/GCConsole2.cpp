@@ -1538,7 +1538,8 @@ void TGCConsole2::startAppearTelop(bool param_1)
 		// +0x18; J2DPrint at 0x50 vs 0x5c: 3 words above it, 3 below), and
 		// regalloc.py: the loader CSE temp takes r4 (retail r5) and the data
 		// forceload r5 (retail r0). A getMessageText(loader, id) helper and
-		// `data + offset` are +8/inert and keep the registers.
+		// `data + offset` are +8/inert and keep the registers. Also inert or
+		// worse (c-m1): named data/entry/offset/loader locals, (u16) index.
 		const u8* messageText
 		    = &unk530->getMessageData()[unk530->unk8[unk570[unk558] & 0xffff]
 		                                    .mTextOffset];
@@ -2090,6 +2091,8 @@ void TGCConsole2::startAppearMario(bool param_1)
 // JUTPoint ctor/set spelling that adds objects here also breaks the exact
 // constant-argument sites (startAppearTank, processDownCoin, TTalk2D2); inert:
 // named bool/switch locals, pane binders (+8 at 4 sites), TU helpers (reorder).
+// c-m1: variables.txt shows ours has no dead object at all (only the nine
+// temps); GC/1.2.5n compiles the TU to the same 0x60, so it is not the compiler.
 void TGCConsole2::processMoveNozzle()
 {
 	if (!unk274->update())

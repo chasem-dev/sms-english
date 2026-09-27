@@ -1486,7 +1486,8 @@ static inline int CardLoadGetHeight(const JUTRect* p)
 }
 
 // TODO: `this` and `result` swap r30/r31 throughout; frame and every other
-// instruction match (int/char result types are inert).
+// instruction match (int/char result types are inert). regalloc.py (c-m1):
+// no single move fixes it; `u16 rest = score - ...` changes code (<1 >1).
 s8 TCardLoad::waitForAnyKeyBM(TEProgress param_1)
 {
 	s8 result = -1;
