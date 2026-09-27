@@ -96,6 +96,10 @@ static const char* getAttackModeStr(int) { return nullptr; }
 // explicit three-compare chain (87.0, and it costs the expansions their
 // materialised bool), a pointer-taking forwarding overload, and
 // TBGTentacle::isThing() (order 6/3/4, no fold anywhere) were all tried.
+// The inlined copies are expansions of changeAllTentacleState itself, so any
+// source change there moves them too: naming `TBGTentacle* tentacle` in its
+// loop unfolds the out-of-line body exactly (frame 8 short) but also unfolds
+// every expansion; a member-reading predicate does the same.
 // TODO: find the real name; `canTake` and `isAttacking` are the only named
 // TBGTentacle predicates in the map and neither fits.
 static inline BOOL isTentacleBusy(TBGTentacle* tentacle)

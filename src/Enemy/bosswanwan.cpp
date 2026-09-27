@@ -1788,6 +1788,9 @@ DEFINE_NERVE(TNerveBWJump, TLiveActor)
 		// Named node + tracer land the 0x60 frame; the leftover r29/r30
 		// swap on the body versus the goal address is the this-vs-pool
 		// callee-saved class.
+		// TODO: an inline BWJumpTo(boss, goal) holding tracer/speed/setVelocity
+		// fixes the r29/r30 swap (5 markers left) but the velocity temporary
+		// sits 8 high (0x38 vs 0x30) and the vtable load schedules first.
 		const TPathNode& node             = boss->getUnk104();
 		const JGeometry::TVec3<f32>& goal = node.getPoint();
 		TGraphTracer* tracer              = boss->getTracer();
