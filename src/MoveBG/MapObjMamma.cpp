@@ -1297,11 +1297,10 @@ u32 TMammaBlockRotate::touchWater(THitActor* actor)
 	return 1;
 }
 
-// TODO: 99.9%. STATE_BACKING's `trans` sits at 0x90 where retail shares
-// STATE_GOING's 0xa0. Inert: a function-scope `trans`, declaring it
-// uninitialised before `info` in one or both arms.
 void TMammaBlockRotate::control()
 {
+	JGeometry::TVec3<f32> trans;
+
 	TMapObjBase::control();
 
 	switch (mState) {
@@ -1318,14 +1317,14 @@ void TMammaBlockRotate::control()
 		J3DTransformInfo& info = mUpJointObj->getJoint()->getTransformInfo();
 		mBuilding->getModel()->calc();
 
-		JGeometry::TVec3<f32> trans(0.0f, info.mTranslate.y, 0.0f);
+		trans.set(0.0f, info.mTranslate.y, 0.0f);
 		mDownCollision->moveTrans(trans);
 		trans.set(0.0f, info.mTranslate.y, 0.0f);
 		mUpCollision->moveTrans(trans);
 
 		if (info.mTranslate.y < 0.0f) {
-			mStateTimer = mWaitTime;
-			mState      = STATE_GOAL_WAIT;
+			startStateTimer(mWaitTime);
+			mState = STATE_GOAL_WAIT;
 		}
 		break;
 	}
@@ -1340,16 +1339,16 @@ void TMammaBlockRotate::control()
 		moveJoint(mDownJointObj->getJoint(), 0.0f, mMapBackSpeed, 0.0f);
 
 		J3DTransformInfo& info = mUpJointObj->getJoint()->getTransformInfo();
-		JGeometry::TVec3<f32> trans(0.0f, info.mTranslate.y, 0.0f);
+		trans.set(0.0f, info.mTranslate.y, 0.0f);
 		mDownCollision->moveTrans(trans);
 		trans.set(0.0f, info.mTranslate.y, 0.0f);
 		mUpCollision->moveTrans(trans);
 
 		mBuilding->getModel()->calc();
 
-		if (info.mTranslate.y
-		    > mUpJointObj->getJoint()->getMax().y
-		        - mUpJointObj->getJoint()->getMin().y)
+		f32 height = mUpJointObj->getJoint()->getMax().y
+		             - mUpJointObj->getJoint()->getMin().y;
+		if (info.mTranslate.y > height)
 			mState = STATE_WAIT;
 		break;
 	}
