@@ -296,3 +296,9 @@ Marker method: `int mk; extp(&mk);` declared first sits right above the dead reg
 - **A callee local passed into a deeper inline gets a binding.** `s32 time` (an `update()` local) fed to TExPane's inline setters was re-converted from the float (two `fctiwz` stores) and rescheduled; `int time` keeps one conversion and retail's schedule.
 - **Callee-saved order follows adjusted cost, then vreg number; vregs are numbered in reverse object creation.** An IRO-split web of a reused variable gets a fresh object created last (lowest vreg), so sharing `u32 var1, var2` across the two letterbox blocks gave the second block retail's r21/r22 order; the first block, which keeps the original object, stays swapped.
   Reusing one variable for a load and its update (`u16 a = pane->getAlpha(); a += k;`) put the value in the load's callee-saved register (SelectMenu APPEAR case).
+
+## Refinements (unit agent c-d18, 2026-09-27)
+
+- **An UNUSED member holding a nerve's tail moves a by-value return temporary to depth-1 rank.** `TNerveKukkuRecoverGraph` spelled `updateRotation(); mLinearVelocity = calcMomentum(...)` itself, so calcMomentum's return temporary was a parse-time object (sat 8 high); calling the UNUSED `doRecoverToCurPathNode()`, whose body is exactly those two statements, makes it a callee temporary created after the depth-1 habataki read (closed with `getSaveParams()->getHabatakiTimer()` at the site and `mMarchSpeed.get()` in the helper).
+  Tell: a by-value call result 1-2 words too high with the parse-time temporaries above it exact; look for an UNUSED stub whose body is the site's statements.
+- `TMapWire::drawUpper` (open): every `getStartPoint()`/`getEndPoint()` passed to the TU's `addPoint`/`subPoint` helpers is one dead word; all four accessor sites give retail's 0x58 but move the `r31` restore after `mtlr`.

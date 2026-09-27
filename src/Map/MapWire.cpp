@@ -101,6 +101,11 @@ void TMapWire::drawLower() const
 // `startPoint` ref for the first vertex's x/z, getStartPoint() elsewhere):
 // docs/progress/lever-search/mapwire_drawupper.patch. Not applied as
 // implausible; addPoint/subPoint on either spelling stays at 99.9.
+// Each getX() passed to addPoint/subPoint is one dead word: all four start
+// and end vertices through the helpers with getStartPoint() on both start
+// ones is instruction-exact at 0x50; getEndPoint() in the end helpers lands
+// 0x58 but schedules the r31 restore after mtlr (and a raw end with the
+// accessor in only one helper breaks the body).
 void TMapWire::drawUpper() const
 {
 	f32 xOffset = mDrawAxes.x;
