@@ -1898,7 +1898,7 @@ void TMario::calcBaseMtx(MtxPtr mtx)
 	MTXConcat(mtx, unk318, mtx);
 }
 
-// UNUSED (0x74). Dead: `calcAnim` carries the same block written out.
+// UNUSED (0x74); inlined into `calcAnim`.
 void TMario::calcAnimBody(u32 param_1, JDrama::TGraphics* graphics)
 {
 	Mtx baseMtx;
@@ -1908,7 +1908,7 @@ void TMario::calcAnimBody(u32 param_1, JDrama::TGraphics* graphics)
 	getM3UModel()->perform(param_1, graphics);
 }
 
-// UNUSED (0x148). Dead: `calcAnim` carries the same block written out.
+// UNUSED (0x148); inlined into `calcAnim`.
 void TMario::calcAnimHands()
 {
 	if (mHandModels[0][0] != nullptr) {
@@ -2087,33 +2087,18 @@ void TMario::removeCallBack()
 	modelData->getJointNodePointer(mJointIdFootL)->setCallBack(nullptr);
 }
 
-// TODO: 99.4%. Retail's frame is 0x28 larger, and both Yoshi
+// TODO: 99.4%. Retail's frame is 0x28 larger (0x24 above baseMtx; calling
+// calcAnimBody/calcAnimHands is code- and frame-identical to the written-out
+// blocks), and both Yoshi
 // setMotionBlendRatioForBck sites test mAnmBck in r0 and reload it for the
 // call; ours caches it (raw mAnmBck / getAnmBck() spellings are worse).
 void TMario::calcAnim(u32 param_1, JDrama::TGraphics* graphics)
 {
 	addCallBack(graphics);
 	addUpper();
-	Mtx baseMtx;
-	calcBaseMtx(baseMtx);
-	considerWaist();
-	MTXCopy(baseMtx, getM3UModel()->unk8->getBaseTRMtx());
-	getM3UModel()->perform(param_1, graphics);
+	calcAnimBody(param_1, graphics);
 	removeCallBack();
-
-	if (mHandModels[0][0] != nullptr) {
-		mHandModels[0][0]->setBaseTRMtx(getM3UModel()->unk8->getAnmMtx(mJointIdHandR));
-		mHandModels[0][1]->setBaseTRMtx(getM3UModel()->unk8->getAnmMtx(mJointIdHandL));
-		mHandModels[1][0]->setBaseTRMtx(getM3UModel()->unk8->getAnmMtx(mJointIdHandR));
-		mHandModels[1][1]->setBaseTRMtx(getM3UModel()->unk8->getAnmMtx(mJointIdHandL));
-		mRHand4ndModel->setBaseTRMtx(getM3UModel()->unk8->getAnmMtx(mJointIdHandR));
-
-		mHandModels[0][0]->calc();
-		mHandModels[0][1]->calc();
-		mHandModels[1][0]->calc();
-		mHandModels[1][1]->calc();
-		mRHand4ndModel->calc();
-	}
+	calcAnimHands();
 
 	if (mCap != nullptr) {
 		mCap->unkC->setBaseTRMtx(getM3UModel()->unk8->getAnmMtx(mJointIdMHead));

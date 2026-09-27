@@ -839,13 +839,18 @@ void TElecCarapace::shoot()
 	mZigzagAngle = TMsRange<f32>(20.0f, 30.0f).rand();
 }
 
-// UNUSED, 0x160 in the map, and nothing references it: shoot() sets the two
-// zigzag values inline.
-// TODO: incorrect size.
+// UNUSED, 0x160 in the map (this body is 0x160).
+// TODO: shoot() inlines this in retail. Calling it there keeps every
+// instruction but leaves shoot's frame 0xc8 against 0xd0 and moves the
+// sub temporary high (retail 0x5c, below the ranges; ours 0x90), so shoot
+// still carries the block written out.
 void TElecCarapace::setZigParameter()
 {
-	mZigzagCycle
-	    = TMsRange<f32>(3.0f, 5.0f).rand() * unk104.getPoint().distance(mPosition);
+	f32 cycle    = TMsRange<f32>(3.0f, 5.0f).rand();
+	mZigzagCycle = cycle
+	             * ElecLength((unk104.unk0 ? unk104.unk0->mPosition
+	                                       : unk104.unk4)
+	                          - mPosition);
 	mZigzagAngle = TMsRange<f32>(20.0f, 30.0f).rand();
 }
 
@@ -983,20 +988,22 @@ void TElecCarapace::reflect(THitActor* other)
 	setGoalPath(mNokonoko->mPosition);
 }
 
-// UNUSED, 0x94 in the map: the shell's own step, which the move nerve does
-// inline.
-// TODO: incorrect size.
+// UNUSED, 0x94 in the map (this body is 0x94): the shell's step and spin,
+// inlined into the move nerve.
 void TElecCarapace::move()
 {
+	f32 spinSpeed = getNokonoko()->getSaveParams()->mSLCarapaceSpinSpeed.value;
+	f32 speed     = getNokonoko()->getSaveParams()->mSLCarapaceSpeed.value;
+	f32 turnSpeed = getNokonoko()->getSaveParams()->mSLCarapaceTurnSpeed.value;
+
 	if (mStraight)
-		walkToCurPathNode(mNokonoko->getSaveParams()->getSLCarapaceSpeed(),
-		                  mNokonoko->getSaveParams()->getSLCarapaceTurnSpeed(),
-		                  0.0f);
+		walkToCurPathNode(speed, turnSpeed, 0.0f);
 	else
-		zigzagToCurPathNode(
-		    mNokonoko->getSaveParams()->getSLCarapaceSpeed(),
-		    mNokonoko->getSaveParams()->getSLCarapaceTurnSpeed(), mZigzagCycle,
-		    mZigzagAngle);
+		zigzagToCurPathNode(speed, turnSpeed, mZigzagCycle, mZigzagAngle);
+
+	mSpinAngle += spinSpeed;
+	if (mSpinAngle > 360.0f)
+		mSpinAngle -= 360.0f;
 }
 
 // UNUSED, 0x8c in the map.
@@ -1218,23 +1225,7 @@ DEFINE_NERVE(TNerveElecCarapaceMove, TLiveActor)
 {
 	TElecCarapace* carapace = (TElecCarapace*)spine->getBody();
 
-	f32 spinSpeed = carapace->getNokonoko()
-	                    ->getSaveParams()->mSLCarapaceSpinSpeed.value;
-	f32 speed
-	    = carapace->getNokonoko()->getSaveParams()->mSLCarapaceSpeed.value;
-	f32 turnSpeed
-	    = carapace->getNokonoko()->getSaveParams()->mSLCarapaceTurnSpeed.value;
-
-	if (carapace->mStraight)
-		carapace->walkToCurPathNode(speed, turnSpeed, 0.0f);
-	else
-		carapace->zigzagToCurPathNode(speed, turnSpeed,
-		                              carapace->mZigzagCycle,
-		                              carapace->mZigzagAngle);
-
-	carapace->mSpinAngle += spinSpeed;
-	if (carapace->mSpinAngle > 360.0f)
-		carapace->mSpinAngle -= 360.0f;
+	carapace->move();
 
 	if (carapace->mLanded) {
 		// Once the shell has landed it homes on the koopa, and a near miss
