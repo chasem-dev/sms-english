@@ -1094,6 +1094,10 @@ void TGCConsole2::entryHelpActor(THelpActor* param_1)
 	}
 }
 
+// TODO: frame 0x30 short (0x260 vs 0x290). With resetMoveTank() inlined every
+// JUTPoint slot is in retail's order and uniformly 0x2c low, so retail has 11
+// more words created after all of ours (IRO/low region), plus one register
+// pair (r25/r26) swapped.
 void TGCConsole2::startCameraDemo()
 {
 	bool marioDead = true;
@@ -1125,14 +1129,7 @@ void TGCConsole2::startCameraDemo()
 	startDisappearLife(120);
 
 	unk18 = 10;
-	unk48 = 0;
-
-	unk274->setPanePosition(1, JUTPoint(0, 0), JUTPoint(0, 0), JUTPoint(0, 0));
-	unk274->update();
-	unk26C->setPanePosition(1, JUTPoint(0, 0), JUTPoint(0, 0), JUTPoint(0, 0));
-	unk26C->update();
-	unk270->setPanePosition(1, JUTPoint(0, 0), JUTPoint(0, 0), JUTPoint(0, 0));
-	unk270->update();
+	resetMoveTank();
 
 	if (unkBC != nullptr) {
 		if (!unkBC->unk29A)
@@ -1160,12 +1157,21 @@ void TGCConsole2::startCameraDemo()
 	unkB6 = 0;
 }
 
-// TODO: UNUSED, 0xe0 in the map (56 instructions), and nothing in the TU
-// resembles it. It sits between startCameraDemo() and endCameraDemo() in source
-// order, so it is most likely the "put the tank panes back where they started"
-// counterpart of startDisappearTank(), but there is no call site to confirm the
-// pane set or the timings, so it stays a stub rather than a guess.
-void TGCConsole2::resetMoveTank() { }
+// UNUSED (0xe0 in the map, 56 instructions: this body exactly), inlined into
+// startCameraDemo(). The inline is what retail's startCameraDemo frame shows:
+// its nine JUTPoint(0, 0) temporaries sit below startDisappearLife()'s and in
+// reverse source order (the third call's highest, each call's first argument
+// lowest), which is how an inlined callee's temporaries are laid out.
+void TGCConsole2::resetMoveTank()
+{
+	unk48 = 0;
+	unk274->setPanePosition(1, JUTPoint(0, 0), JUTPoint(0, 0), JUTPoint(0, 0));
+	unk274->update();
+	unk26C->setPanePosition(1, JUTPoint(0, 0), JUTPoint(0, 0), JUTPoint(0, 0));
+	unk26C->update();
+	unk270->setPanePosition(1, JUTPoint(0, 0), JUTPoint(0, 0), JUTPoint(0, 0));
+	unk270->update();
+}
 
 // fabricated: a named-result binder over getPane(). Retail's frame has one
 // more 8-byte low slot than the direct `unk2F8->getPane()->show()`.
