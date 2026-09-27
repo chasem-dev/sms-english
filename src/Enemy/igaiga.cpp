@@ -1038,17 +1038,13 @@ void TGorogoroManager::createModelData()
 	createModelDataArray(entry);
 }
 
-// TODO: 88%. The original calls a local out-of-line MsWrap<f> twice here
-// (the map's MsWrap<f>__Ffff, 72 bytes, our one missing symbol); ours
-// inlines the header template at both sites. The two seating blocks are
-// TGorogoro::setGenerateGraphIdx(10/16) inlined: calling it does make MsWrap
-// the ROM's `bl`, but MsGetRotFromZaxisY then stays out of line at depth 2
-// (the MathUtil.hpp known-open block; named angle, MsAngleWrap and a
-// temporary axis all inert), 87.8 -> 68.9, so the blocks stay expanded.
-// Retail's frame (0x170, two separate point/goal blocks) confirms the two
-// expansions. Rechecked 2026-09-23 with setGenerateGraphIdx moved to its map
-// slot (after setMActorAndKeeper, before generateByGateKeeper): same 71.4%,
-// MsGetRotFromZaxisY still out of line, so definition order is not the lever.
+static inline f32 wrapAngle(f32 angle) { return MsWrap(angle, 0.0f, 360.0f); }
+
+// TODO: 96.4%. wrapAngle's extra inline level makes MsWrap<f> the ROM's `bl`.
+// The two seating blocks are TGorogoro::setGenerateGraphIdx(10/16) inlined
+// (retail frame 0x170 with two point/goal blocks, goro and second in r27/r28),
+// but calling it leaves MsGetRotFromZaxisY out of line at depth 2 (the
+// MathUtil.hpp known-open block): 71.4% with or without wrapAngle there.
 void TGorogoroManager::perform(u32 cue, JDrama::TGraphics* graphics)
 {
 	if (cue & CUE_MOVE) {
@@ -1084,8 +1080,7 @@ void TGorogoroManager::perform(u32 cue, JDrama::TGraphics* graphics)
 							JGeometry::TVec3<f32> dir(point.x - goro->mPosition.x,
 							                          0.0f,
 							                          point.z - goro->mPosition.z);
-							goro->mRotation.y
-							    = MsWrap(MsGetRotFromZaxisY(dir), 0.0f, 360.0f);
+							goro->mRotation.y = wrapAngle(MsGetRotFromZaxisY(dir));
 							TPathNode goal(point);
 							goro->unkF4  = goal;
 							goro->unk104 = goal;
@@ -1101,8 +1096,7 @@ void TGorogoroManager::perform(u32 cue, JDrama::TGraphics* graphics)
 							JGeometry::TVec3<f32> dir2(
 							    point.x - second->mPosition.x, 0.0f,
 							    point.z - second->mPosition.z);
-							second->mRotation.y
-							    = MsWrap(MsGetRotFromZaxisY(dir2), 0.0f, 360.0f);
+							second->mRotation.y = wrapAngle(MsGetRotFromZaxisY(dir2));
 							TPathNode goal2(point);
 							second->unkF4  = goal2;
 							second->unk104 = goal2;
