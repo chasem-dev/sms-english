@@ -580,9 +580,11 @@ void TBossManta::moveObject()
 
 	// The manta itself is the attacker: retail reads mPosition through the
 	// same register that holds `this` for mCollisions/mColCount.
-	for (int i = 0; i < mColCount; ++i)
-		if (mCollisions[i]->isActorType(0x80000001))
+	for (int i = 0; i < mColCount; ++i) {
+		THitActor* hit = mCollisions[i];
+		if (hit->isActorType(0x80000001))
 			AttackMario(this);
+	}
 }
 
 BOOL TBossManta::isSpawnState()
