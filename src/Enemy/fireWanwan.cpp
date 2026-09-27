@@ -152,6 +152,9 @@ void TTailRubber::bind()
 // fixes the operand order but not the register, so it is left as `+=`. Also
 // the `next - node.mPos` temporary sits 0xc high (0x20 vs 0x14). Inert:
 // the sum on one line, `+ 1.0f` on the call, a second local, a named limit.
+// TODO: retail adds 20.0f literal-first into fVar1's own register and keeps
+// the `next - mPos` temporary at 0x14 (ours 0x20). `fVar1 = fVar1 + 20.0f`, a
+// named `groundY` or `20.0f + fVar1` fix the operand order only (99.2).
 void TTailRubber::bindOne(Node& node)
 {
 	JGeometry::TVec3<f32> next = node.mPos;
