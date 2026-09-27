@@ -256,10 +256,11 @@ TBGTakeHit::TBGTakeHit(TBGTentacle* owner, const char* name)
 	    ->getChildren()
 	    .push_back(this);
 
-	TBGTentacle::TTentacleParams* pTVar3 = mOwner->getParams();
-	initHitActor(0x8000006, 1, -0x80000000, pTVar3->mAttackRadius.get(),
-	             pTVar3->mAttackHeight.get(), pTVar3->mDamageRadius.get(),
-	             pTVar3->mDamageHeight.get());
+	initHitActor(0x8000006, 1, -0x80000000,
+	             mOwner->getParams()->mAttackRadius.get(),
+	             mOwner->getParams()->mAttackHeight.get(),
+	             mOwner->getParams()->mDamageRadius.get(),
+	             mOwner->getParams()->mDamageHeight.get());
 	offHitFlag(HIT_FLAG_NO_COLLISION);
 	unk74.zero();
 }
