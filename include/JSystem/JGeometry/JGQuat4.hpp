@@ -183,32 +183,21 @@ public:
 	// execWalk 86.78 -> 89.89, fireWanwan's nerves unchanged without the
 	// fork, nothing else moves; the old x/y/z/w-parameter form is gone).
 	//
-	// The two-argument rotate keeps the one-level vx/vy/vz body.
-	// TODO: measured tree-wide on 2026-09-23, the two-argument rotate as a
-	// one-level copy of rotateQ's body (member reads, no `* 0`, no second
-	// TQuat4) makes Kumokun's weak rotate 90.39 -> 100 and gains
-	// rotateGoalDirToLocal 97.73 -> 100, makeKillerVelocity +2.32,
-	// calcBathtubData +2.22, getGravityDir +1.05, shotSeeds +0.91,
-	// moveCoaster +0.62, flyAroundMario +0.59, dropCoins +0.07,
-	// doFlyToCurPathNode +0.02, but costs doAttackPose 78.94 -> 75.69,
-	// makeQuat 92.61 -> 90.40 and fireWanwan bindBody 99.53 -> 98.39 (frame
-	// 0x1b0 vs retail 0x1e8; rotateInPlace or rotate(v) there is worse).
-	// Kazekun's three doAttackPose rotates are inert to rotateInPlace. As a
-	// two-level forwarder to rotateQ it gains the same sites (and Bird's weak
-	// set<f>) but inlines at Kumokun's Wait nerve, where retail `bl`s rotate,
-	// so the weak copy vanishes (90.39 -> 0). The one-level member-read body
-	// is very likely retail's; the three losing sites are what blocks it.
-	// Re-measured 2026-09-23 (c-hdr2): the same gains plus doLanding +0.22;
-	// losses doAttackPose 82.36 -> 79.63 (frame exact at 0x218, the loss is
-	// FPR colouring in getAroundQuat/mul), makeQuat 92.61 -> 90.40 (0x1f0
-	// vs 0x1e0; param FPRs f29/f30 vs retail f24/f25), bindBody 99.53 ->
-	// 98.39. Refuted as fixes: a q2 result temporary, vx/vy/vz or x/y/z/w
-	// copies in the body (all lose Kumokun's weak rotate; the old locals are
-	// what give bindBody retail's 0x1e8); at the sites, rotating a TVec3
+	// The two-argument rotate is a one-level copy of rotateQ's body (member
+	// reads, no `* 0` terms, no second TQuat4). Landed 2026-09-27: Kumokun's
+	// weak rotate 90.39 -> 100 and rotateGoalDirToLocal 97.73 -> 100, with
+	// gains at makeKillerVelocity, getGravityDir, shotSeeds, flyAroundMario,
+	// moveCoaster and doLanding. Accepted cost, none of them exact before:
+	// Kazekun doAttackPose 89.50 -> 85.65 (FPR colouring in getAroundQuat/mul),
+	// BathtubKiller makeQuat 97.27 -> 95.05 (param FPRs f29/f30 vs retail
+	// f24/f25) and fireWanwan bindBody 99.53 -> 98.39 (frame 0x1b0 vs retail
+	// 0x1e8). Those three sites are where the remaining difference lives.
+	// Refuted there (2026-09-23): a q2 result temporary, vx/vy/vz or x/y/z/w
+	// copies in the body (all lose Kumokun's weak rotate), rotating a TVec3
 	// temporary or straight into mVelocity, in-place or rotateInPlace calls,
 	// split source/destination, scope and declaration order, and a
-	// `const TQuat4& cur = mQuat` binder (80.7). lever-search on bindBody
-	// finds only forks (98.42).
+	// `const TQuat4& cur = mQuat` binder. As a two-level forwarder to rotateQ
+	// it inlines at Kumokun's Wait nerve, where retail `bl`s rotate.
 	void rotateQ(const TVec3<T>& v, TVec3<T>& rDest) const
 	{
 		// clang-format off
@@ -231,30 +220,17 @@ public:
 
 	void rotate(const TVec3<T>& v, TVec3<T>& rDest) const
 	{
-		// Incollect regalloc
-		f32 vx = v.x;
-		f32 vy = v.y;
-		f32 vz = v.z;
-
-		T w = this->w;
-		T z = this->z;
-		T y = this->y;
-		T x = this->x;
-
 		// clang-format off
 		TQuat4 q;
-		q.x =  w *  0 + y * vz - z * vy + w * vx;
-		q.y = -x * vz + y *  0 + z * vx + w * vy;
-		q.z =  x * vy - y * vx + z *  0 + w * vz;
-		q.w = -x * vx - y * vy - z * vz + w *  0;
+		q.x =  this->y * v.z - this->z * v.y + this->w * v.x;
+		q.y = -this->x * v.z + this->z * v.x + this->w * v.y;
+		q.z =  this->x * v.y - this->y * v.x + this->w * v.z;
+		q.w = -this->x * v.x - this->y * v.y - this->z * v.z;
 
-		TQuat4 q2;
-		q2.x =  q.x *  w + q.y * -z - q.z * -y + q.w * -x;
-		q2.y = -q.x * -z + q.y *  w + q.z * -x + q.w * -y;
-		q2.z =  q.x * -y - q.y * -x + q.z *  w + q.w * -z;
+		rDest.set( q.x *  this->w + q.y * -this->z - q.z * -this->y + q.w * -this->x,
+		          -q.x * -this->z + q.y *  this->w + q.z * -this->x + q.w * -this->y,
+		           q.x * -this->y - q.y * -this->x + q.z *  this->w + q.w * -this->z);
 		// clang-format on
-
-		rDest.set(q2.x, q2.y, q2.z);
 	}
 
 	void rotate(TVec3<T>& rDest) const { rotateInPlace(rDest, rDest); }
