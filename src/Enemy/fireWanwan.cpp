@@ -1452,10 +1452,6 @@ void TFireWanwan::updateHitPoint()
 	ensureTakeSituation();
 }
 
-// TODO: instruction-exact; the inlined calcRipplePos keeps mtx[2][3] in f29
-// where retail uses f31. Inert or worse: named z/x/y locals, a named ground
-// height, component stores instead of set(), `200.0f + y`; in the slip-smoke
-// block, scale() for `*=`, set() after declaring thing, `a = a + b` stores.
 void TFireWanwan::emitEffects()
 {
 	MtxPtr mtx = FireWanwanGetModel(this)->getAnmMtx(mCenterJointIdx);
@@ -1480,7 +1476,10 @@ void TFireWanwan::emitEffects()
 		} else {
 			pos = unk1FC;
 			MTXCopy(getModel()->getBaseTRMtx(), pos);
-			JGeometry::TVec3<f32> thing(pos[0][2], pos[1][2], pos[2][2]);
+			f32 x = pos[0][2];
+			f32 y = pos[1][2];
+			f32 z = pos[2][2];
+			JGeometry::TVec3<f32> thing(x, y, z);
 			thing.normalize();
 			thing *= 150.0f;
 			pos[0][3] += thing.x;

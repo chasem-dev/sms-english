@@ -182,18 +182,11 @@ void TBossHanachan::copyFrameFromOldAnmToNewAnm_()
 		mBodies[i]->copyFrameFromOldAnmToNewAnm_();
 }
 
-// TODO: 99.9%. Frame is now exact; the only difference is that r26 and r28 are
-// swapped (retail parks the tumble-loop counter and the head MActor in r26 --
-// the same register as the last loop's body MActor -- we use r28).
-// cc28: raw `mSpine->getLatestNerve()` instead of `getSpine()->` put the nerve
-// in retail's r29 (10 -> 6 markers). Inert on the rest: the head block in its
-// own `{}` scope or a TU-local helper; worse: one `actor` reused by the loop
-// (12), the head actor unnamed (frame -8), a named nerve (+8).
-// Also inert: the head actor or a shared loop `int i` declared C-style at
-// the top of the function.
 void TBossHanachan::changeAnmRateAndFrameUpdate_()
 {
 	bool changeRate = true;
+	int i;
+	MActor* actor;
 	f32 rate = SMSGetAnmFrameRate();
 	if (mSpine->getLatestNerve() == &TNerveBossHanachanTumble::theNerve()) {
 		offHeadAndBodyNonstopMotionBlend_();
@@ -277,13 +270,13 @@ void TBossHanachan::changeAnmRateAndFrameUpdate_()
 			break;
 		}
 	}
-	MActor* actor = getHead()->mMActor;
+	MActor* headActor = getHead()->mMActor;
 	if (changeRate)
-		actor->getFrameCtrl(ANM_TYPE_BCK)->setRate(rate);
+		headActor->getFrameCtrl(ANM_TYPE_BCK)->setRate(rate);
 	getHead()->updateAnmSound();
-	actor->frameUpdate();
-	for (int i = 0; i < 8; ++i) {
-		MActor* actor = mBodies[i]->mMActor;
+	headActor->frameUpdate();
+	for (i = 0; i < 8; ++i) {
+		actor = mBodies[i]->mMActor;
 		if (changeRate)
 			actor->getFrameCtrl(ANM_TYPE_BCK)->setRate(rate);
 		mBodies[i]->updateAnmSound();
