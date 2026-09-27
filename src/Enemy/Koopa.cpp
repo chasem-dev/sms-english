@@ -55,6 +55,15 @@ static const char* koopa_bastable[] = {
 	"/scene/koopa/bas/koopa_waterhit.bas",
 };
 
+// The tub Bowser stands in. Binding the search result before the cast is an
+// inline level of its own: 8 bytes of low region at each site that uses it
+// (the Tumble nerve and calcRootMatrix); GetDown wants the bare search.
+static inline TBathtub* KoopaGetBathtub()
+{
+	JDrama::TNameRef* ref = JDrama::TNameRefGen::search2("バスタブ");
+	return (TBathtub*)ref;
+}
+
 namespace {
 int KoopaNeckCallBack(J3DNode*, int);
 } // namespace
@@ -200,8 +209,7 @@ BOOL TNerveKoopaTumble::execute(TSpineBase<TLiveActor>* spine) const
 	if (spine->getTime() == 190) {
 		gpCameraShake->startShake(CAM_SHAKE_MODE_KOOPA_HIPDROP, 1.0f);
 
-		static TBathtub* bathtub
-		    = (TBathtub*)JDrama::TNameRefGen::search2("バスタブ");
+		static TBathtub* bathtub = KoopaGetBathtub();
 		gpMarioParticleManager->emitAndBindToMtx(
 		    KOOPA_JPA_MS_KP_HIPDROP, *bathtub->getRootJointMtx(), 0, this);
 		if (SMS_IsMarioTouchGround4cm())
@@ -1473,7 +1481,7 @@ static inline void KoopaConcat(JGeometry::TMatrix34<JGeometry::SMatrix34C<f32> >
 // down.set() were all inert.
 void TKoopa::calcRootMatrix()
 {
-	TBathtub* bathtub = (TBathtub*)JDrama::TNameRefGen::search2("バスタブ");
+	TBathtub* bathtub = KoopaGetBathtub();
 	MtxPtr tub        = *bathtub->getRootJointMtx();
 	JGeometry::TVec3<f32> down(tub[0][1], tub[1][1], tub[2][1]);
 	down.scale(-1500.0f);
