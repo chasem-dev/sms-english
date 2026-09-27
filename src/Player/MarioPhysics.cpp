@@ -311,7 +311,8 @@ int TMario::barProcess()
 BOOL TMario::hangonCheck(const TBGCheckData* wall, const Vec& prev,
                          const Vec& curr)
 {
-	if (getVel().y > 0.0f)
+	const TBGCheckData* ground;
+	if (mVel.y > 0.0f)
 		return false;
 
 	if ((curr.x - prev.x) * getVel().x + (curr.z - prev.z) * getVel().z > 0.0f)
@@ -321,10 +322,6 @@ BOOL TMario::hangonCheck(const TBGCheckData* wall, const Vec& prev,
 	newPos.x = curr.x - 60.0f * wall->getNormal().x;
 	newPos.z = curr.z - 60.0f * wall->getNormal().z;
 
-	// TODO: `ground` sits below `newPos` (0x40 vs 0x48, newPos 0x44 vs 0x3c).
-	// Declaring ground first (here or at the top), a plain Vec newPos and
-	// `mPosition = newPos` are inert or worse.
-	const TBGCheckData* ground;
 	checkGroundPlane(newPos.x, curr.y + 160.0f, newPos.z, &newPos.y, &ground);
 
 	if (newPos.y - curr.y <= 100.0f)
@@ -510,12 +507,9 @@ void TMario::fallProcess()
 		mVel.y = -75.0f;
 }
 
-// TODO: the std::sqrtf spill sits at 0x2c, retail 0x28, with `next` at 0x30.
-// One raw mPosition read lands the spill but drops `next` to 0x2c; a
-// jumpMax() fork restores the +4 below the spill. Also tried: `next` at the
-// top, a named sum of squares, the ret test folded into the if.
 int TMario::jumpProcess(int param_1)
 {
+	Vec next;
 	int result = 0;
 	f32 speed  = std::sqrtf(mVel.x * mVel.x + mVel.z * mVel.z);
 
@@ -524,8 +518,7 @@ int TMario::jumpProcess(int param_1)
 		mVel.z = mVel.z * (mJumpParams.mJumpingMax.get() / speed);
 	}
 
-	Vec next;
-	next.x  = getPosition().x + 0.25f * mVel.x;
+	next.x  = mPosition.x + 0.25f * mVel.x;
 	next.y  = getPosition().y + 0.25f * mVel.y;
 	next.z  = getPosition().z + 0.25f * mVel.z;
 	int ret = checkGroundAtJumping(next, param_1);
