@@ -44,11 +44,10 @@ public:
 	void startOpenWindow();
 	void startCloseWindow();
 
-	// Inlined into perform; retail's calls one level down (SMS_getShineID,
-	// TColor::set) show these case bodies were separate inline functions.
-	void selectPrev();
-	void selectNext();
-	void animateArrows();
+	// Inlined into perform (fabricated names): retail lays out the switch's
+	// and the 2D draw's stack objects as two inlined callees'.
+	void update();
+	void draw(JDrama::TGraphics* gfx);
 
 public:
 	enum SelectMenuState {
