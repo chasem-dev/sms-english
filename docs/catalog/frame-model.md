@@ -218,3 +218,19 @@ Marker method: `int mk; extp(&mk);` declared first sits right above the dead reg
 - `TBWPicket::moveRequest` (closed): the c-d6 depth move again: a direct-return fork over the existing latest-nerve binder puts the binder's locals below pullTail's copy; raw `mLeash`/`mHitPoints` then give retail's low region.
 - **Which depth a callee's dead word has.** In `TBossEel::setBckAnm`, a dead named local of the callee (`f32 ratio = 1.0f;`, one initialised from a nested inline's result, or a named single-use value) is created with the depth-1 expansion; `ctrl->setRate(rate)` with named `ctrl`/`rate` leaves both named locals in registers and kills setRate's two parameter copies at depth 2.
   Open (bosseel): one dead word per setBckAnm closes OutWait (and Appear with two binders), but FirstSpin/SecondSpin want it created after ExecSpinNerve_Sub's `spinSpeed`, i.e. at depth 2, and no spelling of the body found does that; `docs/progress/lever-search/bosseel_setbckanm_248.patch` is the base.
+## Refinements (structural agent c-s2, 2026-09-27)
+
+- **An inlined callee's temporaries are laid out in reverse source order.** With `-inline deferred` the temporaries in an inline body are created last-first, like its named locals (rule 8b): for `setPanePosition(t, JUTPoint(..), JUTPoint(..), JUTPoint(..))` the first argument's temporary sits lowest, and of several calls in one body the last call's temporaries sit highest.
+  At depth 0 the order is source order (first argument highest).
+  So a retail site whose argument temporaries run the other way from ours was written inside an inline callee.
+- `TGCConsole2::startCameraDemo` showed that tell for its nine `JUTPoint(0, 0)`: they belong to the UNUSED `resetMoveTank()` (map 0xe0), which is `unk48 = 0;` plus three `setPanePosition(1, 0-points)`/`update()` pairs (exactly 56 instructions) and is inlined there.
+  With that inline every JUTPoint slot is in retail's order (uniformly 0x2c low, the rest is low region); instructions unchanged.
+- Tree scan for that tell (`addi rX, r1, N` offsets ranked in retail against ours, same instruction count): `TSelectMenu::perform` has 1208 of 1225 object pairs reversed (all twelve `setPanePosition` sites: the whole block is callee code in retail).
+  Smaller signals: `TLensFlare::perform` 31/55, `wireHanging` 17/66, `TBossHanachan::perform` 14/55, `TPauseMenu2::perform` 14/28, `wireWait`/`wireSWait` 13/45. GCConsole2 has none left.
+- **The GCConsole2 low-region deficit is not a header spelling.** Priced on every unit that includes the header (compile-only, against retail objects):
+  JUTPoint `set(const int&, const int&)` 0 up/16 down, `JUTPoint(const int&, const int&)` 0/18, both 0/21, ctor assigning directly or by init list 0/1 (`processAppearLife`'s converting `JUTPoint(unk1C8, unk1CA)` needs today's `{ set(x, y); }`);
+  JUTRect `getWidth`/`getHeight` with a named local 0/37; statement-bodied `TBoundPane::getPane` 0/22; non-const `getPane`, `isVisible() != 0`, raw `J2DPane::getHeight` inert.
+  The constant-argument JUTPoint sites that are exact today (`startAppearTank`, `processDownCoin`, `processAppearTank`, TTalk2D2's board windows) pin the JUTPoint header: any spelling that adds an object per temporary breaks them.
+- `processMoveNozzle` (no inlinable call besides the JUTPoint ctor) needs 5-12 bytes created before its nine temporaries and 16 words after them.
+  A named per-case `int y = -30;` passed to `JUTPoint(0, y)` gives exactly the upper part (three dead named words); named `bool`/switch locals are inert (they take registers), a statement-bodied pane binder is +2 words per site, below.
+  The 16 low words are unexplained: our function has no IRO temp in the stack at all, so the retail low region is objects created after inlining that our spelling never makes.

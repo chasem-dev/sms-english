@@ -2093,11 +2093,12 @@ void TGCConsole2::startAppearMario(bool param_1)
 }
 
 // TODO: frame 0x60 vs 0xa8: 0x40 of dead low region under the nine JUTPoint
-// temps and 8 above them, nothing in the body reaches it. Refuted: a JUTPoint
-// header spelling (`: x(x), y(y)` shrinks perform by 0x20; `set(const int&, ...)`
-// lands 0xa8 with the temps 8 high but breaks the exact
-// TTalk2D2::checkBoardControler), and wrapping the three calls in a scalar or
-// const-ref helper (inert); a by-value JUTPoint helper is +0x20 and 70%.
+// temps and 5-12 bytes above them, nothing in the body reaches it. A named
+// per-case `int y = -30;` fed to JUTPoint(0, y) lands the top (3 dead named
+// words, frame 0x68) but not the 16 low words. Not a header lever: every
+// JUTPoint ctor/set spelling that adds objects here also breaks the exact
+// constant-argument sites (startAppearTank, processDownCoin, TTalk2D2); inert:
+// named bool/switch locals, pane binders (+8 at 4 sites), TU helpers (reorder).
 void TGCConsole2::processMoveNozzle()
 {
 	if (!unk274->update())
@@ -4682,8 +4683,9 @@ static inline void drawConsole(TGCConsole2* console,
 // objects between `graph` and the first startDisappearLife JUTPoints, 0xc0
 // between those and read8b's bytes, and 0x24c below the write(u8) copies.
 // The low-region deficit matches the TU-wide pattern (processMoveNozzle,
-// countShine, countBlueCoin, processAppearStar are all short the same way),
-// so it is likely a header inline (JUTPoint, getPane/isVisible) spelling.
+// countShine, countBlueCoin, processAppearStar are all short the same way);
+// JUTPoint, JUTRect, J2DPane and getPane spellings were priced and all only
+// regress exact sites (docs/catalog/frame-model.md, c-s2).
 void TGCConsole2::perform(u32 flags, JDrama::TGraphics* graphics)
 {
 	if (flags & 1)
