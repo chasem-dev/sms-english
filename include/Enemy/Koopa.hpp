@@ -253,7 +253,7 @@ public:
 	TKoopaParams* getParam() const;
 
 	// No map symbols: header inlines. The Turn nerves reach turnBody through
-	// KoopaTurnL/KoopaTurnR, so getTurnAnim puts
+	// KoopaTurn (KoopaNerve.hpp), so getTurnAnim puts
 	// TEnemyManager::getSaveParam() at depth 5 there, where retail `bl`s it;
 	// the clamped turnBody argument needs the extra getTurnStep level for the
 	// same, while the condition's getTurnSpeed read stays inline at depth 4.
@@ -265,14 +265,11 @@ public:
 	// second `delta > 0` test in each of them is the inlined body's own.
 	// The named `dir` is what makes TurnL's frame 8 above TurnR's, as in
 	// retail (0x1a8 vs 0x1a0); without it both are equal.
-	// TODO: code matches, but the frames are 0xa0/0x98 against retail's
-	// 0x1a8/0x1a0. Neither nerve touches the stack, so the 0x108 has no
-	// slot evidence, and nothing codeless in the map fits: every UNUSED
-	// TKoopa member expands to code. Named results in the wrap, mod and
-	// getTurnStep levels add only 8 each; a TVec3 copy of mRotation adds
-	// code. Wait (0x88 short), Flame (0x148), Tumble (0x10), perform
-	// (0x50), init (0x30) and getTargetDir (0x28) are short too, so the
-	// cause is likely one unit-wide inline shape, not a turn helper.
+	// Frames: see KoopaTurn in KoopaNerve.hpp (the folded arm carries
+	// 0xb0 of the old 0x108). Wait (0x88 short), Flame (0x148), Tumble
+	// (0x10), perform (0x50), init (0x30) and getTargetDir (0x28) are short
+	// too; named results in the wrap, mod and getTurnStep levels add only 8
+	// each and a TVec3 copy of mRotation adds code.
 	bool turnBody(f32 delta)
 	{
 		if (delta > 0.0f)

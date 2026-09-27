@@ -50,20 +50,27 @@ public:
 // These two nerves' execute symbols are weak, so the bodies were written in
 // the class. They need the complete TKoopa, which is why the whole nerve set
 // lives in this header rather than in Koopa.hpp.
-static inline bool KoopaTurnL(TKoopa* koopa, f32 diff)
+//
+// One turn routine for both directions, called with a constant `left`: MWCC
+// folds the other arm only after inlining, so its objects (bindings, callee
+// locals, IRO temporaries) stay in each nerve's frame as dead words. That is
+// 0xb0 of the 0x108 both nerves used to be short (docs/catalog/frame-model.md,
+// "Dead code keeps its objects"); the arm order and spelling are frame-inert.
+// TODO: both frames still 0x58 short (0x148/0x150 vs 0x1a0/0x1a8), no stack
+// access to place the rest; a third `turnBody(diff)` arm gives +0x40.
+static inline bool KoopaTurn(TKoopa* koopa, f32 diff, bool left)
 {
-	if (diff < -koopa->getTurnSpeed())
-		return koopa->turnBody(-koopa->getTurnStep());
-	else if (diff < 0.0f)
-		return koopa->turnBody(diff);
-	return false;
-}
-static inline bool KoopaTurnR(TKoopa* koopa, f32 diff)
-{
-	if (diff > koopa->getTurnSpeed())
-		return koopa->turnBody(koopa->getTurnStep());
-	else if (diff > 0.0f)
-		return koopa->turnBody(diff);
+	if (left) {
+		if (diff < -koopa->getTurnSpeed())
+			return koopa->turnBody(-koopa->getTurnStep());
+		else if (diff < 0.0f)
+			return koopa->turnBody(diff);
+	} else {
+		if (diff > koopa->getTurnSpeed())
+			return koopa->turnBody(koopa->getTurnStep());
+		else if (diff > 0.0f)
+			return koopa->turnBody(diff);
+	}
 	return false;
 }
 class TNerveKoopaTurnR : public TNerveKoopaTurn {
@@ -71,8 +78,8 @@ public:
 	virtual BOOL execute(TSpineBase<TLiveActor>* spine) const
 	{
 		TKoopa* koopa = (TKoopa*)spine->getBody();
-		if (KoopaTurnR(koopa,
-		               KoopaWrapDegrees(koopa->mTargetDir - koopa->mRotation.y)))
+		if (KoopaTurn(koopa,
+		               KoopaWrapDegrees(koopa->mTargetDir - koopa->mRotation.y), false))
 			return FALSE;
 		return TRUE;
 	}
@@ -89,8 +96,8 @@ public:
 	virtual BOOL execute(TSpineBase<TLiveActor>* spine) const
 	{
 		TKoopa* koopa = (TKoopa*)spine->getBody();
-		if (KoopaTurnL(koopa,
-		               KoopaWrapDegrees(koopa->mTargetDir - koopa->mRotation.y)))
+		if (KoopaTurn(koopa,
+		               KoopaWrapDegrees(koopa->mTargetDir - koopa->mRotation.y), true))
 			return FALSE;
 		return TRUE;
 	}
