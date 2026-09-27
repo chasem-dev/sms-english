@@ -463,6 +463,17 @@ void THangingBridge::drawRopeBetweenBoards(f32 yOffset, int divide) const
 	GXEnd();
 }
 
+// fabricated names. Returning the TColor from a helper keeps the colour out
+// of initDraw's named block and puts the parameter copy under the TColor
+// temporary; the manager fork is the +4 rung next to SMSGetMapObjManager's +0xc.
+static inline JUtility::TColor MonteRopeColor()
+{
+	GXColor color = { 0, 0, 100, 255 };
+	return JUtility::TColor(color);
+}
+
+static inline TMapObjManager* MonteMapObjManager() { return gpMapObjManager; }
+
 void THangingBridge::initDraw() const
 {
 	GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_F32, 0);
@@ -477,17 +488,16 @@ void THangingBridge::initDraw() const
 	              GX_DF_NONE, GX_AF_NONE);
 	GXSetChanCtrl(GX_COLOR1A1, GX_DISABLE, GX_SRC_REG, GX_SRC_REG, GX_LIGHT_NULL,
 	              GX_DF_NONE, GX_AF_NONE);
-	GXColor color = { 0, 0, 100, 255 };
-	GXSetChanMatColor(GX_COLOR0A0, JUtility::TColor(color));
+	GXSetChanMatColor(GX_COLOR0A0, MonteRopeColor());
 	GXSetNumTexGens(1);
 	GXSetTexCoordGen2(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, GX_IDENTITY,
 	                  GX_FALSE, GX_PTIDENTITY);
 
-	if (gpMarDirector->mMap == 0xD) {
-		JUTTexture texture(gpMapObjManager->unkCC);
+	if (SMSGetMarDirector()->mMap == 0xD) {
+		JUTTexture texture(SMSGetMapObjManager()->unkCC);
 		texture.load(GX_TEXMAP0);
 	} else {
-		JUTTexture texture(gpMapObjManager->unkCC);
+		JUTTexture texture(MonteMapObjManager()->unkCC);
 		texture.load(GX_TEXMAP0);
 	}
 
