@@ -11,7 +11,7 @@ Measured from `build/GMSE01/report.json` on 2026-09-27.
 
 | | Fuzzy match | Perfect match | Fully linked | Linked units |
 | --- | ---: | ---: | ---: | ---: |
-| Game | 99.47% | 66.85% | 18.81% | 198 / 385 |
+| Game | 99.48% | 66.85% | 18.81% | 198 / 385 |
 | JSystem | 99.89% | 93.91% | 81.22% | 186 / 198 |
 | SDK | 100.00% | 99.71% | 99.54% | 148 / 149 |
 | All | 99.57% | 72.94% | 33.18% | 532 / 732 |
