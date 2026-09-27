@@ -138,19 +138,23 @@ f32 TDirectionCalc::calcNearerDirection(f32 dir)
 	return dir;
 }
 
-// TODO: the nearer-direction adjustment is written out here, in
-// absDirection and in calcNearerDirection. calcNearerDirection wraps with
-// std::fmodf, the others with TUtil::mod, so they cannot share one helper.
+// True when a turn of diff is longer than the way round the other side.
+static inline bool IsLongWayRound(f32 diff) { return TWO_PI - diff < diff; }
+
+// The distance test is IsLongWayRound: its parameter binding is an inline
+// object, coloured before the IRO temporary of the reloaded mDirection, which
+// gives retail's f2/f3 (a named `diff` is coloured after it).
+// TODO: 99.8%; the wrap's mDirection load takes f3 where retail has f1: our
+// pre-regalloc schedule loads it before the `fmr` that saves dir, so it
+// interferes with the incoming f1.
 f32 TDirectionCalc::sub(f32 dir)
 {
 	normalize();
 	if (dir >= mDirection) {
-		f32 diff = dir - mDirection;
-		if (TWO_PI - diff < diff)
+		if (IsLongWayRound(dir - mDirection))
 			dir -= TWO_PI;
 	} else {
-		f32 diff = mDirection - dir;
-		if (TWO_PI - diff < diff)
+		if (IsLongWayRound(mDirection - dir))
 			dir += TWO_PI;
 	}
 	return mDirection - dir;
@@ -159,17 +163,14 @@ f32 TDirectionCalc::sub(f32 dir)
 // Returns the stored direction turned towards dir by at most step.
 f32 TDirectionCalc::calcTurnDirection(f32 dir, f32 step)
 {
-	// TODO: 98.2%; the frame is 8 short and the wrapped direction lands in
-	// f2 where the ROM has f3.
+	// TODO: 99.3%; the frame is 8 short.
 	mDirection = WrapRadianF(mDirection);
 	normalize();
 	if (dir >= mDirection) {
-		f32 diff = dir - mDirection;
-		if (TWO_PI - diff < diff)
+		if (IsLongWayRound(dir - mDirection))
 			dir -= TWO_PI;
 	} else {
-		f32 diff = mDirection - dir;
-		if (TWO_PI - diff < diff)
+		if (IsLongWayRound(mDirection - dir))
 			dir += TWO_PI;
 	}
 
