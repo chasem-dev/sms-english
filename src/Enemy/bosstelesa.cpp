@@ -1755,48 +1755,34 @@ bool TBossTelesa::slotFall()
 // TODO: incorrect size. Map records 44 bytes.
 void TBossTelesa::openWaterPlace() { }
 
-// TODO: the unrolled loop's counter takes r8 in retail (r6 here), and the
-// coin's flag address is still missing. Inert: s32 phase, i++, a coin flag
-// reference, flags read through the reference, a shared TU-local helper;
-// also (c-tel2) a function-scope `int i`, `u32` counters, a `u32*` flag pointer.
 void TBossTelesa::flashItem(int timer)
 {
 	int phase = timer % 16;
 
 	for (int i = 0; i < 20; ++i) {
-		// The reference is what the ROM's `addi rN, obj, 0xf0` before the
-		// dead test comes from; the accessors keep the base+offset form.
-		TMapObjBase* fruit = mFruits[i];
-		u32& fruitFlags    = fruit->mLiveFlag;
-		if (!fruit->checkLiveFlag(LIVE_FLAG_DEAD)
-		    && fruit->mHolder == nullptr) {
+		if (!mFruits[i]->checkLiveFlag(LIVE_FLAG_DEAD)
+		    && mFruits[i]->mHolder == nullptr) {
 			if (phase < 8)
-				fruitFlags |= LIVE_FLAG_HIDDEN;
+				mFruits[i]->onLiveFlag(LIVE_FLAG_HIDDEN);
 			else
-				fruitFlags &= ~LIVE_FLAG_HIDDEN;
+				mFruits[i]->offLiveFlag(LIVE_FLAG_HIDDEN);
 		}
 	}
 
 	for (int i = 0; i < 10; ++i) {
-		TMapObjBase* pepper = mPeppers[i];
-		u32& pepperFlags    = pepper->mLiveFlag;
-		if (!pepper->checkLiveFlag(LIVE_FLAG_DEAD)
-		    && pepper->mHolder == nullptr) {
+		if (!mPeppers[i]->checkLiveFlag(LIVE_FLAG_DEAD)
+		    && mPeppers[i]->mHolder == nullptr) {
 			if (phase < 8)
-				pepperFlags |= LIVE_FLAG_HIDDEN;
+				mPeppers[i]->onLiveFlag(LIVE_FLAG_HIDDEN);
 			else
-				pepperFlags &= ~LIVE_FLAG_HIDDEN;
+				mPeppers[i]->offLiveFlag(LIVE_FLAG_HIDDEN);
 		}
 
-		// TODO: the ROM computes &coin->mLiveFlag here as well, but binding a
-		// reference the way the fruit and pepper loops do makes MWCC fuse the
-		// address into an `lwzu` and costs more than the two instructions.
-		TCoin* coin = mCoins[i];
-		if (!coin->checkLiveFlag(LIVE_FLAG_DEAD)) {
+		if (!mCoins[i]->checkLiveFlag(LIVE_FLAG_DEAD)) {
 			if (phase < 8)
-				coin->onLiveFlag(LIVE_FLAG_HIDDEN);
+				mCoins[i]->onLiveFlag(LIVE_FLAG_HIDDEN);
 			else
-				coin->offLiveFlag(LIVE_FLAG_HIDDEN);
+				mCoins[i]->offLiveFlag(LIVE_FLAG_HIDDEN);
 		}
 	}
 }
