@@ -171,32 +171,32 @@ void TBathtubKiller::setMActorAndKeeper()
 	mMActorKeeper = new TMActorKeeper(mManager, 2);
 	mMActor = mMActorKeeper->createMActor("bathtubkiller_model1.bmd", 0);
 	mMActorKeeper->createMActor("bathtubdownkiller_model1.bmd", 3);
-	int nose = mMActorKeeper->getMActor("bathtubkiller_model1.bmd")
+	s32 nose = getActorKeeper()->getMActor("bathtubkiller_model1.bmd")
 	               ->getModel()
 	               ->getModelData()
 	               ->getMaterialName()
 	               ->getIndex("_nosemat1");
-	int eyes = mMActorKeeper->getMActor("bathtubkiller_model1.bmd")
+	s32 eyes = getActorKeeper()->getMActor("bathtubkiller_model1.bmd")
 	               ->getModel()
 	               ->getModelData()
 	               ->getMaterialName()
 	               ->getIndex("_eyesmat1");
-	int body = mMActorKeeper->getMActor("bathtubkiller_model1.bmd")
+	s32 body = getActorKeeper()->getMActor("bathtubkiller_model1.bmd")
 	               ->getModel()
 	               ->getModelData()
 	               ->getMaterialName()
 	               ->getIndex("_body1");
 	SMS_InitPacket_OneTevColor(
-	    mMActorKeeper->getMActor("bathtubkiller_model1.bmd")->getModel(),
+	    getActorKeeper()->getMActor("bathtubkiller_model1.bmd")->getModel(),
 	    nose, GX_TEVREG0, &unk1E0);
 	SMS_InitPacket_OneTevColor(
-	    mMActorKeeper->getMActor("bathtubkiller_model1.bmd")->getModel(),
+	    getActorKeeper()->getMActor("bathtubkiller_model1.bmd")->getModel(),
 	    eyes, GX_TEVREG0, &unk1E8);
 	SMS_InitPacket_OneTevColor(
-	    mMActorKeeper->getMActor("bathtubkiller_model1.bmd")->getModel(),
+	    getActorKeeper()->getMActor("bathtubkiller_model1.bmd")->getModel(),
 	    body, GX_TEVREG0, &unk1D8);
 	SMS_InitPacket_OneTevColor(
-	    mMActorKeeper->getMActor("bathtubdownkiller_model1.bmd")->getModel(),
+	    getActorKeeper()->getMActor("bathtubdownkiller_model1.bmd")->getModel(),
 	    0, GX_TEVREG0, &unk1F0);
 }
 
