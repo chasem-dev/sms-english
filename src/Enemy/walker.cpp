@@ -160,7 +160,7 @@ void TWalker::bind(TLiveActor* param_1)
 			unk20 = 30;
 		}
 
-		if (local_30.y >= fVar1 + 0.05f
+		if (local_30.y <= fVar1 + 0.05f
 		    && !local_40->checkFlag(BG_CHECK_FLAG_ILLEGAL)
 		    && !local_40->isEnemyThrough()) {
 			local_30.y       = fVar1;
