@@ -127,18 +127,18 @@ void TCardManager::TCriteria::setEmpty()
 	}
 }
 
+enum TEUseSector {
+	USE_SECTOR_0 = 0,
+	USE_SECTOR_1 = 1,
+};
+
 // Retail calls this from copyTo and readBlock_: the single-exit result chain
 // (one assignment and one `else` per arm) is what takes the body over the
 // depth-1 budget; early returns cost the same bytes but three statements less.
 s32 TCardManager::decideUseSector(TCardManager::TCriteria* criteria)
 {
-	// TODO: retail keeps the last result in r0 and joins with a single
-	// `mr r3, r0`, so `result` did not get the return register there.
-	// Exhausted: early returns, an if/else, a ternary, and declaring the
-	// result before the early returns -- all emit `li r3, 0/1` into r3.
-	// The join is a conversion: early returns plus `? false : true` gives
-	// `li r0; mr` with a `clrlwi` (97.9), `(s16)` an `extsh`; u32, int and an
-	// inline helper returning 0/1 are inert. A same-width conversion is open.
+	// The newer-sector choice is an enum-typed local: retail joins that arm
+	// through r0 (`mr r3, r0`) while the other arms load r3 directly.
 	s32 result;
 	if (criteria[0].getState() == TCriteria::STATE_EMPTY) {
 		result = CARD_RESULT_WRONGDEVICE;
@@ -149,10 +149,13 @@ s32 TCardManager::decideUseSector(TCardManager::TCriteria* criteria)
 			result = 1;
 	} else if (criteria[1].getState() == TCriteria::STATE_CHECKSUM_BAD) {
 		result = 0;
-	} else if (criteria[0].getWriteCount() >= criteria[1].getWriteCount()) {
-		result = 0;
 	} else {
-		result = 1;
+		TEUseSector sector;
+		if (criteria[0].getWriteCount() >= criteria[1].getWriteCount())
+			sector = USE_SECTOR_0;
+		else
+			sector = USE_SECTOR_1;
+		result = sector;
 	}
 	return result;
 }
