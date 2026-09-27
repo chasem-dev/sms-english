@@ -379,14 +379,19 @@ int TMenuDirector::direct()
 	return uVar13;
 }
 
+// fabricated name: the seven extra-stage remaps are one inlined helper; its
+// director pointer is what reserves retail's 0x20 below the remap table.
+static inline int MenuGetExStageNo(const TMenuDirector* dir, const int* table)
+{
+	return dir->unk4C - 10 + table[dir->unk48];
+}
+
 void TMenuDirector::setFixedStageValue()
 {
 	unk48 = unk40->unk2C;
 	unk4C = unk44->unk2C;
 	int local_30[]
 	    = { 0, 0x14, 0x1c, 0x1e, 0x20, 0x22, 0x28, 0, 0x2a, 0x2c, 0x2e };
-	// TODO: frame 0x38 vs retail 0x58 — 0x20 dead below remap table.
-	// A named unused char[0x1c] lands the frame but is a fakematch.
 
 	if ((unk48 == 0x11) || (unk48 == 0x12)) {
 		int movie = unk4C;
@@ -405,12 +410,12 @@ void TMenuDirector::setFixedStageValue()
 				unk48 = 0x3b;
 				unk4C = 0;
 			} else if (unk4C >= 10) {
-				unk48 = unk4C - 10 + local_30[unk48];
+				unk48 = MenuGetExStageNo(this, local_30);
 				unk4C = 0;
 			}
 		} else if (unk48 == 9) {
 			if (unk4C >= 10) {
-				unk48 = unk4C - 10 + local_30[unk48];
+				unk48 = MenuGetExStageNo(this, local_30);
 				unk4C = 0;
 			} else if (unk4C == 8) {
 				unk48 = 0x10;
@@ -433,7 +438,7 @@ void TMenuDirector::setFixedStageValue()
 				unk48 = 6;
 				unk4C = unk4C - 8;
 			} else if (unk4C >= 10) {
-				unk48 = unk4C - 10 + local_30[unk48];
+				unk48 = MenuGetExStageNo(this, local_30);
 				unk4C = 0;
 			} else if (unk4C >= 6) {
 				unk48 = 7;
@@ -459,12 +464,12 @@ void TMenuDirector::setFixedStageValue()
 				unk48 = 0x3a;
 				unk4C = 0;
 			} else if (unk4C >= 10) {
-				unk48 = unk4C - 10 + local_30[unk48];
+				unk48 = MenuGetExStageNo(this, local_30);
 				unk4C = 0;
 			}
 		} else if (unk48 == 10) {
 			if (unk4C >= 10) {
-				unk48 = unk4C - 10 + local_30[unk48];
+				unk48 = MenuGetExStageNo(this, local_30);
 				unk4C = 0;
 			} else if (unk4C == 7) {
 				unk48 = 0x3c;
@@ -472,7 +477,7 @@ void TMenuDirector::setFixedStageValue()
 			}
 		} else if (unk48 == 2) {
 			if (unk4C >= 10) {
-				unk48 = unk4C - 10 + local_30[unk48];
+				unk48 = MenuGetExStageNo(this, local_30);
 				unk4C = 0;
 			} else if (unk4C == 8) {
 				unk48 = 0x37;
@@ -480,7 +485,7 @@ void TMenuDirector::setFixedStageValue()
 			}
 		} else if (unk48 != 0) {
 			if (unk4C >= 10) {
-				unk48 = unk4C - 10 + local_30[unk48];
+				unk48 = MenuGetExStageNo(this, local_30);
 				unk4C = 0;
 			}
 		}
