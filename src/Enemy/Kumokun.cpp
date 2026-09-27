@@ -173,20 +173,14 @@ void TKumokun::initCollision()
 	initAttachPlane();
 }
 
-// TODO: frame 0x10 short. Retail calls set<f> for the wall record (one
-// inline level deeper than here, like the UNUSED checkWallPlane but with no
-// write-back and reading mPosition directly); inlining checkWallPlane on a
-// copy gives the exact frame and the call but adds the copy and write-back.
+// TODO: frame 0x10 short, every instruction right. Retail's roof/floor
+// pointers sit below the record (the UNUSED plane checks inlined); it has
+// 0xc more between the two normal results and 0x18 more below floor.
 void TKumokun::initAttachPlane()
 {
-	TBGWallCheckRecord record;
-	record.mCenter.set(mPosition.x, mPosition.y + mHeadHeight, mPosition.z);
-	record.mRadius     = 100.0f;
-	record.mMaxResults = 1;
-	record.mFlags      = 0;
-
-	int hitNum = gpMap->isTouchedWallsAndMoveXZ(&record);
-	const TBGCheckData* wall = hitNum > 0 ? record.mResultWalls[0] : nullptr;
+	JGeometry::TVec3<f32> pos;
+	pos.set(mPosition);
+	const TBGCheckData* wall = checkWallPlane(&pos, mHeadHeight, 100.0f);
 	if (wall) {
 		unk198 = wall;
 		JGeometry::TVec3<f32> up(0.0f, 1.0f, 0.0f);
@@ -194,30 +188,16 @@ void TKumokun::initAttachPlane()
 		return;
 	}
 
-	f32 headHeight = mHeadHeight;
-	JGeometry::TVec3<f32> pos;
 	pos.set(mPosition);
-	const TBGCheckData* roof = nullptr;
-	f32 dVar6                = gpMap->checkRoof(pos.x, pos.y, pos.z, &roof);
-	f32 fVar8                = dVar6 - 1.0f - pos.y;
-	if (!(0.0f <= fVar8 && fVar8 < headHeight))
-		roof = nullptr;
-
+	const TBGCheckData* roof = checkRoofPlane(&pos, mHeadHeight);
 	if (roof) {
 		unk198 = roof;
 		unk19C.setEulerZ(JGeometry::TUtil<f32>::PI());
 		return;
 	}
 
-	JGeometry::TVec3<f32> pos2;
-	pos2.set(mPosition);
-	pos2.y += mHeadHeight;
-	const TBGCheckData* floor = nullptr;
-	f32 dVar62 = gpMap->checkGround(pos2.x, pos2.y, pos2.z, &floor);
-	dVar62 += 1.0f;
-	if (!(pos.y <= dVar62 + 0.05f))
-		floor = nullptr;
-
+	pos.set(mPosition);
+	const TBGCheckData* floor = checkFloorPlane(&pos, mHeadHeight, 0.0f);
 	if (floor) {
 		unk198 = floor;
 
