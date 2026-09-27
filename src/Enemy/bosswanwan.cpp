@@ -276,6 +276,9 @@ void TBWLeashNode::perform(u32 cue, JDrama::TGraphics* graphics)
 		BWLeashNodeMActor(this)->perform(cue, graphics);
 }
 
+// TODO: every low temporary (new-node spill, push_back iterators) sits 8 below
+// retail at an equal 0x120 frame. Binder/raw/.value mixes at the four param
+// reads and a named keeper in the node ctor move the frame, never the base.
 TBWLeash::TBWLeash(TBossWanwan* owner, int node_num, const char* name)
     : JDrama::TViewObj(name)
     , mOwner(owner)
@@ -866,6 +869,7 @@ static inline J3DJoint* WanwanJointNode(u16 idx)
 // and the jma table loads above scratch.zero()'s stores, ours emits them after.
 // Inert: cos first, no roll, named s/c declared early, sin/cos as set() args,
 // ref() stores instead of set(), a named angle, JMASSin/JMASCos.
+// Also inert: dropping `roll` for scratch at MTXConcat, or taking it after set().
 void TBossWanwanMtxCalc::calc(u16 joint)
 {
 	// While airborne the root joint's translation is thrown away so the boss
@@ -1787,6 +1791,8 @@ DEFINE_NERVE(TNerveBWJump, TLiveActor)
 		// TODO: an inline BWJumpTo(boss, goal) holding tracer/speed/setVelocity
 		// fixes the r29/r30 swap (5 markers left) but the velocity temporary
 		// sits 8 high (0x38 vs 0x30) and the vtable load schedules first.
+		// Passing node.getPoint() straight to calcVelocityToJumpToY (goal
+		// unnamed) fixes the registers but loads tracer->unkC before it (~6 <2 >2).
 		const TPathNode& node             = boss->getUnk104();
 		const JGeometry::TVec3<f32>& goal = node.getPoint();
 		TGraphTracer* tracer              = boss->getTracer();
