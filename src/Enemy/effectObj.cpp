@@ -107,6 +107,10 @@ void TEffectObjBase::reset()
 // TODO: 90.8%. Every instruction matches; retail's frame is 0x20 with r31
 // saved and never used (a dead callee-saved GPR plus 0x10 dead bytes). Inert:
 // a switch on unk68, an early `!(cue & CUE_MOVE)` return.
+// c-h22: retail tested `cue` again after moveObject() in a statement that
+// compiled to nothing (an empty `if (cue & CUE_DRAW) {}` there is byte-exact:
+// cue lives across the call in r31, then the test is dropped); empty bodies
+// are refused, and forceKill() is UNUSED so it cannot be that body.
 void TEffectObjBase::perform(u32 cue, JDrama::TGraphics*)
 {
 	if (cue & CUE_MOVE) {
@@ -131,6 +135,9 @@ BOOL TEffectObjBase::receiveMessage(THitActor* sender, u32 message)
 
 // TODO: the three setGlobalScale copies load x/y/z into f2/f0/f1; retail uses
 // f0/f1/f2. A TVec3 local, direct set() calls and an xyz constructor were inert.
+// c-h22 dump: the Vec->TVec3 conversion temp's x goes through an extra IRO copy
+// (@1613 = @1622 = local.x) that colours last; `: Vec(b)`/component ctor bodies,
+// split Dynamics/Particle setters and a named ratio were inert or worse.
 void TEffectObjBase::moveObject()
 {
 	if (unk68 == 2) {
