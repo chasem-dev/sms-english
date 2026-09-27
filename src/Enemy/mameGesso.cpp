@@ -576,6 +576,10 @@ DEFINE_NERVE(TNerveMameGessoPickUp, TLiveActor)
 	return false;
 }
 
+// Fabricated name, after the other SMS_GetMario* accessors in
+// MarioAccess.hpp; kept TU-local until that shared header grows it.
+static inline f32 SMS_GetMarioThrowPower() { return *gpMarioThrowPower; }
+
 DEFINE_NERVE(TNerveMameGessoThrown, TLiveActor)
 {
 	TMameGesso* self = (TMameGesso*)spine->getBody();
@@ -588,19 +592,13 @@ DEFINE_NERVE(TNerveMameGessoThrown, TLiveActor)
 		// table value and only the second brings the rate in. Named
 		// power/rate/z/x with component stores put the VY load after the
 		// x store as in the ROM (97.1 -> 99.8).
-		// TODO: frame 0x68 against 0x70 (the ROM has 8 bytes above `vel`)
-		// and power/cosine swapped between f2 and f3. Tried: every order of
-		// power/rate/angle, named s16/int angle (frame -8), named sin/cos,
-		// a named VY (+8 frame but `vel` 4 high), `vel` at function scope,
-		// params declared after `vel`, `set`/ctor/temporary forms, raw
-		// `*gpMarioAngleY`, product-returning helpers (frame +0x10..+0x20),
-		// a component-setter helper.
-		// Also inert or worse: `.value` on either or both params (-8 frame
-		// with both), raw `mVelocity = vel`, a named or raw ground plane,
-		// `!spine->getTime()`, computing x before z (92.7%).
-		JGeometry::TVec3<f32> vel;
-		f32 power = *gpMarioThrowPower;
+		// The throw power comes through an inline accessor, which makes
+		// `power` an IR-optimiser temporary: its dead stack word and
+		// `rate`'s are the ROM's 8 bytes above `vel`, and it is created
+		// ahead of the cosine's temporary, so it takes f2.
+		f32 power = SMS_GetMarioThrowPower();
 		f32 rate = params->mSLThrownRateXZ.get();
+		JGeometry::TVec3<f32> vel;
 		f32 z = rate * (power * JMASCos(SMS_GetMarioAngleY()));
 		f32 x = rate * (power * JMASSin(SMS_GetMarioAngleY()));
 		vel.x = x;
