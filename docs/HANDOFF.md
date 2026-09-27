@@ -4,6 +4,15 @@ Written 2026-09-18 by the session that ran batches 92 to 181.
 Read this before `docs/ORCHESTRATION.md`; it is the judgement that document does not carry.
 Keep it current: every orchestrator appends a dated "State" entry below and rewrites the advice when it stops being true.
 
+## State 2026-09-27 night (session 5237deed, map + compiler-research round)
+
+All 72.72 -> 72.82% matched, 531/732 linked (MarNameRefGen linked), DOL identical, zero regressions.
+Inputs added: `orig/GMSE01/files/marioUS.MAP` (see below) and two read-only compiler RE clones at `/home/user/ext` (JackPriceBurns/mwcc = GC/1.2.5 decomp notes, zcanann/mwcc-rs); neither is in the repo, re-clone per container.
+Rules landed in the catalog: dead code keeps its stack objects (frame-model.md, last section, with jpb-mwcc addresses); commutative operand order is fixed at parse time and a real call's subtree generates first (register-model.md "Operand order and generation order").
+Tools: `tools/unused-sizes.sh Dir/Unit` lists UNUSED map functions that are stubs or mis-sized (215 stubs, 251 mis-sized tree-wide when run); census.py now rejects option-like arguments.
+Yield: ~12 batches closed ~8 functions. UNUSED-body restoration (c-u1..4) and helper-call sweeps (c-x1/2) make the source truer and fix symbol order but rarely close a scored function; the operand-order sweep found 53 functions/82 sites, 5 swap-only (all deep-searched).
+What still blocks the bulk: frame deficits with no carrier (WaterGun emit trio ~46 words, GCConsole2 perform 0x2b8, Koopa turn 0x58, the initSetEnemies family whose dead TMsRange<s32> is map-proven but whose block is unknown), per-site inlining decisions, and header template shapes (TRotation3::setQuat, TVec3 copy/operator returns).
+
 ## State 2026-09-27 evening (session 5237deed, batches c-h1..c-h23)
 
 All 72.50 -> 72.72% matched, 530/732 linked, DOL identical, zero regressions; about 20 batches closed ~15 functions (0-3 each).
