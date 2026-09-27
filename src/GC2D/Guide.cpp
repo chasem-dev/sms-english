@@ -265,21 +265,12 @@ void TGuide::resetObjects()
 	mCursors[1]->getPane()->mVisible = true;
 }
 
-// fabricated: retail reads the digit texture before the pane search at these
-// sites, so the search and the swap were one inline taking the texture.
-static inline void GuideSetTexture(J2DScreen* screen, u32 tag,
-                                   const ResTIMG* img)
-{
-	((J2DPicture*)screen->search(tag))->changeTexture(img, 0);
-}
-
-// TODO: every instruction matches; the callee-saved set is permuted (retail
-// this r31, total r27, etcTotal r20) and the frame is 0x68 vs 0xd8 (0x70 dead
-// low region). Declaration order and getInstance()/smInstance were inert.
+// TODO: retail keeps `remaining` in r5 apart from the clamp's compare temp
+// (r0); ours coalesces them (IRO @ web). Clamp spellings and total types inert.
 void TGuide::resetScore()
 {
 	int etcTotal = 0;
-	int total    = 0;
+	u8 total = 0;
 	for (int i = 0; i < 10; ++i) {
 		if (i == 9)
 			continue;
@@ -334,16 +325,16 @@ void TGuide::resetScore()
 		u16 rest             = coins;
 		if (rest < 100) {
 			digit100->mVisible = false;
-			digit10->changeTexture(mNumberTextures[rest / 10]->mTexInfo, 0);
-			digit1->changeTexture(mNumberTextures[rest % 10]->mTexInfo, 0);
+			digit10->changeTexture(mNumberTextures[rest / 10]->getTexInfo(), 0);
+			digit1->changeTexture(mNumberTextures[rest % 10]->getTexInfo(), 0);
 		} else {
 			int hundreds       = rest / 100;
 			digit100->mVisible = true;
-			digit100->changeTexture(mNumberTextures[hundreds]->mTexInfo, 0);
+			digit100->changeTexture(mNumberTextures[hundreds]->getTexInfo(), 0);
 			coins -= hundreds * 100;
 			rest = coins;
-			digit10->changeTexture(mNumberTextures[rest / 10]->mTexInfo, 0);
-			digit1->changeTexture(mNumberTextures[rest % 10]->mTexInfo, 0);
+			digit10->changeTexture(mNumberTextures[rest / 10]->getTexInfo(), 0);
+			digit1->changeTexture(mNumberTextures[rest % 10]->getTexInfo(), 0);
 		}
 
 		if (mScores[i].mHasFirstEtcShine) {
@@ -362,17 +353,18 @@ void TGuide::resetScore()
 		bosses = 1;
 	if (TFlagManager::getInstance()->getBool(0x10058))
 		bosses++;
-	GuideSetTexture(mScreen, '0s_1', mNumberTextures[bosses]->mTexInfo);
+	((J2DPicture*)mScreen->search('0s_1'))
+	    ->changeTexture(mNumberTextures[bosses]->getTexInfo(), 0);
 	total += bosses;
 
 	s32 allShines = TFlagManager::getInstance()->getFlag(0x40000);
-	u8 remaining  = allShines - (u8)total;
+	u8 remaining  = allShines - total;
 	if (remaining > 99)
 		remaining = 99;
-	GuideSetTexture(mScreen, '1s_1',
-	                mNumberTextures[remaining / 10]->mTexInfo);
-	GuideSetTexture(mScreen, '1s_2',
-	                mNumberTextures[remaining % 10]->mTexInfo);
+	((J2DPicture*)mScreen->search('1s_1'))
+	    ->changeTexture(mNumberTextures[remaining / 10]->getTexInfo(), 0);
+	((J2DPicture*)mScreen->search('1s_2'))
+	    ->changeTexture(mNumberTextures[remaining % 10]->getTexInfo(), 0);
 
 	if (allShines > 999)
 		allShines = 999;
@@ -381,15 +373,15 @@ void TGuide::resetScore()
 	J2DPicture* total1   = (J2DPicture*)mScreen->search('lt_3');
 	if (allShines < 100) {
 		total100->mVisible = false;
-		total10->changeTexture(mNumberTextures[allShines / 10]->mTexInfo, 0);
-		total1->changeTexture(mNumberTextures[allShines % 10]->mTexInfo, 0);
+		total10->changeTexture(mNumberTextures[allShines / 10]->getTexInfo(), 0);
+		total1->changeTexture(mNumberTextures[allShines % 10]->getTexInfo(), 0);
 	} else {
 		s32 hundreds       = allShines / 100;
 		total100->mVisible = true;
-		total100->changeTexture(mNumberTextures[hundreds]->mTexInfo, 0);
+		total100->changeTexture(mNumberTextures[hundreds]->getTexInfo(), 0);
 		allShines -= hundreds * 100;
-		total10->changeTexture(mNumberTextures[allShines / 10]->mTexInfo, 0);
-		total1->changeTexture(mNumberTextures[allShines % 10]->mTexInfo, 0);
+		total10->changeTexture(mNumberTextures[allShines / 10]->getTexInfo(), 0);
+		total1->changeTexture(mNumberTextures[allShines % 10]->getTexInfo(), 0);
 	}
 
 	switch (gpApplication.mSaveFile) {
@@ -414,7 +406,7 @@ void TGuide::resetScore()
 	    = 255.0f
 	      * (1.0f
 	         - (f32)(TFlagManager::getInstance()->getFlag(0x40000) / 30)
-	               * 0.25f);
+	               / 4.0f);
 	mMarkPane->getPane()->setAlpha(mMarkAlpha);
 }
 
