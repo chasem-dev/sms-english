@@ -95,7 +95,22 @@ TBathWaterGlobalParams::TBathWaterGlobalParams()
 	TParams::load(mPrmPath);
 }
 
-static void minmax_set(JGeometry::TBox3<f32>&, const JGeometry::TVec3<f32>&) { }
+static void minmax_set(JGeometry::TBox3<f32>& box,
+                       const JGeometry::TVec3<f32>& v)
+{
+	if (v.x < box.i.x)
+		box.i.x = v.x;
+	if (v.y < box.i.y)
+		box.i.y = v.y;
+	if (v.z < box.i.z)
+		box.i.z = v.z;
+	if (v.x > box.f.x)
+		box.f.x = v.x;
+	if (v.y > box.f.y)
+		box.f.y = v.y;
+	if (v.z > box.f.z)
+		box.f.z = v.z;
+}
 
 class TBathWater : public THitActor {
 public:
@@ -1821,10 +1836,24 @@ f32 TBathWaterManager::getWaterHeight(f32 x, f32 z) const
 }
 
 namespace {
-void CalcJumpVelocityY(const JGeometry::TVec3<f32>&,
-                       const JGeometry::TVec3<f32>&, f32, f32, f32,
-                       JGeometry::TVec3<f32>*)
+void CalcJumpVelocityY(const JGeometry::TVec3<f32>& from,
+                       const JGeometry::TVec3<f32>& to, f32 velY,
+                       f32 gravity, f32 minVelY, JGeometry::TVec3<f32>* out)
 {
+	int count = 1;
+	f32 vy    = velY;
+	f32 y     = from.y;
+	while (true) {
+		y += vy;
+		if (vy < 0.0f && y <= to.y)
+			break;
+		vy -= gravity;
+		if (vy < minVelY)
+			vy = minVelY;
+		count++;
+	}
+
+	out->set((to.x - from.x) / count, velY, (to.z - from.z) / count);
 }
 } // namespace
 
@@ -1882,25 +1911,8 @@ void TBathWaterManager::throwMario(f32 param_1)
 		// terms into scratch registers (y, x, z) before adding the Z-axis
 		// terms into f30/f31/f29; a single expression per component is
 		// worse (98.8 -> 94.9).
-		f32 gravity = SMS_GetMarioGravity();
-		int count   = 1;
-		f32 vy      = 100.0f;
-		f32 y       = gpMarioPos->y;
-		while (true) {
-			y += vy;
-			if (vy < 0.0f && y <= w.y)
-				break;
-			vy -= gravity;
-			if (vy < -75.0f)
-				vy = -75.0f;
-			count++;
-		}
-
-		f32 dx = w.x - gpMarioPos->x;
-		f32 dz = w.z - gpMarioPos->z;
-		vel.x  = dx / (f32)count;
-		vel.y  = 100.0f;
-		vel.z  = dz / (f32)count;
+		CalcJumpVelocityY(*gpMarioPos, w, 100.0f, SMS_GetMarioGravity(),
+		                  -75.0f, &vel);
 	} else {
 		vel.x = 0.0f;
 		vel.y = param_1;
