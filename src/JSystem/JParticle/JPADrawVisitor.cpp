@@ -628,19 +628,10 @@ void rotTypeYJiggle(f32 sin, f32 cos, Mtx& out)
 // which the header cross (stores x, y, z) cannot give: the same body storing
 // z, y, x does. Changing TVec3::cross itself regresses the tree (see its
 // TODO in JGVec3.hpp) and the Stripe draws here, so it stays TU-local.
-// `pt` wants the same mirrored coloring (x f31 .. z f29); JPABaseParticle::
-// getGlobalPosition stores x, y, z, so the copy is spelled z, y, x here.
-// TODO: retail still loads x first; this loads z first (two instructions).
-// c-c4: all six store orders here, getGlobalPosition(pt), pt.set(v) and
-// member-wise x,y,z are inert or worse (x first always takes f29).
-static inline void JPAGetPos(const JGeometry::TVec3<f32>& v,
-                             JGeometry::TVec3<f32>& out)
-{
-	out.z = v.z;
-	out.y = v.y;
-	out.x = v.x;
-}
-
+// `pt` is colored the mirror way (x f31 .. z f29) yet loaded x first: its
+// fields are first touched z first, by zero()'s chained `x = y = z = 0`,
+// before getGlobalPosition copies x, y, z over them (the dead zero stores
+// go, the order of the IRO temporaries stays).
 static inline void JPACross(JGeometry::TVec3<f32>& out, const JGeometry::TVec3<f32>& a,
                             const JGeometry::TVec3<f32>& b)
 {
@@ -653,7 +644,7 @@ static inline void JPACross(JGeometry::TVec3<f32>& out, const JGeometry::TVec3<f
 }
 
 // TODO: The low region is 0x20 short (frame 0x128 vs 0x100); FPRs are right
-// through JPACross and JPAGetPos. Retail also has a 12-byte named slot above offs. Declaration
+// through JPACross and the zeroed pt. Retail also has a 12-byte named slot above offs. Declaration
 // moves of pt are inert (pt has no slot). Without the angle level the Rot
 // siblings are 8 short too, so one 8-byte site is shared by all four.
 void JPADrawExecDirectional::exec(const JPADrawContext* dc,
@@ -709,7 +700,8 @@ void JPADrawExecDirectional::exec(const JPADrawContext* dc,
 	MTXMultVecArray(local_80, offs, offs, ARRAY_COUNT(offs));
 
 	JGeometry::TVec3<f32> pt;
-	JPAGetPos(particle->mGlobalPosition, pt);
+	pt.zero();
+	particle->getGlobalPosition(pt);
 
 	GXBegin(GX_QUADS, GX_VTXFMT0, 4);
 	GXPosition3f32(offs[0].x + pt.x, offs[0].y + pt.y, offs[0].z + pt.z);
@@ -723,10 +715,7 @@ void JPADrawExecDirectional::exec(const JPADrawContext* dc,
 	GXEnd();
 }
 
-// TODO: Stack-exact (angle level on sine and cosine, rotation Mtx first); only
-// the pt load order is left (see JPAGetPos). Loading into temporaries first
-// costs 0x10 of frame; pt as scalars/ctor/reference/`=` and declaration moves
-// were inert or worse.
+// Stack-exact through the angle level on sine and cosine, rotation Mtx first.
 void JPADrawExecRotDirectional::exec(const JPADrawContext* dc,
                                      JPABaseParticle* particle)
 {
@@ -788,7 +777,8 @@ void JPADrawExecRotDirectional::exec(const JPADrawContext* dc,
 	MTXMultVecArray(local_78, offs, offs, ARRAY_COUNT(offs));
 
 	JGeometry::TVec3<f32> pt;
-	JPAGetPos(particle->mGlobalPosition, pt);
+	pt.zero();
+	particle->getGlobalPosition(pt);
 
 	GXBegin(GX_QUADS, GX_VTXFMT0, 4);
 	GXPosition3f32(offs[0].x + pt.x, offs[0].y + pt.y, offs[0].z + pt.z);
@@ -868,7 +858,8 @@ void JPADrawExecDirectionalCross::exec(const JPADrawContext* dc,
 	MTXMultVecArray(local_80, offs, offs, ARRAY_COUNT(offs));
 
 	JGeometry::TVec3<f32> pt;
-	JPAGetPos(particle->mGlobalPosition, pt);
+	pt.zero();
+	particle->getGlobalPosition(pt);
 
 	GXBegin(GX_QUADS, GX_VTXFMT0, 8);
 	GXPosition3f32(offs[0].x + pt.x, offs[0].y + pt.y, offs[0].z + pt.z);
@@ -890,10 +881,7 @@ void JPADrawExecDirectionalCross::exec(const JPADrawContext* dc,
 	GXEnd();
 }
 
-// TODO: Stack-exact (angle level on sine and cosine, rotation Mtx first); only
-// the pt load order is left (see JPAGetPos). Loading into temporaries first
-// costs 0x10 of frame; pt as scalars/ctor/reference/`=` and declaration moves
-// were inert or worse.
+// Stack-exact through the angle level on sine and cosine, rotation Mtx first.
 void JPADrawExecRotDirectionalCross::exec(const JPADrawContext* dc,
                                           JPABaseParticle* particle)
 {
@@ -963,7 +951,8 @@ void JPADrawExecRotDirectionalCross::exec(const JPADrawContext* dc,
 	MTXMultVecArray(local_a8, offs, offs, ARRAY_COUNT(offs));
 
 	JGeometry::TVec3<f32> pt;
-	JPAGetPos(particle->mGlobalPosition, pt);
+	pt.zero();
+	particle->getGlobalPosition(pt);
 
 	GXBegin(GX_QUADS, GX_VTXFMT0, 8);
 	GXPosition3f32(offs[0].x + pt.x, offs[0].y + pt.y, offs[0].z + pt.z);
