@@ -401,13 +401,8 @@ void TMapObjBall::boundByActor(THitActor* param_1)
 void TMapObjBall::touchActor(THitActor* param_1)
 {
 	// unk194 is a short cooldown after a kick, so one kick cannot chain.
-	if (unk194 != 0)
-		return;
-	if (isState(STATE_HOLDING))
-		return;
-	if (isHideObj(param_1))
-		return;
-	if (param_1->isActorType(0x08000083)
+	if (unk194 != 0 || isState(STATE_HOLDING) || isHideObj(param_1)
+	    || param_1->isActorType(0x08000083)
 	    || param_1->isActorType(0x400000CA)
 	    || param_1->isActorType(0x400000CC))
 		return;
@@ -1028,27 +1023,7 @@ static inline bool MapObjBallIsState(TResetFruit* p, u32 i)
 	return state;
 }
 
-void TResetFruit::touchActor(THitActor* param_1)
-{
-	if (MapObjBallIsState(this, STATE_APPEARING))
-		return;
-	if (MapObjBallIsState(this, STATE_BREAKING))
-		return;
-	if (MapObjBallIsState(this, STATE_ROTTING))
-		return;
-	if (MapObjBallIsState(this, STATE_WAITING_TO_APPEAR))
-		return;
-
-	TMapObjBall::touchActor(param_1);
-
-	if (checkMapObjFlag(MAP_OBJ_FLAG_UNK4000000))
-		return;
-
-	// Being knocked about starts the countdown, unless it is being carried.
-	if (MapObjBallIsState(this, STATE_NORMAL)
-	    && !checkLiveFlag(LIVE_FLAG_UNK10))
-		makeObjLiving();
-}
+void TResetFruit::touchActor(THitActor* param_1) { pick(param_1); }
 
 void TResetFruit::touchGround(JGeometry::TVec3<f32>* param_1)
 {
@@ -1072,30 +1047,28 @@ void TResetFruit::makeObjLiving()
 }
 
 // UNUSED, 0x254 in the map.
-// TODO: incorrect size -- this body compiles to about 0x134, the same as
-// touchActor(), which is the only evidence available: same class, a
-// THitActor argument, and exactly the per-collision "knock it about, then
-// start the countdown" flow that control()'s NORMAL loop performs. The
-// missing ~0x120 is about the size of TMapObjBall::touchActor, so the
-// original probably expanded that here rather than calling it; no spelling
-// tried reproduces both the size and touchActor's own instruction stream.
-void TResetFruit::pick(THitActor* actor)
+// UNUSED, 0x254 in the map (ours 0x250): touchActor()'s body. Out of line it
+// expands TMapObjBall::touchActor; reached through touchActor() or control()'s
+// NORMAL loop it sits one level deeper, where retail calls that instead.
+void TResetFruit::pick(THitActor* param_1)
 {
-	if (isState(STATE_APPEARING))
+	if (MapObjBallIsState(this, STATE_APPEARING))
 		return;
-	if (isState(STATE_BREAKING))
+	if (MapObjBallIsState(this, STATE_BREAKING))
 		return;
-	if (isState(STATE_ROTTING))
+	if (MapObjBallIsState(this, STATE_ROTTING))
 		return;
-	if (isState(STATE_WAITING_TO_APPEAR))
+	if (MapObjBallIsState(this, STATE_WAITING_TO_APPEAR))
 		return;
 
-	TMapObjBall::touchActor(actor);
+	TMapObjBall::touchActor(param_1);
 
 	if (checkMapObjFlag(MAP_OBJ_FLAG_UNK4000000))
 		return;
 
-	if (isState(STATE_NORMAL) && !checkLiveFlag(LIVE_FLAG_UNK10))
+	// Being knocked about starts the countdown, unless it is being carried.
+	if (MapObjBallIsState(this, STATE_NORMAL)
+	    && !checkLiveFlag(LIVE_FLAG_UNK10))
 		makeObjLiving();
 }
 
@@ -1153,9 +1126,8 @@ void TResetFruit::kicked()
 	}
 }
 
-// UNUSED, 0x188 in the map. The body of control()'s LIVING arm, which the
-// original spells out there rather than calling: at sixteen statements it is
-// over MWCC's depth-1 inline budget, so a call would not have expanded.
+// UNUSED, 0x188 in the map. control()'s LIVING arm without its doubled
+// sand-pillar type test. TODO: 0x190 with one isActorType() (0x1b0 with two).
 void TResetFruit::living()
 {
 	offHitFlag(HIT_FLAG_NO_COLLISION);
@@ -1168,8 +1140,7 @@ void TResetFruit::living()
 
 		const TLiveActor* owner = getGroundPlane()->getActor();
 		if (mPosition.y < mGroundHeight + 200.0f) {
-			if (owner->isActorType(0x400000CD)
-			    || owner->isActorType(0x400000CD)) {
+			if (owner->isActorType(0x400000CD)) {
 				f32 wasRatio = unk198;
 				unk198       = SMS_GetSandRiseUpRatio(owner);
 				if (unk198 > 0.05f && unk198 > wasRatio)
@@ -1279,7 +1250,7 @@ void TResetFruit::control()
 	case STATE_NORMAL:
 		offHitFlag(HIT_FLAG_NO_COLLISION);
 		for (int i = 0; i < mColCount; ++i)
-			TResetFruit::touchActor(mCollisions[i]);
+			pick(mCollisions[i]);
 		if (mGroundPlane->getActor())
 			calcCurrentMtx();
 		break;
@@ -1461,9 +1432,9 @@ BOOL TResetFruit::receiveMessage(THitActor* sender, u32 message)
 	if (MapObjBallIsState(this, STATE_NORMAL)
 	    || MapObjBallIsState(this, STATE_HOLDING)
 	    || MapObjBallIsState(this, STATE_LIVING)) {
-		// Qualified so that TResetFruit::touchActor expands here as it does
-		// in control(); the virtual call cannot be inlined.
-		TResetFruit::touchActor(sender);
+		// pick() expands here as in control(); the virtual touchActor()
+		// could not be inlined.
+		pick(sender);
 
 		BOOL handled = TMapObjBall::receiveMessage(sender, message);
 		// Putting the fruit down starts its countdown.
@@ -1602,10 +1573,8 @@ void TBigWatermelon::touchGround(JGeometry::TVec3<f32>* param_1)
 	TMapObjBall::touchGround(param_1);
 }
 
-// TODO: 61.3%. Structurally right, but the original inlines
-// TMapObjBall::touchActor here and our build emits a call, the same
-// -inline deferred budget difference that affects the TUtil<f32>::sqrt
-// call sites. Worth re-checking once the TU is complete.
+// TMapObjBall::touchActor expands here at depth 1 once its guards are one
+// `||` chain; one level down (TResetFruit::pick) it stays a call.
 void TBigWatermelon::touchActor(THitActor* param_1)
 {
 	if (isState(STATE_APPEARING))
@@ -1646,30 +1615,7 @@ void TBigWatermelon::touchActor(THitActor* param_1)
 		return;
 	}
 
-	// TMapObjBall::touchActor's body is written out here rather than called,
-	// exactly as TBigWatermelon::control writes out TMapObjBall::control's:
-	// the ROM's tail is that body followed by a bl to boundByActor.
-	if (unk194 != 0)
-		return;
-	if (isState(STATE_HOLDING))
-		return;
-	if (isHideObj(param_1))
-		return;
-	if (param_1->isActorType(0x08000083))
-		return;
-	if (param_1->isActorType(0x400000CA))
-		return;
-	if (param_1->isActorType(0x400000CC))
-		return;
-
-	if (param_1->isActorType(0x80000001)) {
-		if (!isActorType(0x400000D0) && SMS_GetMarioSpeedY() != 0.0f) {
-			kicked();
-			return;
-		}
-	}
-
-	boundByActor(param_1);
+	TMapObjBall::touchActor(param_1);
 }
 
 // Binding level over a raw member read, worth +16 of low region in

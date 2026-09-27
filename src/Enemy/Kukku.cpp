@@ -307,7 +307,7 @@ void TKukku::control()
 // 1) (worse), else-first, a (0,1,0) initialiser (worse).
 void TKukku::calcRootMatrix()
 {
-	if (mSpine->getLatestNerve() == &TNerveSmallEnemyDie::theNerve()) {
+	if (isDying()) {
 		// Dead: lie flat against whatever it landed on instead of using the
 		// spine enemy's upright matrix.
 		JGeometry::TVec3<f32> up;
@@ -661,9 +661,7 @@ bool TKukku::isRecoveringGraph() const
 // UNUSED, 0x4c in the map. TODO: dead and fabricated.
 bool TKukku::isDying() const
 {
-	if (mSpine->getLatestNerve() == &TNerveSmallEnemyDie::theNerve())
-		return true;
-	return false;
+	return mSpine->getLatestNerve() == &TNerveSmallEnemyDie::theNerve();
 }
 
 // UNUSED, 0xb4 in the map: Mario is within the search range, measured flat.
