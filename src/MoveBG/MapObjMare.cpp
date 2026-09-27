@@ -155,13 +155,11 @@ TCogwheelScale::TCogwheelScale(const char* name)
 {
 }
 
-// TODO: instructions exact, frame 0x88 vs retail 0x80 (also TWireBell):
-// an unused 8-byte slot sits above the texture. Block-scoping the color or
-// the texture, a const color, and passing color without TColor are inert or
-// worse; a named TColor lands the frame but moves the copy into the named
-// block (see TSwingBoard::initDraw in MapObjMonte). THangingBridge's
-// TColor-returning helper, a GXColor-returning one, a void setter helper and
-// a (GXColor){} literal all trade the named slot for 8 of low region or worse.
+// The colour is a file-scope constant (also in TWireBell::initDraw): a local
+// GXColor is a dead named slot above the texture (frame 0x88), and the
+// constant folds to the same immediate.
+static const GXColor sCogwheelColor = { 0, 0, 100, 255 };
+
 void TCogwheel::initDraw() const
 {
 	GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_F32, 0);
@@ -180,8 +178,7 @@ void TCogwheel::initDraw() const
 	GXSetChanCtrl(GX_COLOR1A1, GX_FALSE, GX_SRC_REG, GX_SRC_REG, 0, GX_DF_NONE,
 	              GX_AF_NONE);
 
-	GXColor color = { 0, 0, 100, 255 };
-	GXSetChanMatColor(GX_COLOR0A0, JUtility::TColor(color));
+	GXSetChanMatColor(GX_COLOR0A0, JUtility::TColor(sCogwheelColor));
 
 	GXSetNumTexGens(1);
 	GXSetTexCoordGen2(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, GX_IDENTITY,
@@ -670,6 +667,8 @@ TMapObjGrowTree::TMapObjGrowTree(const char* name)
 {
 }
 
+static const GXColor sWireBellColor = { 0, 0, 100, 255 };
+
 void TWireBell::initDraw() const
 {
 	GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_F32, 0);
@@ -688,8 +687,7 @@ void TWireBell::initDraw() const
 	GXSetChanCtrl(GX_COLOR1A1, GX_FALSE, GX_SRC_REG, GX_SRC_REG, 0, GX_DF_NONE,
 	              GX_AF_NONE);
 
-	GXColor color = { 0, 0, 100, 255 };
-	GXSetChanMatColor(GX_COLOR0A0, JUtility::TColor(color));
+	GXSetChanMatColor(GX_COLOR0A0, JUtility::TColor(sWireBellColor));
 
 	GXSetNumTexGens(1);
 	GXSetTexCoordGen2(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, GX_IDENTITY,
