@@ -73,3 +73,14 @@ Marker method: `int mk; extp(&mk);` declared first sits right above the dead reg
   That spelling has six fewer inner dead words, which ForceJumped (exact today) needs from its own later code: it drops to 0x10 short, so it is not committed.
   Per rule 8b the block stacks goal, point, index, range from the top in every caller; willFall/KeepBalance then need six more depth-1 words before the expansion.
 - Tool note: GC/1.1 rejects some TUs that 1.2.5 accepts (chuuhana: incomplete `J3DJoint`); prepend the missing `#include` to a scratch copy of the .cpp and pass that to `dbg.sh`.
+
+## Refinements (unit agent c-d3, 2026-09-27)
+
+- **Upper/lower trades.** A named single-use value (`f32 searchDist = p->m.get(); if (d < searchDist)`) is one more dead object in the named block, and can remove one IRO temp from the low region (rule 8), so the frame stays put while every object declared after it moves down 4.
+  A named base pointer used only as an index base (`TGraphWeb* graph = ...->getGraph(); graph->getGraphNode(8)`) is the same trade against the inline `this` binding it replaces.
+  When retail shows extra words *between* two named aggregates and fewer below, look for these two spellings first: `TEnemyMario::emWaitingToInviteMario` closed with one of each.
+- **Callee locals are depth-1 objects.** A named local in an inlined callee's body is created with that callee's depth-1 expansion, ahead of later depth-1 call sites in the caller.
+  `TMario::walkEnd` needed one dead word above `considerRotateStart`'s `direction`: a nested `f32 speed = mForwardVel;` in `isRunningSlipStart` put it there (retail does not emit `isRunningSlipStart` out of line), and `rate = mForwardVel / 4.0f` dropped `getForwardVel()`'s by-value result object below it (rule 5, `g = f(simple)`).
+- **Per-field copy temps.** A by-value `J3DGXColorS10` copy creates four 2-byte IRO temps (one per `s16` field) per distinct source object; copies from one shared source share them (`TYoshi::entry`: sharing one `tevColor` drops 8 of the 12).
+- **Where a by-value copy is created is a depth fact.** `TYoshi::doSearch`'s retail `mTipPos - pos` copies sit below all depth-1 objects, i.e. they are an inline callee's local (`TVec3 r(a); r -= b; return r;`), not the friend operator's by-value parameter, which is created at the call site.
+- The debugger cannot show which expression an IRO temp named: `@N` created and removed inside IRO appears only in `variables.txt`, not in any frontend or backend dump.
