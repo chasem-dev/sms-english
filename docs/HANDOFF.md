@@ -14,7 +14,12 @@ Levers that paid (all in the catalog or TODOs):
 - `.length()` on the unnamed operator- result restores retail's `bl TUtil<f32>::sqrt`; `dst.set(expr, expr, expr)` in place of getZDir at one site.
 - TQuat4::rotate now has rotateQ's one-level body (+2 exact; doAttackPose/makeQuat/bindBody costs recorded in JGQuat4.hpp).
 Rejected as fakematches (recorded in TODOs, do not re-land): bare forwarders (`return a->getMActor();`, binder returning a named search<T> result), an invented enum temporary in one arm (decideUseSector), empty `if (cue & X) {}` (effectObj perform).
-Remaining wall: every batch now reports "frame short with every instruction right" or known-open classes. The two inputs that would move it are the retail map (marioUS.MAP or the JP mario.MAP, for UNUSED helper names/sizes) and the decompiled compiler (RootCubed/mwcceppc-decomp, for dead-stack and inliner rules); both are waiting on the user.
+Remaining wall: every batch now reports "frame short with every instruction right" or known-open classes. The two inputs that would move it are the retail map (marioUS.MAP or the JP mario.MAP, for UNUSED helper names/sizes) and the decompiled compiler (RootCubed/mwcceppc-decomp, for dead-stack and inliner rules); the map is now back (below); the compiler source still waits on the user.
+
+**Map restored (2026-09-27 late).** `orig/GMSE01/files/marioUS.MAP` is untracked, so a fresh container lacks it (this session ran without it until the user found it).
+Source: `https://raw.githubusercontent.com/QbeRoot/Super-Mario-Sunshine-C-Kit/master/marioUS.MAP` (8.0 MB, 102882 lines, CodeWarrior link-map format).
+Verified against `config/GMSE01/symbols.txt`: all 12782 distinct function names sit at the same address and size (the only mismatches are duplicate weak template copies), and the memory map puts `.text` at 0x80005600 size 0x36dab4.
+With it installed, `validate-symbol-order.py` runs again; 14 recently edited unlinked units FAIL it (mostly weak `set<f>` placement and MISSING UNUSED bodies), none linked.
 
 ## State 2026-09-27 (session 5237deed): compiler-internals tooling
 
