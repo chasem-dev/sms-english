@@ -373,3 +373,12 @@ Marker method: `int mk; extp(&mk);` declared first sits right above the dead reg
 - **Reuse the TU's own helpers before inventing one.** `drawMantaShadow` spelled out the ortho and identity blocks that `setupEfbAlpha` already calls as static inlines; calling them puts texObj, the colour copy and proj in retail's order (the 0x78 deficit is then all created after proj).
 - **Not every reversed pair is a callee.** In `TBossHanachan::perform` the offsetX/offsetZ and ground/direction pairs were depth-0 declaration order (`f32 offsetZ, offsetX;`, `ground` declared at the top of the probe loop).
 - `TKumokun::bind` (open): retail's mVelocity copy and `local_f8` are parse-time temporaries under the named block (`+= TVec3<f32>(mVelocity)`, `+= a - b`), which lands the frame and every upper slot but loses the copy out of the difference under the current `operator-` (the open class).
+
+## Refinements (unit agent c-g6, 2026-09-27)
+
+- **Measure the upper region before chasing a reversed block.** Sum the named block from the lowest depth-1 object to the top of the locals in both builds: when the sums agree, the reversal is pure order and the frame gap is all below, so fixing the order alone closes nothing.
+  `TMario::calcBaseMtx`: retail and ours both have 0xcc between the Torocco `Mtx` and the top; retail's order is groundData, p1, p2, p3, 12, axis, ncross, 16, plane, ti, rot, 4, gp, 4 (ours p1..p3, groundData, forward, plane, ncross, axis, bin, ti, the surf blocks' dead pitchRate/delta pairs, rot, gp); the 0x40 deficit is all below swim's `ti`.
+  `TBWLeashNode::calcMatrix` is the same shape: retail mtx, pos, xDir, yDir, zDir against our declaration order, and 28 more words below zDir (0x70, the whole frame gap).
+- **`toCamSpace`'s by-value `in` is created after `out` in retail.** In the inlined `MSStageProc::setBgmPosition` retail stacks camPos, `out`, `in`; `Vec toCamSpace(const Vec& pos) const { Vec in = pos; Vec out; ... }` gives exactly that order but schedules the gpMSound load earlier (+1 instruction) and leaves the frames (0x40-0xb8 short) unchanged, so it was not kept.
+- `MarioWaistCtrl` (frame already equal): retail's single 0x88 `Mtx` over 0x60 of dead objects is two `Mtx` worth; our three per-site `Mtx` reach the same frame by coincidence.
+- `TNerveCannonSearch::execute`: retail's `diff` is the topmost object (a named local created first) and its operator- copy is one word low, i.e. the open `a = b - c` word; not closable per site.
