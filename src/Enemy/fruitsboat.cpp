@@ -588,82 +588,21 @@ void TFruitsBoatManager::load(JSUMemoryInputStream& stream)
 
 TSpineEnemy* TFruitsBoatManager::createEnemyInstance() { return nullptr; }
 
-// TODO: instruction-identical, frame 0x140 against the ROM's 0x120. The ROM
-// puts the direction vector above both pos/rot pairs, which named body locals
-// cannot do, so 0x20 of its locals belong to objects this reconstruction does
-// not create. Declare-then-assign on either `speed` did not move it.
-DEFINE_NERVE(TNerveFruitsBoatGraphWander, TLiveActor)
+// The rowing step both GraphWander sites expand: the body of the UNUSED
+// TFruitsBoat::rowToCurPathNode() less its flag test, which each site makes
+// itself. Expanded from a helper, its pos/rot pairs land in the upper block
+// under the direction vector, one pair per site, as in retail.
+static inline void FruitsBoatRow(TFruitsBoat* boat)
 {
-	TFruitsBoat* boat = (TFruitsBoat*)spine->getBody();
-	// The two spelled-out rowing blocks below do not share slots for these
-	// two vectors when each declares its own pair, so one pair is declared
-	// here (-0x18 of frame).
-	// TODO: the frame is still 8 long at 0x128 against retail's 0x120; the
-	// `node` binder and the `speed`/`marchSpeed` locals are all inert here.
-	JGeometry::TVec3<f32> rot;
-	JGeometry::TVec3<f32> pos;
-
-	if (boat->getTracer()->getGraph() == nullptr
-	    || boat->getTracer()->getGraph()->isDummy())
-		return FALSE;
-
-	// NOTE: the rowing step below is TFruitsBoat::rowToCurPathNode(), which
-	// the map has as an UNUSED symbol -- but it is spelled out at both sites
-	// here rather than called, exactly like TYumbo::lookatMario. Both copies
-	// are byte-identical to the ROM's, and the dead out-of-line copy is a
-	// different length, so the original really did paste it twice.
-	if (boat->isReachedToGoal()) {
-		TGraphNode& node = boat->getTracer()->getCurrent();
-
-		if (node.getRailNode()->mFlags & 0x100)
-			boat->onLiveFlag(TFruitsBoat::LIVE_FLAG_UNK10000);
-		if (node.getRailNode()->mFlags & 0x400)
-			boat->mReversed ^= 1;
-
-		boat->goToDirectedNextGraphNode(
-		    MsGetVecFromRotY(boat->mRotation.y, 1.0f));
-
-		if (!boat->checkLiveFlag(TFruitsBoat::LIVE_FLAG_UNK10000)) {
-			f32 marchSpeed = boat->mMarchSpeed;
-			if (boat->getTracer()->getGraph()->getSplineRail() ? TRUE
-			                                                  : FALSE) {
-				f32 speed = boat->getTracer()->calcSplineSpeed(marchSpeed);
-				boat->getTracer()->traceSpline(speed);
-
-				boat->getTracer()->getGraph()->getSplineRail()->getPosAndRot(
-				    boat->getTracer()->unk14, &pos, &rot);
-
-				pos.sub(boat->mPosition);
-				boat->mLinearVelocity.add(pos);
-
-				boat->mRotation.y = rot.y;
-				if (speed < 0.0f)
-					boat->mRotation.y
-					    = MsAngleWrap(180.0f + boat->mRotation.y);
-			} else {
-				boat->walkToCurPathNode(marchSpeed, boat->mTurnSpeed,
-				                        0.0f);
-			}
-
-			SMSGetMSound()->startSoundActor(MSD_SE_OBJ_PONPONSEN,
-			                                &boat->mPosition, 0, nullptr, 0,
-			                                4);
-		}
-
-		spine->pushAfterCurrent(&theNerve());
-		return TRUE;
-	}
-
-	if (boat->checkLiveFlag(TFruitsBoat::LIVE_FLAG_UNK10000))
-		return FALSE;
-
 	f32 marchSpeed = boat->mMarchSpeed;
-	if (boat->getTracer()->getGraph()->getSplineRail() ? TRUE : FALSE) {
+	if (boat->unk124->getGraph()->getSplineRail() ? TRUE : FALSE) {
 		f32 speed = boat->getTracer()->calcSplineSpeed(marchSpeed);
 		boat->getTracer()->traceSpline(speed);
 
-		boat->getTracer()->getGraph()->getSplineRail()->getPosAndRot(
-		    boat->getTracer()->unk14, &pos, &rot);
+		JGeometry::TVec3<f32> pos;
+		JGeometry::TVec3<f32> rot;
+		boat->unk124->getGraph()->getSplineRail()->getPosAndRot(
+		    boat->unk124->unk14, &pos, &rot);
 
 		pos.sub(boat->mPosition);
 		boat->mLinearVelocity.add(pos);
@@ -675,8 +614,44 @@ DEFINE_NERVE(TNerveFruitsBoatGraphWander, TLiveActor)
 		boat->walkToCurPathNode(marchSpeed, boat->mTurnSpeed, 0.0f);
 	}
 
-	SMSGetMSound()->startSoundActor(MSD_SE_OBJ_PONPONSEN, &boat->mPosition, 0,
-	                                nullptr, 0, 4);
+	gpMSound->startSoundActor(MSD_SE_OBJ_PONPONSEN, &boat->mPosition, 0,
+	                          nullptr, 0, 4);
+}
+
+// TODO: instruction- and frame-exact; the first site's pos/rot pair sits 4
+// bytes low (pos 0xcc against 0xd0), the second is exact. Inert: the flag
+// test inside the helper (also costs two branches), rot declared first,
+// pos/rot/speed declared at the helper's top, raw tracer for `node`, a
+// named direction vector, a const `node`, a named rail node.
+DEFINE_NERVE(TNerveFruitsBoatGraphWander, TLiveActor)
+{
+	TFruitsBoat* boat = (TFruitsBoat*)spine->getBody();
+	if (boat->getTracer()->getGraph() == nullptr
+	    || boat->getTracer()->getGraph()->isDummy())
+		return FALSE;
+
+	if (boat->isReachedToGoal()) {
+		TGraphNode& node = boat->getTracer()->getCurrent();
+
+		if (node.getRailNode()->mFlags & 0x100)
+			boat->onLiveFlag(TFruitsBoat::LIVE_FLAG_UNK10000);
+		if (node.getRailNode()->mFlags & 0x400)
+			boat->mReversed ^= 1;
+
+		boat->goToDirectedNextGraphNode(
+		    MsGetVecFromRotY(boat->mRotation.y, 1.0f));
+
+		if (!boat->checkLiveFlag(TFruitsBoat::LIVE_FLAG_UNK10000))
+			FruitsBoatRow(boat);
+
+		spine->pushAfterCurrent(&theNerve());
+		return TRUE;
+	}
+
+	if (boat->checkLiveFlag(TFruitsBoat::LIVE_FLAG_UNK10000))
+		return FALSE;
+
+	FruitsBoatRow(boat);
 	return FALSE;
 }
 
