@@ -38,7 +38,7 @@ JPABaseEmitter::JPABaseEmitter()
 
 	initStatus(0);
 	setStatus(STATUS_FIRST_EMIT | STATUS_EMIT_NEXT_FRAME);
-	mRng.setSeed(JPAEmitterInfoObj.unk8.get());
+	mRng.setSeed(JPAEmitterInfoObj.unk8.get_bit32());
 }
 
 f32 JPABaseEmitter::getFovy() { return JPAEmitterInfoObj.mFovy; }
@@ -265,17 +265,14 @@ void JPABaseEmitter::calcEmitterGlobalParams()
 	}
 }
 
-// TODO: lever-search closes this only by routing `block` through an identity
-// inline at both mRawData reads (a frame-only level, refused); the real
-// missing level is unknown (2026-09-22).
 void JPABaseEmitter::loadBaseEmitterBlock(JPADataBlock* block)
 {
 	s16 fix;
 	JGeometry::TVec3<s16> fixVec;
 	JGeometry::TVec3<f32> floatVec;
 
-	JSUMemoryInputStream stream2(block->mRawData,
-	                             *(u32*)((u8*)block->mRawData + 4));
+	JSUMemoryInputStream stream2(block->getRawData(),
+	                             *(u32*)(block->getRawData() + 4));
 
 	JSUInputStream& stream = stream2;
 	stream.skip(0xC);
