@@ -1067,10 +1067,13 @@ void TBossPakkun::startTornadoBlur()
 }
 
 // UNUSED, 0xa4 in the map: the StompReact, TumbleOut and PreDie nerves all
-// spell it out. Spits the swallowed water back out and starts the belly
-// deflating.
+// inline it (the unk17C guard is its own, which is what the map size counts).
+// Spits the swallowed water back out and starts the belly deflating.
 void TBossPakkun::resetWaterMark()
 {
+	if (unk17C)
+		return;
+
 	unk17C = 1;
 	unk174 = 0;
 	unk170 = 0;
@@ -1971,12 +1974,9 @@ DEFINE_NERVE(TNerveBPTumbleOut, TLiveActor)
 		}
 	}
 
-	// Inert in resetWaterMark (standalone still 0x98 against the map's
-	// 0xa4): mPos.set(mouth), raw mWaterEmitInfo, raw gpModelWaterManager,
-	// `mouth.y = mouth.y + 250.0f`.
 	if (actor->checkCurBckFromIndex(BOSSPAKU_BCK_RETURN)) {
 		f32 frame = BosspakkunBckFrame(actor);
-		if (140.0f < frame && frame < 160.0f && !boss->unk17C)
+		if (140.0f < frame && frame < 160.0f)
 			boss->resetWaterMark();
 		if (35.0f < frame)
 			boss->unk1BC = 1;
@@ -2035,7 +2035,7 @@ DEFINE_NERVE(TNerveBPStompReact, TLiveActor)
 		boss->mHeadHit->onHitFlag(HIT_FLAG_NO_COLLISION);
 	}
 
-	if (spine->getTime() == 30 && !boss->unk17C)
+	if (spine->getTime() == 30)
 		boss->resetWaterMark();
 
 	if (spine->getTime() == 50)
@@ -2071,8 +2071,7 @@ DEFINE_NERVE(TNerveBPPreDie, TLiveActor)
 	if (spine->getTime() == 0) {
 		boss->changeBck(BOSSPAKU_BCK_UNK5);
 		boss->mHeadHit->onHitFlag(HIT_FLAG_NO_COLLISION);
-		if (!boss->unk17C)
-			boss->resetWaterMark();
+		boss->resetWaterMark();
 		boss->killSmallEnemies();
 		MSBgm::stopTrackBGM(1, 10);
 	}
