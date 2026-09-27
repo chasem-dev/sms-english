@@ -308,11 +308,12 @@ static inline JGeometry::TVec3<f32> fromPolar(f32 theta, f32 radius)
 	                             radius * JMASCos(angle));
 }
 
-// TODO: frame and instructions match; local_34 sits 4 above retail (0xe0 vs
-// 0xdc). Inert: raw unkF4, getPosition()/getRotation() at the angle reads,
-// raw mSLTurnSpeedLow, fVar3 or local_40 declared at the top.
+// diff is declared first: it is a dead named float, and retail keeps its
+// slot above local_34.
 void TTamaNoko::walkBehavior(int param_1, f32 param_2)
 {
+	f32 diff;
+
 	mTurnSpeed  = getSaveParams2()->mSLTurnSpeedLow.get();
 	mMarchSpeed = getSaveParams2()->mSLMarchSpeedLow.get();
 
@@ -321,7 +322,7 @@ void TTamaNoko::walkBehavior(int param_1, f32 param_2)
 	VECMag(&local_34);
 
 	f32 rot  = MsWrap(MsGetRotFromZaxisY(local_34), 0.0f, 360.0f);
-	f32 diff = MsAngleDiff(rot, mRotation.y);
+	diff     = MsAngleDiff(rot, mRotation.y);
 
 	f32 fVar3;
 	if (diff > 0.0f) {
