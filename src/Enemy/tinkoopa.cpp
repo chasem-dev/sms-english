@@ -830,7 +830,8 @@ f32 TTinKoopa::calcCoasterDistanceInOrder(int from, int to)
 		return calcCoasterDistance(from, to);
 
 	f32 distance = calcCoasterDistance(from, mKillerGraph->getNodeNum() - 1);
-	return distance + calcCoasterDistance(0, to);
+	f32 rest     = calcCoasterDistance(0, to);
+	return rest + distance;
 }
 
 // UNUSED, 0xdc in the map: inlined into
@@ -845,10 +846,9 @@ bool TTinKoopa::checkKillerApproachingFromBack(TCoasterKiller* killer,
 	if (killer->getPathDir() != 0)
 		return false;
 
-	int marioNode  = mKillerGraph->findNearestNodeIndex(pos, -1);
-	int killerNode = killer->getPathIdx();
-
-	return calcCoasterDistanceInOrder(killerNode, marioNode) <= limit;
+	return calcCoasterDistanceInOrder(killer->getPathIdx(),
+	                                  mKillerGraph->findNearestNodeIndex(pos, -1))
+	       <= limit;
 }
 
 void TTinKoopa::reset()
@@ -1181,10 +1181,9 @@ void TTinKoopa::checkTinKoopaMessage()
 	checkTinKoopaFirstFlameMessage();
 }
 
-// TODO: 99.8%, frame size exact. Retail's `pos` copy sits 8 bytes lower
-// (0x5c), compares the node in r28 rather than r3, and adds the wrap sum as
-// `f1 + f31`. Inert: swapped or `+=` sum, `from <= to`, a named limit;
-// SMS_GetMarioPos(), a named bool, or killer node first cost frame.
+// The node indices go straight into calcCoasterDistanceInOrder (its bindings
+// are the two words under `pos` and hold the node in r28), the limit is
+// named here, and the wrap sum adds two named distances.
 void TTinKoopa::checkTinKoopaKillerApproachingMessage()
 {
 	for (int i = 0; i < mKillerManager->getActiveObjNum(); i++) {
@@ -1192,9 +1191,8 @@ void TTinKoopa::checkTinKoopaKillerApproachingMessage()
 		if (killer->checkLiveFlag(LIVE_FLAG_DEAD))
 			continue;
 
-		if (checkKillerApproachingFromBack(
-		        killer, *gpMarioPos,
-		        getSaveParams()->getSLKillerApproachingDistance()))
+		f32 limit = getSaveParams()->getSLKillerApproachingDistance();
+		if (checkKillerApproachingFromBack(killer, *gpMarioPos, limit))
 			startTinKoopaMessage(BALLOON_MSG_TINKOOPA_KILLER_APPROACHING);
 	}
 }
