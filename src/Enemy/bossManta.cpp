@@ -819,12 +819,9 @@ bool TBossManta::isDamageable()
 	       || mSpine->getLatestNerve() == &TNerveMantaHitWater::theNerve();
 }
 
-// TODO: moveObject is instruction-identical but this array's inlined slot
-// lands at 0x24 where retail has it at 0x20, directly above AttackMario's
-// `dir`.  One dead 4-byte inline temporary too many; naming the
-// getPolluteRadius() result moves it the wrong way (+8), and the array's
-// const/size/signedness spelling does not move it at all.
-bool TBossManta::isPolluting()
+// Returns the table's byte as is: moveObject tests it with `cmplwi` and the
+// map's 0x28 leaves no room for a bool conversion.
+u8 TBossManta::isPolluting()
 {
 	const u8 pollute[6] = { 1, 1, 1, 1, 1, 1 };
 	return pollute[mGeneration];

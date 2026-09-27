@@ -22,7 +22,7 @@ public:
 	virtual void reset() { }
 
 	void updateAttractor();
-	bool isPolluting();
+	u8 isPolluting();
 	f32 getPolluteRadius();
 	void initNthGeneration(int);
 	bool collidedWithWater();
