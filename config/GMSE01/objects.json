@@ -392,6 +392,7 @@
     "System/MarDirectorLoadResource.cpp",
     "System/MarDirectorPreEntry.cpp",
     "System/MarDirectorSetup2.cpp",
+    "System/MarNameRefGen.cpp",
     "System/MarNameRefGen_BossEnemy.cpp",
     "System/MarNameRefGen_Enemy.cpp",
     "System/MarNameRefGen_Map.cpp",
