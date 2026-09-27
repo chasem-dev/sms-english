@@ -1102,21 +1102,13 @@ BOOL TBossWanwan::receiveMessage(THitActor* sender, u32 message)
 	return TSpineEnemy::receiveMessage(sender, message);
 }
 
-// UNUSED, 0x184 in the map: TNerveBWDie::execute spells this out, because
-// MWCC will not expand a body this big from there.
-// TODO: this standalone copy is 0x27c because at depth 1 it expands both
-// changeBck and TMapCollisionBase::setMtx; retail's 0x184 means one of the two
-// stayed a call in the dead copy. That is also why the weak setMtx the map
-// lists for this TU is missing from our object -- the Die nerve inlines it at
-// every spelling tried (setUpUnk8TRS, setUpMtx, setMtx + setUp).
-// Die's chain reaches setMtx at depth 3 (setUpUnk8TRS, setUpMtx); a bl by
-// the depth budget would need two more levels no symbol supports. Die also
-// keeps center/scale below the fireStartDemoCamera flag temporary (0xb0 vs
-// 0xcc), i.e. as inline temporaries rather than Die's own named locals.
+// UNUSED, 0x184 in the map (this body is exactly that size): the demo camera,
+// the bath pose and collision, and the two hit boxes. TNerveBWDie::execute
+// inlines it and switches off the rest of the collision itself.
 void TBossWanwan::takeBath()
 {
-	gpMarDirector->fireStartDemoCamera("bwanwan_down_camera", nullptr, -1, 0.0f,
-	                                   true, nullptr, 0, nullptr, 0);
+	SMSGetMarDirector()->fireStartDemoCamera("bwanwan_down_camera", nullptr, -1,
+	                                         0.0f, true, nullptr, 0, nullptr, 0);
 	mIsRolling = 0;
 	mRollAngle = 0.0f;
 	mIsInBath  = true;
@@ -1128,21 +1120,9 @@ void TBossWanwan::takeBath()
 	JGeometry::TVec3<f32> scale(mScaling);
 	scale.scale(1.1f);
 
-	TMapCollisionManager* collision = mMapCollisionManager;
-	Mtx mtx;
-	MsMtxSetTRS(mtx, center, mRotation, scale);
-	collision->getUnk8()->setUpMtx(mtx);
-
+	mMapCollisionManager->setUpUnk8TRS(center, mRotation, scale);
 	mHits[0]->onHitFlag(HIT_FLAG_NO_COLLISION);
 	mHits[1]->onHitFlag(HIT_FLAG_NO_COLLISION);
-	TBWLeash* leash = mLeash;
-	for (int i = 0; i < leash->getRope()->mNumPoints; ++i)
-		leash->getNode(i)->onHitFlag(HIT_FLAG_NO_COLLISION);
-	mPicket->onHitFlag(HIT_FLAG_NO_COLLISION);
-
-	changeBck(BWANWAN_BCK_DOWN);
-	mMActor->setBtpFromIndex(0);
-	mMActor->setBrkFromIndex(1);
 }
 
 // UNUSED, 0x84 in the map: the Bark and Shake nerves and TBWPicket's take
@@ -1943,34 +1923,15 @@ DEFINE_NERVE(TNerveBWDie, TLiveActor)
 		return TRUE;
 	}
 
+	// TODO: instruction- and register-exact; the frame is 0x18 short. Retail
+	// has one word less above takeBath's flag temporary, one more between it
+	// and `scale`, one less between `center` and the Mtx and five more below
+	// the Mtx (getScaling()/getPosition() in takeBath add +8 each, but between
+	// `center` and the Mtx).
 	if (spine->getTime() == 0) {
-		// TBossWanwan::takeBath (UNUSED, 0x184) is exactly this block, but
-		// MWCC will not expand it from here, so it is spelled out; see the
-		// comment on that function.
-		SMSGetMarDirector()->fireStartDemoCamera("bwanwan_down_camera", nullptr,
-		                                         -1, 0.0f, true, nullptr, 0,
-		                                         nullptr, 0);
-		boss->mIsRolling = 0;
-		boss->mRollAngle = 0.0f;
-		boss->mIsInBath  = 1;
-		boss->mPosition  = BW_BATH_POS;
-
-		JGeometry::TVec3<f32> center(boss->mPosition);
-		center.y += 500.0f;
-
-		JGeometry::TVec3<f32> scale(boss->getScaling());
-		scale.scale(1.1f);
-
-		boss->getMapCollisionManager()->setUpUnk8TRS(
-		    center, boss->getRotation(), scale);
-
-		boss->mHits[0]->onHitFlag(HIT_FLAG_NO_COLLISION);
-		boss->mHits[1]->onHitFlag(HIT_FLAG_NO_COLLISION);
-		TBWLeash* leash = boss->getLeash();
-		for (int i = 0; i < leash->getRope()->mNumPoints; ++i)
-			leash->getNode(i)->onHitFlag(HIT_FLAG_NO_COLLISION);
+		boss->takeBath();
+		boss->mLeash->invalidateAllCollision();
 		boss->getPicket()->onHitFlag(HIT_FLAG_NO_COLLISION);
-
 		boss->changeBck(BWANWAN_BCK_DOWN);
 		actor->setBtpFromIndex(0);
 		actor->setBrkFromIndex(1);
