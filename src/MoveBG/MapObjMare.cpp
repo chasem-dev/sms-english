@@ -1084,6 +1084,11 @@ static inline MtxPtr MapObjMareGetAnmMtx0(const TMapObjBase* object)
 // saved FPRs. Retail's `scale` sits 8 bytes lower (0x64) at equal frame.
 // Inert or frame-changing: raw getModel() at any binder site, raw mScaling in
 // the wake scale, wakeScale/scale declared at the top.
+// (c-d7) Each binder site costs 0x10 of low region (MapObjMareGetModel(this)
+// ->getAnmMtx(0) 0xc, raw 0). A top-declared `MtxPtr mtx;` assigned from
+// MapObjMareGetModel(this)->getAnmMtx(0) at the first site lands every slot
+// but leaves the frame 8 short (0xc8): retail has one more dead named word
+// above `scale`. Named offset/waveHeight/effectY/speed get registers.
 void TMuddyBoat::calc()
 {
 	f32 x, waveY, yaw, y, z;

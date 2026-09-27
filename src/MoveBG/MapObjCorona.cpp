@@ -469,7 +469,11 @@ void TBathtub::quake(const JGeometry::TVec3<f32>& pos)
 		return;
 	// The direction is thrown away in the shipped build; only the inlined
 	// inv_sqrt guard survives.
-	// TODO: body exact, frame 0x98 against retail's 0xa0 (one 8-byte local).
+	// TODO: instructions exact at frame 0xa0; SMS_ThrowMario's TVec3 temporary
+	// sits at 0x80, retail 0x74. Raw getInitialPosition() (no binder) lands
+	// it but the frame drops to 0x98; `const TVec3& initialPos =
+	// getInitialPosition()` plus getUnk16C() at the last param read lands it
+	// too with frame 0x98, so retail has one more dead named word above it.
 	JGeometry::TVec3<f32> dir;
 	dir.sub(pos, MapObjCoronaGetInitialPosition(this));
 	dir.y = 0.0f;
