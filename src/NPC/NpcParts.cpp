@@ -48,31 +48,13 @@ void SetMActorAnmFrame(MActor* actor, f32 frame, bool set_bck, bool set_btp)
 	}
 }
 
-// TODO: 94.2% (84.8% before batch 136 fixed the clearing loop below), frame
-// 0x1f8 vs 0x190 and eight instructions still missing. The missing ones are
-// one construct: at both defaulted `initSimpleMotionBlend` sites retail emits a
-// dead `li r4,-1; cmpwi r4,-1; bne` and only then reads
-// `mPtrSaveNormal->mMotionBlendFrame`, i.e. the frame count is a **defaulted
-// argument** of a wrapper around MActor::initSimpleMotionBlend that resolves -1
-// to the saved value. Spelling that wrapper as a TU-local `static inline
-// (MActor*, int frame = -1)` does not reproduce it -- MWCC folds the default
-// through one inline level. Header round 23 added the second level and it still
-// folds: `SetPartsMotionBlendFrame(TSharedParts*, int frame = -1)` forwarding
-// to `SetMActorMotionBlendFrame(MActor*, int frame)` (which assigns the
-// parameter, so it cannot be substituted away) leaves all eight instructions
-// missing and the frame unchanged, and passing `-1` explicitly at one level is
-// inert too (frame 0x188 -> 0x198, still eight missing). So the construct is
-// not a defaulted argument across inline levels at all.
-// The sharper clue is the `20` site three arms down: retail emits `li r4,0x14`
-// there with *no* compare, so MWCC folded the constant on that path. One shared
-// wrapper cannot fold 20 and keep -1, so the two defaulted sites reach
-// `MActor::initSimpleMotionBlend` through a *different* callee than the `20`
-// site -- look for a zero-argument NPC-side helper whose -1 is produced by
-// something MWCC will not propagate (an inlined accessor returning the
-// constant, per the surviving `* 1.0f` rule), not by a default argument.
-// TNpcParts' own header only forward-declares TBaseNPC, so that helper is not
-// an inline method of TNpcParts without new includes there. The remaining 104
-// low bytes would live in the same helper.
+// TODO: 98.9%, frame 0x188 vs retail 0x1f8 (0x70 short), an r26/r27 swap
+// (the hoisted `&initInfo->unk4[i]` against the parts/model temporaries) and
+// the `20` site's `li r4, 0x14`, which retail materialises before loading the
+// parts pointer. The dead `li r4,-1; cmpwi r4,-1` at the two defaulted sites
+// is an `s32` local: MWCC's IR optimiser does not fold `x == -1` for an `s32`
+// (long) local assigned `-1`, while an `int` local folds and TU-local inline
+// wrappers substitute the constant (both measured worse).
 TNpcParts::TNpcParts(u32 param_1, const J3DGXColorS10* param_2,
                      TBaseNPC* param_3)
     : unk60(param_3)
@@ -149,7 +131,7 @@ TNpcParts::TNpcParts(u32 param_1, const J3DGXColorS10* param_2,
 					case 0:
 					case 3:
 					case 4:
-						int iVar6 = -1;
+						s32 iVar6 = -1;
 						if (iVar6 == -1)
 							iVar6 = TBaseNPC::mPtrSaveNormal->mMotionBlendFrame
 							            .get();
@@ -160,13 +142,13 @@ TNpcParts::TNpcParts(u32 param_1, const J3DGXColorS10* param_2,
 				break;
 
 			case 0x4000010:
-				if (i == 0 && j == 9)
+				if (j == 0 && i == 9)
 					unk0[j][i]->getMActor()->initSimpleMotionBlend(20);
 				break;
 
 			case 0x4000015:
 				if (j == 0 && i == 10) {
-					int iVar6 = -1;
+					s32 iVar6 = -1;
 					if (iVar6 == -1)
 						iVar6
 						    = TBaseNPC::mPtrSaveNormal->mMotionBlendFrame.get();
@@ -177,7 +159,7 @@ TNpcParts::TNpcParts(u32 param_1, const J3DGXColorS10* param_2,
 
 			for (int k = 0; k < 3; ++k) {
 				const TColorChangeInfo* ccInfo
-				    = initInfo->unk4[i]->unk10[k].unk0;
+				    = initInfo->unk4[i]->unk10[k][j];
 				if (ccInfo != nullptr)
 					SMS_InitChangeNpcColor(unk0[j][i]->getMActor(), ccInfo,
 					                       param3, param4);
