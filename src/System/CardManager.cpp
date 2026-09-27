@@ -138,6 +138,10 @@ void TCardManager::TCriteria::setEmpty()
 // Retail calls this from copyTo and readBlock_: the single-exit result chain
 // (one assignment and one `else` per arm) is what takes the body over the
 // depth-1 budget; early returns cost the same bytes but three statements less.
+// TODO: 93.9%. Retail joins the newer-sector arm through r0 (`li r0; ...;
+// mr r3, r0`) while the other arms load r3 directly. An enum-typed local in
+// that arm alone gives it exactly (100%, c-h18), but a lone temporary of an
+// invented type in one arm is not plausible source, so it is not used.
 s32 TCardManager::decideUseSector(TCardManager::TCriteria* criteria)
 {
 	// TODO: retail keeps the last result in r0 and joins with a single
