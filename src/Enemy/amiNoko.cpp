@@ -164,7 +164,10 @@ static inline u8 AmiNokoGetCurrentMap(TMarDirector* p)
 	return currentMap;
 }
 
-// TODO: instruction-identical, frame 8 bytes short.
+// TODO: instruction-identical, frame exact. TAmiHit's push_back puts the
+// search's TNameRefGen binder after the insert temps where retail has it
+// before; the named-group form in TAmiHit fixes that order but adds a dead
+// group slot and loses one bottom optimizer temp (frame +8).
 void TAmiNoko::init(TLiveManager* manager)
 {
 	TWalkerEnemy::init(manager);

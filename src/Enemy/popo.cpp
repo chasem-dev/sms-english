@@ -374,7 +374,8 @@ void TPopo::init(TLiveManager* manager)
 	mCollision = new TPopoCollision("ポポコリジョン");
 	// Named search is -8 against the 6-site getMActor binder's +0x48, landing
 	// the frame.
-	// TODO: JGadget iterator temps still group 0xc off (stride-8-vs-12 class).
+	// TODO: the push_back temps sit 0xc off retail; a per-site object count
+	// between the depth groups, not a JGadget header property.
 	TIdxGroupObj* group
 	    = JDrama::TNameRefGen::search<TIdxGroupObj>("敵グループ");
 	group->getChildren().push_back(mCollision);

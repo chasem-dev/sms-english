@@ -185,9 +185,11 @@ void TObjHitCheck::checkAndEntryGroup(TIdxGroupObj* group)
 	}
 }
 
-// TODO: frame and instructions match; retail places the four iterator
-// temporaries 4 bytes lower (0x64 vs 0x68). Moving `e`, splitting `i`,
-// naming `*it` and re-spelling begin()/end() were inert or worse.
+// TODO: frame and instructions match; the six loop iterator copies sit 4
+// high: retail has one more depth-1 compiler temp from the loop body (the
+// checkHitFlag/getPosition/getEntryRadius/getTableIndex/entryActor binders),
+// not an iterator property. Inert: `unk0 + i`, named pos/radius/list/out,
+// a named result in getTableIndex (dead named slots land at the top), it++.
 void TObjHitCheck::entryGroup(TIdxGroupObj* group)
 {
 	JGadget::TList_pointer<THitActor*>& children = group->getChildren();
@@ -270,7 +272,8 @@ void TObjHitCheck::checkGroup(TIdxGroupObj* group)
 }
 
 // TODO: frame 0x20 short: checkGroupPlayer's iterator block sits 4 lower than
-// retail (JGadget iterator block stride, known open).
+// retail; a per-expansion missing object in the inlined bodies, not a
+// JGadget header property (research c-r4).
 void TObjHitCheck::checkActorsHit()
 {
 	initTable();
@@ -294,8 +297,11 @@ void TObjHitCheck::checkActorsHit()
 		checkGroupPlayer(gpStrategy->unk10[5]);
 }
 
-// TODO: frame 0x30 short: each clearGroup expansion is 4 short in both its
-// iterator block and its low temps. Inert: unnamed children, begin before end.
+// TODO: frame 0x30 short: each clearGroup expansion is one object short in
+// its depth-1 block and one in its depth-2 block (after the operator==
+// copies). `THitActor* actor;` first in clearGroup with `actor = *it;` fixes
+// the depth-1 block (0x210); the depth-2 word is still unfound (inert:
+// unnamed children, begin before end, while loop, pointer children, it++).
 void TObjHitCheck::clearHitNum()
 {
 	if (!(gpStrategy->unk50 & 0x100))

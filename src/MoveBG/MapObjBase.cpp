@@ -695,6 +695,10 @@ BOOL TMapObjBase::receiveMessage(THitActor* sender, u32 message)
 	return false;
 }
 
+// TODO: the search's TNameRefGen binder sits after the insert temps (retail:
+// before) and one extra optimizer temp at the bottom. Named group plus
+// getChildren fixes the order with two extra temps (+8); a direct
+// getRootNameRef()->search() into a named group leaves the depth-1 pair 4 low.
 void TMapObjBase::initAndRegister(const char* param_1)
 {
 	unkF4 = param_1;

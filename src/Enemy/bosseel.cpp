@@ -104,6 +104,10 @@ TBEelTearsDrop::TBEelTearsDrop(TBEelTears* owner, int jointIndex,
 	             BEelTearsParams(mOwner)->mSLTearsDropAttackHeight.get(),
 	             BEelTearsParams(mOwner)->mSLTearsDropDamageRadius.get(),
 	             BEelTearsParams(mOwner)->mSLTearsDropDamageHeight.get());
+	// TODO: the push_back depth-2 pair sits 4 high: retail's search
+	// TNameRefGen binder precedes the insert temps. A named list reference
+	// fixes that pair but drops the depth-1 pair 4; the named-group form
+	// loses a bottom optimizer temp.
 	JDrama::TNameRefGen::search<TIdxGroupObj>("敵グループ")
 	    ->getChildren()
 	    .push_back(this);

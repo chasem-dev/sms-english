@@ -407,3 +407,12 @@ Marker method: `int mk; extp(&mk);` declared first sits right above the dead reg
   The exact `*BM` functions keep the index-free accessor, so the two spellings are per function.
 - **Unnamed repeated reads decide operand order a named local hid.** With `bm` gone, `getLastSaveTime() == info.unk8` (flag time on the left) gives retail's load order and xor operands at all four sites (320 -> 272 non-stack diff lines); with the named `bm` the order had been inert.
 - **Pair anchors, then attribute each gap to a region.** Deltas between consecutive paired slots (`retail - ours`) located every missing word to one inline site before any edit; a candidate that changes only the bottom delta (SMSGetMSound, a named `flags` in the inlined free function) is an IRO or depth-2 lever, not a site lever.
+## Refinements (unit agent c-g8, 2026-09-27)
+
+- Slots are assigned bottom-up in reverse creation order, so a pair that sits 4 high has one extra object below it (or one missing between it and the next matching anchor); the gap under the saved registers is only alignment.
+  Optimizer-created temps (absent from `frontend-00`) fill the bottom of the frame, and their count changes with the spelling of any statement.
+- A named local that the optimizer propagates away keeps a dead slot among the named locals at the top; a named local that is register-allocated takes none.
+- `TKukkuBall::init` closed at a statement away from the push_back: `J3DModelData* data = mMActor->getModel()->getModelData();` in the `if` block, with the `KukkuGetModel` wrapper removed, takes one depth-1 temp out of the region under the push_back pair and adds the dead named slot on top.
+- The chained `search<TIdxGroupObj>(...)->getChildren().push_back(x)` sites (`TPoiHana::init`, `TBEelTearsDrop`, `TAmiNoko::init` via `TAmiHit`, `TMapObjBase::initAndRegister`) share one residue: retail creates the search's `TNameRefGen` binder before the insert temps, and ours creates it after them.
+  The two-line `TIdxGroupObj* group = search<>(...); group->getChildren().push_back(x);` form gives retail's order at every site, but the optimizer-temp count at the bottom is then off by -1 (poihana, TBEelTearsDrop, amiNoko) or +2 (MapObjBase), so none is committed.
+  A direct `getInstance()->getRootNameRef()->search()` does the same with a different temp count, and a named list reference fixes the depth-2 pair but drops the depth-1 pair by 4.

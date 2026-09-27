@@ -349,7 +349,8 @@ TBiancoGateKeeper::TBiancoGateKeeper(const char* name)
 // TODO: frame 0x178 vs retail 0x1c8 and `this` reloaded into r28 where
 // retail uses r30 after the keeper ctor.  Every instruction else matches;
 // the slots are the three push_back pools (this body plus the pasted
-// TBGKObstacle/TGKHitObj ctors), the known-open JGadget stride class:
+// TBGKObstacle/TGKHitObj ctors), per-site object counts between depth
+// groups (not a header property):
 // the Obstacle group's internal spacing already equals retail's, the
 // HitObj and own groups differ by 4-8 per group.  Naming the searched
 // TIdxGroupObj at any subset of the three sites moves 0 or +8 (cc32).

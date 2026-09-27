@@ -152,9 +152,11 @@ void TPoiHana::init(TLiveManager* param_1)
 	unk19C = (TPoihanaSaveLoadParams*)getSaveParam();
 	unk1BC = new TPoiHanaCollision;
 
-	// TODO: the push_back temporaries sit at 0x6c/0x70, retail 0x68/0x6c (the
-	// JGadget stride class). Naming the group is -8 of frame; a named
-	// collision pointer or an explicit THitActor* cast are inert.
+	// TODO: the push_back depth-2 pair sits 4 high: retail creates the
+	// search's TNameRefGen binder before the insert temps (as the two-line
+	// `TIdxGroupObj* group = search<>(); group->getChildren()...` form
+	// does), but that form, a direct getRootNameRef()->search() and a named
+	// list reference each lose one optimizer temp at the frame bottom.
 	JDrama::TNameRefGen::search<TIdxGroupObj>("敵グループ")
 	    ->getChildren()
 	    .push_back(unk1BC);
