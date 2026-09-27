@@ -39,6 +39,7 @@
     "Enemy/enemytable.cpp",
     "Enemy/generator.cpp",
     "Enemy/launcher.cpp",
+    "Enemy/mameGesso.cpp",
     "Enemy/riccohook.cpp",
     "Enemy/seal.cpp",
     "Enemy/spline.cpp",
