@@ -256,3 +256,13 @@ Marker method: `int mk; extp(&mk);` declared first sits right above the dead reg
   `changeState` and `updateGameMode` pair the same way: 0x50 below their lowest object, plus words between; `decideNextScenario` (only `smInstance->getBool` calls and the inlined shadow-Mario loop) has no dead object in ours and 7 words in retail.
 - Reading: retail's director code reached other classes' fields and non-simple receivers through inline accessors whose bindings and result objects die (rule 4), where ours reads fields raw (`gpMSound->unkA8`, `gpSilhouetteManager->unk48`, `gpCamera->unk2C8`, pad button fields).
   `TSelectDir::direct` and `TMovieDirector::direct` have the same bottom-region deficit class. The fix is per-site real accessors, not a shared header; none was committed here.
+
+## Accessor pricing on the director deficits (unit agent c-d17, 2026-09-27)
+
+- **Real accessors supply at most 0x38 of `currentStateFinalize`'s 0x90** (no stack access, so the frame is the whole score).
+  `unk18[0]->offFlag(f)` for the five raw `mFlags &= ~f` is +0x18, `getGamePad()->offFlag(f)` +0x28; `mCurrArea.getStage()`/`getScenario()` +8 each; best combination 0xc8 against 0x120.
+  Inert: `search2`, the spelled-out `getInstance()->getRootNameRef()->search`, named search receivers, `getConsole()`, `SMSGetCamera()`, `!unk124`.
+- `TMarDirector::direct`: only `gpCamera->getUnk2C8()` moves the frame (+8); `isUnk48Positive()`, `SMSGetMSound()`, `getGamePad(i)` and unnaming `pad` are inert or break code.
+- `TSelectDir::direct` pairs as: 1-2 words above `res` (created before it), one word between `res` and the `setColor` by-value copy, 29 words below every object; `isFullyFadedOut()` for the last compare supplies one of the low words, and no colour spelling adds the middle one without reordering.
+- The class covers every director, not only MarDirector: `TGCLogoDir::direct` (0x30: one word between its JUTRect and TColor temporaries, 14 below), `direct_nlogo` 0xa8, `TMenuDirector::direct` 0xb0, and the three `setup`s (0x18, the JDRDStageGroup.hpp TODO). Look for one shared construct, not per-site accessors.
+- `decideNextScenario` is instruction-exact with `int scenario = 0;` and an else-if chain ending `else scenario = 0;` (retail hoists the first `li r3, 0`); its 5-7 dead words are still unexplained.
