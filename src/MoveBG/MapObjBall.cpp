@@ -486,10 +486,6 @@ void TMapObjBall::calcCurrentMtx()
 	getModel()->setAnmMtx(0, rot);
 }
 
-// Binding level over the physical-parameter chain, sizing
-// TMapObjBall::checkWallCollision's low region.
-static inline f32 MapObjBallBodyRadius(const TMapObjBall* p) { return p->mBodyRadius; }
-
 static inline const TMapObjPhysicalInfo* MapObjBallPhysical(const TMapObjBall* p)
 {
 	return p->mMapObjData->mPhysical;
@@ -501,24 +497,19 @@ static inline u32 MapObjBallWallCheckFlags(const TMapObjBall* p)
 	return flags;
 }
 
+// TODO: 99.7%. Every instruction matches and the frame is exact; retail
+// puts `centre` (0x28) below the check record (0x34) where ours puts it
+// above. mBodyRadius read inside the sum gives retail's y-then-radius load
+// order. Declaring the record first and filling it field by field
+// reorders the slots but reloads the radius (four instructions).
 void TMapObjBall::checkWallCollision(JGeometry::TVec3<f32>* param_1)
 {
 	JGeometry::TVec3<f32> centre;
 	centre.x = param_1->x;
-	f32 radius = MapObjBallBodyRadius(this);
-	centre.y = param_1->y + radius;
+	centre.y = param_1->y + mBodyRadius;
 	centre.z = param_1->z;
 
-	// TODO: 99.3%. Every instruction matches and the frame is exact; retail
-	// puts `centre` below the check record where ours puts it above, and
-	// loads param_1->y into f0 before the radius. Declaration order among
-	// the two named locals cannot be reversed (the record's constructor
-	// consumes centre). Measured (h3): declaring `TBGWallCheckRecord check;`
-	// first and filling it field by field from a named `radius` puts centre
-	// below the record as retail does, but every slot then sits 4 low (a
-	// hole at 0x5c) and the y/radius load order is still swapped; unnamed
-	// radius reloads it after the centre stores.
-	TBGWallCheckRecord check(centre, radius, 4,
+	TBGWallCheckRecord check(centre, mBodyRadius, 4,
 	                         MapObjBallWallCheckFlags(this));
 
 	if (gpMap->isTouchedWallsAndMoveXZ(&check)) {
