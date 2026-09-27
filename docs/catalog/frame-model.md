@@ -144,3 +144,11 @@ Marker method: `int mk; extp(&mk);` declared first sits right above the dead reg
 - `TApplication::initialize_nlogoAfter` (open, c-d8): without the `this_00` name and with the stage-archive search behind a binder over `search2`, frame and every slot land except the option stream's ctor binding (4 high): one more depth-1 object belongs between the two stream constructions and one fewer below.
 - `TBaseNPC::npcMadding` (open, c-d8): retail ranks the vectors named result (top), parse-time temporary, depth-1 callee local (lowest), i.e. `TVec3 v = a - b` through a by-value-returning `operator-`; a TU-local by-value helper reproduces that order but not the registers. Header class (JGVec3.hpp cc23 shape).
 - The `new JUTTexture` storeTIMG `this` copy (CardSave initData, Guide load, GCConsole2, SelectMenu, Talk2D2) appears in retail at sites whose source is identical to copy-free ones (CardLoad, GCConsole2 vs CardLoad coin loops); a TU-local texture loader helper does not produce it.
+
+## Refinements (unit agent c-d9, 2026-09-27)
+
+- **A this-taking inline moves a whole statement's bindings one depth down.** `TSpineEnemy::goToRandomNextGraphNode`/`goToRandomEscapeGraphNode` (closed): the if/else node choice's five `getTracer()->...` receiver bindings sat above `setGoalPathFromGraph`'s TVec3/TPathNode block; retail has the block on top.
+  Wrapping the if/else in `static inline void f(TSpineEnemy* enemy)` (argument `this` is simple, so no depth-1 binding) creates the bindings at depth 2, after the block, with no instruction change.
+  A helper taking the tracer (`f(getTracer())`) or per-read helpers returning values do not work: the argument binding or the result objects stay at depth 1.
+- **Chained accessors expand by nesting, not statement depth.** In `jumpToNextGraphNode` the receiver chain inside `getGraphNode(getTracer()->getCurGraphIndex()).checkFlag()` is created after `setGoalPathFromGraph`'s block although both are caller-level code; the idx statement's three bindings sit above it.
+- **Moving a loop into an inline changes its induction setup.** The exclusive variant's loop moved into a helper gets `li r29, 0; addi r30, r29, 0` instead of retail's two `li`; a helper holding named `currIdx`/`idx` also drops the `mr` copies retail keeps (goToDirectedNextGraphNode), so those locals are caller-level in retail.
