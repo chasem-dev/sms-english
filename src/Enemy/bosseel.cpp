@@ -404,10 +404,15 @@ void TBEelTears::moveObject()
 	TLiveActor::moveObject();
 }
 
-// TODO: 97.3%. Retail loads the 0.1f literal right after the TPosition3f
-// ctor, before the translation stores; ours loads it after the mSpawnMtx read.
-// Tried: 0.1f as the left factor, `+=` forms, a named rate, a named at(0, 3),
-// a named rate after the TPosition3f ctor (+8 frame, load still late).
+// Moves v a fraction `rate` of the way towards target. Retail loads the rate
+// before the translation stores and multiplies it on the left, which only this
+// inlined shape (the rate a parameter, the step a named local) reproduces.
+static inline void BEelApproach(f32& v, f32 target, f32 rate)
+{
+	f32 d = target - v;
+	v += rate * d;
+}
+
 void TBEelTears::calcRootMatrix()
 {
 	if (mSpawnMtx != nullptr) {
@@ -417,12 +422,8 @@ void TBEelTears::calcRootMatrix()
 
 		if (mSpine->getCurrentNerve() == &TNerveBEelTearsGenerate::theNerve()) {
 			TPosition3f transform(mPosition.x, mPosition.y, mPosition.z);
-			transform.ref(0, 3)
-			    = transform.at(0, 3)
-			      + (mSpawnMtx[0][3] - transform.at(0, 3)) * 0.1f;
-			transform.ref(2, 3)
-			    = transform.at(2, 3)
-			      + (mSpawnMtx[2][3] - transform.at(2, 3)) * 0.1f;
+			BEelApproach(transform.ref(0, 3), mSpawnMtx[0][3], 0.1f);
+			BEelApproach(transform.ref(2, 3), mSpawnMtx[2][3], 0.1f);
 
 			mScaling.setAll(mTearsParams->mSLBodyScaleLow.get());
 			mMActor->getModel()->setBaseScale(mScaling);
