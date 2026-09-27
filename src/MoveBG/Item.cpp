@@ -930,14 +930,9 @@ void TShine::loadAfter()
 
 static inline u8 ShineLoadNo(s32 v) { return v + 1; }
 
-// TODO: 100% of instructions and frame (0x50, via the by-value u8 level
-// ShineLoadNo, +8); only `v` is 4 high (ours 0x1c, retail 0x18: retail has a
-// dead 4-byte slot between `eventId` 0x20 and `v`). Tried on 2026-09-22 with
-// no effect on that slot: an `s32` fork on each read (+8 each, v stays right
-// below eventId), `v` declared beside eventId or in a nested block, reading
-// straight into eventId, `u32`/`int` result levels (instruction changes), a
-// named scalar declared after `name` (moves name). The earlier setEventId
-// carrier note in MapObjBase.hpp still applies.
+// The by-value u8 level ShineLoadNo is +8 of frame. The named u32 id handed to
+// setEventId is retail's dead word between `eventId` and `v`: it replaces the
+// setter's long->u32 argument binding, which sat below `v`.
 void TShine::loadBeforeInit(JSUMemoryInputStream& stream)
 {
 	char name[0x20];
@@ -953,7 +948,8 @@ void TShine::loadBeforeInit(JSUMemoryInputStream& stream)
 	stream >> eventId;
 	if (eventId == -1)
 		eventId = 120;
-	setEventId(eventId);
+	u32 id = eventId;
+	setEventId(id);
 
 	s32 v;
 	stream >> v;
