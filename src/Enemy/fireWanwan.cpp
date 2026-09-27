@@ -2343,16 +2343,16 @@ DEFINE_NERVE(TNerveFireWanwanHungTail, TLiveActor)
 // TODO: fake
 static inline JGeometry::TVec3<f32> fromPolar(f32 theta, f32 radius)
 {
-	return JGeometry::TVec3<f32>(radius * JMASSin(theta * (65536.0f / 360.0f)),
-	                             0.0f,
-	                             radius * JMASCos(theta * (65536.0f / 360.0f)));
+	JGeometry::TVec3<f32> v(radius * JMASSin(theta * (65536.0f / 360.0f)),
+	                        0.0f,
+	                        radius * JMASCos(theta * (65536.0f / 360.0f)));
+	return v;
 }
 
-// TODO: frame 0xd0, retail 0x100. Retail copies fromPolar's result (built at
-// 0xc4, returned at 0x10) into a separate stack `vel` at 0xdc before
-// mVelocity, and fuses x*x + y*y in the squared test; ours elides that copy.
-// Assign-later vel, vel.set(), a chained assign, dot() and a hand-written
-// sum are inert or worse.
+// TODO: frame 0xf8, retail 0x100. Retail copies fromPolar's result (built at
+// 0xc4, returned at 0x10 in the low region) into `vel` at 0xdc and into
+// mVelocity both from the 0x10 temporary, and fuses x*x + y*y in the squared
+// test; ours returns at 0xb8 and copies mVelocity from vel.
 DEFINE_NERVE(TNerveFireWanwanFly, TLiveActor)
 {
 	TFireWanwan* self = FireWanwanGetBody(spine);
@@ -2362,9 +2362,9 @@ DEFINE_NERVE(TNerveFireWanwanFly, TLiveActor)
 		self->getMActor()->setBtkFromIndex(0);
 		self->getMActor()->setFrameRate(SMSGetAnmFrameRate(), ANM_TYPE_BTK);
 
-		JGeometry::TVec3<f32> vel
+		JGeometry::TVec3<f32> vel;
+		self->mVelocity = vel
 		    = fromPolar(self->mRotation.y, self->unk194->mThrowPow);
-		self->mVelocity = vel;
 
 		SMS_EasyEmitParticle(PARTICLE_MS_FUMI_C, self->getTailMtx(), self,
 		                     JGeometry::TVec3<f32>(1.0f, 1.0f, 1.0f));
