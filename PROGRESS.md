@@ -11,12 +11,12 @@ Measured from `build/GMSE01/report.json` on 2026-09-27.
 
 | | Fuzzy match | Perfect match | Fully linked | Linked units |
 | --- | ---: | ---: | ---: | ---: |
-| Game | 99.45% | 66.72% | 17.63% | 196 / 385 |
+| Game | 99.47% | 66.77% | 18.42% | 197 / 385 |
 | JSystem | 99.89% | 93.40% | 81.22% | 186 / 198 |
 | SDK | 100.00% | 99.71% | 99.54% | 148 / 149 |
-| All | 99.55% | 72.76% | 32.25% | 530 / 732 |
+| All | 99.56% | 72.79% | 32.88% | 531 / 732 |
 
-11,992 of 12,904 functions match. The rebuilt DOL remains byte-identical to the original.
+11,993 of 12,904 functions match. The rebuilt DOL remains byte-identical to the original.
 
 ## What recent batches have done
 
