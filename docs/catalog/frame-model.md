@@ -245,3 +245,14 @@ Marker method: `int mk; extp(&mk);` declared first sits right above the dead reg
 - `processMoveNozzle` (no inlinable call besides the JUTPoint ctor) needs 5-12 bytes created before its nine temporaries and 16 words after them.
   A named per-case `int y = -30;` passed to `JUTPoint(0, y)` gives exactly the upper part (three dead named words); named `bool`/switch locals are inert (they take registers), a statement-bodied pane binder is +2 words per site, below.
   The 16 low words are unexplained: our function has no IRO temp in the stack at all, so the retail low region is objects created after inlining that our spelling never makes.
+
+## The MarDirector deficit is not a name-search level (structural agent c-s3, 2026-09-27)
+
+- **Every binding level on the search chain loses tree-wide.** Census against 11920 exact, one level at a time (`JDRNameRefGen.hpp`/`JDRNameRef.hpp` overlays, full build):
+  a named local in `getInstance()` 11773 (19 up / 167 down), in `getRootNameRef()` 11803 (15/128), `TNameRef::search` binding its result 11798 (15/133) or its key 11865 (2/64), `search<T>` binding the call result or the cast result 11812 (15/125), binding the root or root-then-result 11811 (14/128).
+  The direct-return chain in the tree is right for the great majority of the ~250 sites; do not re-test these.
+- **The levels cannot reach retail's frame anyway.** A 48-variant grid (the four levels crossed, `-opt`/`-inline`/compiler-version flags included separately) moves `TMarDirector::currentStateFinalize` (four search sites) from 0x90 to at most 0x110; retail is 0x120.
+- **The deficit is in functions with no search at all, and it sits at the bottom.** `direct()` (0x48 short, no search, no flag reads) has exactly three stack objects in ours (`local_40`, the 0x100-byte `TGraphics`, one dead `unk18[i]` binding under it); pairing its slots with retail's shifts every one of them, the lowest included, by exactly 0x48, so retail has 18 more words created *after* the `TGraphics` (inline bindings or IRO temps), not a header-level word per search.
+  `changeState` and `updateGameMode` pair the same way: 0x50 below their lowest object, plus words between; `decideNextScenario` (only `smInstance->getBool` calls and the inlined shadow-Mario loop) has no dead object in ours and 7 words in retail.
+- Reading: retail's director code reached other classes' fields and non-simple receivers through inline accessors whose bindings and result objects die (rule 4), where ours reads fields raw (`gpMSound->unkA8`, `gpSilhouetteManager->unk48`, `gpCamera->unk2C8`, pad button fields).
+  `TSelectDir::direct` and `TMovieDirector::direct` have the same bottom-region deficit class. The fix is per-site real accessors, not a shared header; none was committed here.
