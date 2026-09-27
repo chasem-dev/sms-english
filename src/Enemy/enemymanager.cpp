@@ -59,7 +59,12 @@ void TSharedMActorSet::calcAnm()
 		unk0[i]->calcAnm();
 }
 
-void TSharedMActorSet::setScale(const JGeometry::TVec3<f32>&) { }
+// UNUSED (0x48).
+void TSharedMActorSet::setScale(const JGeometry::TVec3<f32>& scale)
+{
+	for (int i = 0; i < unk4; ++i)
+		unk0[i]->getModel()->setBaseScale(scale);
+}
 
 TEnemyManager::TEnemyManager(const char* name)
     : TLiveManager(name)

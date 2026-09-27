@@ -25,22 +25,6 @@
 #include <MSound/MSoundBGM.hpp>
 #include <M3DUtil/InfectiousStrings.hpp>
 
-// FABRICATED
-inline bool TBGTentacle::isAttackable()
-{
-	if (mTakeHit->checkHitFlag(HIT_FLAG_CANNOT_ATTACK))
-		return false;
-	if (mState == 10)
-		return false;
-	if (mState == 4)
-		return false;
-	if (mState == 6)
-		return false;
-	if (mState == 1 || mOwner->getAttackMode() == 7)
-		return true;
-	return false;
-}
-
 static const char* tstatestr[] = {
 	"TSTATE_WAIT",     "TSTATE_ATTACK", "TSTATE_REST", "TSTATE_HELD",
 	"TSTATE_AMPUTEE",  "TSTATE_STUN",   "TSTATE_HIDE", "TSTATE_FOLLOWBODY",
@@ -265,9 +249,9 @@ TBGTakeHit::TBGTakeHit(TBGTentacle* owner, const char* name)
 	unk74.zero();
 }
 
-// TODO: these were almost surely calling onHitFlag/offHitFlag, but what flag?..
-void TBGTakeHit::enableAttackCheck() { }
-void TBGTakeHit::disableAttackCheck() { }
+// UNUSED (0x10 each).
+void TBGTakeHit::enableAttackCheck() { offHitFlag(HIT_FLAG_CANNOT_ATTACK); }
+void TBGTakeHit::disableAttackCheck() { onHitFlag(HIT_FLAG_CANNOT_ATTACK); }
 
 MtxPtr TBGTakeHit::getTakingMtx() { return unk80; }
 
@@ -337,7 +321,7 @@ BOOL TBGTakeHit::receiveMessage(THitActor* sender, u32 message)
 			    && casted->getHeldObject() != this)
 				return false;
 
-			if (mOwner->isThing3()) {
+			if (mOwner->canTake()) {
 				mHolder = casted;
 				mOwner->changeStateAndFixNodes(3);
 				mOwner->getOwner()->unk1A0 = 1;
@@ -448,7 +432,7 @@ void TBGTakeHit::perform(u32 cue, JDrama::TGraphics* graphics)
 			unk74.zero();
 		}
 
-		if (mOwner->isAttackable()) {
+		if (mOwner->isAttacking()) {
 			for (int i = 0; i < mColCount; ++i) {
 				THitActor* col = mCollisions[i];
 				if (!col->isActorType(0x80000001))
@@ -490,7 +474,7 @@ void TBGAttackHit::perform(u32 cue, JDrama::TGraphics* graphics)
 	if (cue & CUE_MOVE) {
 		mPosition = mOwner->mSpline->getPoint(mPosOnSpline);
 
-		if (mOwner->isAttackable()) {
+		if (mOwner->isAttacking()) {
 			for (int i = 0; i < mColCount; ++i) {
 				THitActor* col = mCollisions[i];
 				if (gpMarioOriginal->isRoofing())
@@ -719,9 +703,33 @@ void TBGTentacle::throwMario(THitActor* param_1, THitActor* param_2)
 	mOwner->stopIfRoll();
 }
 
-BOOL TBGTentacle::isAttacking() const { }
+// UNUSED (0x74).
+bool TBGTentacle::isAttacking() const
+{
+	if (mTakeHit->checkHitFlag(HIT_FLAG_CANNOT_ATTACK))
+		return false;
+	if (mState == 10)
+		return false;
+	if (mState == 4)
+		return false;
+	if (mState == 6)
+		return false;
+	if (mState == 1 || mOwner->getAttackMode() == 7)
+		return true;
+	return false;
+}
 
-bool TBGTentacle::canTake() const { }
+// UNUSED (0x3c).
+bool TBGTentacle::canTake() const
+{
+	if (mState == 10)
+		return false;
+	if (mState == 4)
+		return false;
+	if (mState == 6)
+		return false;
+	return true;
+}
 
 f32 TBGTentacle::getNodeLen() const
 {
@@ -933,12 +941,19 @@ void TBGTentacle::changeStateAndFixNodes(int new_state)
 		mTakeHit->offHitFlag(HIT_FLAG_NO_COLLISION);
 
 	if (mState == 9)
-		mTakeHit->onHitFlag(HIT_FLAG_CANNOT_ATTACK);
+		mTakeHit->disableAttackCheck();
 
 	mTakeHit->offHitFlag(HIT_FLAG_CANNOT_GET_HIT);
 }
 
-void TBGTentacle::returnToDefaultState() { }
+// UNUSED (0x40).
+void TBGTentacle::returnToDefaultState()
+{
+	if (mOwner->getAttackMode() == 6)
+		changeStateAndFixNodes(9);
+	else
+		changeStateAndFixNodes(0);
+}
 
 void TBGTentacle::moveNode()
 {
@@ -1177,10 +1192,7 @@ void TBGTentacle::decideOwnState()
 
 		if (getState() == 5
 		    && mTimeInCurrentState >= mOwner->getSaveParam2()->getSLStunTime()) {
-			if (mOwner->getAttackMode() == 6)
-				changeStateAndFixNodes(9);
-			else
-				changeStateAndFixNodes(0);
+			returnToDefaultState();
 		}
 	} // FALLTHROUGH
 
@@ -1188,10 +1200,7 @@ void TBGTentacle::decideOwnState()
 	case 2:
 		if (getState() == 2
 		    && mTimeInCurrentState >= mOwner->getSaveParam2()->getSLRestTime()) {
-			if (mOwner->getAttackMode() == 6)
-				changeStateAndFixNodes(9);
-			else
-				changeStateAndFixNodes(0);
+			returnToDefaultState();
 		}
 		break;
 
@@ -1313,7 +1322,7 @@ void TBGTentacle::calcAtkParticleAndSE()
 
 void TBGTentacle::decideAtkColExists()
 {
-	mTakeHit->onHitFlag(HIT_FLAG_CANNOT_ATTACK);
+	mTakeHit->disableAttackCheck();
 
 	f32 frame = unk80->getFrameCtrl(0)->getFrame();
 
@@ -1346,9 +1355,9 @@ void TBGTentacle::decideAtkColExists()
 	}
 
 	if (shouldCollisionExist) {
-		mTakeHit->offHitFlag(HIT_FLAG_CANNOT_ATTACK);
+		mTakeHit->enableAttackCheck();
 	} else {
-		mTakeHit->onHitFlag(HIT_FLAG_CANNOT_ATTACK);
+		mTakeHit->disableAttackCheck();
 	}
 }
 
