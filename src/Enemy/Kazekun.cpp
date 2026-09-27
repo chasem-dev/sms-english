@@ -558,13 +558,14 @@ DEFINE_NERVE(TNerveKazekunPreAttack, TLiveActor)
 	return FALSE;
 }
 
-// TODO: 99.9%, every instruction right. Frame 0x1e8 against retail's 0x1f0:
-// retail's `vel` sits 0xc higher (right under the saved registers) and the
-// second inlined getAroundQuat block (mtx 0x8c, up 0xd8) 4 bytes lower.
-// Inert or worse after the TQuat4::mul rewrite (2026-09-23): the five
-// doAttack orders of target/quat/dir, quat assigned after declaration,
-// toGoal.sub(getPosition()), a named attack speed, raw mAirFric/mResetTime
-// reads and their pairs (these restore the size but shift every slot).
+// TODO: 99.96%, every instruction right and the frame exact (0x1f0). The
+// velocity is an unnamed TVec3 copy, as elsewhere in this TU: that parse-time
+// temporary is retail's 12 bytes between `vel` and the first doAttack's
+// locals. Left: retail creates one more word between the two inlined
+// getAroundQuat blocks and one fewer after the second (its mtx 0x8c, ours
+// 0x90). Inert: toGoal.sub(getPosition()), raw mAttackSpeed, a named params,
+// toGoal.set(...), `-=`, mVelocity.set(toGoal), quat.normalize(quat),
+// setLength forms, the three-argument slerp.
 DEFINE_NERVE(TNerveKazekunAttack, TLiveActor)
 {
 	TKazekun* kazekun = (TKazekun*)spine->getBody();
@@ -574,7 +575,7 @@ DEFINE_NERVE(TNerveKazekunAttack, TLiveActor)
 
 	kazekun->doAttack(false);
 
-	JGeometry::TVec3<f32> vel = kazekun->mVelocity;
+	JGeometry::TVec3<f32> vel = JGeometry::TVec3<f32>(kazekun->mVelocity);
 	vel.scale(kazekun->getSaveParams()->getAirFric());
 	kazekun->mVelocity = vel;
 
