@@ -475,6 +475,9 @@ void TBeeHive::calcRootMatrix()
 	getModel()->setBaseTRMtx(rot);
 }
 
+// TODO: map 0x120, ours 0x200: appearBee expands here where retail calls it; a
+// probe level around appearBee gives 0x128 but leaves TNerveBeeHiveWait unchanged,
+// and appearAllBees() is wrong (the nerve keeps retail's literal 3-bee loop).
 void TBeeHive::prepareWait()
 {
 	onLiveFlag(LIVE_FLAG_UNK10 | LIVE_FLAG_AIRBORNE);

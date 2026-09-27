@@ -841,6 +841,10 @@ f32 TTinKoopa::calcCoasterDistanceInOrder(int from, int to)
 
 // UNUSED, 0xdc in the map: inlined into
 // checkTinKoopaKillerApproachingMessage.
+// TODO: ours 0x2a8 (calcCoasterDistance expanded three times). A probe level between
+// calcCoasterDistanceInOrder and calcCoasterDistance gives exactly 0xdc but shrinks
+// InOrder to 0x1b0 and costs the (exact) caller 0x10 of frame; a level above InOrder
+// stops its expansion (0x98). Inert: calc/body respellings, named locals, if-forms.
 bool TTinKoopa::checkKillerApproachingFromBack(TCoasterKiller* killer,
                                                JGeometry::TVec3<f32> pos,
                                                f32 limit)

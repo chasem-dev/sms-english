@@ -1897,6 +1897,8 @@ static inline void FireWanwanSetGroundPlane(TFireWanwan* p,
 // (below the inline region) where ours is at 0x88, and the `point.y >
 // actualPoint.y` loads swap f0/f1. Inert or worse: `actualPoint.y < point.y`,
 // a named offset or point copy, `sub()`, assign-then-`-=`.
+// `out_offset->set(actualPoint - point)` is inert too: the by-value copy must be
+// created after the depth-1 expansions, i.e. inside an inline body (none in the map).
 void TFireWanwan::bindPoint(JGeometry::TVec3<f32>* out_offset,
                             const JGeometry::TVec3<f32>& point,
                             const JGeometry::TVec3<f32>& param_3, f32 radius,
