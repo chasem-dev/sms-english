@@ -437,7 +437,13 @@ BOOL TMario::startHangLanding(u32 status)
 	return changePlayerStatus(status, 0, false);
 }
 
-void TMario::hangingCommon(int, int) { }
+void TMario::hangingCommon(int anim, int status)
+{
+	waitProcess();
+	setAnimation(anim, 1.0f);
+	if (isLast1AnimeFrame())
+		changePlayerStatus(status, 0, false);
+}
 
 TBGCheckData* TMario::findNearestWall(const TBGWallCheckRecord& record)
 {
@@ -620,10 +626,7 @@ BOOL TMario::ascend()
 {
 	if (mInput & 0x4)
 		return startHangLanding(MARIO_STATUS_LAND_SAFE_DOWN);
-	waitProcess();
-	setAnimation(ANIM_HGUP, 1.0f);
-	if (isLast1AnimeFrame())
-		changePlayerStatus(MARIO_STATUS_WAIT, 0, false);
+	hangingCommon(ANIM_HGUP, MARIO_STATUS_WAIT);
 	return 0;
 }
 
@@ -631,10 +634,7 @@ BOOL TMario::descend()
 {
 	if (mInput & 0x4)
 		return startHangLanding(MARIO_STATUS_LAND_SAFE_DOWN);
-	waitProcess();
-	setAnimation(ANIM_HGDWN, 1.0f);
-	if (isLast1AnimeFrame())
-		changePlayerStatus(MARIO_STATUS_HANGING, 0, false);
+	hangingCommon(ANIM_HGDWN, MARIO_STATUS_HANGING);
 	return 0;
 }
 
@@ -642,10 +642,7 @@ BOOL TMario::hangJumping()
 {
 	if (mInput & 0x4)
 		return startHangLanding(MARIO_STATUS_LAND_SAFE_DOWN);
-	waitProcess();
-	setAnimation(ANIM_HGJMP, 1.0f);
-	if (isLast1AnimeFrame())
-		changePlayerStatus(MARIO_STATUS_WAIT, 0, false);
+	hangingCommon(ANIM_HGJMP, MARIO_STATUS_WAIT);
 	return 0;
 }
 
