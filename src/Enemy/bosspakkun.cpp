@@ -1870,10 +1870,13 @@ static inline MActor* BosspakkunMActor(const TBossPakkun* p)
 	return actor;
 }
 
+// The frame control is a named local and the frame is returned directly:
+// that keeps the helper's word below resetWaterMark's `mouth` block in
+// TNerveBPTumbleOut, where a named `frame` put it above.
 static inline f32 BosspakkunBckFrame(MActor* actor)
 {
-	f32 frame = actor->getFrameCtrl(ANM_TYPE_BCK)->getFrame();
-	return frame;
+	J3DFrameCtrl* ctrl = actor->getFrameCtrl(ANM_TYPE_BCK);
+	return ctrl->getFrame();
 }
 
 static inline TCameraShake* BosspakkunGetCameraShake()
@@ -1968,8 +1971,6 @@ DEFINE_NERVE(TNerveBPTumbleOut, TLiveActor)
 		}
 	}
 
-	// TODO: frame-exact; the `mouth` block inside the resetWaterMark
-	// expansion is still 4 low, and every rung here prices in 8s.
 	// Inert in resetWaterMark (standalone still 0x98 against the map's
 	// 0xa4): mPos.set(mouth), raw mWaterEmitInfo, raw gpModelWaterManager,
 	// `mouth.y = mouth.y + 250.0f`.
