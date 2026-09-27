@@ -579,22 +579,26 @@ void TPopo::behaveToFindMario()
 	}
 }
 
-// TODO: 98.6%. Retail passes &unk104 to each inlined getPoint() instead of
-// folding it into r31+0x108, and its frame is 8 smaller with the low
-// temporaries (calcVelocityToJumpToY's result, the TPathNode, vel) 8-0x30
-// lower and an unexplained 12-byte slot between range and goal.
+// getUnk104() gives retail's &unk104 at each inlined getPoint(), and
+// assigning jumpSp before dist gives its load order and frame.
+// TODO: 99.8%. The params pointer after MsVECNormalize is r3 (retail r4, as
+// in TFlyEnemy::calcChaseParam); retail's dead 12-byte named slot between
+// goal and range is missing, and its `vel` copy sits with the inline
+// temporaries (below the TPathNode) instead of in the named block.
 void TPopo::walkBehavior(int param_1, f32 param_2)
 {
 	if (!isAirborne()) {
-		JGeometry::TVec3<f32> goal(unk104.getPoint());
-		goal.set(unk104.getPoint().x - mPosition.x, 0.0f,
-		         unk104.getPoint().z - mPosition.z);
+		JGeometry::TVec3<f32> goal(getUnk104().getPoint());
+		goal.set(getUnk104().getPoint().x - mPosition.x, 0.0f,
+		         getUnk104().getPoint().z - mPosition.z);
 		if (goal.x == 0.0f && goal.y == 0.0f && goal.z == 0.0f)
 			goal.x += 1.0f;
 		MsVECNormalize((Vec*)&goal, (Vec*)&goal);
 
-		f32 dist    = mSaveParams->getSLMoveDist();
-		f32 jumpSp  = mSaveParams->getSLMoveJumpSp();
+		f32 dist;
+		f32 jumpSp;
+		jumpSp = mSaveParams->getSLMoveJumpSp();
+		dist   = mSaveParams->mSLMoveDist.value;
 		TMsRange<f32> range(-20.0f, 20.0f);
 		f32 scatter = 1.0f;
 		if (mSpine->getCurrentNerve() == &TNervePopoAttack::theNerve()) {
@@ -1021,9 +1025,6 @@ void TPopo::explosionEffect()
 	mEffectPos.set(mtx[0][3], mtx[1][3], mtx[2][3]);
 	gpMarioParticleManager->emit(0xA1, &mEffectPos, 0, nullptr);
 	gpMarioParticleManager->emit(0xA2, &mEffectPos, 0, nullptr);
-	if (gpMSound->gateCheck(0x297F))
-		MSoundSESystem::MSoundSE::startSoundActor(0x297F, &mPosition, 0,
-		                                          nullptr, 0, 4);
 }
 
 void TPopo::thrownByChorobei()
@@ -1193,6 +1194,9 @@ DEFINE_NERVE(TNervePopoExplosion, TLiveActor)
 		popo->onHitFlag(HIT_FLAG_NO_COLLISION);
 		popo->onLiveFlag(LIVE_FLAG_UNK8);
 		popo->explosionEffect();
+		if (gpMSound->gateCheck(0x297F))
+			MSoundSESystem::MSoundSE::startSoundActor(0x297F, &popo->mPosition,
+			                                          0, nullptr, 0, 4);
 	}
 
 	if (spine->getTime() > PopoExplosionEmitTime(popo)) {
