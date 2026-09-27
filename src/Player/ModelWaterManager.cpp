@@ -814,16 +814,20 @@ void TModelWaterManager::calcWorldMinMax()
 	unk5D7C.z = 200.0f + maxZ;
 }
 
-// TODO: instruction-identical and the frame matches at 0xe0, but every local
-// sits 12 bytes low: retail has one more 12-byte inline-expansion temporary
-// below `viewVel` (temporaries grow up from 0xc), so `vtx` lands at 0x54 there
-// and 0x48 here. No candidate for that expansion found.
+// viewPos and viewVel are declared up front: retail homes fadeTime/type/life
+// below them. `stretch *= radius` gives the fmuls its inverse-first order.
+// TODO: 99.4%. radius is f5 where retail has f3 (a register-only residue
+// through the else branch), and MsSqrtf's temp sits at 0x20, retail 0x28:
+// retail allocates two of px/mAlive/mExtension's 4-byte temps below it.
+// Dropping px or reading either param's raw value costs frame (-8/-0x10).
 void TModelWaterManager::calcDrawVtx(MtxPtr viewMtx)
 {
 	unk5D30->reset();
 
 	for (int i = 0; i < mParticleCount; i++) {
 		JGeometry::TVec3<f32> vtx[4];
+		JGeometry::TVec3<f32> viewPos;
+		JGeometry::TVec3<f32> viewVel;
 
 		if (getFlagBottom4Bits(i) != 1)
 			continue;
@@ -834,14 +838,12 @@ void TModelWaterManager::calcDrawVtx(MtxPtr viewMtx)
 		if (!(life < mWaterParticleTypes[type]->mAlive.get() - fadeTime))
 			continue;
 
-		JGeometry::TVec3<f32> viewPos;
 		MTXMultVec(viewMtx, &mParticlePositionSOA[i], &viewPos);
 		if (viewPos.z > 0.0f)
 			continue;
 		if (viewPos.z < -unk5D28)
 			continue;
 
-		JGeometry::TVec3<f32> viewVel;
 		MTXMultVecSR(viewMtx, &mParticleVelocitySOA[i], &viewVel);
 
 		f32 extension = mWaterParticleTypes[mParticleTypeSOA[i]]
@@ -850,11 +852,12 @@ void TModelWaterManager::calcDrawVtx(MtxPtr viewMtx)
 		viewVel.y *= extension;
 		viewVel.z *= extension;
 
-		f32 speedSq = viewVel.x * viewVel.x + viewVel.y * viewVel.y;
 		f32 radius  = 1.414f * (0.5f * mParticleSizeSOA[i]);
+		f32 speedSq = viewVel.x * viewVel.x + viewVel.y * viewVel.y;
 
 		if (speedSq > 1.0f) {
-			f32 stretch = (1.0f / MsSqrtf(speedSq)) * radius;
+			f32 stretch = 1.0f / MsSqrtf(speedSq);
+			stretch *= radius;
 			f32 sx      = viewVel.x * stretch;
 			f32 sy      = viewVel.y * stretch;
 			f32 px      = sy;

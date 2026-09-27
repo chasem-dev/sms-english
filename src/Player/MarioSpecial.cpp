@@ -1409,8 +1409,11 @@ BOOL TMario::fenceMove()
 			}
 
 			f32 stickH = 0.015625f * work->mStickH;
-			newPos.x += normX * stickH * fenceSp;
-			newPos.z += normZ * stickH * fenceSp;
+			// Named: retail's fmadds reads the product before fenceSp.
+			f32 dx = normX * stickH;
+			f32 dz = normZ * stickH;
+			newPos.x += dx * fenceSp;
+			newPos.z += dz * fenceSp;
 
 			JGeometry::TVec3<f32> sideFront = newPos;
 			sideFront.x += 0.5f * (50.0f * JMASSin(mFaceAngle.y));
@@ -1493,8 +1496,8 @@ BOOL TMario::fenceMove()
 				// retail's surviving `0.0f * sin`, `0.0f * cos` and
 				// `1.0f * cos` products are TVec3::cross's constant-folded
 				// terms.
-				// TODO: every instruction matches; the frame is 0x28 short
-				// (0x190 vs 0x1b8) with the named block uniformly low and
+				// TODO: every instruction matches; the frame is 0x20 short
+				// (0x198 vs 0x1b8) with the named block uniformly low and
 				// `diff` 0xc low, so retail has an inline level (likely
 				// around the cross product) whose temporaries this
 				// spelling does not reserve.

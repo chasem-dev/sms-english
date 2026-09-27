@@ -172,6 +172,10 @@ public:
 		// + 1.0f)` (99.5, byte-identical) and `sqrt(1.0f + at(0,0) + at(1,1)
 		// + at(2,2))` (97.8). MWCC reassociates the sum onto the CSE from the
 		// condition above regardless of how it is written here.
+		// c-r13: the literal is always the left operand at parse; `scale = sum;
+		// scale = sqrt(scale += 1.0f)` fixes the order (BeeHive reset left with
+		// its frame only) but adds an `fmr` to this weak copy; `trace += 1.0f`
+		// and a named `one` swap f3/f4 or worse. Retail binds no copy here.
 		//
 		// TODO: nasty regswap
 		if (this->at(0, 0) + this->at(1, 1) + this->at(2, 2) >= 0.0f) {
