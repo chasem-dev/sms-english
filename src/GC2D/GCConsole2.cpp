@@ -1320,16 +1320,14 @@ void TGCConsole2::startDisappearCoin()
 	unk124->setStatus(JPABaseEmitter::STATUS_STOP_EMIT);
 }
 
-// TODO: frame 8 short (0x2e0 vs 0x2e8), instructions exact. Retail gives every
-// TColor(u32) conversion temp its own 8-byte slot, top-down in source order;
-// ours packs them at 4. Inert: TColor(...) cast, (u32) cast, by-value and
-// const-ref setWhite/setBlack helpers (+8..+16 per site), an explicit
-// TColor copy ctor; an empty ~TColor() packs tighter. JUTColor stride class.
+// TODO: instructions exact and frame right (0x2e8, with setWhite at the first
+// loop's site; every other site also lands it but with more slot markers).
+// The TColor(u32) conversion temps still pack at 4 where retail strides 8.
 void TGCConsole2::startInsertLife(int param_1)
 {
 	if (param_1 == 0) {
 		for (int i = 1; i < 9; ++i) {
-			((J2DPicture*)unk17C[i * 2])->mWhite = 0xFFFFFFFF;
+			((J2DPicture*)unk17C[i * 2])->setWhite(0xFFFFFFFF);
 			((J2DPicture*)unk17C[i * 2])->mBlack = 0;
 			if (gpMarioOriginal->mHealth + 1 > i)
 				unk17C[i * 2]->show();
@@ -3368,8 +3366,6 @@ static inline void loadPictureTexture(J2DPicture* picture, u8 idx,
 		picture->mTextures[idx]->load(id);
 }
 
-// TODO: frame 0x108 against retail 0x128 with every instruction right: the
-// low region (colour temporaries and below) is 0x24 short, the rest 0x20.
 void TGCConsole2::drawJuice(J2DOrthoGraph& graph, u32 color)
 {
 	if (unk50)
@@ -3407,8 +3403,7 @@ void TGCConsole2::drawJuice(J2DOrthoGraph& graph, u32 color)
 
 	u8 selected = 0x17;
 	for (u8 i = 0x16; (u8)i != 0; --i) {
-		int threshold = (int)(64.0f * (1.0f - unk2B8));
-		if (unk334[i]->mBounds.y1 >= threshold) {
+		if (unk334[i]->getBounds().y1 >= (int)(64.0f * (1.0f - unk2B8))) {
 			selected = i + 1;
 			break;
 		}
@@ -3416,11 +3411,11 @@ void TGCConsole2::drawJuice(J2DOrthoGraph& graph, u32 color)
 
 	f32 translateY;
 	if (selected < 0x17)
-		translateY = 1.0f - (f32)unk334[selected]->mBounds.y1 * 0.015625f;
+		translateY = 1.0f - unk334[selected]->getBounds().y1 / 64.0f;
 	else
 		translateY = 1.0f;
 
-	if (unk334[1]->mBounds.y1 < (int)(64.0f * (1.0f - unk2B8)))
+	if (unk334[1]->getBounds().y1 < (int)(64.0f * (1.0f - unk2B8)))
 		translateY = 0.0f;
 
 	MTXTrans(mtx, 0.0f, translateY, 0.0f);
@@ -3661,11 +3656,11 @@ static inline void updateConsole(TGCConsole2* console)
 		amount = 8;
 
 	if (airMode && gpMarDirector->mState == TMarDirector::STATE_UNK5) {
-		s16 alpha = console->unk1C4->getPane()->mAlpha;
+		s16 alpha = console->unk1C4->getPane()->getAlpha();
 		alpha -= 0x10;
 		if (alpha < 0)
 			alpha = 0;
-		console->unk1C4->getPane()->mAlpha = alpha;
+		console->unk1C4->getPane()->setAlpha(alpha);
 	}
 	if (console->unk1C4->getPane()->mAlpha != 0xff
 	           && gpMarDirector->mState != TMarDirector::STATE_UNK5) {
@@ -3673,7 +3668,7 @@ static inline void updateConsole(TGCConsole2* console)
 		alpha += 0x10;
 		if (alpha > 0xff)
 			alpha = 0xff;
-		console->unk1C4->getPane()->mAlpha = alpha;
+		console->unk1C4->getPane()->setAlpha(alpha);
 	}
 
 	bool airTimeout = false;
@@ -3704,7 +3699,7 @@ static inline void updateConsole(TGCConsole2* console)
 			console->startAppearLife(1);
 			console->unk1CC[0] = amount = (s16)gpMarioOriginal->mAir;
 			if (gpMarDirector->mState == TMarDirector::STATE_UNK5)
-				console->unk1C4->getPane()->mAlpha = 0;
+				console->unk1C4->getPane()->setAlpha(0);
 			console->unk84 = 0;
 			console->unk18 = 4;
 		} else if (!airMode && console->unk1CC[0] < 8
@@ -4015,11 +4010,11 @@ static inline void updateConsole(TGCConsole2* console)
 	}
 
 	if (console->unk2B8 >= 1.0f)
-		console->unk2A0[0]->mAlpha = 0xff;
+		console->unk2A0[0]->setAlpha(0xff);
 	else if (console->unk2B8 == 0.0f)
-		console->unk2A0[0]->mAlpha = 0;
+		console->unk2A0[0]->setAlpha(0);
 	else
-		console->unk2A0[0]->mAlpha = 0x50;
+		console->unk2A0[0]->setAlpha(0x50);
 
 	console->unk28 = currentWater;
 
@@ -4041,9 +4036,9 @@ static inline void updateConsole(TGCConsole2* console)
 			console->unk7C = 0;
 
 		if (console->unk7C < 0x46)
-			console->unk288->mAlpha = 0;
+			console->unk288->setAlpha(0);
 		else if (console->unk7C < 0x10e)
-			console->unk288->mAlpha = 0xff;
+			console->unk288->setAlpha(0xff);
 		else
 			console->unk7C = 0;
 
