@@ -816,28 +816,31 @@ void TKoopaJrSubmarine::perform(u32 cue, JDrama::TGraphics* graphics)
 	mFrontBody->perform(cue, graphics);
 }
 
+// Binding level over the front hit box, worth the last word of
+// TKoopaJrSubmarine::makeCollisionPositions's low region.
+static inline TCallbackHitActor* KoopaJrFrontBody(const TKoopaJrSubmarine* p)
+{
+	TCallbackHitActor* body = p->mFrontBody;
+	return body;
+}
+
 // The rear hit box sits between the two rear launchers, the front one on
 // the KoopaJr seat.
-// TODO: frame 0x70 against retail's 0x80; every instruction matches. A TVec3
-// accumulator reaches 0x78 here but is then inlined into perform(), which
-// retail keeps out of line.
 void TKoopaJrSubmarine::makeCollisionPositions()
 {
-	f32 x = 0.0f;
-	f32 y = 0.0f;
-	f32 z = 0.0f;
+	JGeometry::TVec3<f32> center(0.0f, 0.0f, 0.0f);
 	for (int i = 0; i < 2; ++i) {
 		MtxPtr mtx = getModel()->getAnmMtx(TKoopaJr_getJointIndex(i + 3));
-		x += mtx[0][3];
-		y += mtx[1][3];
-		z += mtx[2][3];
+		JGeometry::TVec3<f32> pos(mtx[0][3], mtx[1][3], mtx[2][3]);
+		center.x += pos.x;
+		center.y += pos.y;
+		center.z += pos.z;
 	}
-	x *= 0.5f;
-	y *= 0.5f;
-	z *= 0.5f;
-	JGeometry::TVec3<f32> center(x, y, z);
-	mRearBody->mPosition.set(center.x, center.y, center.z);
-	getJointTransByIndex(TKoopaJr_getJointIndex(0), &mFrontBody->mPosition);
+	center.x *= 0.5f;
+	center.y *= 0.5f;
+	center.z *= 0.5f;
+	mRearBody->mPosition.set(center);
+	getJointTransByIndex(TKoopaJr_getJointIndex(0), &KoopaJrFrontBody(this)->mPosition);
 }
 
 void TKoopaJrSubmarine::moveSwing()
