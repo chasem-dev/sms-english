@@ -1180,13 +1180,12 @@ static JSULink<JPABaseParticle>* stripeGetPrev(JSULink<JPABaseParticle>* link)
 {
 	return link->getPrev();
 }
-// TODO: 98.0%, instruction-exact; frame 0x1e0 vs 0x1f8 and a callee-saved FPR
-// permutation (retail puts the hoisted 0.0f/1.0f constants in f29-f31 and
-// fVar2/fVar9 in f22/f20). Spelling both rotations `mtx.mult(v, v)` (TWW's
-// forwarding form) gives the exact frame but leaves local_BC at 0x100 (retail
-// 0x108) and the same FPR permutation (97.6%). Inert: function-scope pt0 /
-// local_BC / v1 / v2, pt0 first, f29_f30_f31 before local_BC, cross2 on the
-// first cross product.
+// TODO: 98.0%, instruction-exact with retail's frame (sine and cosine taken
+// inline in the v1/v2 constructors, not named); the low region is one word
+// short (local_BC at 0x10c, retail 0x108) and the callee-saved FPRs are
+// permuted (retail colours the hoisted 1.0f/0.0f/epsilon first, f31-f29).
+// Inert before: function-scope pt0/local_BC/v1/v2, pt0 first, cross2 on the
+// first cross product; `mtx.mult(v, v)` now overshoots the frame by 0x18.
 void JPADrawExecStripe::exec(const JPADrawContext* dc)
 {
 	u32 elems = dc->unk18->getNumLinks();
@@ -1219,13 +1218,11 @@ void JPADrawExecStripe::exec(const JPADrawContext* dc)
 		JPABaseParticle* particle = link->getObject();
 
 		JPADrawParams* params = particle->getDrawParamPPtr();
-		f32 sin               = JMASSin(params->unk34);
-		f32 cos               = JMASCos(params->unk34);
 
 		f32 x = -params->mScaleX * (dc->pcb->unk4.x + dc->pcb->unkC.x);
-		JGeometry::TVec3<f32> v1(x * cos, 0.0f, x * sin);
+		JGeometry::TVec3<f32> v1(x * JMASCos(params->unk34), 0.0f, x * JMASSin(params->unk34));
 		f32 y = +params->mScaleX * (dc->pcb->unk4.x - dc->pcb->unkC.x);
-		JGeometry::TVec3<f32> v2(y * cos, 0.0f, y * sin);
+		JGeometry::TVec3<f32> v2(y * JMASCos(params->unk34), 0.0f, y * JMASSin(params->unk34));
 
 		JGeometry::TVec3<f32> pt0;
 		particle->getGlobalPosition(pt0);
@@ -1262,10 +1259,11 @@ void JPADrawExecStripe::exec(const JPADrawContext* dc)
 	GXEnd();
 }
 
-// TODO: 97.0%, instruction-exact with the right frame; the residue is the same
-// callee-saved FPR permutation as JPADrawExecStripe (retail ranks the hoisted
-// constants highest). `mult(v, v)` grows the frame here; cross2 on the first
-// cross product, or cross on the second, is worse.
+// TODO: 97.3%, instruction-exact with the right frame; GPRs right with start
+// declared before getNext. Left: local_BC 0x18 high (0x1d4, retail 0x1bc) and
+// the callee-saved FPRs (retail colours loop 1's pt.x and fVar2 first, fVar9
+// f20, fVar2_0 f16). `mult(v, v)`, inline sine/cosine, pt0.zero() and
+// cross2 on the first cross product are worse or inert.
 void JPADrawExecStripeCross::exec(const JPADrawContext* dc)
 {
 
@@ -1275,8 +1273,8 @@ void JPADrawExecStripeCross::exec(const JPADrawContext* dc)
 
 	typedef JSULink<JPABaseParticle>* (*NxtFunc)(JSULink<JPABaseParticle>*);
 
-	NxtFunc getNext;
 	JSULink<JPABaseParticle>* start;
+	NxtFunc getNext;
 
 	f32 fVar2_0;
 	f32 fVar2;
