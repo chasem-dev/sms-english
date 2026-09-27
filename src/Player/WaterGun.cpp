@@ -381,6 +381,8 @@ void TNozzleBase::emitCommon(int param_1, TWaterEmitInfo* param_2)
 // Inert or worse on the register swap (c-wgun): the two references declared
 // before emitCommon (88.0), after mPow.set (94.2, unchanged), no pow reference
 // (90.3), emitInfo named after emitCommon's argument read (92.8).
+// c-m12: our dead set is F=10 P=4 inline=7 named=3 (iro.py), retail +46
+// words; a named s16/u16/int face angle or named sin/cos keeps one sraw (96.0).
 void TNozzleBase::emit(int param_1)
 {
 	if (mFludd->mCurrentWater > 0 && unk378 != 0.0f) {
