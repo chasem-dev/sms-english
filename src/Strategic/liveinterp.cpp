@@ -458,6 +458,11 @@ static void linSetAnmRate(TSpcTypedInterp<TLiveActor>* interp, u32 arg_num)
 // `push(f32)` (92.5%), if/else outer (97.4%), separate arg decl+assign
 // (95.7%), TU-local pop wrapper (forces out-of-line TSpcStack::pop, 90.3%).
 // Header `setDataFloat(const f32&)` still regresses exact spcFloat.
+// c-d11: moving each float arm into `static inline void f(interp, const f32&
+// value) { TSpcSlice slice; <direct writes>; interp->push(slice); }` is
+// instruction-exact and puts pop temps and every slice in retail's source
+// order (slices become depth-1 callee locals); retail then still has one
+// 4-byte object under each float slice (the arg is simple, so no binding).
 static void linGetSRT(TSpcTypedInterp<TLiveActor>* interp, u32 arg_num)
 {
 	interp->verifyArgNum(2, &arg_num);

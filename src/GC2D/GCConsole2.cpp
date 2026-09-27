@@ -4608,6 +4608,14 @@ void TGCConsole2::drawWater(J2DOrthoGraph& graph)
 // perform expands are short too: countShine 0x68, setTimer 0x50,
 // processMoveNozzle 0x48, countBlueCoin 0x40, processAppearStar 0x38 (all dead
 // low region under instruction-exact bodies). Close those first.
+// Debugger read (c-d11): retail's referenced objects run, top down, the
+// 4720 blink JUTRect, the 4663 life-meter JUTRect/TColors, the 4739 then 4737
+// telop/red-coin rects, `bounds`, the 4771/4781/4793 balloon and counter
+// objects, the balloon char[255], the setScissor TRect, `graph`, then the
+// 4663 JUTPoints and u8 bindings. Named locals always sit on top, so retail's
+// `bounds` and `graph` are locals of inlined callees (the unk35 block and the
+// flags&8 draw block), and each reversed pair (4663/4720, 4737/4739) is one
+// callee's locals: the per-state static inline split here is not retail's.
 void TGCConsole2::perform(u32 flags, JDrama::TGraphics* graphics)
 {
 	if (flags & 1) {

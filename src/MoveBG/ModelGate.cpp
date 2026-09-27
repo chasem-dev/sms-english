@@ -47,7 +47,9 @@ static inline void setGateTexRes(ResTIMG* res, u16 width, u16 height)
 }
 
 // TODO: frame is 0x48 short (0x268 vs retail 0x2b0); every instruction
-// matches.
+// matches. Slot map (c-d11): retail has 12 bytes of named locals between
+// videoInfo (0x188) and mtx (0x14c) that ours lacks, then +2/-5/+3 words
+// around the push_back iterators (JGadget stride class) and +15 below.
 void TModelGate::loadAfter()
 {
 	initHitActor(0x080000C0, 5, 0x80000000, 300.0f, 400.0f, 300.0f,

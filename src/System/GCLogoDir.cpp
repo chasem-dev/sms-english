@@ -134,6 +134,8 @@ TGCLogoDir::~TGCLogoDir() { TGCLogoDirGetGamePad(this)->offFlag(0x1); }
 
 // TODO: frame 0x48 against 0x78 with every instruction right (low region
 // 0x30 short); TGCLogoDirGetGamePad at the pad test is +8, a named rect -8.
+// Slot map (c-d11): retail has one parse-time word between the rect (0x58)
+// and colour (0x50) temps and twelve more words created after the colour.
 int TGCLogoDir::direct()
 {
 	int desiredAppState = TApplication::APP_STATE_DEFAULT;

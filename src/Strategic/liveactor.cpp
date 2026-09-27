@@ -476,6 +476,10 @@ static inline MAnmSound* LiveactorAnmSound(const TLiveActor* p)
 // MAnmSoundNPC ctor assigning unk98 in the body, via a named u8, get_uint8
 // with a named f32 are inert (also in init); get_uint8 through get_ufloat
 // is too deep to inline. JAISound::setSeDistancePitch pins get_uint8's body.
+// c-d11 debugger: retail's buffer is the topmost object, so no depth-1 dead
+// word may precede it; raw `mAnmSound` at the test with the binder at the
+// final receiver lands the frame (0x40) with the binder local 4 above the
+// buffer and one word short below: that local must be created at depth > 3.
 void TLiveActor::initAnmSound()
 {
 	if (LiveactorAnmSound(this))

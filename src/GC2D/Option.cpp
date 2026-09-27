@@ -1001,6 +1001,10 @@ static inline TArrowControl* OptionBackArrow(const TOptionControl* p)
 // writeValue's header accessors move the rect +4 each (and the frame with
 // it past two), raw mBackArrow / gpCameraOption move both down; no combo of
 // those narrows the 0x48 distance.
+// c-d11 debugger: the three words retail lacks above the rect are
+// movementCommon's dead `this` bindings for the refused unit update()s
+// (depth 2); the rect is a depth-3 callee temp of OptionSetShiftedBounds.
+// Retail creates the rect first (or those bindings deeper).
 bool TOptionControl::movementOption()
 {
 	OptionBackArrow(this)->update();
