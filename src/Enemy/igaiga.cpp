@@ -1450,6 +1450,15 @@ static inline void IgaigaSetCurr(TGraphTracer* t, int idx)
 	t->mCurrIdx = idx;
 }
 
+// Push the current goal and chase the given node next. Retail's node is the
+// temporary created right after the two jump-velocity returns, below them and
+// above every inline object, which is what a temporary argument gives.
+static inline void IgaigaPushGoal(TGorogoro* p, const TPathNode& goal)
+{
+	p->unk114.push(p->unkF4);
+	p->unkF4 = goal;
+}
+
 void TGorogoro::generateByGateKeeper(const JGeometry::TVec3<f32>& pos,
                                      const JGeometry::TVec3<f32>& dir)
 {
@@ -1482,21 +1491,7 @@ void TGorogoro::generateByGateKeeper(const JGeometry::TVec3<f32>& pos,
 	if (!target.isZero()) {
 		// Aim up to 15 degrees either side, then jump 0..1500 that way.
 		VECNormalize(&target, &target);
-		s16 angle = DEG2SHORTANGLE(30.0f * MsRandF() - 15.0f);
-		f32 s     = JMASSin(angle);
-		f32 c     = JMASCos(angle);
-		rot[0][0] = c;
-		rot[0][1] = 0.0f;
-		rot[0][2] = s;
-		rot[0][3] = 0.0f;
-		rot[1][0] = 0.0f;
-		rot[1][1] = 1.0f;
-		rot[1][2] = 0.0f;
-		rot[1][3] = 0.0f;
-		rot[2][0] = -s;
-		rot[2][1] = 0.0f;
-		rot[2][2] = c;
-		rot[2][3] = 0.0f;
+		MsMtxSetRotY(rot, 30.0f * MsRandF() - 15.0f);
 		MTXMultVec(rot, &target, &target);
 
 		mRotation.y = MsWrap(MsGetRotFromZaxisY(target), 0.0f, 360.0f);
@@ -1512,11 +1507,8 @@ void TGorogoro::generateByGateKeeper(const JGeometry::TVec3<f32>& pos,
 	}
 
 	// Chasing Mario: push the current goal and make him the next one.
-	if (sawMario) {
-		TPathNode goal(IgaigaGateMarioPos());
-		unk114.push(unkF4);
-		unkF4 = goal;
-	}
+	if (sawMario)
+		IgaigaPushGoal(this, TPathNode(IgaigaGateMarioPos()));
 
 	unk1A8 = 1;
 }
