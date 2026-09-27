@@ -896,6 +896,8 @@ void TGraphGroup::perform(u32 cue, JDrama::TGraphics* graphics)
 	// getGraph(i) accessor (inert) and a named TGraphWeb* (worse) refuted.
 	// Also inert: unnamed callee params, a hoisted graphs array, a while loop,
 	// an outer-declared i or TGraphWeb*, pointer arithmetic; u32 i is worse.
+	// A `cue` test with an empty body in the inlined TGraphWeb::perform closes
+	// it (cue kept live), but that is forced control flow, so it is not used.
 	for (int i = 0; i < unk4; ++i)
 		unk8[i]->perform(cue, graphics);
 }
