@@ -1244,6 +1244,11 @@ void TResetFruit::appearing()
 	}
 }
 
+// TODO: instruction-exact, frame 0x90 vs 0xf8. The APPEARING arm is
+// TMapObjBall::control expanded; a 12-statement spelling of it (no `timer`,
+// if/else instead of return; 99.9 out of line) inlines at all three arms and
+// the frame jumps to 0x158. Retail must reach the LIVING and HOLDING arms one
+// level deeper; living() itself is not it (it is then called, frame 0xe8).
 void TResetFruit::control()
 {
 	switch (mState) {
