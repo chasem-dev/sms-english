@@ -1819,14 +1819,6 @@ const char** TBossTelesa::getBasNameTable() const { return btelesa_bastable; }
 
 // The item branch is the map's UNUSED TBubble::appendItem (0xd8), inlined;
 // its inline level is what the frame needed at the first makeOneEnemyAppear.
-// TODO: every instruction matches; `chance` sits at 0x54 instead of 0x58, so
-// some 4-byte slot is still missing (speed, item, bubble, declaration-order
-// moves and `!p`/`p == nullptr` forks are inert). Naming the first roll
-// (`f32 roll = chance.rand();`, the lever that closed rouletteStart) puts
-// chance at 0x58 but lifts mtx/velocity 4 (0x64/0x94); no pair with the
-// param `.value`, getMActor(), getPosition() or a named second roll fixes both.
-// Also inert or worse (c-tel2): the speed param read twice (+8/+0x10 frame),
-// `Mtx` declared before the velocity with the named roll.
 void TBossTelesa::genAttacker()
 {
 	if (unk150) {
@@ -1838,9 +1830,9 @@ void TBossTelesa::genAttacker()
 		return;
 	}
 
+	MtxPtr mouthMtx = getMActor()->getModel()->getAnmMtx(5);
 	JGeometry::TVec3<f32> velocity;
 	Mtx mtx;
-	MtxPtr mouthMtx = getMActor()->getModel()->getAnmMtx(5);
 	int num         = mParams->mSLNumGenBubble.get();
 	f32 step        = 180.0f / (f32)num;
 	f32 halfSpread  = step * (f32)num / 2.0f;
@@ -1870,7 +1862,8 @@ void TBossTelesa::genAttacker()
 		bubble->onLiveFlag(LIVE_FLAG_AIRBORNE);
 
 		TMsRange<f32> chance(0.0f, 1.0f);
-		if (chance.rand() < mItemGenRate) {
+		f32 roll = chance.rand();
+		if (roll < mItemGenRate) {
 			bubble->appendItem();
 		} else if (chance.rand() < mEnemyGenRate) {
 			bubble->appendEnemy();
