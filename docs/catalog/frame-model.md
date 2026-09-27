@@ -28,6 +28,14 @@ Diagnose a frame-only or slots-only function with `tools/mwcc-stack/dbg.sh` befo
    moveRequest: stock header has 3 dead IRO temps + the `const TVec3&` result pointer; with a by-value `operator-` the IRO temps vanish.
 9. **All-or-nothing.** A function with no locals area (no frame beyond the link area) shows none of this; add one saved register or one slot and all dead objects materialise (cc12).
 
+10. **Offsets count what was created later.** Allocation starts at the bottom, so an object's offset is the size of everything created after it (plus the floor).
+    An object 4 low in ours means retail created one more word *after* it; removing an object created *before* it (a named local, an earlier site) never moves it.
+11. **The frame bounds the count.** frame = align8(align8(top of the locals) + saved GPRs/FPRs), so retail's frame gives the top of its locals to within 8 bytes.
+    When the slots below say "+4" but that bound forbids a net addition, the object was *moved*, not added: something created early (usually a named local, which sits at the top) is created later in retail.
+12. **Inline bodies and result objects.** A straight-line inline body that ends in `return <constant>;` makes no result object (the call becomes a comma expression).
+    A body with control flow makes one, which dies when the caller copies it into a local (+4).
+    `BOOL result = 0; ...; return result;` in a straight-line body costs +8 (the local and the result object it forces); in a body that already had a result object, +4.
+
 ## Experiments (synthetic TUs)
 
 Marker method: `int mk; extp(&mk);` declared first sits right above the dead region, so `(mk - 8) / 4` counts dead words.
@@ -45,3 +53,9 @@ Marker method: `int mk; extp(&mk);` declared first sits right above the dead reg
 - `TApplication::proc`: our dead set is 28 TGameSequence/TFlagT copy objects (1-2 bytes each). A 32-variant grid of `GameSequence.hpp` (u8/int params, TFlagT by value/const&, operator= by value/const&, set/memberwise, assign/set(get())) never exceeds 0x80 at unchanged instructions (retail 0xc8); int params give proc 0x80 and setNextStage 0x48 (retail 0x50).
 - `TApplication::checkAdditionalMovie` (0x58 vs 0x20) has **zero** dead objects in ours: all 11 `getInstance()` feed call receivers (rule 4), so no accessor spelling can add frame there; retail's 56-64 bytes are some other construct.
 - `jumpingBasic`: ours has 10 dead objects (3 `mWallPlane` bindings for isNoWallJump/isFence/getNormal, a bool and six IRO temps); retail needs 18 more words with no instruction change and no visible slot, so nothing is closable from evidence.
+- `TMario::jumpMain` (closed, c-d1): 11 missing words all below pullJumping's `pos` (0x34 vs 0x60) and none above, so only handlers inlined after pullJumping could carry them.
+  Named `result` locals in jumpingThrow, the four jump*Down handlers, landSafeDown and fallDead give exactly +0x2c (5 x 4 + 3 x 8); the same spelling on handlers before pullJumping overshoots the frame.
+- `TMarNameRefGen::getNameRef` (closed, c-d1): two `this` slots 4 low with the frame already at its bound, so one object had to move from above them to between TSplashManager's depth-1 binding and TSmplFader's TColor.
+  Building Mario through a static inline (its `mario` becomes a depth-1 callee local) is that move; the same level around MLight (whose inline ctor then expands one level deeper) moves every later slot and the frame.
+- `evSetAttentionTime` (EventWatcher, open): the push slice is 0x10 low and frame 0x18 short. Moving the dead pop one inline level down (`static inline int f(interp) { return TSpcSlice(interp->pop()).getDataInt(); }`) lands the slice and every object below it; the frame is then 8 short (one or two words above the slice), and no spelling found adds only those.
+- `evStartMontemanBGM` (open): retail = ours plus one object created after the push slice (the frame bound leaves no room above it); every sound-receiver spelling tried adds that word only together with two above.
