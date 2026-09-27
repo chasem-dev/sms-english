@@ -756,9 +756,8 @@ f32 TFireWanwanTailHit::calcApartPow()
 
 MtxPtr TFireWanwanTailHit::getTakingMtx() { return unk74; }
 
-// TODO: retail's named block sits 4 bytes higher (next at 0x34, not 0x30).
-// Inert or worse: next as Vec, declaring checkData first, set()/chained copies,
-// translation(next) and translation(x, y, z).
+// The tail node is indexed through the raw size: back() is 4 bytes under
+// retail's frame, size() 8 or 0x10 over.
 BOOL TFireWanwanTailHit::moveRequest(const JGeometry::TVec3<f32>& param_1)
 {
 	JGeometry::TVec3<f32> next = param_1;
@@ -772,7 +771,7 @@ BOOL TFireWanwanTailHit::moveRequest(const JGeometry::TVec3<f32>& param_1)
 	next.y += 50.0f;
 
 	gpMap->isTouchedOneWallAndMoveXZ(&next.x, next.y, &next.z, 70.0f);
-	FireWanwanTailRubber(this)->unk0.back().mPos = next;
+	FireWanwanTailRubber(this)->unk0[unkA4->unk0.mSize - 1].mPos = next;
 	mPosition               = next;
 	unk74.translation(mPosition);
 	return true;
