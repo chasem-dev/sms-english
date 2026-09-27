@@ -91,10 +91,11 @@ void TAnimalBird::init(TLiveManager* live_manager)
 	initAnmSound();
 }
 
+// The named model data is one dead word below load()'s eventID.
 void TAnimalBird::initTevColor(const GXColorS10* color)
 {
-	s32 index = getModel()->getModelData()->getMaterialName()->getIndex(
-	    cMatName);
+	J3DModelData* modelData = getModel()->getModelData();
+	s32 index = modelData->getMaterialName()->getIndex(cMatName);
 	SMS_InitPacket_OneTevColor(getModel(), index, GX_TEVREG1, color);
 }
 
@@ -130,9 +131,6 @@ void TAnimalBird::initParams()
 	}
 }
 
-// TODO: instruction-exact; eventID sits at 0x30, retail 0x34 (frame equal).
-// Inert: eventID declared first, a named actor type (either order, +8), raw
-// mActorType (-8), `sizeof(s32)`, `cColorTable + mColorIndex`.
 void TAnimalBird::load(JSUMemoryInputStream& stream)
 {
 	TSpineEnemy::load(stream);
