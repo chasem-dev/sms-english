@@ -79,9 +79,9 @@ static void setMtxRotY(MtxPtr mtx, f32 degrees)
 	mtx[2][3] = 0.0f;
 }
 
-// TODO: instruction-exact; retail ranks `angle` in f31 above the three loop
-// literals where ours ranks it below them (f28). Declaring `angle` before the
-// sound call costs three instructions and splitting its initialiser is worse.
+// `rad` and `offset` are declared ahead of `angle`, which numbers `angle`
+// below them: it reaches the first colouring sweep at full degree and is
+// coloured first (f31) above the three hoisted loop literals.
 void TBigWindmill::control()
 {
 	TMapObjBase::control();
@@ -94,12 +94,14 @@ void TBigWindmill::control()
 	                                  nullptr, fabsf(sSpeed), 0, 0,
 	                                  &mSoundHandle, 0, 4);
 
+	f32 rad;
+	f32 offset;
 	f32 angle = mRotation.z + sAngleAdd;
 	for (int i = 0; i < 4; ++i) {
 		MtxPtr mtx = mBlocks[i]->getModel()->getAnmMtx(0);
-		f32 rad    = 0.017453294f * angle;
+		rad        = 0.017453294f * angle;
 		mtx[0][3]  = sRadius * cosf(rad) + getPosition().x;
-		f32 offset = mYOffset;
+		offset = mYOffset;
 		mtx[1][3]  = sRadius * sinf(rad) + getPosition().y - offset;
 		angle += 90.0f;
 		mtx[2][3] = getPosition().z - sSubZ;
