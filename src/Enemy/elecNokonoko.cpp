@@ -678,7 +678,8 @@ void TElecCarapace::loadInit(TSpineEnemy* host, const char* model)
 
 	// Half the shells spin the other way, so a pair thrown together crosses
 	// over instead of travelling side by side.
-	if (TMsRange<s32>(0, 300).rand() < 150)
+	s32 r = TMsRange<s32>(0, 300).rand();
+	if (r < 150)
 		mSpinReverse = false;
 
 	mHeadHeight = 80.0f;
