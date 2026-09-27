@@ -133,3 +133,13 @@ A web whose degree is still at least K when its sweep reaches it is pushed in a 
   Named locals are always numbered below `@` objects, so: for a named web, declare the blocking named local ahead of it (`int frame;` before `body`); for an IRO temporary (`&j3dSys.mModel`), turn the blocking named locals into an inline level's parameters (the `p`/`q` scaled copy as `M3UScaleMtxCopy`), which numbers them above it.
 - **An inline predicate's parameter is coloured before an IRO temporary** (`TDirectionCalc::sub` 98.4 to 99.8, `calcTurnDirection` 98.2 to 99.3): `IsLongWayRound(dir - mDirection)` in place of a named `diff`.
   The rest of `sub` is a pre-regalloc schedule difference (the wrap's load placed before the `fmr` that saves the incoming f1), not colouring.
+
+## Additions (c-g10, regsweep apply)
+
+- **An inline accessor turns a named local into an IRO temporary** (closed `TNerveTamaNokoThrown`, `TNerveMameGessoThrown`, `TNerveBombHeiThrown`).
+  `f32 power = *gpMarioThrowPower;` stays a named web, coloured after every `@` object; `f32 power = SMS_GetMarioThrowPower();` (a TU-local `{ return *gpMarioThrowPower; }`, like the other SMS_GetMario* accessors) makes `power` an IRO split temporary created in statement order, ahead of the cosine's, so it takes f2.
+  The named local's slot goes dead, and with `rate`'s it gives the 8 bytes retail has above `vel`.
+  Tell: a named web that `--search` wants coloured just before an `@` object, with our frame 4-8 bytes short of retail.
+  Inert on `TMapObjGeneral::thrown`, whose frame is already equal.
+- **Declaration order closes a loop counter swap** (`TBossHanachan::init`, registers only; its slots stay open): `--why` showed `group` pushed after `i`, its only lower neighbour, and `int i;` declared ahead of `group` for the last loop reverses the two.
+- Still open after this pass: `TBossManta::calcRootMatrix` needs cross2's y component generated first (its 1.0f literal must be numbered above the `0*v.z` product); `TRocket::calcRootMatrix` (lenZ's IRO temporary sits at exactly K) and `TCardSave::perform` need one more or one fewer neighbour, and no spelling found supplies it.
