@@ -114,6 +114,10 @@ static int TobiPukuRollCallback(J3DNode* param_1, int param_2)
 		// TPosition3f matrix.
 		// Also inert (c-ident): a TMtx34f, a named angle, the pointer declared
 		// above the joint (96.7-96.8); TMtx34f identity() first is 76.9.
+		// c-c5: 100% only with a no-op `(MtxPtr)local_44` argument plus an
+		// internal MtxPtr copy (stores the scheduler cannot resolve); natural
+		// stand-ins are inert: one reassigned row pointer 98.1, row pointers
+		// 98.0, *p++ stores 96.9, a modified parameter 96.7, an aggregate 74.5.
 		Mtx local_44;
 		MtxPtr rot = local_44;
 		MsMtxSetRotZ(rot, gpCurTobiPuku->unk1EC);
