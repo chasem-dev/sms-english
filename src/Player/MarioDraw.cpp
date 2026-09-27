@@ -2387,10 +2387,8 @@ void TMario::addDamageFog(JDrama::TGraphics* graphics)
 	bool check       = true;
 	GXColor fogColor = (GXColor) { 0xff, 0x00, 0x80, 0xff };
 
-	// TODO: frame and instructions match; the three compound-literal temps
-	// still sit 0xc low and fogColor 4 low inside the (correctly sized) low
-	// region.
-	// Inlined "bool getFogColor(GXColor* color)"?
+	// One `modelData` reused for the body, cap and hand loops, and a named
+	// PE block in the first loop, give retail's slots.
 	if (mInvincibilityFrames == 0)
 		check = false;
 
@@ -2411,8 +2409,8 @@ void TMario::addDamageFog(JDrama::TGraphics* graphics)
 		// Very likely an inline since it is duplicated
 		J3DModelData* modelData = MarioFogM3UModel(this)->getModel()->getModelData();
 		for (u16 i = 0; i < MarioFogMatNum(modelData); ++i) {
-			J3DFog* fog
-			    = modelData->getMaterialNodePointer(i)->getPEBlock()->getFog();
+			J3DPEBlock* peBlock = modelData->getMaterialNodePointer(i)->getPEBlock();
+			J3DFog* fog         = peBlock->getFog();
 			fog->mColor = fogColor;
 		}
 
@@ -2420,9 +2418,9 @@ void TMario::addDamageFog(JDrama::TGraphics* graphics)
 		                       graphics);
 
 		if (mCap != nullptr) {
-			J3DModelData* mCapModelData = mCap->unkC->getModelData();
-			for (u16 i = 0; i < MarioFogMatNum(mCapModelData); ++i) {
-				J3DFog* fog = mCapModelData->getMaterialNodePointer(i)
+			modelData = mCap->unkC->getModelData();
+			for (u16 i = 0; i < MarioFogMatNum(modelData); ++i) {
+				J3DFog* fog = modelData->getMaterialNodePointer(i)
 				                  ->getPEBlock()
 				                  ->getFog();
 				fog->mColor = fogColor;
@@ -2434,10 +2432,9 @@ void TMario::addDamageFog(JDrama::TGraphics* graphics)
 		if (mHandModels[0][0] != nullptr) {
 			for (int handIdx = 0; handIdx < 2; ++handIdx) {
 				for (int modelIdx = 0; modelIdx < 2; ++modelIdx) {
-					J3DModelData* mHandModelData
-					    = mHandModels[handIdx][modelIdx]->getModelData();
-					for (u16 i = 0; i < mHandModelData->getMaterialNum(); ++i) {
-						J3DFog* fog = mHandModelData->getMaterialNodePointer(i)
+					modelData = mHandModels[handIdx][modelIdx]->getModelData();
+					for (u16 i = 0; i < MarioFogMatNum(modelData); ++i) {
+						J3DFog* fog = modelData->getMaterialNodePointer(i)
 						                  ->getPEBlock()
 						                  ->getFog();
 						fog->mColor = fogColor;
