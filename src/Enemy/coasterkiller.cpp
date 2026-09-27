@@ -222,9 +222,12 @@ void TCoasterKiller::init(TLiveManager* mgr)
 
 void TCoasterKiller::reset() { TCoasterEnemy::reset(); }
 
-// TODO: 95.5%. Scheduling only in the `mPosition.distance(SMS_GetMarioPos())`
-// block -- we hoist `lfs f0, 4(r3)` one slot early and `fmuls f1, f4, f4` two
-// slots early, everything else matches -- plus a frame of 0x50 against 0x58.
+// TODO: 99.3%, frame exact. The getPosition() receiver gives retail's
+// schedule and its reference temporary the missing 8 bytes, but we then share
+// its `this + 0x10` with the `&mPosition` argument (`lfsu f3, 0x10(r31)` and
+// `addi r4, r31, 0`), where retail folds the offsets and recomputes the
+// address. Inert or worse: `&getPosition()` for the argument, `*gpMarioPos`,
+// gpMSound for SMSGetMSound(), a named distance or difference vector.
 void TCoasterKiller::perform(u32 cue, JDrama::TGraphics* graphics)
 {
 	TCoasterEnemy::perform(cue, graphics);
@@ -238,7 +241,7 @@ void TCoasterKiller::perform(u32 cue, JDrama::TGraphics* graphics)
 		    != &TNerveCoasterKillerExplosion::theNerve()) {
 			SMSGetMSound()->startSoundActorWithInfo(
 			    MSD_SE_EN_KILLER_FLY_KUPPA, &mPosition, nullptr,
-			    mPosition.distance(SMS_GetMarioPos()), 0, 0, nullptr, 0, 4);
+			    getPosition().distance(SMS_GetMarioPos()), 0, 0, nullptr, 0, 4);
 		}
 	}
 }
