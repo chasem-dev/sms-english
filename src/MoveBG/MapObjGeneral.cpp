@@ -51,19 +51,18 @@ static inline f32 MOGSum(f32 a, f32 b) { return a + b; }
 
 // The comparisons test the distance against the radii (retail's
 // `fcmpo dist, sum; ble`): the object appears once Mario is outside them.
-// TODO: 99.9%. The 0x4000005a branch's `mario + damage` fadds has its
-// operands swapped. Only reading getDamageRadius() in the sum while keeping
-// the (then unused) named local lands it, which is a dead local and refused;
-// MOGSum there, a reordered sum and 100.0f first are inert or cost frame.
+// The 0x4000005a branch names its 100-unit margin: a named damage radius
+// there swaps the `mario + damage` fadds operands, and reading
+// getDamageRadius() in the sum without the margin local is 8 short.
 void TMapObjGeneral::waitingToAppear()
 {
 	if (isStateTimerEngaged())
 		return;
 
 	if (isActorType(0x4000005a)) {
-		f32 damageRadius = getDamageRadius();
+		f32 margin = 100.0f;
 		if (distToMario(getInitialPosition())
-		    > SMS_GetMarioDamageRadius() + damageRadius + 100.0f)
+		    > SMS_GetMarioDamageRadius() + getDamageRadius() + margin)
 			appear();
 	} else {
 		f32 damageRadius = getDamageRadius();
