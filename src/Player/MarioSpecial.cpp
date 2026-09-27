@@ -1242,7 +1242,19 @@ void TMario::getCurrentPullParams(f32* outV, f32* outH)
 	}
 }
 
-void TMario::setPullingAnm(const JGeometry::TVec3<f32>&, f32) { }
+void TMario::setPullingAnm(const JGeometry::TVec3<f32>& delta, f32 animRate)
+{
+	s16 ang  = matan(delta.z, delta.x);
+	s16 adff = ang - mFaceAngle.y;
+	if (adff >= -0x2000 && adff <= 0x2000)
+		setAnimation(ANIM_HOLD_DRAG, animRate);
+	if (adff <= -0x6000 || adff >= 0x6000)
+		setAnimation(ANIM_HOLD_BACK, animRate);
+	if (adff > -0x6000 && adff < -0x2000)
+		setAnimation(ANIM_HOLD_MOVE_R, animRate);
+	if (adff > 0x2000 && adff < 0x6000)
+		setAnimation(ANIM_HOLD_MOVE_L, animRate);
+}
 
 BOOL TMario::pulling()
 {
@@ -1327,16 +1339,7 @@ BOOL TMario::pulling()
 		if (len < 1.0f) {
 			setAnimation(ANIM_HOLD_WAIT, animRate);
 		} else {
-			s16 ang  = matan(delta.z, delta.x);
-			s16 adff = ang - mFaceAngle.y;
-			if (adff >= -0x2000 && adff <= 0x2000)
-				setAnimation(ANIM_HOLD_DRAG, animRate);
-			if (adff <= -0x6000 || adff >= 0x6000)
-				setAnimation(ANIM_HOLD_BACK, animRate);
-			if (adff > -0x6000 && adff < -0x2000)
-				setAnimation(ANIM_HOLD_MOVE_R, animRate);
-			if (adff > 0x2000 && adff < 0x6000)
-				setAnimation(ANIM_HOLD_MOVE_L, animRate);
+			setPullingAnm(delta, animRate);
 		}
 		break;
 	}
