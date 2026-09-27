@@ -246,3 +246,12 @@ Only ShadowUtil's six `makeDL`/`__dt__` names depend on the exact value.
 The union of MSL, all `dolphin/*`, JKernel/JUtility/JSupport/JGadget, all J3D and J2D/JMath is 450 ids; the headers that may precede the J3D blocks total about 176.
 The deficit is the thinness of our `dolphin/` and MSL reconstructions (29 and 58 ids where the real headers hold hundreds of inline bodies with literals).
 It closes only as those headers are fleshed out; a set chosen to hit the number would be number-fitting.
+
+## `Enemy/mameGesso` (linked, 2026-09-27)
+
+- **A 100/100 object can still reference the wrong object**: `getGravityY` tested `TNerveMameGessoObject::theNerve()` where retail tests `TNerveMameGessoGraphJumpWander`.
+The inlined `theNerve()` bodies are byte-identical apart from relocations, and objdiff scored the function 100% against the other nerve's `instance$`/`__vt__`/`__dt__`.
+Diffing the DOLs showed it (SDA offsets and `lis/addi` of a vtable in one function); `objdump -dr` on both objects named the nerve.
+- Weak order: retail emits `changeByJuice`, `isEatenByYosshi`, `forceKill`, the `TSmallEnemy` inlines, then `__dt__10TMameGesso`.
+Moving the `changeByJuice` override above `isEatenByYosshi` fixed the pair; the implicit destructor was flushed first, and declaring `virtual ~TMameGesso() { }` (at any position) moved it after the base inlines.
+- Without the map, `cmp` of the rebuilt and original DOL plus `config/GMSE01/symbols.txt` (it keeps map order and binding) was enough to prove retail's order.
