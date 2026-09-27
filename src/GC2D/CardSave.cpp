@@ -1678,8 +1678,10 @@ void TCardSave::changePattern(J2DPicture*, s16, u32) { }
 // 0x13), and three low IRO words. Registers: the endWaitForChoice
 // expansions' setCenteredSizeWr bindings (retail r26/r24, ours r25/r26) and
 // the named status/score/r (retail r25, ours r24) are coloured differently.
-// Inert: TU-local helpers around whole case bodies or the score display, the
-// compare's operand order, smInstance/getInstance at every flag call, both
+// The save-time compares read the flag time first (`getLastSaveTime() ==
+// ...unk8`, the xor operand order). Inert: TU-local helpers around whole
+// case bodies or the score display, smInstance/getInstance at every flag
+// call, both
 // score-conversion spellings; a named `TFlagManager* flags` in saveBookmark
 // adds a word per expansion; SMSGetMSound() at a sound site adds low words.
 void TCardSave::execMovement_()
@@ -1995,9 +1997,8 @@ void TCardSave::execMovement_()
 					unk310 = PROGRESS_UNK1E;
 				} else {
 					if (getBookmarkInfo(unk2EA).unk18 == 0
-					    || getBookmarkInfo(unk2EA).unk8
-					           == TFlagManager::getInstance()
-					                  ->getLastSaveTime()) {
+					    || TFlagManager::getInstance()->getLastSaveTime()
+					           == getBookmarkInfo(unk2EA).unk8) {
 
 						saveBookmark(unk2EA);
 					} else {
@@ -2117,9 +2118,8 @@ void TCardSave::execMovement_()
 					unk310 = PROGRESS_UNK1E;
 				} else {
 					if (getBookmarkInfo(unk2EA).unk18 == 0
-					    || getBookmarkInfo(unk2EA).unk8
-					           == TFlagManager::getInstance()
-					                  ->getLastSaveTime()) {
+					    || TFlagManager::getInstance()->getLastSaveTime()
+					           == getBookmarkInfo(unk2EA).unk8) {
 						saveBookmark(unk2EA);
 						unk310 = PROGRESS_UNK16;
 					} else {
@@ -2146,9 +2146,8 @@ void TCardSave::execMovement_()
 						unk310 = PROGRESS_UNK1E;
 					} else {
 						if (getBookmarkInfo(unk2EA).unk18 == 0
-						    || getBookmarkInfo(unk2EA).unk8
-						           == TFlagManager::getInstance()
-						                  ->getLastSaveTime()) {
+						    || TFlagManager::getInstance()->getLastSaveTime()
+						           == getBookmarkInfo(unk2EA).unk8) {
 							saveBookmark(unk2EA);
 							unk310 = PROGRESS_UNK16;
 						} else {
@@ -2206,9 +2205,8 @@ void TCardSave::execMovement_()
 					unk310 = PROGRESS_UNK1E;
 				} else {
 					if (getBookmarkInfo(unk2EA).unk18 == 0
-					    || getBookmarkInfo(unk2EA).unk8
-					           == TFlagManager::getInstance()
-					                  ->getLastSaveTime()) {
+					    || TFlagManager::getInstance()->getLastSaveTime()
+					           == getBookmarkInfo(unk2EA).unk8) {
 						saveBookmark(unk2EA);
 						unk310 = PROGRESS_UNK16;
 					} else {
