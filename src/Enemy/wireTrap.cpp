@@ -383,9 +383,14 @@ void TWireTrap::calcMomentum()
 // UNUSED, 0x3c in the map: fifteen instructions, which is exactly the signed
 // int-to-float conversion plus the product. The "1.0f +" and the timer guard
 // live at each call site, not here.
+// Naming the result puts retail's 8 bytes above the conversion temporary in
+// the moving nerves (ReturnMove/OnewayMove frames now exact).
+// TODO: those nerves still keep `momentum` 8/0x10 too high: the low region is
+// short of that much. Inert: raw mWaterTimer, a named timer, (f32) casts.
 f32 TWireTrap::getWaterPow() const
 {
-	return mWaterPower * mWaterTimer / 30.0f;
+	f32 pow = mWaterPower * mWaterTimer / 30.0f;
+	return pow;
 }
 
 // UNUSED, 0x114 in the map.
