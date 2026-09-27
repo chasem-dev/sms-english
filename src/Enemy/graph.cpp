@@ -458,6 +458,7 @@ int TGraphWeb::getRandomButDirLimited(int param_1, int param_2,
 	JGeometry::TVec3<f32> local_cc = param_3;
 	JGeometry::TVec3<f32> local_d8;
 	JGeometry::TVec3<f32> local_e4;
+	f32 cos;
 	MsVECNormalize(&local_cc, &local_cc);
 
 	int result;
@@ -472,12 +473,6 @@ int TGraphWeb::getRandomButDirLimited(int param_1, int param_2,
 		local_d8 -= param_4;
 		MsVECNormalize(&local_d8, &local_d8);
 
-		// TODO: retail's cross vector sits at 0x44, 4 below ours, with a
-		// 4-byte hole under local_e4. A TU-local angle helper with an f32&
-		// out-param lands it at 0x44 but grows the named block by 8; a
-		// nested scope, top-level cross/angle/maxCos and value helpers are inert.
-		// Also (c-c4): `f32 angle;` above local_f4 inert; a named dot is +8;
-		// MsAtan2 stays out of line (94.0).
 		JGeometry::TVec3<f32> local_f4;
 		local_f4.cross(local_cc, local_d8);
 		f32 angle = abs(matan(local_cc.dot(local_d8), MsVECMag2(&local_f4))
@@ -506,7 +501,7 @@ int TGraphWeb::getRandomButDirLimited(int param_1, int param_2,
 		local_e4.sub(param_4);
 		MsVECNormalize(&local_e4, &local_e4);
 
-		f32 cos = local_e4.dot(local_cc);
+		cos = local_e4.dot(local_cc);
 		if (result < 0 || cos > maxCos) {
 			maxCos = cos;
 			result = railNode->mConnections[i];
@@ -548,6 +543,7 @@ int TGraphWeb::getEscapeDirLimited(int param_1, int param_2,
 	JGeometry::TVec3<f32> local_c0 = param_3;
 	JGeometry::TVec3<f32> local_cc = SMS_GetMarioPos();
 	JGeometry::TVec3<f32> local_d8;
+	f32 cos;
 	JGeometry::TVec3<f32> local_e4;
 	MsVECNormalize(&local_c0, &local_c0);
 	local_cc -= param_4;
@@ -561,13 +557,12 @@ int TGraphWeb::getEscapeDirLimited(int param_1, int param_2,
 		if (param_2 == railNode->mConnections[i])
 			continue;
 
-		getGraphNode(railNode->mConnections[i]).getPoint(&local_d8);
+		const TGraphNode& node = getGraphNode(railNode->mConnections[i]);
+		node.getPoint(&local_d8);
 		local_d8 -= param_4;
 		MsVECNormalize(&local_d8, &local_d8);
 
-		// TODO: retail has a 4-byte hole between local_d8 and local_e4 and
-		// this cross vector 0xc lower (0x4c); same residue as
-		// getRandomButDirLimited.
+		f32 dirCos;
 		JGeometry::TVec3<f32> local_f4;
 		local_f4.cross(local_c0, local_d8);
 		f32 angle = abs(matan(local_c0.dot(local_d8), MsVECMag2(&local_f4))
@@ -577,10 +572,10 @@ int TGraphWeb::getEscapeDirLimited(int param_1, int param_2,
 				result    = railNode->mConnections[i];
 				unaff_f29 = local_d8.dot(local_cc);
 			} else {
-				f32 cos = local_d8.dot(local_cc);
-				if (cos < unaff_f29) {
+				dirCos = local_d8.dot(local_cc);
+				if (dirCos < unaff_f29) {
 					result    = railNode->mConnections[i];
-					unaff_f29 = cos;
+					unaff_f29 = dirCos;
 				}
 			}
 		}
@@ -598,7 +593,7 @@ int TGraphWeb::getEscapeDirLimited(int param_1, int param_2,
 		local_e4.sub(param_4);
 		MsVECNormalize(&local_e4, &local_e4);
 
-		f32 cos = local_e4.dot(local_cc);
+		cos = local_e4.dot(local_cc);
 		if (result < 0 || cos < unaff_f29) {
 			unaff_f29 = cos;
 			result    = railNode->mConnections[i];
