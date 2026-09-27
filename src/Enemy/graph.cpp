@@ -751,13 +751,7 @@ JGeometry::TVec3<f32> TGraphWeb::indexToPoint(int param_1) const
 	return result;
 }
 
-// The draw pass (cue bit 3) has an empty body in this build, but the test on
-// `cue` keeps it live through TGraphGroup::perform's elided loop, which is
-// what gives retail's loop its r5/r6/r7 scratch registers.
-void TGraphWeb::perform(u32 cue, JDrama::TGraphics* graphics)
-{
-	if (cue & 8) { }
-}
+void TGraphWeb::perform(u32 cue, JDrama::TGraphics* graphics) { }
 
 BOOL TGraphWeb::isDummy() const
 {
@@ -896,6 +890,12 @@ TGraphWeb* TGraphGroup::getGraphByName(const char* name)
 
 void TGraphGroup::perform(u32 cue, JDrama::TGraphics* graphics)
 {
+	// TODO: retail's scratch registers start one higher (r5/r6/r7 for our
+	// r4/r5/r6), i.e. the `graphics` parameter stays live past the first
+	// temporary; the loop is fully elided otherwise. A named bound (-9pp), a
+	// getGraph(i) accessor (inert) and a named TGraphWeb* (worse) refuted.
+	// Also inert: unnamed callee params, a hoisted graphs array, a while loop,
+	// an outer-declared i or TGraphWeb*, pointer arithmetic; u32 i is worse.
 	for (int i = 0; i < unk4; ++i)
 		unk8[i]->perform(cue, graphics);
 }
