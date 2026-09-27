@@ -11088,6 +11088,8 @@ MActor* TMapObjBase::initMActor(const char* param_1, const char* param_2,
 	return newActor;
 }
 
+// TODO: frame 0x40 short (low region), and each initMActor expansion lacks
+// retail's dead `unkC` load and old-actor register (see initMActor's TODO).
 void TMapObjBase::makeMActors()
 {
 	u16 uVar6 = 1;
@@ -11193,6 +11195,8 @@ void TMapObjBase::initActorData()
 		unkE8 = 2;
 }
 
+// TODO: frame 0x10 short, and the inlined J3DTexture::setResTIMG schedules
+// `addi r5` before the offset load (header body; a local += fork is worse).
 void TMapObjBase::initMapObj()
 {
 	mInitialPosition = mPosition;

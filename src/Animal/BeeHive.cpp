@@ -157,6 +157,8 @@ void TBeeHive::init(TLiveManager* manager)
 	initCollision();
 }
 
+// TODO: frame 0x10 over retail (0x14 extra low region), and the inlined
+// getQuat adds `1.0f + trace` where retail adds `trace + 1.0f` (JGRotation3.hpp).
 void TBeeHive::reset()
 {
 	mPosition = mHomePosition;
@@ -305,6 +307,8 @@ TRealoidActor* TBeeHive::createRealoidActor(MActor* actor)
 	return new TBee(actor, this);
 }
 
+// TODO: frame 0x10 short, and retail reloads mSwingSpeed for the sign test
+// (ours CSEs it into f2), putting sign in f29. Inert: __fabsf, fabs, a sign helper.
 BOOL TBeeHive::receiveMessage(THitActor* sender, u32 message)
 {
 	switch (message) {

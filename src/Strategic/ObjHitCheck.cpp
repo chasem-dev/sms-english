@@ -269,6 +269,8 @@ void TObjHitCheck::checkGroup(TIdxGroupObj* group)
 	}
 }
 
+// TODO: frame 0x20 short: checkGroupPlayer's iterator block sits 4 lower than
+// retail (JGadget iterator block stride, known open).
 void TObjHitCheck::checkActorsHit()
 {
 	initTable();
@@ -292,6 +294,8 @@ void TObjHitCheck::checkActorsHit()
 		checkGroupPlayer(gpStrategy->unk10[5]);
 }
 
+// TODO: frame 0x30 short: each clearGroup expansion is 4 short in both its
+// iterator block and its low temps. Inert: unnamed children, begin before end.
 void TObjHitCheck::clearHitNum()
 {
 	if (!(gpStrategy->unk50 & 0x100))
