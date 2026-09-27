@@ -532,26 +532,6 @@ f32 TMapObjGrowTree::getGrowHeightFromRate(f32 rate) const
 	return 0.0f;
 }
 
-static inline MActor* GrowTreeGetMActor(const TLiveActor* actor)
-{
-	return actor->getMActor();
-}
-
-static inline f32 GrowTreeHeightAtFrame(const TMapObjGrowTree* p)
-{
-	return p->mInitialHeight
-	       + (p->mGrowHeight - p->mInitialHeight)
-	             * (GrowTreeGetMActor(p)->getFrameCtrl(ANM_TYPE_BCK)->getFrame()
-	                - mGrowStartFrame)
-	             / (mGrowEndFrame - mGrowStartFrame);
-}
-
-static inline void GrowTreeAddFrame(TLiveActor* actor, f32 speed)
-{
-	actor->getMActor()->getFrameCtrl(ANM_TYPE_BCK)->setFrame(
-	    speed + actor->getMActor()->getFrameCtrl(ANM_TYPE_BCK)->getFrame());
-}
-
 /**
  * @brief Resize the damage cylinder to the tree's current height.
  *
@@ -565,16 +545,25 @@ void TMapObjGrowTree::updateHeight()
 		    > mGrowEndFrame) {
 			setDamageHeight(mGrowHeight);
 		} else {
-			setDamageHeight(GrowTreeHeightAtFrame(this));
+			setDamageHeight(
+			    mInitialHeight
+			    + (mGrowHeight - mInitialHeight)
+			        * (getMActor()->getFrameCtrl(ANM_TYPE_BCK)->getFrame()
+			           - mGrowStartFrame)
+			        / (mGrowEndFrame - mGrowStartFrame));
 		}
 	} else {
 		setDamageHeight(mInitialHeight);
 	}
 }
 
-// TODO: control() and touchWater() are instruction-exact (the frame-add and
-// height helpers give retail's getMActor bl and f31/f30 order); only the
-// frames stay short, 0xf8/0xe8 vs 0x90: a ~0x58 low region still unplaced.
+// TODO: control() and touchWater() are instruction-exact except that retail
+// calls getMActor() out of line in updateHeight()'s interpolated
+// setDamageHeight() argument, and both frames are larger (0xf8/0xe8 vs 0x90).
+// Probes show a small inline is refused only at depth 5 from the caller, so
+// retail reaches that site through two more inline levels; a TU-local frame
+// helper (1-3 levels, all or some sites), a named argument and raw mMActor in
+// getGrowHeightFromRate() were inert or worse.
 u32 TMapObjGrowTree::touchWater(THitActor* water)
 {
 	if (water->mPosition.y > mPosition.y + mInitialHeight)
@@ -593,7 +582,10 @@ u32 TMapObjGrowTree::touchWater(THitActor* water)
 		soundBas(MSD_SE_OBJ_SANDBOMB_WATER_3, 103.0f, mGrowSpeed);
 		soundBas(MSD_SE_OBJ_SANDBOMB_WATER_4, 137.0f, mGrowSpeed);
 
-		GrowTreeAddFrame(this, mGrowSpeed);
+		f32 rate = mGrowSpeed;
+		getMActor()->getFrameCtrl(ANM_TYPE_BCK)
+		    ->setFrame(rate
+		               + getMActor()->getFrameCtrl(ANM_TYPE_BCK)->getFrame());
 		updateHeight();
 
 		// The collision block rides up with the sprout.
@@ -622,7 +614,10 @@ void TMapObjGrowTree::control()
 		    < mGrowEndFrame)
 			removeMapCollision();
 
-		GrowTreeAddFrame(this, -mShrinkSpeed);
+		f32 rate = -mShrinkSpeed;
+		getMActor()->getFrameCtrl(ANM_TYPE_BCK)
+		    ->setFrame(rate
+		               + getMActor()->getFrameCtrl(ANM_TYPE_BCK)->getFrame());
 		if (getMActor()->getFrameCtrl(ANM_TYPE_BCK)->getFrame() < 0.0f) {
 			startAnim(0);
 			mState = 1;
