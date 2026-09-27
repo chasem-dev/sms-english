@@ -645,8 +645,9 @@ void TPakkunSeed::loadInit(TSpineEnemy* host, const char* model)
 	unk150       = SEED_STATE_DEAD;
 	mGroundPlane = gpMap->getIllegalCheckData();
 
-	getMActor()->getModel()->getModelData()->getJointNodePointer(0)
-	    ->setCallBack(PakkunSeedCallback);
+	J3DJoint* root
+	    = getMActor()->getModel()->getModelData()->getJointNodePointer(0);
+	root->setCallBack(PakkunSeedCallback);
 }
 
 void TPakkunSeed::moveObject()
