@@ -2552,19 +2552,21 @@ void TMario::gunExec()
 	}
 }
 
-// TODO: 100.0%, every instruction present; the inlined thinkHeight `point`
-// and checkRideReCalc `ridingMtx` sit 4 low. Raw `mPosition.y` in thinkHeight
-// gives retail's relative layout except a 4-byte slot missing between
-// `ridingMtx` and checkPlayerAround's `outPlane` (a by-value f32 fork over
-// getPosition() leaves only `outPlane` 4 high); getRidingMtx and
-// checkRideReCalc spellings are inert.
+static inline s16 MarioMoveCameraUnk258()
+{
+	s16 angle = gpCamera->getUnk258();
+	return angle;
+}
+
+// SMSGetMarDirector() at the first billboard test and the camera angle read
+// through the MarioMoveCameraUnk258 binder give retail's slots.
 void TMario::playerControl(JDrama::TGraphics* param_1)
 {
 	unk9C         = mFaceAngle.y;
 	mPrevPosition = mPosition;
 	offUnk114(UNK114_FLAG_UNK8);
 
-	if (gpMarDirector->unk124 == 1 && getStatus() != MARIO_STATUS_READ_BILLBOARD)
+	if (SMSGetMarDirector()->unk124 == 1 && getStatus() != MARIO_STATUS_READ_BILLBOARD)
 		changePlayerStatus(MARIO_STATUS_READ_BILLBOARD, 0, false);
 
 	if (gpMarioOriginal == this) {
@@ -2574,7 +2576,7 @@ void TMario::playerControl(JDrama::TGraphics* param_1)
 		         && (MARIO_STATUS_HANG_JUMPING & MARIO_STATUS_TYPE_AND_ID_MASK)
 		                >= (getStatus() & MARIO_STATUS_TYPE_AND_ID_MASK))
 		    && gpMarDirector->unk124 != 1) {
-			mFaceAngle.y = (MarioMoveGetCamera()->getUnk258() + 0x8000)
+			mFaceAngle.y = (MarioMoveCameraUnk258() + 0x8000)
 			               - gpCamera->getOffsetAngleY();
 		}
 	}
