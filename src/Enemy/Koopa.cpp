@@ -1236,8 +1236,10 @@ void TKoopa::fall()
 	mSpine->setNext(&TNerveKoopaFall::theNerve());
 }
 
-// TODO: 99.5%. Frame 0x18 short and the set()'s y/z loads swap f1/f2; a
-// TVec3 temporary, direct stores, `= mPosition` and getAnmIndex() are inert.
+// The head matrix is the UNUSED getHeadMtx() (+8 of frame over the chain).
+// TODO: 99.5%. Frame 0x10 short and the set()'s y/z loads swap f1/f2; a TVec3
+// temporary, direct stores, set(mPosition), getAnmIndex() and an uncast
+// animeLoop argument are inert, alone and on top of getHeadMtx().
 void TKoopa::updateAnmSound()
 {
 	if (getMActor()->getCurAnmIdx(ANM_TYPE_BCK) == KOOPA_ANM_HIPDROP) {
@@ -1245,7 +1247,7 @@ void TKoopa::updateAnmSound()
 		mAnmSoundPos.y = mPosition.y;
 		mAnmSoundPos.z = mPosition.z;
 	} else {
-		MtxPtr mtx = getMActor()->getModel()->getAnmMtx(mHeadJntIndex);
+		MtxPtr mtx = getHeadMtx();
 		mAnmSoundPos.set(mtx[0][3], mtx[1][3], mtx[2][3]);
 	}
 
