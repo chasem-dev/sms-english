@@ -510,6 +510,7 @@ BOOL TMario::jumpCatch()
 
 BOOL TMario::jumpingThrow()
 {
+	BOOL result = 0;
 	setAnimation(ANIM_THROW, 1.0f);
 	checkThrowObject();
 	doJumping();
@@ -524,7 +525,7 @@ BOOL TMario::jumpingThrow()
 		break;
 	}
 
-	return 0;
+	return result;
 }
 
 BOOL TMario::jumpDownCommon(int param_1, int animation, float velocity)
@@ -560,48 +561,53 @@ void TMario::checkWallJumping()
 
 BOOL TMario::jumpShortBackDown()
 {
+	BOOL result = 0;
 	if (mStatusTimer == 0) {
 		mStatusTimer += 1;
 		rumbleStart(0x15, 0x14);
 	}
 	jumpDownCommon(MARIO_STATUS_SHORT_BACK_DOWN, ANIM_BKDWN, -16.0f);
-	return 0;
+	return result;
 }
 
 BOOL TMario::jumpShortForeDown()
 {
+	BOOL result = 0;
 	if (mStatusTimer == 0) {
 		mStatusTimer += 1;
 		rumbleStart(0x15, 0x14);
 	}
 	jumpDownCommon(MARIO_STATUS_SHORT_FORE_DOWN, ANIM_JFDWN, 16.0f);
-	return 0;
+	return result;
 }
 
 BOOL TMario::jumpBackDown()
 {
+	BOOL result = 0;
 	if (mStatusTimer == 0) {
 		mStatusTimer += 1;
 		rumbleStart(0x15, 0x14);
 	}
 	jumpDownCommon(MARIO_STATUS_BACK_DOWN, ANIM_BKDWN, -16.0f);
-	return 0;
+	return result;
 }
 
 BOOL TMario::jumpForeDown()
 {
+	BOOL result = 0;
 	if (mStatusTimer == 0) {
 		mStatusTimer += 1;
 		rumbleStart(0x15, 0x14);
 	}
 	jumpDownCommon(MARIO_STATUS_FORE_DOWN, ANIM_JFDWN, 16.0f);
-	return 0;
+	return result;
 }
 
 BOOL TMario::landSafeDown()
 {
+	BOOL result = 0;
 	jumpDownCommon(MARIO_STATUS_LAND_SLIP, ANIM_LAND, mForwardVel);
-	return 0;
+	return result;
 }
 
 BOOL TMario::stayWall()
@@ -1320,22 +1326,18 @@ BOOL TMario::diving()
 
 BOOL TMario::fallDead()
 {
+	BOOL result = FALSE;
 	jumpProcess(0);
-	return FALSE;
+	return result;
 }
 
-// TODO: Body opcodes/registers match; recover the original inline stack layout.
-// Frame is 0x60 instead of 0x88; pullJumping's position is at 0x34, not 0x60.
-// Measured: routing any one handler call through an extra inline level
-// (a forwarding static inline, or `BOOL r = f(); return r;`) adds 8 bytes,
-// even for non-inlined landing(); five such levels close it exactly. Named
-// locals inside the handlers, getVel()/getStatus() spellings, per-case
-// `return f();` and jumpingCommonEvents() rewrites all leave the frame at 0x60.
-// Narrowed: the +8 is specifically an inline body returning a named local
-// (fallDead as `BOOL r = FALSE; jumpProcess(0); return r;` gives 0x68);
-// direct-return forwarders are +0. Every handler now matches its map size out
-// of line (jumping/secJumping took the named `anim` ternary), so the missing
-// levels are not visible in the handlers' own sizes.
+// The frame (0x88) comes from the handlers inlined after pullJumping: each of
+// jumpingThrow, the four jump*Down handlers, landSafeDown and fallDead keeps
+// its return value in a named `result`, which leaves that local and the
+// handler's result object dead in the frame (8 bytes for the straight-line
+// bodies, 4 for those whose result object already existed). Handlers inlined
+// before pullJumping must not: their objects sit above pullJumping's `pos`,
+// which is already at retail's 0x60.
 BOOL TMario::jumpMain()
 {
 	int result;
