@@ -152,3 +152,14 @@ Marker method: `int mk; extp(&mk);` declared first sits right above the dead reg
   A helper taking the tracer (`f(getTracer())`) or per-read helpers returning values do not work: the argument binding or the result objects stay at depth 1.
 - **Chained accessors expand by nesting, not statement depth.** In `jumpToNextGraphNode` the receiver chain inside `getGraphNode(getTracer()->getCurGraphIndex()).checkFlag()` is created after `setGoalPathFromGraph`'s block although both are caller-level code; the idx statement's three bindings sit above it.
 - **Moving a loop into an inline changes its induction setup.** The exclusive variant's loop moved into a helper gets `li r29, 0; addi r30, r29, 0` instead of retail's two `li`; a helper holding named `currIdx`/`idx` also drops the `mr` copies retail keeps (goToDirectedNextGraphNode), so those locals are caller-level in retail.
+
+## Refinements (unit agent c-d10, 2026-09-27)
+
+- **A converting argument binding moves up when named.** An inline setter taking `u32` fed an `s32` local makes a typecon binding (non-simple, rule 3) created with the depth-1 expansion, below every named local.
+  `u32 id = eventId; setEventId(id);` turns it into a dead named word at the declaration point: `TShine::loadBeforeInit` closed (retail had one word between `eventId` and `v` and one fewer below `v`).
+- `TMap::isTouchedOneWall` (open): the inlined `center` reference of `isTouchedOneWallAndMoveXZ` is part of retail's set (dropping it is -8); the one missing word sits below `record`. Inert or code-breaking: `int r;` declared before the record, a named `bool`, `if (r != 0)` (loses the ternary's bool), default-ctor plus `set()` (stops the inlining).
+- `PopoRollCallback`: `MsMtxSetRotY(rollPtr, 180.0f)` is instruction-identical to the open-coded `JMASSin(0x8000)` block but frame-inert there; retail's six extra words are all low region (`gpCurPopo->isRollJump()` is +8).
+  `PopoNonScaleCallback` needs 15 more low words than ours with the same two inlined nerve compares; retail's `isUseScaleCallBack`/`isRollJump` expansions carry about twice our dead objects.
+- `TShine::control`: `MsAngleWrap(mRotation.y)` for the discarded `MsWrap(...)` dead-strips the wrap loops (-9 instructions per site), so retail calls `MsWrap` directly there.
+- `decideRandomLoveFruit` (open): every random spelling (`f32 rnd` named, `MsRandI`, a named product) reaches +8 at most; retail needs +0x10.
+- The 0xa0-0xc8 dead regions with no stack access (`TPoiHanaManager`/`TGessoManager`/`TIgaigaManager`/`TTamaNokoManager::initSetEnemies`, `TNerveBWRoll`) are one size family; look for one shared construct rather than per-function levers.
