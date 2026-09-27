@@ -93,42 +93,15 @@ void TMushroom1up::load(JSUMemoryInputStream& stream)
 	offLiveFlag(LIVE_FLAG_AIRBORNE | LIVE_FLAG_UNK10);
 }
 
-// TODO: 99.9%, all instructions match, 34 operand-only markers (closure batch
-// 123 made it instruction-exact; batch 128 mapped the frame). The residue is
-// now fully localised: retail's frame is 0x88 with three 12-byte named slots
-// packed at 0x44 (`diff`), 0x50 (`pos`) and 0x5c (unreferenced), 16 bytes of
-// int<->float magic doubles at 0x68/0x70, and 56 bytes of inline-temp pool
-// (0xc..0x43). Ours is 0x80 with `pos` at 0x50 and `diff` at 0x40 and only 52
-// pool bytes. Two independent items:
-//   (a) a dead 12-byte local declared before the Mario-follow block fills
-//       retail's 0x5c slot and lands the frame at 0x88 exactly (52 -> 34
-//       markers, zero instruction change) -- positional evidence only, no
-//       candidate the function plausibly wanted, so not committed;
-//   (b) after that, the only remaining difference is `diff` at 0x40 vs 0x44,
-//       i.e. retail's inline-temp pool is exactly 4 bytes bigger. Measured
-//       here: every accessor rung is +8, not +4 (`getPosition()` in the
-//       `diff -= mPosition` line, `getRotation().y` at the MsAngleDiff site or
-//       at the MsWrap site: each 0x88 -> 0x90); a dead 4-byte local declared
-//       last is +8; `SMS_GetMarioPos()` bound to a `const TVec3&`/`const
-//       TVec3*` local, or spelled as raw `*gpMarioPos`, is +0 at the `diff`
-//       site and costs 12 markers at the `pos` site. So this needs one of the
-//       catalogued "+4 low" causes (a global-accessor level per read site, a
-//       named cast intermediate), none of which this function has a site for.
-// Closure re-pass (batch 161): the new UNUSED-callee carrier rule does not
-// apply -- MapObjItem2 has no UNUSED *function* at all (only the four data
-// objects @1431/@1411/@1210/MtxCalcTypeName), and item (a)'s slot is in the
-// named block anyway (0x5c, above `pos` at 0x50 and `diff` at 0x44), i.e. a
-// local of this body declared before `pos`, not a callee's.
-// cc28: C-style top declarations `scale, pos, diff` with `scale.set(1.5f,
-// 1.5f, 1.5f); mScaling = scale;` land frame 0x88 and every slot (3 markers)
-// but add the six-instruction word copy; every copy-free spelling
-// (`mScaling.set(scale)`, `.set(scale.x, ...)`, member-wise) scalarises
-// `scale` and costs +0x10/+0x18 of frame, so the 0x5c object is still unnamed.
+// The C-style `s`/`deg` declarations at the top of the follow block and
+// getPosition() in the `diff -= ...` line give retail's 0x88 frame and slots.
 void TMushroom1up::control()
 {
 	TMapObjBase::control();
 
 	if (unk13A == 1) {
+		f32 s;
+		f32 deg;
 		int t = 180 - unk13C;
 		if (t < 0) {
 			kill();
@@ -136,12 +109,13 @@ void TMushroom1up::control()
 		}
 
 		JGeometry::TVec3<f32> pos = SMS_GetMarioPos();
-		f32 deg = 5.0f * t;
+		deg = 5.0f * t;
 		// The y offset comes first: it owns the lower literal id
 		// (@3312) than the 1.5f of the x/z lines.
 		pos.y += 200.0f;
 		pos.x += 1.5f * (50.0f * JMACos(deg));
-		pos.z += 1.5f * (50.0f * JMASin(deg));
+		s = JMASin(deg);
+		pos.z += 1.5f * (50.0f * s);
 		mPosition = pos;
 
 		mScaling.set(1.5f, 1.5f, 1.5f);
@@ -165,7 +139,7 @@ void TMushroom1up::control()
 	}
 
 	JGeometry::TVec3<f32> diff = SMS_GetMarioPos();
-	diff -= mPosition;
+	diff -= getPosition();
 	diff.y = 0.0f;
 	if (diff.isZero())
 		diff.x = 1.0f;
