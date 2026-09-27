@@ -191,6 +191,8 @@ TPollutionLayerWallBase::TPollutionLayerWallBase()
 // operand, a named minX before or after x, z declared before x, split
 // declarations, reading x/z through getBaseTRMtx() per site; `mMinX > x`
 // and a TU-local predicate for the whole test regress.
+// c-m29: an unnamed `model->getBaseTRMtx()[0][3]` at both x sites gives
+// retail's mMinX-then-x order but loads z late (93.0); named z is always early.
 void TPollutionLayer::stampModel(J3DModel* model)
 {
 	MtxPtr mtx = model->getBaseTRMtx();
@@ -380,7 +382,13 @@ void TPollutionLayer::initTexImage(const char* name)
 	DCStoreRange(mPollutionMap, mPos.getWidth() * mPos.getHeight());
 }
 
-void TPollutionLayer::initTex(const char*) { }
+void TPollutionLayer::initTex(const char* name)
+{
+	mPollutionImage               = getTexResource(name);
+	mPollutionImage->alphaEnabled = 2;
+
+	mPollutionMap = (u8*)mPollutionImage + mPollutionImage->imageDataOffset;
+}
 
 void TPollutionLayer::initLayerInfo(const TPollutionLayerInfo* param_1)
 {
@@ -419,10 +427,7 @@ void TPollutionLayer::initPollutionTex(const char* depth_tex_name)
 	          info->mLog2Width, info->mLog2Height);
 	unk88 = info->unk24;
 
-	mPollutionImage               = getTexResource(depth_tex_name);
-	mPollutionImage->alphaEnabled = 2;
-
-	mPollutionMap = (u8*)mPollutionImage + mPollutionImage->imageDataOffset;
+	initTex(depth_tex_name);
 	initTexImage(depth_tex_name);
 
 	if (getPollutionType() == POLLUTION_TYPE_ELECTRIC)

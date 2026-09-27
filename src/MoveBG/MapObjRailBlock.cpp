@@ -565,34 +565,19 @@ void TRollBlock::calcRootMatrix()
 {
 	J3DModel* model = getModel();
 	MtxPtr mtx      = model->getBaseTRMtx();
-	// Declaring the roll matrix between the sine and cosine reads lands it at
-	// retail's 0x2c. TODO: 97.3%. Retail copies mScaling.x through r4 and
-	// computes &roll after it; ours uses r6 and hoists the addi. Tried: raw
-	// mScaling, a bound scaling reference, getModel() at the scale site.
-	// c-mbg: a named `MtxPtr` over `roll` (Mtx or TMtx34f) gives 97.6 with
-	// the MTXConcat argument setup reordered (r4 first, r3/r5 last).
-	MsMtxSetXYZRPH(mtx, mPosition.x, mPosition.y - mYOffset, mPosition.z,
+	// TODO: 99.2%, frame and every slot exact; the roll matrix is the header's
+	// MsMtxSetRotZ (the hand-written sin/cos copy was 97.3). Left: retail sets
+	// MTXConcat's r3 with `mr` and r5 with `addi r5, r30, 0`, ours `mr` twice.
+	// `MTXConcat(mtx, roll, mtx)` gives that pair but hoists `addi r4, roll`
+	// above the scale copy (r6 for mScaling.x, 97.3); both getBaseTRMtx() the
+	// same as this. Two getPosition() sites (any two) pay the frame's last 8.
+	MsMtxSetXYZRPH(mtx, mPosition.x, getPosition().y - mYOffset, getPosition().z,
 	               mInitialRotation.x, mInitialRotation.y, mInitialRotation.z);
 	model->setBaseScale(getScaling());
 
-	f32 sinRoll = JMASin(unk138);
 	Mtx roll;
-	f32 cosRoll = JMACos(unk138);
-
-	roll[0][0] = cosRoll;
-	roll[0][1] = -sinRoll;
-	roll[0][2] = 0.0f;
-	roll[0][3] = 0.0f;
-	roll[1][0] = sinRoll;
-	roll[1][1] = cosRoll;
-	roll[1][2] = 0.0f;
-	roll[1][3] = 0.0f;
-	roll[2][0] = 0.0f;
-	roll[2][1] = 0.0f;
-	roll[2][2] = 1.0f;
-	roll[2][3] = 0.0f;
-
-	MTXConcat(mtx, roll, mtx);
+	MsMtxSetRotZ(roll, unk138);
+	MTXConcat(model->getBaseTRMtx(), roll, mtx);
 }
 
 void TRollBlock::control()
