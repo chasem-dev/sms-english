@@ -1411,9 +1411,14 @@ void TMammaYacht::initMapObj()
 	mFlag->init("MammaYacht00");
 }
 
-// TODO: every instruction matches; the frame is 8 short (0x70 vs 0x78). Each
-// accessor site below is +8; startStateTimer(), a null test on the ground
-// actor and single-site subsets are inert or -8.
+// Binding level over Mario's ground plane, worth the one word of low region
+// TSandBird::control was short.
+static inline const TBGCheckData* SandBirdGroundPlane()
+{
+	const TBGCheckData* plane = SMS_GetMarioGroundPlane();
+	return plane;
+}
+
 void TSandBird::control()
 {
 	TJointCoin::control();
@@ -1433,7 +1438,7 @@ void TSandBird::control()
 	}
 
 	if (!gpCamera->isDemoCamera() && !mHelpShown) {
-		const TLiveActor* actor = SMS_GetMarioGroundPlane()->getActor();
+		const TLiveActor* actor = SandBirdGroundPlane()->getActor();
 		if (actor) {
 			if (actor->isActorType(0x400002C9)) {
 				SMSGetMarDirector()->getConsole()->startAppearBalloon(0x2C, false);
