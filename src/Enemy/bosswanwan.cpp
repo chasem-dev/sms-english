@@ -481,19 +481,26 @@ BosswanwanGetLatestNerve(const TBossWanwan* p)
 	return latestNerve;
 }
 
-// TODO: pullTail's copy sits 0xc low (0x3c vs retail 0x48) in the right frame.
-// Inert or worse: dropping the binder (0x58), raw mLeash or mHitPoints (0x60),
-// a named TBWLeash* local.
+// Retail has three dead words above pullTail's copy (the two theNerve()
+// results and one binding) and the binder's locals below it, i.e. one inline
+// level further down; with that level the raw mLeash and mHitPoints reads
+// give the rest of retail's low region.
+static inline const TNerveBase<TLiveActor>*
+BosswanwanLatestNerve(const TBossWanwan* p)
+{
+	return BosswanwanGetLatestNerve(p);
+}
+
 BOOL TBWPicket::moveRequest(const JGeometry::TVec3<f32>& where_to)
 {
-	if (BosswanwanGetLatestNerve(mOwner) == &TNerveBWJumpToBath::theNerve()
-	    || BosswanwanGetLatestNerve(mOwner) == &TNerveBWDie::theNerve())
+	if (BosswanwanLatestNerve(mOwner) == &TNerveBWJumpToBath::theNerve()
+	    || BosswanwanLatestNerve(mOwner) == &TNerveBWDie::theNerve())
 		return FALSE;
 
-	if (mOwner->getHitPoints() != 0)
+	if (mOwner->mHitPoints != 0)
 		return FALSE;
 
-	mOwner->getLeash()->pullTail(where_to);
+	mOwner->mLeash->pullTail(where_to);
 	return TRUE;
 }
 
