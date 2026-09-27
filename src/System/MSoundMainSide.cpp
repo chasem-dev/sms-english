@@ -896,7 +896,8 @@ void MSStageCubeFade::proc()
 			gpMSound->unk9C->unk0 = 0.0f;
 		}
 	} else {
-		gpMSound->unk9C->xFadeBgm(calcParamRatioInCube(unk4));
+		f32 ratio = calcParamRatioInCube(unk4);
+		gpMSound->unk9C->xFadeBgm(ratio);
 		if (MSMainProc::MSStageInfo::cubeFadeUsePan != 0) {
 			Vec local_158 = gpCubeSoundChange->unk14->begin()[unk4]->unkC;
 			Vec local_14c = *gpMarioPos;
@@ -955,7 +956,8 @@ void MSStageCubeFadeDouble::proc()
 			gpMSound->unk9C->xFadeBgmForce(0.0f);
 		}
 	} else {
-		gpMSound->unk9C->xFadeBgm(calcParamRatioInCube(unk4));
+		f32 ratio = calcParamRatioInCube(unk4);
+		gpMSound->unk9C->xFadeBgm(ratio);
 		if (MSMainProc::MSStageInfo::cubeFadeUsePan != 0) {
 			Vec local_160 = gpCubeSoundChange->unk14->begin()[unk4]->unkC;
 			Vec local_154 = *gpMarioPos;
@@ -976,8 +978,9 @@ MSStageCubeFadeMonte::MSStageCubeFadeMonte()
 {
 }
 
-// TODO: frame still 0x80 short of retail's and the pan/dolby FPRs are
-// swapped, as in the other cube-fade procs (calcParamRatioInCube residue).
+// TODO: frame 0xb8 short of retail's, and the inlined setBgmPosition's
+// pan/dolby FPRs are swapped (retail d/dolby f30, pan f31), as in the other
+// cube-fade procs; passing vec_dist straight as the argument breaks the sqrt.
 void MSStageCubeFadeMonte::proc()
 {
 	JAISound* sound1 = MSBgm::getHandle(1);
@@ -991,11 +994,7 @@ void MSStageCubeFadeMonte::proc()
 	unk4  = gpCubeSoundChange->getInCubeNo(local_19c);
 	unk10 = SMS_GetMonteVillageAreaInMario();
 
-	f32 fVar2;
-	if (unk4 != -1)
-		fVar2 = calcParamRatioInCube(unk4);
-	else
-		fVar2 = 0.0f;
+	f32 fVar2 = unk4 != -1 ? calcParamRatioInCube(unk4) : 0.0f;
 
 	if (unk10 == 0) {
 		MSoundSESystem::MSoundSE::startSoundSystemSE(
