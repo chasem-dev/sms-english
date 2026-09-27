@@ -221,50 +221,19 @@ static inline void MsGetRotFromZaxisY2(const JGeometry::TVec3<f32>& axis,
 	}
 }
 
-// TODO: very much fake
-// Pitch from a unit Z axis. The two degenerate cases are negated relative to
-// MsGetRotFromZaxisY2's: `.sdata2` shows @1673 = 90.0f and @1674 = -90.0f, and
-// the y == 1.0f arm loads @1674.
-static inline void MsGetRotFromZaxisX2(const JGeometry::TVec3<f32>& axis,
-                                       f32* out)
-{
-	f32 y = axis.y;
-	if (y == 1.0f) {
-		*out = -90.0f;
-		return;
-	} else if (y == -1.0f) {
-		*out = 90.0f;
-		return;
-	}
-
-	f32 a = 1.0f - y * y;
-
-	*out = -(matan(MsSqrtf(a), y) * (360.0f / 65536.0f));
-}
-// TODO: 98.8%. Body and register allocation are right; retail's frame is 0x58
-// and ours 0x48, and every slot above the inline-temporary pool matches offset
-// for offset.  The 16 bytes are 16 more dead pool bytes *below* MsSqrtf's
-// volatile round-trip temporary (retail 0x28, ours 0x18).
-//
-// The "32-byte outgoing-parameter area" reading is **refuted**: adding a call
-// with three or four `f32` arguments, or with one pointer plus three `f32`s,
-// or with eight pointers, leaves the frame at 0x48; only a ninth pointer
-// argument moves it (to 0x50).  So the area is not sized per argument and
-// matan's two floats are not what the 16 bytes are.
-//
-// What does land it is a dead 12-byte **non-trivial** local, and the placement
-// is remarkably insensitive: in X2's body, in Y2's body, or block-scoped in
-// this body before `result`, between `normalize()` and X2, or after Y2 -- all
-// five give frame 0x58 with the same four-instruction residue (16 bytes gives
-// 0x58 too but costs 33 more operand differences, 8 and 20 miss the frame).
-// That residue is the MsSqrtf temporary still at 0x18 instead of 0x28 plus the
-// `lfs 1.0f` / `lfs axis.y` load-order swap at 0x86c, i.e. our dead object
-// lands *above* the temporary and retail's 16 bytes are below it, so the size
-// is right and the pool position is not.  Nothing in either helper names a
-// vector, so it is left out rather than fabricated.
-// 2026-09-22, all inert (98.8): X2 taking `f32 y` by value, X2 reading
-// `axis.y` unnamed, MsSqrtf over the unnamed `1 - y*y`, `axis` declared then
-// assigned, `setLength(1.0f)` for `normalize()`.
+// TODO: 99.7%, instruction- and register-exact; retail's frame is 0x58 and
+// ours 0x48. The pitch is spelled in this body (the `.sdata2` pair @1673 =
+// 90.0f / @1674 = -90.0f puts -90 on the y == 1 arm): through a void helper
+// taking `&result.x` (the old MsGetRotFromZaxisX2) MsSqrtf expanded one level
+// deeper, after normalize()'s setLength binding, which cost the load swap at
+// 0x86c and the f3/f4 choice. Spelled here, MsSqrtf's volatile sits directly
+// under `axis` as in retail, and every slot is uniformly 12 bytes low: retail
+// has three more words created after that volatile, i.e. in the yaw helper's
+// depth-1 expansion or deeper. Measured: a named `f32 angle = 180.0f - theta;
+// *out = angle;` in the else arm supplies one; named z/x components take
+// registers (+0); a by-value or local TVec3 copy of the axis supplies all
+// twelve bytes but keeps its lwz/stw copy (95.7%). Nothing found supplies the
+// three words with no code.
 JGeometry::TVec3<f32> MsGetRotFromZaxis(const JGeometry::TVec3<f32>& param_1)
 {
 	JGeometry::TVec3<f32> result;
@@ -273,7 +242,14 @@ JGeometry::TVec3<f32> MsGetRotFromZaxis(const JGeometry::TVec3<f32>& param_1)
 	JGeometry::TVec3<f32> axis = param_1;
 	axis.normalize();
 
-	MsGetRotFromZaxisX2(axis, &result.x);
+	if (axis.y == 1.0f) {
+		result.x = -90.0f;
+	} else if (axis.y == -1.0f) {
+		result.x = 90.0f;
+	} else {
+		result.x = -(matan(MsSqrtf(1.0f - axis.y * axis.y), axis.y)
+		             * (360.0f / 65536.0f));
+	}
 	MsGetRotFromZaxisY2(axis, &result.y);
 
 	return result;
