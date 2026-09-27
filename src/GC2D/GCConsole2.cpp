@@ -1710,9 +1710,15 @@ void TGCConsole2::startAppearRedCoin()
 		unk43C[i]->getPane()->hide();
 }
 
+// Closes the balloon at once, whatever is left of its display time.
+static inline void forceDisappearBalloon(TGCConsole2* console)
+{
+	console->startDisappearBalloon(console->unk3E0, true);
+}
+
 void TGCConsole2::pauseIn()
 {
-	startDisappearBalloon(unk3E0, true);
+	forceDisappearBalloon(this);
 	startAppearMario(false);
 	startAppearStar();
 	startDisappearTelop();
@@ -1748,12 +1754,6 @@ void TGCConsole2::pauseOut()
 	unk5A = 0;
 }
 
-// TODO: figure out inlining without pragmas
-// TODO (cc38): about six statements short (fillers); both in-TU call sites
-// are `bl` in retail, so this is not a per-site depth split.
-// Source order does not explain it either: pauseIn precedes this definition,
-// perform follows it, and both inline it without the pragma (deferred mode).
-#pragma dont_inline on
 bool TGCConsole2::startDisappearBalloon(u32 param_1, bool param_2)
 {
 	if (!param_2 && unk3F4 == 0xffffffff && (param_1 != unk3E0 || unk3E4 != 0))
@@ -1764,7 +1764,6 @@ bool TGCConsole2::startDisappearBalloon(u32 param_1, bool param_2)
 	unk10 = 4;
 	return true;
 }
-#pragma dont_inline off
 
 // fabricated: a by-value copy of the window's contents rect. The other two
 // readers of getContentsBounds() in this file copy it once, so this is not a
@@ -1774,6 +1773,18 @@ static inline JUTRect GCConsole2ContentsBounds(const J2DWindow* window)
 	return window->getContentsBounds();
 }
 
+// Starts the nozzle voice line a balloon message carries, if it has one.
+static inline void startBalloonVoice(u8 voice)
+{
+	s32 soundID = scNozzleSoundList[voice];
+	if (soundID != -1)
+		SMSGetMSound()->startSoundSystemSE(soundID, 0, nullptr, 0);
+}
+
+// TODO: frame 0x90 vs retail 0x98, every instruction and register right:
+// a uniform 8-byte shift, i.e. two dead words missing from the low region.
+// setAlpha and the voice helper's startSoundSystemSE gave +8 each; inert:
+// SMSGetMarDirector(), gpMSound, a direct getContentsBounds() copy.
 bool TGCConsole2::startAppearBalloon(u32 messageID, bool autoClose)
 {
 	JMSMesgEntry* entry
@@ -1785,16 +1796,7 @@ bool TGCConsole2::startAppearBalloon(u32 messageID, bool autoClose)
 	if (unk10 != 0) {
 		if (unk3F4 == 0xffffffff) {
 			unk3F4 = messageID;
-			// TODO: the ROM compares unk3E0 with itself here (`cmplw r4, r4`):
-			// this is an inlined `startDisappearBalloon(unk3E0, false)` (its
-			// param_1 != unk3E0 test). Calling it with the dont_inline pragma
-			// removed takes this to 99.8% (frame 0x18 short only), but pauseIn
-			// and perform then inline it too where retail keeps a `bl`.
-			if (unk3F4 != 0xffffffff || (unk3E0 == unk3E0 && unk3E4 == 0)) {
-				unk3B8->hide();
-				unk48 = 0;
-				unk10 = 4;
-			}
+			startDisappearBalloon(unk3E0, false);
 			return true;
 		}
 		return false;
@@ -1804,7 +1806,7 @@ bool TGCConsole2::startAppearBalloon(u32 messageID, bool autoClose)
 		return false;
 
 	unk3F0         = entry->unk4;
-	unk3B0->mAlpha = 0;
+	unk3B0->setAlpha(0);
 	unk3B0->show();
 
 	// The ROM copies the contents rect twice here: once into a by-value
@@ -1840,9 +1842,7 @@ bool TGCConsole2::startAppearBalloon(u32 messageID, bool autoClose)
 	unk14 = 0;
 	unk10 = 1;
 
-	s32 soundID = scNozzleSoundList[entry->mVoiceIndex];
-	if (soundID != -1 && SMSGetMSound()->gateCheck(soundID))
-		MSoundSESystem::MSoundSE::startSoundSystemSE(soundID, 0, nullptr, 0);
+	startBalloonVoice(entry->mVoiceIndex);
 
 	return true;
 }
