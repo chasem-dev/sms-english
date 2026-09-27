@@ -52,6 +52,9 @@ public:
 		// the constant is written on, and moving the multiply after t or amp
 		// is worse (93.8). `angle = (f32)i * k` in one statement gets the
 		// operand order but swaps f1/f2 (conversion lands in f1).
+		// c-r11: a literal is always the left operand at parse; a non-const
+		// `f32 step = 0.31415927f; angle = angle * step;` gets retail's order
+		// but its dead home makes the frame 0x78 (retail 0x70).
 		f32 t;
 		f32 angle;
 		f32 amp;

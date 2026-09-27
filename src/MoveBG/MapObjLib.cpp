@@ -1091,6 +1091,10 @@ TMapObjMessenger::TMapObjMessenger(const char* name)
 // literal first, `+=`, the sum in the set() argument or a TU-local adder,
 // declaration order, getPosition() on either component (+8 frame, inert),
 // and calling throwObjToFront itself (inlines, 96.2%).
+// c-r11: that call is retail's: y_offset as an inline parameter is what gives
+// the throwY-first fadds; left there are an obj/this r30/r31 swap, the Mtx 4
+// low and a frame 8 over (0x80 with `if (getMActor())`, which costs the
+// standalone throwObjToFront its 0x90).
 static inline f32 MapObjTurnRotX(const TMapObjBase* obj)
 {
 	return obj->getRotation().x;

@@ -17,6 +17,10 @@
 // SMS_NO_MEMORY_MESSAGE's string, which is what split that header in two. The
 // remaining .rodata objects are @1819/@1820 (TMtxTimeLag::calc's zero Vec and
 // Quaternion) and @1846 (TMtxSwingRZ::calcLocalXY's zero Vec).
+// TODO: retail adds (m00 + m11) + m22 with the partial sum first; the frontend
+// moves the leaf m22 left of the sum. `f32 s = m00 + m11; s = s + m22 + 1.0f;`
+// gets that order but coalesces s into MsSqrtf's parameter (retail copies it
+// with `fmr f5, f0`), 97.7%; `s += m22` then `1.0f + s` is worse (97.0%).
 void MtxToQuat(MtxPtr m, Quaternion* quat)
 {
 	f32 q[4];
