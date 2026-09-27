@@ -522,10 +522,15 @@ void TBathtubKiller::moveChasing()
 // Retail calls makeQuat here directly: the argument copy then sits above
 // `dir` (an inlined callee's temporaries are laid out last-first), where the
 // makeVelocityQuat level put it below.
+// The forward vector is written out rather than taken from TQuat4::getZDir:
+// the header's named components leave dead words below `dir` and load
+// 1.0f late, where retail's frame (0x48 in the Straight nerve) has neither.
 void TBathtubKiller::moveStraight()
 {
 	JGeometry::TVec3<f32> dir;
-	mQuat.getZDir(dir);
+	dir.set(mQuat.x * mQuat.z * 2.0f + mQuat.w * mQuat.y * 2.0f,
+	        mQuat.y * mQuat.z * 2.0f - mQuat.w * mQuat.x * 2.0f,
+	        1.0f - mQuat.x * mQuat.x * 2.0f - mQuat.y * mQuat.y * 2.0f);
 	dir.y = 0.0f;
 	dir.normalize();
 	dir.scale(mPersonality.mChaseSpeed);
@@ -883,10 +888,6 @@ DEFINE_NERVE(TNerveBathtubKillerChase, TLiveActor)
 	return FALSE;
 }
 
-// TODO: 95.1%, frame 0xb0 vs 0xa0. The residue is the inlined moveStraight
-// (dir at 0x40 below makeQuat's axis copy, getZDir loading 1.0f into f31
-// first; see the Straight nerve's TODO) plus isAttackable's distance order;
-// naming Mario's distance there costs this nerve another 8 bytes.
 DEFINE_NERVE(TNerveBathtubKillerChaseStraight, TLiveActor)
 {
 	TBathtubKiller* killer = (TBathtubKiller*)spine->getBody();
@@ -913,14 +914,6 @@ DEFINE_NERVE(TNerveBathtubKillerChaseStraight, TLiveActor)
 	return FALSE;
 }
 
-// TODO: 87.0%, frame 0x58 vs 0x48: with makeQuat called directly in
-// moveStraight, dir and the axis copy are in retail's order but 0x10 high:
-// retail has 3 dead words below dir where ours has 7 (getZDir's _x/_y, set's
-// three copies, normalize's two), and schedules the inlined TQuat4::getZDir
-// with the 1.0f load first; both are JGQuat4.hpp/JGVec3.hpp shapes. Inert: makeQuat called directly, mVelocity.scale(s, dir),
-// `mVelocity = dir`, and moveStraight written out in the nerve; also
-// dir.set(x, 0, z) (84.9%), getZDir straight into mVelocity (80.3%), and a
-// TU-local helper level around the nerve's moveStraight call (68.8%).
 DEFINE_NERVE(TNerveBathtubKillerStraight, TLiveActor)
 {
 	TBathtubKiller* killer = (TBathtubKiller*)spine->getBody();
