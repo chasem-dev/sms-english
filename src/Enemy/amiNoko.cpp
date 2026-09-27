@@ -474,6 +474,11 @@ void TAmiNoko::calcRootMatrix()
 	// up.x there, which `Vec up` reproduces at +0x10 frame. Inert: cross2 on
 	// the fallback, the root copy inlined into setBaseTRMtx, mtx declared
 	// first or per branch; else-branch first is worse.
+	// c-m17 (regalloc): `this` (deg 35) is deferred; the getBaseTRMtx web
+	// (@1940/@1964) has deg 28, one short of being deferred too and so
+	// coloured first (r31). `Vec up` with an inline set() instead of cross
+	// gives the up.x reload at -0x10 frame; an else arm, no named mtx in
+	// the first branch, and TVec3/Vec mixes are all inert or worse.
 	MtxPtr mtx;
 	if (isBckAnm(AMINOKO_ANM_FLYING1_LOOP)) {
 		// While falling the orientation is frozen, only the position moves.

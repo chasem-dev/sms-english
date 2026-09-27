@@ -305,6 +305,11 @@ static BOOL NameKuriAttackCallback(J3DNode* param_1, int param_2)
 		// rows and a named joint index change nothing useful.
 		// c-ident: the rows through a named MtxPtr with the concats on the
 		// array keep r1-relative concats (96.5); MsMtxSetRotX via it is 96.3.
+		// c-m17 (regalloc): param_1 is deferred (deg 33) and so is a named
+		// rot pointer (deg 30, higher number, so coloured first -> r31);
+		// retail's rot web is pushed in the first sweep. Same tell as the
+		// MsMtxSetRotX/Y header note in MathUtil.hpp (&mtx kept in a saved
+		// register, 1.0f loaded after the stores).
 		MtxPtr mA = gpCurNameKuri->getMActor()->mModel->getAnmMtx(
 		    ((J3DJoint*)param_1)->getJntNo());
 
