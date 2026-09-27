@@ -66,7 +66,7 @@ static inline bool ElecIsShockedNearCarapace(TElecNokonoko* nokonoko)
 {
 	if (nokonoko->mSpine->getCurrentNerve()
 	        == &TNerveElecNokonokoFreeze::theNerve()
-	    && ElecDistTo(nokonoko->mPosition, nokonoko->mCarapace->mPosition)
+	    && ElecDistTo(nokonoko->getPosition(), nokonoko->mCarapace->mPosition)
 	           < 200.0f)
 		return true;
 	return false;
@@ -1292,10 +1292,13 @@ DEFINE_NERVE(TNerveElecCarapaceWait, TLiveActor)
 	return FALSE;
 }
 
-// TODO: every instruction matches; frame 0xb8 (retail 0xc0), and
-// ElecDistTo's operator- copy sits above ElecVecMag's parameter (retail 0x48
-// below 0x74). Inert: a named difference (VECMag or ElecVecMag), an explicit
-// TVec3 temporary, a copy-then-sub body.
+// getPosition() on the koopa in ElecIsShockedNearCarapace lands the 0xc0
+// frame and the first `home` slot.
+// TODO: every instruction matches; the second `home` sits 8 high (0x9c vs
+// 0x94) and ElecDistTo's operator- copy still sits above ElecVecMag's
+// parameter (retail 0x48 below 0x74). Inert: a named difference (VECMag or
+// ElecVecMag), an explicit TVec3 temporary, a copy-then-sub body, a copy
+// inside ElecVecMag, getPosition() at either `home`.
 DEFINE_NERVE(TNerveElecCarapaceReturn, TLiveActor)
 {
 	TElecCarapace* carapace = (TElecCarapace*)spine->getBody();
