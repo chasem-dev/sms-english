@@ -734,6 +734,12 @@ void TYoshi::emitTongue()
 // puts each emitTongue expansion's `mTipPos - pos` operand copy in the low
 // region (0xa8/0x88) under the named block; ours sits above it. Naming the
 // distance or routing it through a TU-local helper breaks the inlining.
+// mwcc-stack (c-d3): retail's top holds no 12-byte `diff` (case 0 as plain
+// dx/dz floats is instruction-exact and frees it), each expansion has one
+// more 4-byte object between the velocity temporary and `dir`, and the copy
+// is created at depth 2: `YoshiTipOffset(tip, pos).length()` with a local
+// `offset(tip); offset -= pos;` puts it there with exact instructions, but
+// leaves 3 depth-2 words short before the first copy and 2 between copies.
 void TYoshi::doSearch()
 {
 	switch (unkDC) {
@@ -1169,6 +1175,11 @@ void TYoshi::entry()
 	// request and the fctiwz slots where retail leaves 0x10. Every object
 	// below is at its retail offset. Spelling the demo test as
 	// isDemoModeNow() or raw unk124 compares, and int r/g/b, are worse.
+	// mwcc-stack (c-d3): above the request sit modelData (dead) and the three
+	// named tevColors (28 bytes; retail 12-16). The 12 two-byte objects at the
+	// bottom are one per field per distinct copy source, so sharing one
+	// tevColor (or one GXColorS10) drops 8 of them: 0x138, and a loop-local
+	// plus one shared for the mirrors gives 0x148 with every object 8 low.
 	// Raw mTranslation at both requests lands the frame but drops every object
 	// 0x10; declaring shadowRequest earlier (four spots) moves its ctor.
 	J3DModelData* modelData = mActor->getModel()->getModelData();
