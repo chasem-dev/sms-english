@@ -526,11 +526,11 @@ JGeometry::TVec3<f32> TKukku::calcMomentum(f32 speed)
 	return velocity;
 }
 
-// UNUSED, 0xa0 in the map. TODO: fabricated, see doFlyToCurPathNode().
+// UNUSED, 0xa0 in the map; TNerveKukkuRecoverGraph inlines it.
 void TKukku::doRecoverToCurPathNode()
 {
 	updateRotation();
-	mLinearVelocity = calcMomentum(getSaveParams()->getMarchSpeed());
+	mLinearVelocity = calcMomentum(getSaveParams()->mMarchSpeed.get());
 }
 
 // UNUSED, 0xd8 in the map. TODO: dead and fabricated. "Habataki" is flapping,
@@ -906,14 +906,9 @@ DEFINE_NERVE(TNerveKukkuPostFall, TLiveActor)
 	return FALSE;
 }
 
-// TODO: the frame is exact (0x60 -> 0x58 by reading the habataki timer
-// through the plain cast: `TParamRT::get()` behind getSaveParams() costs a
-// reference temporary), but calcMomentum's return slot sits at 0x38 against
-// retail's 0x30 with the velocity temporary exact at 0x44. Tried and inert:
-// a raw or cast march-speed read, a named result copied into
-// mLinearVelocity, `.set()`, a named zero vector for setVelocity (block or
-// function scope); `!spine->getTime()` moves the result to 0x34 but the
-// velocity temporary to 0x40.
+// The tail is the UNUSED doRecoverToCurPathNode() inlined: its
+// calcMomentum return temporary is then a depth-1 callee object, created
+// after the velocity temporary and the habataki read, which is retail's slot.
 DEFINE_NERVE(TNerveKukkuRecoverGraph, TLiveActor)
 {
 	TKukku* kukku = (TKukku*)spine->getBody();
@@ -923,13 +918,11 @@ DEFINE_NERVE(TNerveKukkuRecoverGraph, TLiveActor)
 		kukku->setVelocity(JGeometry::TVec3<f32>(0.0f, 0.0f, 0.0f));
 	}
 
-	if (((TKukkuParams*)kukku->getSaveParam())->getHabatakiTimer() < spine->getTime()) {
+	if (kukku->getSaveParams()->getHabatakiTimer() < spine->getTime()) {
 		spine->pushAfterCurrent(&TNerveKukkuGraphWander::theNerve());
 		return TRUE;
 	}
 
-	kukku->updateRotation();
-	kukku->mLinearVelocity
-	    = kukku->calcMomentum(kukku->getSaveParams()->getMarchSpeed());
+	kukku->doRecoverToCurPathNode();
 	return FALSE;
 }
