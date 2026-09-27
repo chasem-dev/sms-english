@@ -502,10 +502,14 @@ static inline MActor* SandCastleWitherActor(const TLiveActor* p)
 	return actor;
 }
 
-// TODO: every instruction matches (SandBombAddFrame fixed the f30/f31
-// inversion); the frame is 8 short (0x68 vs 0x70). Accessor forks for the
-// frame/end reads only move it in 0x10 steps; named speeds, a named
-// mChangeStage are inert.
+// Binding level over the change-stage pointer, worth the last word of
+// TSandCastle::withering's low region (the frame-advance helper took the rest).
+static inline TMapObjBase* SandCastleChangeStage(const TSandCastle* p)
+{
+	TMapObjBase* stage = p->mChangeStage;
+	return stage;
+}
+
 bool TSandCastle::withering()
 {
 	SandBombAddFrame(this, 0, mWitherSpeed);
@@ -516,7 +520,7 @@ bool TSandCastle::withering()
 	mScaling.y = mCollisionRate * ((end - frame) / end);
 
 	if (frame > 240.0f) {
-		if (!mChangeStage->checkLiveFlag(LIVE_FLAG_DEAD)) {
+		if (!SandCastleChangeStage(this)->checkLiveFlag(LIVE_FLAG_DEAD)) {
 			mChangeStage->kill();
 			gpTargetArrow->unk14 = 0;
 		}
