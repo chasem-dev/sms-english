@@ -552,14 +552,10 @@ bool TConsoleStr::processGo(f32 param_1)
 	return result;
 }
 
-// TODO: frame 0x168 vs 0x158: retail gives each bounds centre its own four
-// int-to-float slots (x pair, then y pair 0x10 higher) where we reuse two,
-// and converts x1 before the width; same residue as processMiss below.
-// c-e1: the frame gap is one dead word between the first vec and the second
-// rect plus three below the second vec (a temporary probe landing exactly
-// those makes every slot exact), but the <8 >8 conversion schedule stays, so
-// the schedule is not a slot effect. Each getWidth()/getHeight() expansion is
-// one dead word (raw x2 - x1 is -0x10); unnamed vecs get hoisted.
+// TODO: instructions exact (the named manager fixed the conversion schedule);
+// frame 0x158 vs 0x168: one dead word between the first vec and the second
+// rect plus three below the second vec (c-e1). A TU-local manager accessor
+// adds one bottom word per site (0x160) and is not landed.
 bool TConsoleStr::processShineGet(int param_1)
 {
 	bool result = true;
@@ -627,11 +623,10 @@ bool TConsoleStr::processShineGet(int param_1)
 	return result;
 }
 
-// TODO: frame 0x198 vs 0x1a0. The unnamed emitter vec gives retail's
-// conversion slots; retail still computes the vec address before the id and
-// sits the rect/vec pair above the first call's points. A TU-local
-// `PaneCentre(JUTRect)` returning the vec lands the frame (95.4) but not the
-// slots; named/set/ref/div2 vec spellings and alpha/rotation spellings inert.
+// TODO: instructions exact with the named vec and manager; frame 0x190 vs
+// 0x1a0 (the unnamed vec was 0x198 but misschedules the conversions). A
+// TU-local manager accessor gives 0x198; a `PaneCentre(JUTRect)` helper
+// returning the vec landed the frame at the old schedule (95.4).
 bool TConsoleStr::processMiss(int param_1)
 {
 	bool result = true;
