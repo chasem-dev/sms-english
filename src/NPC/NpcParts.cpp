@@ -48,13 +48,22 @@ void SetMActorAnmFrame(MActor* actor, f32 frame, bool set_bck, bool set_btp)
 	}
 }
 
-// TODO: 98.9%, frame 0x188 vs retail 0x1f8 (0x70 short), an r26/r27 swap
-// (the hoisted `&initInfo->unk4[i]` against the parts/model temporaries) and
-// the `20` site's `li r4, 0x14`, which retail materialises before loading the
-// parts pointer. The dead `li r4,-1; cmpwi r4,-1` at the two defaulted sites
-// is an `s32` local: MWCC's IR optimiser does not fold `x == -1` for an `s32`
-// (long) local assigned `-1`, while an `int` local folds and TU-local inline
-// wrappers substitute the constant (both measured worse).
+// Starts a simple motion blend on one part; -1 takes the NPCs' shared
+// blend length. `frame` is `s32` like the TParamRT it defaults to: MWCC does
+// not fold the resulting `frame == -1` test, which retail keeps at both
+// defaulted sites and schedules the `20` ahead of the parts load.
+static inline void NpcPartsInitMotionBlend(TNpcParts* parts, int i, int j,
+                                           s32 frame = -1)
+{
+	if (frame == -1)
+		frame = TBaseNPC::mPtrSaveNormal->mMotionBlendFrame.get();
+	parts->unk0[j][i]->getMActor()->initSimpleMotionBlend(frame);
+}
+
+// TODO: 99.6%, frame 0x198 vs retail 0x1f8 (0x60 short) and an r26/r27 swap
+// (the hoisted `&initInfo->unk4[i]` against the parts/model temporaries).
+// An `int` frame, or a `TSharedParts*`/`MActor*` parameter in place of the
+// indices, lets MWCC fold or reorder the blend sites (93.7-96.8%).
 TNpcParts::TNpcParts(u32 param_1, const J3DGXColorS10* param_2,
                      TBaseNPC* param_3)
     : unk60(param_3)
@@ -131,11 +140,7 @@ TNpcParts::TNpcParts(u32 param_1, const J3DGXColorS10* param_2,
 					case 0:
 					case 3:
 					case 4:
-						s32 iVar6 = -1;
-						if (iVar6 == -1)
-							iVar6 = TBaseNPC::mPtrSaveNormal->mMotionBlendFrame
-							            .get();
-						unk0[j][i]->getMActor()->initSimpleMotionBlend(iVar6);
+						NpcPartsInitMotionBlend(this, i, j);
 						break;
 					}
 				}
@@ -143,16 +148,12 @@ TNpcParts::TNpcParts(u32 param_1, const J3DGXColorS10* param_2,
 
 			case 0x4000010:
 				if (j == 0 && i == 9)
-					unk0[j][i]->getMActor()->initSimpleMotionBlend(20);
+					NpcPartsInitMotionBlend(this, i, j, 20);
 				break;
 
 			case 0x4000015:
 				if (j == 0 && i == 10) {
-					s32 iVar6 = -1;
-					if (iVar6 == -1)
-						iVar6
-						    = TBaseNPC::mPtrSaveNormal->mMotionBlendFrame.get();
-					unk0[j][i]->getMActor()->initSimpleMotionBlend(iVar6);
+					NpcPartsInitMotionBlend(this, i, j);
 				}
 				break;
 			}
