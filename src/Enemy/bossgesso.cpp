@@ -847,10 +847,12 @@ void TBossGesso::changeBck(int param_1)
 	setAnmSound(!table ? nullptr : table[param_1]);
 }
 
-// TODO: this inline is 99% incorrect, need to try harder =(
+// Takes the full sight angle and halves it itself: retail multiplies by 0.5f
+// after inSight() returns at the moveObject guard site (97.8 -> 98.8).
+// TODO: map 0x16c, ours 0xcc: retail also expands MsGetRotFromZaxisY here.
 BOOL TBossGesso::inSightAngle(f32 a)
 {
-	if (inSight() < a)
+	if (inSight() < 0.5f * a)
 		return TRUE;
 
 	return FALSE;
@@ -1134,7 +1136,7 @@ void TBossGesso::doAttackSingle()
 		TBGTentacle* tentacle        = mTentacles[idxarray[i]];
 
 		f32 sightAngle = getSaveParam2()->mSLSightAngle.get();
-		if (inSightAngle(0.5f * sightAngle) && tentacle->mState == 0) {
+		if (inSightAngle(sightAngle) && tentacle->mState == 0) {
 			JGeometry::TVec3<f32> delta = SMS_GetMarioPos();
 			delta -= tentacle->getFirstNode()->getPosition();
 
@@ -1238,7 +1240,7 @@ void TBossGesso::doAttackSingle()
 
 	if (is2ndFightNow()) {
 		f32 sightAngle = getSaveParam2()->mSLSightAngle.get();
-		if (inSightAngle(0.5f * sightAngle)
+		if (inSightAngle(sightAngle)
 		    && mTimeInCurrentAttackMode
 		        > getSaveParam2()->mSLUnisonInter.get()) {
 			changeAttackMode(ASTATE_ROLL);
@@ -1362,7 +1364,7 @@ void TBossGesso::doAttackDouble()
 	doubleAttackLen2 *= doubleAttackLen2;
 
 	sightAngle = BossgessoGetSaveParam2(this)->mSLSightAngle.get();
-	BOOL inSight = inSightAngle(0.5f * sightAngle);
+	BOOL inSight = inSightAngle(sightAngle);
 	if (inSight
 	    && delta.squared() < doubleAttackLen2) {
 
@@ -1394,7 +1396,7 @@ void TBossGesso::doAttackSkipRope()
 	}
 
 	f32 sightAngle = BossgessoGetSaveParam2(this)->mSLSightAngle.get();
-	if (inSightAngle(0.5f * sightAngle)) {
+	if (inSightAngle(sightAngle)) {
 		for (int i = 0; i < 2; ++i) {
 			static const int idxarray[2] = { 0, 2 };
 			TBGTentacle* tentacle        = getTentacle(idxarray[i]);
@@ -1421,7 +1423,7 @@ void TBossGesso::doAttackUnison()
 	unisonAttackLen2 *= unisonAttackLen2;
 
 	f32 sightAngle = BossgessoGetSaveParam2(this)->mSLSightAngle.get();
-	if (inSightAngle(0.5f * sightAngle)
+	if (inSightAngle(sightAngle)
 	    && BossgessoGetMario()->isTouchGround4cm()
 	    && delta.squared() < unisonAttackLen2) {
 
@@ -1465,7 +1467,7 @@ void TBossGesso::doAttackShoot()
 	}
 
 	f32 sightAngle = BossgessoGetSaveParam2(this)->mSLSightAngle.get();
-	if (!inSightAngle(0.5f * sightAngle))
+	if (!inSightAngle(sightAngle))
 		return;
 
 	JGeometry::TVec3<f32> delta = *gpMarioPos;
@@ -1493,7 +1495,7 @@ void TBossGesso::doAttackGuard()
 	}
 
 	f32 sightAngle = BossgessoGetSaveParam2(this)->mSLSightAngle.get();
-	if (!inSightAngle(0.5f * sightAngle))
+	if (!inSightAngle(sightAngle))
 		return;
 
 	JGeometry::TVec3<f32> delta = SMS_GetMarioPos();
@@ -1516,11 +1518,10 @@ void TBossGesso::doAttackRoll()
 	changeAttackMode(ASTATE_SINGLE);
 }
 
-// TODO: 97.8%, frame 0xe0 against 0xe8. At the ASTATE_GUARD expansion retail
+// TODO: 98.8%, frame 0xe0 against 0xe8. At the ASTATE_GUARD expansion retail
 // calls SMS_GetMarioPos out of line (its only bl in the TU, hence the weak
-// copy) and multiplies 0.5f * sightAngle after inSight() returns: the
-// inSightAngle -> inSight chain has one more inline level in retail (the map
-// sizes agree: inSightAngle 0x16c vs our 0xc4, inSight 0x17c vs 0x184).
+// copy). Also inert on top of the halving inside inSightAngle (c-m3): set(),
+// assignment, TVec3(...) copy and sub() spellings of inSight's Mario copy.
 // Dropping the sightAngle local or wrapping the guard body were inert.
 // Retail's guard expansion copies Mario's position inline but `bl`s both
 // SMS_GetMarioPos and TVec3::sub, i.e. only the position fetch sits one level
