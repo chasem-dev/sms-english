@@ -487,6 +487,9 @@ void TWarpInCallBack::execute(JPABaseEmitter* emitter,
 	// so the return temporary survives and the slot count stays nine.
 	// The remaining 12 bytes are therefore a return-type question in the
 	// shared header, not a local one.
+	// c-m6: assigning the last product into a declared `v3` (instead of
+	// initialising it) gives retail's copy-out for that step, 80.2 -> 84.2;
+	// the same spelling on the first two steps (or all three) is worse.
 	JGeometry::TVec3<f32>* vel = (JGeometry::TVec3<f32>*)emitter->getUserWork();
 
 	f32 timer = (f32)gpMarioOriginal->mStatusTimer;
@@ -499,7 +502,8 @@ void TWarpInCallBack::execute(JPABaseEmitter* emitter,
 
 	JGeometry::TVec3<f32> v1 = *vel * gpMarioOriginal->unk468;
 	JGeometry::TVec3<f32> v2 = v1 * timer;
-	JGeometry::TVec3<f32> v3 = v2 * factor;
+	JGeometry::TVec3<f32> v3;
+	v3 = v2 * factor;
 
 	velX += v3.x;
 	velY += v3.y;
