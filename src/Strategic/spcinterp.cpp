@@ -235,6 +235,10 @@ void TSpcInterp::execdec()
 // each), function-scope result, raw float stores, typeof() in the header
 // getters, push(int) body spellings; float arm as push(f32), push(TSpcSlice(f)),
 // `TSpcSlice result(f)` or push(result) (c-strat, all inert or worse).
+// Debugger (c-d13): the 4-byte object above the else temp is setDataFloat's
+// argument binding; retail has nothing there and one more word below the
+// temp. Direct field writes drop the binding but schedule the mType store
+// early; a named `f32 f` keeps the schedule but sits above the pop temps.
 void TSpcInterp::execadd()
 {
 	TSpcSlice arg2 = mProcessStack.pop();

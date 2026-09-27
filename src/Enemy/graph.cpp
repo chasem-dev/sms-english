@@ -760,6 +760,10 @@ BOOL TGraphWeb::isDummy() const
 // point2 (0x38 vs 0x40), and an 8-byte smaller low region (thing 0x2c vs
 // 0x34). Reordering the top declarations, a hoisted `point`, a point2
 // constructor and dropping `nodes` are inert or worse.
+// c-d13: `f32 dVar18;` declared first in the inner loop plus
+// `unk0[i].getRailNode()` lands the frame and every slot, but the rail node
+// pointer is then reloaded after getPoint (one extra lwz); a named node
+// reference keeps the single load but drops one more low word.
 JGeometry::TVec3<f32>
 TGraphWeb::getNearestPosOnGraphLink(const JGeometry::TVec3<f32>& param_1) const
 {
@@ -861,6 +865,10 @@ void TGraphGroup::initGraphGroup()
 	// and 99.9%; the TVec3(0,0,0) temporary sits 4 high. attachToGround or
 	// all three sites swap r28/r29; a nested fork is +8 more. The 4-byte
 	// residue is the open "4 off the 8-byte binder grid" class.
+	// c-d13: attachToGround's `pos` declared before `checkData` gives
+	// retail's order; every slot is then 4 high (the binder's `w` is created
+	// after them in ours, retail has that word between the zero temp and
+	// initGoalIndex's copy).
 	for (int i = 0; i < unk4; ++i) {
 		if (unk8[i]->unk10 >= 0)
 			continue;
