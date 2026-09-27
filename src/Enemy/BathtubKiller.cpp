@@ -708,7 +708,8 @@ void TBathtubKiller::setDeadBathtubKillerAnm()
 	mMActor = mMActorKeeper->getMActor("bathtubdownkiller_model1.bmd");
 	setBckAnm(0);
 	mQuat.set(0.0f, 0.0f, 0.0f, 1.0f);
-	mAcceleration.set(0.0f, 0.0f, 0.0f);
+	JGeometry::TVec3<f32>& accel = mAcceleration;
+	accel.set(0.0f, 0.0f, 0.0f);
 	mVelocity = JGeometry::TVec3<f32>(0, 0, 0);
 	onLiveFlag(LIVE_FLAG_UNK8);
 	unk1E0 = unk1D8;
@@ -920,12 +921,6 @@ DEFINE_NERVE(TNerveBathtubKillerStraight, TLiveActor)
 	return FALSE;
 }
 
-// TODO: this and the Explosion nerve are instruction-exact but retail keeps
-// setDeadBathtubKillerAnm's TVec3 temporary at 0x1c, ours at 0x18 (same 0x30
-// frame). Inert: a named MActor, a named model name, a named zero TVec3, a
-// named GXColorS10 copy, a named getTime, and setDead/generateExplosion called
-// from the nerve directly; named int/f32 zeros and setDead's body written in
-// the nerve are worse.
 DEFINE_NERVE(TNerveBathtubKillerBreak, TLiveActor)
 {
 	TBathtubKiller* killer = (TBathtubKiller*)spine->getBody();
