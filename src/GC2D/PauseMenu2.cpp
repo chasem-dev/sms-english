@@ -419,9 +419,8 @@ inline void TPauseMenu2::move()
 				                                   0, nullptr, 0);
 
 				JUTRect& bounds = mOrigItemBounds[curSelectedItem];
-				mMenuItems[mSelectedItem]->mWhite = mItemColor;
-				mMenuItems[curSelectedItem]->mWhite
-				    = JUtility::TColor();
+				mMenuItems[mSelectedItem]->setWhite(mItemColor);
+				mMenuItems[curSelectedItem]->setWhite(JUtility::TColor());
 				mMenuItems[curSelectedItem]->setBounds(bounds);
 
 				mBounceAnim = 0.0f; // reset animation
@@ -447,9 +446,8 @@ inline void TPauseMenu2::move()
 				                                   0, nullptr, 0);
 
 				JUTRect& bounds = mOrigItemBounds[curSelectedItem];
-				mMenuItems[mSelectedItem]->mWhite = mItemColor;
-				mMenuItems[curSelectedItem]->mWhite
-				    = JUtility::TColor();
+				mMenuItems[mSelectedItem]->setWhite(mItemColor);
+				mMenuItems[curSelectedItem]->setWhite(JUtility::TColor());
 				mMenuItems[curSelectedItem]->setBounds(bounds);
 
 				mBounceAnim = 0.0f;
@@ -488,8 +486,7 @@ inline void TPauseMenu2::move()
 			mMenuItems[mSelectedItem]->setBounds(animItemBounds);
 
 			s32 colorShift = 10.0f * mBounceAnim;
-			mMenuItems[mSelectedItem]->mWhite
-			    = mItemColor + (colorShift << 24);
+			mMenuItems[mSelectedItem]->setWhite(mItemColor + (colorShift << 24));
 		} else if (mBounceAnim < 35.0f) {
 			s32 hw = mBounceAnim - 35.0f;
 			s32 hh = 0.5f * (mBounceAnim - 35.0f);
@@ -497,8 +494,7 @@ inline void TPauseMenu2::move()
 			mMenuItems[mSelectedItem]->setBounds(animItemBounds);
 
 			s32 colorShift = (35.0f - mBounceAnim) * 10.0f;
-			mMenuItems[mSelectedItem]->mWhite
-			    = mItemColor + (colorShift << 24);
+			mMenuItems[mSelectedItem]->setWhite(mItemColor + (colorShift << 24));
 		} else {
 			// Loop animation.
 			mBounceAnim = -0.5f;

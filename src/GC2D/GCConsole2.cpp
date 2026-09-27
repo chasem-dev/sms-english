@@ -308,7 +308,7 @@ static inline void changeCoinNum(TBoundPane*& pane, JUTTexture** textures,
 	((J2DPicture*)pane->getPane())
 	    ->changeTexture(textures[digit]->getTexInfo(), 0);
 	JPAEmitterManager* manager = gpEmitterManager4D2;
-	bounds = pane->getPane()->mGlobalBounds;
+	bounds = pane->getPane()->getGlobalBounds();
 	position.set(bounds.x1 + bounds.getWidth() * 0.5f,
 	             bounds.y1 + bounds.getHeight() * 0.5f, 0.0f);
 	manager->createEmitter(position, 0x1FC, nullptr, nullptr);
@@ -1772,14 +1772,6 @@ bool TGCConsole2::startDisappearBalloon(u32 param_1, bool param_2)
 	return true;
 }
 
-// fabricated: a by-value copy of the window's contents rect. The other two
-// readers of getContentsBounds() in this file copy it once, so this is not a
-// change to J2DWindow's accessor.
-static inline JUTRect GCConsole2ContentsBounds(const J2DWindow* window)
-{
-	return window->getContentsBounds();
-}
-
 // Starts the nozzle voice line a balloon message carries, if it has one.
 static inline void startBalloonVoice(u8 voice)
 {
@@ -1788,10 +1780,6 @@ static inline void startBalloonVoice(u8 voice)
 		SMSGetMSound()->startSoundSystemSE(soundID, 0, nullptr, 0);
 }
 
-// TODO: frame 0x90 vs retail 0x98, every instruction and register right:
-// a uniform 8-byte shift, i.e. two dead words missing from the low region.
-// setAlpha and the voice helper's startSoundSystemSE gave +8 each; inert:
-// SMSGetMarDirector(), gpMSound, a direct getContentsBounds() copy.
 bool TGCConsole2::startAppearBalloon(u32 messageID, bool autoClose)
 {
 	JMSMesgEntry* entry
@@ -1809,16 +1797,16 @@ bool TGCConsole2::startAppearBalloon(u32 messageID, bool autoClose)
 		return false;
 	}
 
-	if (gpMarDirector->mState == TMarDirector::STATE_UNK5 || !unk46)
+	if (SMSGetMarDirector()->mState == TMarDirector::STATE_UNK5 || !unk46)
 		return false;
 
 	unk3F0         = entry->unk4;
 	unk3B0->setAlpha(0);
 	unk3B0->show();
 
-	// The ROM copies the contents rect twice here: once into a by-value
-	// return temporary and once into the local.
-	JUTRect contents(GCConsole2ContentsBounds(unk3B0));
+	// The ROM copies the contents rect twice here: once into an explicit
+	// temporary and once into the local.
+	JUTRect contents = JUTRect(unk3B0->getContentsBounds());
 	unk3B0->resize(unk3BC.getWidth(),
 	               unk3BC.getHeight() - contents.getHeight());
 	unk3B0->add(0, contents.getHeight());
@@ -2429,7 +2417,7 @@ void TGCConsole2::changeNum(TBlendPane* pane, int digit, int frames)
 	pane->setPaneBlend(frames, unkE0[digit], nullptr);
 
 	J2DPane* p = pane->getPane();
-	JUTRect bounds(p->mGlobalBounds);
+	JUTRect bounds(p->getGlobalBounds());
 	JGeometry::TVec3<f32> position(bounds.x1 + bounds.getWidth() * 0.5f,
 	                               bounds.y1 + bounds.getHeight() * 0.5f, 0.0f);
 	JPAEmitterManager* manager = gpEmitterManager4D2;
@@ -2644,7 +2632,7 @@ void TGCConsole2::countBlueCoin()
 
 		setBlueCoinDigits(unk154, unkE0, blueCoins);
 		if (unk160->getPane()->isVisible()) {
-			JUTRect bounds(unk154[1]->getPane()->mGlobalBounds);
+			JUTRect bounds(unk154[1]->getPane()->getGlobalBounds());
 			JGeometry::TVec3<f32> position;
 			position.x = bounds.x1 + bounds.getWidth() * 0.5f;
 			position.y = bounds.y1 + bounds.getHeight() * 0.5f;
@@ -2653,7 +2641,7 @@ void TGCConsole2::countBlueCoin()
 			                                   nullptr);
 
 			if (blueCoins % 10 == 0) {
-				bounds   = unk154[0]->getPane()->mGlobalBounds;
+				bounds   = unk154[0]->getPane()->getGlobalBounds();
 				position.x = bounds.x1 + bounds.getWidth() * 0.5f;
 				position.y = bounds.y1 + bounds.getHeight() * 0.5f;
 				position.z = 0.0f;
@@ -2829,11 +2817,11 @@ bool TGCConsole2::processAppearStar(int param_1)
 		updateDownPaneState(unk154[i], isFinished);
 	}
 
-	JUTRect bounds(unk12C->getPane()->mGlobalBounds);
+	JUTRect bounds(unk12C->getPane()->getGlobalBounds());
 	unk144->mGlobalTranslation.set(bounds.x1 + bounds.getWidth() * 0.5f,
 	                               bounds.y1 + bounds.getHeight() * 0.5f, 0.0f);
 
-	bounds = unk14C->getPane()->mGlobalBounds;
+	bounds = unk14C->getPane()->getGlobalBounds();
 	unk164->mGlobalTranslation.set(bounds.x1 + bounds.getWidth() * 0.5f,
 	                               bounds.y1 + bounds.getHeight() * 0.5f, 0.0f);
 
@@ -3548,7 +3536,7 @@ void TGCConsole2::drawWater(J2DOrthoGraph& graph)
 		                  GX_FALSE, GX_PTIDENTITY);
 		GXSetTevOrder(GX_TEVSTAGE1, GX_TEXCOORD1, GX_TEXMAP1, GX_COLOR_NULL);
 
-		f32 top = unk29C->getPane()->mGlobalBounds.y1 + topDiff[layer - 1];
+		f32 top = unk29C->getPane()->getGlobalBounds().y1 + topDiff[layer - 1];
 		f32 bottom = top + unk2A0[layer]->getHeight();
 		GXBegin(GX_QUADS, GX_VTXFMT0, 4);
 		GXPosition2f32(unk2BC[layer].x1, top);
@@ -3565,7 +3553,7 @@ void TGCConsole2::drawWater(J2DOrthoGraph& graph)
 
 	JUTRect bounds = unk2A0[0]->getBounds();
 	f32 hidden     = 47.0f * (1.0f - unk2B8) - 0.5f;
-	int top        = unk29C->getPane()->mGlobalBounds.y1 + (int)hidden;
+	int top        = unk29C->getPane()->getGlobalBounds().y1 + (int)hidden;
 	// TODO: the frame is 0x50 short (0x1c8 against 0x218), and retail adds
 	// the pane's y1 as the first operand of the `add` whichever way it is spelled.
 	int y = ++top;
@@ -3941,19 +3929,19 @@ static inline void updateConsole(TGCConsole2* console)
 		done &= console->unk140->update();
 		done &= console->unk160->update();
 
-		JUTRect bounds(console->unkCC->getPane()->mGlobalBounds);
+		JUTRect bounds(console->unkCC->getPane()->getGlobalBounds());
 		{
 			f32 x = bounds.x1 + bounds.getWidth() * 0.5f;
 			f32 y = bounds.y1 + bounds.getHeight() * 0.5f;
 			console->unk124->setGlobalTranslation(x, y, 0.0f);
 		}
-		bounds = console->unk14C->getPane()->mGlobalBounds;
+		bounds = console->unk14C->getPane()->getGlobalBounds();
 		{
 			f32 x = bounds.x1 + bounds.getWidth() * 0.5f;
 			f32 y = bounds.y1 + bounds.getHeight() * 0.5f;
 			console->unk164->setGlobalTranslation(x, y, 0.0f);
 		}
-		bounds = console->unk12C->getPane()->mGlobalBounds;
+		bounds = console->unk12C->getPane()->getGlobalBounds();
 		console->unk144->setGlobalTranslation(
 		    bounds.x1 + bounds.getWidth() * 0.5f,
 		    bounds.y1 + bounds.getHeight() * 0.5f, 0.0f);
@@ -4202,7 +4190,7 @@ static inline void updateConsole(TGCConsole2* console)
 
 	if (console->unk44 && console->unk520->getPane()->isVisible()) {
 		if (console->processDrawTelop(console->unk80++)) {
-			JUTRect bounds(console->unk524->getPane()->mGlobalBounds);
+			JUTRect bounds(console->unk524->getPane()->getGlobalBounds());
 			console->unk568 = console->unk544.x2;
 			console->unk534.add(console->mTelopTextWidth + bounds.x2, 0);
 
@@ -4251,7 +4239,7 @@ static inline void updateConsole(TGCConsole2* console)
 			console->startAppearRedCoin();
 
 		{
-			JUTRect bounds(console->unk43C[0]->getPane()->mGlobalBounds);
+			JUTRect bounds(console->unk43C[0]->getPane()->getGlobalBounds());
 			// Retail reads the manager before the centre arithmetic (it keeps r3 out
 			// of the rect's registers); spelled as the call's receiver it is read last.
 			JPAEmitterManager* manager = gpEmitterManager4D2;
