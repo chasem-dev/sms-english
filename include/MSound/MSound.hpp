@@ -274,6 +274,11 @@ public:
 	// over the two sites).
 	MSModBgm* getModBgm() { return unk98; }
 
+	// Fabricated name. Reading unkCD through a member level leaves the dead
+	// forced-load word MSoundSE::startSoundActorInner's frame needs at its
+	// switch and its == 8 test (0x50 raw, 0x58 as retail).
+	u8 getUnkCD() const { return unkCD; }
+
 	// fabricated. The named local is the binding closure batch 110 measured
 	// at TSunMgr::perform, where the BGM handle is read through a level that
 	// binds its result (+8 at each of the three sites).

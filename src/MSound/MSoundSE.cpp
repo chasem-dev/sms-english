@@ -665,15 +665,13 @@ static u32 get_thing(u32 param_1)
 // The switch and the `== 8` test read unkCD through an inline accessor: each
 // leaves one dead forced-load word at the bottom of the frame (0x58), while
 // the two checkSoundArea arguments read it raw.
-static inline u8 MSoundSEUnkCD(const MSound* p) { return p->unkCD; }
-
 JAISound* MSoundSE::startSoundActorInner(u32 id, JAISoundHandle* out_handle,
                                          JAIActor* actor, u32 fade,
                                          u8 camera_idx)
 {
 	u32 uVar2 = MSound::getBstSwitch(id);
 	if (actor != (JAIActor*)0xffffffff) {
-		switch (MSoundSEUnkCD(MSGMSound)) {
+		switch (MSGMSound->getUnkCD()) {
 		case 7:
 			if (!checkSoundArea(MSGMSound->unkCD, *actor->mTranslation)) {
 				if (get_thing(id) != 1 && get_thing(id) != 0)
@@ -745,7 +743,7 @@ JAISound* MSoundSE::startSoundActorInner(u32 id, JAISoundHandle* out_handle,
 	if (uVar2 & MSSeSwBit_RandomID)
 		id = getRandomID(id);
 
-	if (MSoundSEUnkCD(MSGMSound) == 8 && id >= MSD_SE_MA_WALK_METALNET_LH1
+	if (MSGMSound->getUnkCD() == 8 && id >= MSD_SE_MA_WALK_METALNET_LH1
 	    && id <= MSD_SE_MA_WALK_METALNET_RT2) {
 		id -= 8;
 	}
