@@ -981,13 +981,15 @@ TShine::TShine(const char* name)
 	unk1A8.zero();
 }
 
-// TODO: every instruction matches; frame 0x58 against retail's 0x68. The
-// director and map/stage accessors at each test (+8 per site, the map load
-// is still shared) bring the low pool; the rand() conversion buffers still
-// sit 0x10 below retail's 0x50/0x58. A named `f32 rnd = MsRandF();` is a
-// uniform +8 (frame 0x60); a named 4.0f is the same +8, and TMsRange<int>
-// adds the int range conversion. Inert: raw mName, `!strcmp`, s32/unnamed
-// int results, `4.0f` or the product reversed.
+static inline const char* EggYoshiName(TEggYoshi* egg)
+{
+	const char* name = egg->getName();
+	return name;
+}
+
+// The director and map/stage accessors at each test (+8 per site, the map
+// load is still shared) bring the low pool; the name read through the
+// EggYoshiName binder is the last 0x10 of retail's 0x68 frame.
 void TEggYoshi::decideRandomLoveFruit()
 {
 	if (SMSGetMarDirector()->getCurrentMap() == 7 && SMSGetMarDirector()->getCurrentStage() == 1) {
@@ -1000,7 +1002,7 @@ void TEggYoshi::decideRandomLoveFruit()
 		return;
 	}
 
-	if (SMSGetMarDirector()->getCurrentMap() == 1 && strcmp(getName(), "ヨッシーの卵（影マリオ用）") == 0) {
+	if (SMSGetMarDirector()->getCurrentMap() == 1 && strcmp(EggYoshiName(this), "ヨッシーの卵（影マリオ用）") == 0) {
 		unk14C = 0x40000394;
 		return;
 	}
