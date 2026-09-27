@@ -103,14 +103,6 @@ DEFINE_NERVE(TNerveNPCUTurn, TLiveActor)
 	return false;
 }
 
-// TODO: 99.6% and frame-exact since resetGraphWaitTimer's two reads became
-// `.value` in min-then-max order. What is left is a three-register rotation:
-// retail keeps `self->unk22C` in r30 with minFrame/maxFrame in r29/r28, i.e.
-// it ranks the timer pointer as a pool/base temp above the two locals, while we
-// rank it as the inlined callee's `this` and put it in r28. That is the
-// known-open `this`-versus-pool-base callee-saved swap (frame-gaps.md,
-// "batch 145"); the scratch register for mPtrSaveNormal (r4 against our r3)
-// follows it.
 DEFINE_NERVE(TNerveNPCGraphWait, TLiveActor)
 {
 	TBaseNPC* self = (TBaseNPC*)spine->getBody();

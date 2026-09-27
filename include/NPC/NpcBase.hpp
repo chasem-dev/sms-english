@@ -424,18 +424,22 @@ public:
 			unk4 = MsRandI(minFrame, maxFrame);
 		}
 
-		// The two reads here are `.value` and in min-then-max order, while
-		// resetGraphWanderTimer above keeps `.get()` in max-then-min order:
-		// TNerveNPCGraphWait wants both (`.get()` is +8 of pool each, frame
-		// 0x78 against retail's 0x68, and the declaration order is what puts
-		// the 0x234 load first), and giving resetGraphWanderTimer the same
-		// spelling breaks TNerveNPCGraphWander (frame 0x128 -> 0x118, 16
-		// markers -> 36). The asymmetry is retail's.
+		// Retail reads both frames before clearing unk0 and ranks the timer
+		// pointer above them in callee-saved registers, so the reads are
+		// arguments of a further level rather than named locals here. The
+		// min read is raw `.value` and the max read `.get()` (either both
+		// raw or both `.get()` is 8 bytes of frame off), while
+		// resetGraphWanderTimer above keeps named `.get()` reads in
+		// max-then-min order: TNerveNPCGraphWander breaks with this shape.
+		// The asymmetry is retail's.
 		void resetGraphWaitTimer()
 		{
-			int minFrame = mPtrSaveNormal->mSLGraphWaitMinFrame.value;
-			int maxFrame = mPtrSaveNormal->mSLGraphWaitMaxFrame.value;
+			resetRandom(mPtrSaveNormal->mSLGraphWaitMinFrame.value,
+			            mPtrSaveNormal->mSLGraphWaitMaxFrame.get());
+		}
 
+		void resetRandom(int minFrame, int maxFrame)
+		{
 			unk0 = 0;
 			unk4 = MsRandI(minFrame, maxFrame);
 		}
