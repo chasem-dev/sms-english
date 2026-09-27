@@ -377,11 +377,11 @@ bool TRollEnemy::isReachedToGoalXZ()
 	return false;
 }
 
-// TODO: 95.4%. Naming the sine (`f32 s = JMASin(...)`) puts the amplitude
-// arm's magic-double slots in retail's order. Left: stampGround's arguments:
-// retail computes z, then `32.0f * range`, then x, with range in f4; named
-// z/x locals before the call are +0.6% only (~4 left), `range * 32.0f`,
-// `range *= 32.0f`, a TVec3 stamp and position-first sums are inert/worse.
+// TODO: 96.1%. Naming the sine (`f32 s = JMASin(...)`) puts the amplitude
+// arm's magic-double slots in retail's order; a named z gives retail's
+// z, 32 * range, x order. Left: retail loads 32.0f after z's fmadds and
+// gpPollution last; inert: raw gpPollution, `range * 32.0f`, sums spelled
+// position-first, a named receiver (+8 frame), a named x.
 void TRollEnemy::setBehavior()
 {
 	if (getPosition().y > 50.0f + mGroundHeight)
@@ -411,9 +411,10 @@ void TRollEnemy::setBehavior()
 		}
 	}
 
+	f32 z = unk1AC * mLinearVelocity.z + mPosition.z;
 	SMSGetPollution()->stampGround(
-	    1, unk1AC * mLinearVelocity.x + mPosition.x, getPosition().y,
-	    unk1AC * mLinearVelocity.z + mPosition.z, 32.0f * range);
+	    1, unk1AC * mLinearVelocity.x + mPosition.x, getPosition().y, z,
+	    32.0f * range);
 }
 
 void TIgaigaPolluteModelManager::init(TLiveActor* param_1)
