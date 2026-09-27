@@ -476,6 +476,27 @@ bool TSmallEnemy::isCollidMove(THitActor* param_1)
 	return false;
 }
 
+// Pushes the enemy straight away from a colliding actor, the same shape as
+// attackToMario(). Expanded from a helper, the two vectors land in the upper
+// block (0x30/0x3c) as in retail.
+static inline void SmallEnemyMoveAwayFrom(TSmallEnemy* e, THitActor* col)
+{
+	JGeometry::TVec3<f32> v(0.0f, 0.0f, 0.0f);
+	JGeometry::TVec3<f32> away;
+
+	away.set(e->mPosition.x - col->mPosition.x,
+	             e->mPosition.y - col->mPosition.y,
+	             e->mPosition.z - col->mPosition.z);
+	if (away.x == 0.0f && away.y == 0.0f && away.z == 0.0f)
+		away.x += 1;
+
+	MsVECNormalize(&away, &away);
+	away.scale(e->mMarchSpeed * 3.0f * e->unk158);
+
+	v.add(away);
+	e->mLinearVelocity = v;
+}
+
 void TSmallEnemy::moveObject()
 {
 	if (checkLiveFlag(LIVE_FLAG_DEAD))
@@ -507,23 +528,7 @@ void TSmallEnemy::moveObject()
 		if (!isCollidMove(col))
 			continue;
 
-		// TODO: local_74/v sit 0x14 higher than retail (0x50/0x44 vs
-		// 0x3c/0x30) at an equal frame. Inert (cc48): both or either
-		// declared at function scope, at loop scope, swapped order.
-		JGeometry::TVec3<f32> local_74;
-		JGeometry::TVec3<f32> v(0.0f, 0.0f, 0.0f);
-
-		local_74.set(mPosition.x - col->mPosition.x,
-		             mPosition.y - col->mPosition.y,
-		             mPosition.z - col->mPosition.z);
-		if (local_74.x == 0.0f && local_74.y == 0.0f && local_74.z == 0.0f)
-			local_74.x += 1;
-
-		MsVECNormalize(&local_74, &local_74);
-		local_74.scale(mMarchSpeed * 3.0f * unk158);
-
-		v.add(local_74);
-		mLinearVelocity = v;
+		SmallEnemyMoveAwayFrom(this, col);
 	}
 
 	bind();
