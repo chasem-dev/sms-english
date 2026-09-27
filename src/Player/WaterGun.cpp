@@ -1265,8 +1265,7 @@ void TWaterGun::init()
 	bomb->unk384                    = true;
 	mNozzleYoshiDeform.mBomb.unk384 = true;
 
-	// TODO: wrong
-	MtxPtr r24 = mMario->mModel->unk8->getAnmMtx(mMario->mJointIdChest);
+	MtxPtr r24 = mMario->mModel->getModel()->getAnmMtx(mMario->mJointIdChest);
 
 	unk1CBC = mMario->mPosition;
 
@@ -1288,12 +1287,13 @@ void TWaterGun::init()
 
 	void* fluddModelData
 	    = JKRFileLoader::getGlbResource("/mario/watergun2/body/wg_mdl1.bmd");
-	J3DModel* fluddModel = new J3DModel(
-	    J3DModelLoaderDataBase::load(fluddModelData,
-	                                 J3DMLF_MaterialPEFull
-	                                     | (4 << J3DMLF_TevStageNumShift)),
-	    0, 1);
-	mFluddModel->setModel(fluddModel, 0);
+	mFluddModel->setModel(
+	    new J3DModel(
+	        J3DModelLoaderDataBase::load(fluddModelData,
+	                                     J3DMLF_MaterialPEFull
+	                                         | (4 << J3DMLF_TevStageNumShift)),
+	        0, 1),
+	    0);
 
 	mFluddModel->getModel()->setBaseTRMtx(
 	    mMario->mModel->getModel()->getAnmMtx(mMario->mJointIdChest));
@@ -1327,18 +1327,23 @@ void TWaterGun::init()
 	for (int i = 0; i < 6; ++i) {
 		if (nozzleBmdData.getPath(i)) {
 
+			// TODO: retail keeps nozzleData in the `new` result's register
+			// (`addi r3/r4, r23, 0`); we copy it to r22. Inert: one reused
+			// function-scope local, a named MActor, an anm-data or MActor
+			// helper. The frame is also 0x100 short.
 			MActorAnmData* nozzleData = new MActorAnmData();
 			nozzleData->init(nozzleBmdData.getPath(i), nullptr);
 			mNozzleList[i]->unk380 = new MActor(nozzleData);
 
 			void* nozzleModelData
 			    = JKRFileLoader::getGlbResource(nozzleBmdData.getBmdPath(i));
-			J3DModel* nozzleModel = new J3DModel(
-			    J3DModelLoaderDataBase::load(
-			        nozzleModelData,
-			        J3DMLF_MaterialPEFull | (4 << J3DMLF_TevStageNumShift)),
-			    0, 1);
-			mNozzleList[i]->unk380->setModel(nozzleModel, 0);
+			mNozzleList[i]->unk380->setModel(
+			    new J3DModel(J3DModelLoaderDataBase::load(
+			                     nozzleModelData,
+			                     J3DMLF_MaterialPEFull
+			                         | (4 << J3DMLF_TevStageNumShift)),
+			                 0, 1),
+			    0);
 
 			J3DModelData* modelData
 			    = mNozzleList[i]->unk380->getModel()->getModelData();
@@ -1452,12 +1457,13 @@ void TWaterGun::createGunBody()
 
 	void* fluddModelData
 	    = JKRFileLoader::getGlbResource("/mario/watergun2/body/wg_mdl1.bmd");
-	J3DModel* fluddModel = new J3DModel(
-	    J3DModelLoaderDataBase::load(fluddModelData,
-	                                 J3DMLF_MaterialPEFull
-	                                     | (4 << J3DMLF_TevStageNumShift)),
-	    0, 1);
-	mFluddModel->setModel(fluddModel, 0);
+	mFluddModel->setModel(
+	    new J3DModel(
+	        J3DModelLoaderDataBase::load(fluddModelData,
+	                                     J3DMLF_MaterialPEFull
+	                                         | (4 << J3DMLF_TevStageNumShift)),
+	        0, 1),
+	    0);
 }
 
 void TWaterGun::initInLoadAfter() { }
