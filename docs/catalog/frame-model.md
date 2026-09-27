@@ -180,3 +180,15 @@ Marker method: `int mk; extp(&mk);` declared first sits right above the dead reg
 - **Refused inline calls still leave their bindings.** `movementCommon`'s three unit `update()`s are refused at depth 2 and `bl`'d, yet each non-simple `this` binding keeps a dead slot at the depth-2 point (the three words `movementOption` has above its JUTRect temp that retail lacks).
 - **Moving a block into a TU-local inline reorders it with the temporaries.** `linGetSRT`'s nine named slices become depth-1 callee locals in source order, level with the pop and default-push temporaries, once each arm is `f(interp, const f32& v)`; a reference argument like `owner->m.x` is simple (no binding word), a by-value one binds and hoists the load above the slice's zero stores.
 - **`std::sqrtf`'s `volatile float y` is the lone sqrt slot** (`TMario::readBillboard`: retail keeps 15 more words created after it).
+## Refinements (unit agent c-d13, 2026-09-27)
+
+- **A dead named scalar's slot follows its declaring scope.** A retail "4-byte hole" between two named aggregates was a function-scope `f32 cos;` declared between them and assigned in a later loop (`getRandomButDirLimited`, `getEscapeDirLimited` closed).
+  The same scalar declared in an inner block (an else arm) sits below every aggregate of the enclosing loop body; declaring it uninitialised at the top of that body moves it above them.
+- **A named reference to an inlined accessor's result** (`const TGraphNode& node = getGraphNode(i); node.getPoint(&p);`) takes a register and removes the accessor's index binding and result object from the low region (the other half of the `getEscapeDirLimited` close).
+- **A helper holding a statement and its local moves both one depth down.** `TNerveLimitKoopaJrWait` (closed): retail had moveWait's `TDirectionCalc target(dir)` and its by-value ctor copy below canRun's depth-2 objects; `static inline void LimitKoopaJrTurnBody(TLimitKoopaJr*, const TVec3&)` holding the declaration and the turn statement creates them at depth 2, after canRun's.
+  Tell: a callee local of expansion A sits below the depth-2 objects of an earlier expansion B.
+- **Unrolled constant loops leave dead objects.** `for (int i = 0; i < 4; i++) a[i] = i * 0.25f;` unrolls to the same folded stores and keeps `i` plus two IRO temps dead (+12 per loop).
+  It is not the `MSRandVol` ctor's answer (retail +8, and `MSRandPlay`'s loop-free ctor has the same +8); the debugger shows zero dead objects in our MSoundSE ctors and `__sinit` (retail +2/+2/+10 words), so those gaps are not inline bindings.
+- **spcinterp exec{add,sub,mul,div} (open):** the word above the else arm's temp is setDataFloat's argument binding; retail has none there and one more below the temp.
+  Direct field writes drop it but schedule the mType store early; a named `f32` keeps the schedule but lands above the pop temps.
+  Moving the float arm into a helper puts `getDataFloat` at depth 2, where it is called out of line.
