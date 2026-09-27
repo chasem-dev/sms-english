@@ -64,6 +64,9 @@ static inline void NpcPartsInitMotionBlend(TNpcParts* parts, int i, int j,
 // (the hoisted `&initInfo->unk4[i]` against the parts/model temporaries).
 // An `int` frame, or a `TSharedParts*`/`MActor*` parameter in place of the
 // indices, lets MWCC fold or reorder the blend sites (93.7-96.8%).
+// Re-reading `unk8[j]` for getPartsSDLModelData instead of passing `puVar3`
+// fixes the swap but drops retail's `mr r25` copy (98.6%); lever-search's
+// accessor levers move the frame in 8s only (best 0x1b0) with the swap intact.
 TNpcParts::TNpcParts(u32 param_1, const J3DGXColorS10* param_2,
                      TBaseNPC* param_3)
     : unk60(param_3)
