@@ -659,6 +659,10 @@ MtxPtr TCannon::getTakingMtx()
 // order of r/rate are inert. can1 pair sweeps (rate raw/get x getPosition
 // x named/top-declared ranges, a TU-local range helper) never lift the
 // ranges; setKillerGoalPoint shares the cause (retail range above `pos`).
+// Dead-stack debugger (c-d2): a named `TMsRange<f32> range` declared first
+// plus `getSaveParams()->` for the rate lands range and the low region; one
+// named scalar too many is left (retail keeps one of r/rate, but naming only
+// one reorders the rate load).
 void TCannon::bombSet()
 {
 	f32 r       = TMsRange<f32>(0.0f, 1.0f).rand();

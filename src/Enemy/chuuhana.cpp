@@ -401,6 +401,9 @@ void TChuuHana::reset()
 
 	// Head for a random node of the graph.
 	// TODO: retail stacks goal above point (0x68 / 0x5c); ours is the reverse.
+	// That is setSafeGoal()'s inlined block (callee locals stack last-declared
+	// highest): `setSafeGoal();` here with GraphNode/GraphNodeNum over
+	// GraphOf in setSafeGoal is byte-exact, but costs ForceJumped 0x10.
 	// setGoalPath(), a TPathNode temporary and chained copies were worse.
 	JGeometry::TVec3<f32> point;
 	ChuuHanaGraphNode(ChuuHanaGraphOf(this),
@@ -898,6 +901,8 @@ void TChuuHana::setGoal()
 	// over mPosition, getRotation() x3, a setGoalPath forwarder, a fork
 	// around swing.rand(), a named f32 for the swung heading, splitting the
 	// dir constructor into set(), and TVec3 goal(mPosition).
+	// c-d2: a named `f32 dist = 1000.0f;` after goal fills retail's 4-byte
+	// slot between goal and swing; the 12 bytes below the TPathNode remain.
 	JGeometry::TVec3<f32> goal;
 	goal.set(mPosition);
 	TMsRange<f32> swing(-30.0f, 30.0f);
