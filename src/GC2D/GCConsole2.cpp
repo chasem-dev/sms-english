@@ -4174,6 +4174,7 @@ static inline void updateConsole(TGCConsole2* console)
 		console->unk3A8->getPane()->hide();
 	}
 
+	s16 telopWait;
 	if (console->unk42) {
 		if (console->unk520->update()) {
 			console->unk42 = 0;
@@ -4201,7 +4202,7 @@ static inline void updateConsole(TGCConsole2* console)
 		}
 	}
 
-	s16 telopWait = console->unk56C ? console->unk562 : console->unk560;
+	telopWait = console->unk56C ? console->unk562 : console->unk560;
 	if (!console->unk44 && !console->unk42 && !console->unk43
 	    && console->unk530->unk4 != nullptr
 	    && console->unk55C >= (u32)((s16)telopWait * 120)
@@ -4666,11 +4667,17 @@ static inline void drawConsole(TGCConsole2* console,
 // position, colour over text buffer), then the flags&8 pass (setScissor TRect
 // over `graph`), then the depth-2 objects (startDisappearLife's JUTPoints,
 // read8b's bytes, the write(u8) copies).
-// TODO: every instruction matches; the frame is 0x358 short (0xc58 vs 0xfb0)
-// with the referenced objects in retail's order, so retail has more dead
-// objects: 5 words between the telop and unk35 rects, one on each side of
-// the balloon contents rect, 0x30 bytes between `graph` and the JUTPoints,
-// 0xc0 between the JUTPoints and read8b's bytes, 0x24c below the write copies.
+// TODO: every instruction matches; the frame is 0x360 short (0xc50 vs 0xfb0)
+// with the referenced objects in retail's order (stack debugger, c-g1), so
+// retail has more dead objects. Per gap, retail minus ours: 4 bytes above the
+// blink rects, 4 between the life-meter rects and the red-coin position, 0x14
+// between the telop and unk35 rects (ours there: telopWait, scaledY, yoshi,
+// maxWater), 4 on each side of the balloon contents rect, 0x30 of depth-2
+// objects between `graph` and the first startDisappearLife JUTPoints, 0xc0
+// between those and read8b's bytes, and 0x24c below the write(u8) copies.
+// The low-region deficit matches the TU-wide pattern (processMoveNozzle,
+// countShine, countBlueCoin, processAppearStar are all short the same way),
+// so it is likely a header inline (JUTPoint, getPane/isVisible) spelling.
 void TGCConsole2::perform(u32 flags, JDrama::TGraphics* graphics)
 {
 	if (flags & 1)
