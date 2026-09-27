@@ -485,6 +485,10 @@ static inline TGraphTracer* BossMantaGetTracer(TBossManta* p)
 	return tracer;
 }
 
+// TODO: instruction-exact at retail's frame; every indexToPoint temporary is
+// 4 low. The unit up vectors are unnamed temporaries in retail (named, the
+// block sat 0x10 low with the frame exact); retail has one more word created
+// after the temporaries.
 bool TBossManta::getIntoGraphVec(JGeometry::TVec3<f32>* out)
 {
 	TGraphWeb* graph = BossMantaGetTracer(this)->getGraph();
@@ -514,8 +518,7 @@ bool TBossManta::getIntoGraphVec(JGeometry::TVec3<f32>* out)
 	d.y = 0.0f;
 
 	if (a.z * d.x - a.x * d.z < 0.0f) {
-		JGeometry::TVec3<f32> up(0.0f, 1.0f, 0.0f);
-		out->cross(up, d);
+		out->cross(JGeometry::TVec3<f32>(0.0f, 1.0f, 0.0f), d);
 		out->normalize();
 		return true;
 	}

@@ -463,6 +463,11 @@ static inline void BossHanachanSaveHistory(TBossHanachan* self)
 // which points at more inline levels (the ROM inlines far more here); left over
 // are volatile-FPR orders in the head offset call, the side-vector ground probes,
 // the wave-roll constants and the tumble chase, plus &mRotation.z held in r22.
+// Slot order (inv.py): with offsetZ declared before offsetX, `ground` at the
+// top of the probe loop and execBodyCalcAnim_'s Mtx first, angle through
+// offsetX and the calc-anim block sit uniformly (0x114, 0x180) below retail;
+// still reversed are the target-arrow vector (retail's topmost object) and the
+// two by-value operator- temporaries (the open `a - b` class).
 void TBossHanachan::perform(u32 cue, JDrama::TGraphics* graphics)
 {
 	if (checkLiveFlag(0x201))
@@ -530,7 +535,7 @@ void TBossHanachan::perform(u32 cue, JDrama::TGraphics* graphics)
 			headPosition.x
 			    -= JMASin(mRotation.y) * mCommonParams->mSLHeadLength.get();
 			headPosition.z -= JMACos(mRotation.y) * mCommonParams->mSLHeadLength.get();
-			f32 offsetX, offsetZ;
+			f32 offsetZ, offsetX;
 			BHSCalcRevisionDistXZByRotateZ(mRotation.y, mRotation.z,
 			                              unk178->mRotationMoveScale, &offsetX, &offsetZ);
 			headPosition.x += offsetX;
@@ -548,6 +553,7 @@ void TBossHanachan::perform(u32 cue, JDrama::TGraphics* graphics)
 			if (nerve != &TNerveBossHanachanDown::theNerve()) {
 				for (int i = 0; i < 8; ++i) {
 					TBossHanachanPartsBody* body = mBodies[i];
+					const TBGCheckData* ground;
 					f32 groundHeight = gpMap->checkGroundIgnoreWaterSurface(
 					    body->mPosition.x, 500.0f + body->mPosition.y,
 					    body->mPosition.z, &body->mGroundPlane);
@@ -585,7 +591,6 @@ void TBossHanachan::perform(u32 cue, JDrama::TGraphics* graphics)
 						JGeometry::TVec3<f32> opposite(-side.x, -side.y, -side.z);
 						side += body->mPosition;
 						opposite += body->mPosition;
-						const TBGCheckData* ground;
 						f32 left = gpMap->checkGroundIgnoreWaterSurface(
 						    side.x, 500.0f + side.y, side.z, &ground);
 						f32 right = gpMap->checkGroundIgnoreWaterSurface(
