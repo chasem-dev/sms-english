@@ -1076,8 +1076,8 @@ bool TBossMantaAdditionalCollisionSet::isUsed()
 	return false;
 }
 
-// TODO: frame 0x98 against retail's 0xf0 with every instruction right; the
-// 0x58 is not a lever (loop and index spellings were inert).
+// The centre and body joints are gathered into vectors (the wings stay
+// scalars); their dead objects are retail's 0xf0 frame.
 void TBossMantaAdditionalCollisionSet::update(u32 cue,
                                               JDrama::TGraphics* graphics)
 {
@@ -1091,39 +1091,41 @@ void TBossMantaAdditionalCollisionSet::update(u32 cue,
 
 		MtxPtr centerMtx
 		    = unkC->getModel()->getAnmMtx(TBossManta::sCenterJointIndex);
-		f32 centerX      = centerMtx[0][3];
-		f32 centerY      = centerMtx[1][3];
-		f32 centerZ      = centerMtx[2][3];
+		f32 centerX = centerMtx[0][3];
+		f32 centerY = centerMtx[1][3];
+		f32 centerZ = centerMtx[2][3];
+		JGeometry::TVec3<f32> center(centerX, centerY, centerZ);
 
 		MtxPtr bodyMtx
 		    = unkC->getModel()->getAnmMtx(TBossManta::sBodyJointIndex);
-		f32 bodyX      = bodyMtx[0][3];
-		f32 bodyY      = bodyMtx[1][3];
-		f32 bodyZ      = bodyMtx[2][3];
+		f32 bodyX = bodyMtx[0][3];
+		f32 bodyY = bodyMtx[1][3];
+		f32 bodyZ = bodyMtx[2][3];
+		JGeometry::TVec3<f32> body(bodyX, bodyY, bodyZ);
 
 		MtxPtr rwingMtx
 		    = unkC->getModel()->getAnmMtx(TBossManta::sRwingJointIndex);
-		f32 rwingX      = rwingMtx[0][3];
-		f32 rwingY      = rwingMtx[1][3];
-		f32 rwingZ      = rwingMtx[2][3];
+		f32 rwingX = rwingMtx[0][3];
+		f32 rwingY = rwingMtx[1][3];
+		f32 rwingZ = rwingMtx[2][3];
 
 		MtxPtr lwingMtx
 		    = unkC->getModel()->getAnmMtx(TBossManta::sLwingJointIndex);
-		f32 lwingX      = lwingMtx[0][3];
-		f32 lwingY      = lwingMtx[1][3];
-		f32 lwingZ      = lwingMtx[2][3];
+		f32 lwingX = lwingMtx[0][3];
+		f32 lwingY = lwingMtx[1][3];
+		f32 lwingZ = lwingMtx[2][3];
 
-		unk0[0]->mPosition.set(-0.15f * (bodyX - centerX) + centerX,
-		                       -0.15f * (bodyY - centerY) + centerY,
-		                       -0.15f * (bodyZ - centerZ) + centerZ);
+		unk0[0]->mPosition.set(-0.15f * (body.x - center.x) + center.x,
+		                       -0.15f * (body.y - center.y) + center.y,
+		                       -0.15f * (body.z - center.z) + center.z);
 
-		unk0[1]->mPosition.set(0.75f * (rwingX - centerX) + centerX,
-		                       0.75f * (rwingY - centerY) + centerY,
-		                       0.75f * (rwingZ - centerZ) + centerZ);
+		unk0[1]->mPosition.set(0.75f * (rwingX - center.x) + center.x,
+		                       0.75f * (rwingY - center.y) + center.y,
+		                       0.75f * (rwingZ - center.z) + center.z);
 
-		unk0[2]->mPosition.set(0.75f * (lwingX - centerX) + centerX,
-		                       0.75f * (lwingY - centerY) + centerY,
-		                       0.75f * (lwingZ - centerZ) + centerZ);
+		unk0[2]->mPosition.set(0.75f * (lwingX - center.x) + center.x,
+		                       0.75f * (lwingY - center.y) + center.y,
+		                       0.75f * (lwingZ - center.z) + center.z);
 	}
 }
 
