@@ -682,10 +682,12 @@ void TBathtub::perform(u32 cue, JDrama::TGraphics* graphics)
 	}
 }
 
-// TODO: 99.0%. Left: the star position's z/y land in swapped FPRs (a
-// getTrans through TPosition3f fixes them but costs 8 bytes of frame), the
-// first remove loop's counter copy, and the torque's FPR numbering (cross2,
-// +=, scaleAdd are inert or worse).
+// The overturned branch clears the collisions through the UNUSED
+// removeCollisions_ (its counter copy is the ROM's `addi r30, r29, 0`).
+// TODO: 99.2%. Left: the star position's z/y land in swapped FPRs (a
+// getTrans through TPosition3f fixes them but costs 8 bytes of frame) and
+// the torque's FPR numbering (cross2, +=, scaleAdd are inert or worse;
+// regalloc: the scale product, a CSE temp, is coloured last, retail f3).
 void TBathtub::control()
 {
 	if (unk29A) {
@@ -719,8 +721,7 @@ void TBathtub::control()
 			    MSD_SE_SHINE_EXIST, &unk200, 0, nullptr, 0, 4);
 		calcRootMatrix();
 		calcBathtubData();
-		for (int i = 0; i < 30; ++i)
-			unk164[i]->remove();
+		removeCollisions_();
 		TTakeActor* mario = (TTakeActor*)SMS_GetMarioHitActor();
 		if (mario->receiveMessage(this, HIT_MESSAGE_TAKE))
 			mHeldObject = mario;
@@ -767,8 +768,7 @@ void TBathtub::control()
 	if (!mHeldObject) {
 		setupCollisions_();
 	} else {
-		for (int i = 0; i < 30; ++i)
-			unk164[i]->remove();
+		removeCollisions_();
 	}
 }
 
