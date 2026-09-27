@@ -85,9 +85,8 @@ static inline TCameraShake* MareWallRockCameraShake()
 	return shake;
 }
 
-// TODO: case 4's t sits 8 bytes low (0xc4 vs retail 0xcc). Inert or worse:
-// every combination of dropping case 4's joint and z locals (frame +8),
-// joint->setTransformInfo, t.set(...).
+// Case 4 declares its translation vector at the top of the block, above the
+// joint, which is what puts it directly under case 2's vector.
 void TMareWallRock::movement()
 {
 	switch (unkF4) {
@@ -139,6 +138,7 @@ void TMareWallRock::movement()
 		break;
 
 	case 4: {
+		JGeometry::TVec3<f32> t;
 		J3DJoint* joint                 = unk104->getJoint();
 		J3DTransformInfo& transformInfo = joint->getTransformInfo();
 		if (!TMapObjBase::isDemo()) {
@@ -157,7 +157,7 @@ void TMareWallRock::movement()
 			unkF4  = 3;
 			return;
 		}
-		JGeometry::TVec3<f32> t(0.0f, 0.0f, z);
+		t.set(0.0f, 0.0f, z);
 		unk10C[0]->moveTrans(t);
 		break;
 	}
