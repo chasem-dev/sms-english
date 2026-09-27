@@ -848,6 +848,11 @@ bool TBossHanachan::isCanWalk() const
 // squared temporary low (0x54/0x60) and execWalk's unnamed vector above its
 // named target. Inert: the squared-XZ helper here; a reference-bound
 // getPoint() in either body changes the code.
+// Model reading (frame-model rules 7, 8b): retail's goal-check vector above
+// its target means both are callee locals of one depth-1 expansion, and
+// isCanWalk's pair (vector over target, both lowest) is expanded one level
+// deeper than that. A goal-check static inline gets the first part; wrapping
+// `if (isCanWalk()) walkToCurPathNode(...)` stops isCanWalk inlining.
 void TBossHanachan::execWalk(bool accelerate)
 {
 	if (accelerate)
@@ -875,6 +880,11 @@ void TBossHanachan::execWalk(bool accelerate)
 // test, an unnamed roll, a rotated TVec3, and unnamed angle/cos/sin; also
 // direction.add(side), add(direction, side), scaleAdd and side.set(). The
 // extra 0x10 above `goal` disappears only when `side` is dead entirely.
+// With the rotation in a static inline (angle/cos/sin become callee objects,
+// created below `goal`) goal and the node land on 0x60/0x50 and the frame is
+// 0xb0: the only surplus is `stopped`, whose byte retail does not have, yet
+// every unnamed isZero() test either drops the mfcr/extrwi. or adds two low
+// words (`== false`, `!= false`, `? :`).
 void TBossHanachan::execSlip()
 {
 	CLBChaseGeneralConstantSpecifySpeed(&mMarchSpeed, 0.0f,

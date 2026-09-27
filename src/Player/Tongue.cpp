@@ -92,6 +92,10 @@ TongueScaled(JGeometry::TVec3<f32> v, f32 k)
 
 // TODO: frame 0x58, retail 0x60; retail keeps the vel*0.5f result above the
 // scaled dir copy. A named `half` (early or late, via TongueScaled) is 0x68.
+// Retail's order (vel*0.5f's return temporary, dir's by-value copy, vel's
+// copy) is two by-value `operator*` expansions; `mInitialVelocity = dir *
+// mInitialSpeed;` is instruction-exact only with the uncast `operator=`
+// (JGVec3.hpp, the `a = b - c` header class) and is then 0x50.
 void TYoshiTongue::emit(const JGeometry::TVec3<f32>& src,
                         const JGeometry::TVec3<f32>& dir,
                         const JGeometry::TVec3<f32>& vel)
