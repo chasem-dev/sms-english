@@ -219,7 +219,8 @@ void TBaseNPC::setNpcAnm_(EnumNpcAnmKind param_1,
 
 // TODO: keep() puts mKeepAnmCtrl in r6 and converts blend in r3; retail
 // reuses dead `this` (lwz r3, 0x190(r3); neg r5, r5). A TU-local keep
-// wrapper is inert. Catalog: levers are in shared NpcBase.hpp.
+// wrapper is inert. Closed by `mBlendOn = blend;` (implicit conversion) in
+// TNpcKeepAnm::keep in the shared NpcBase.hpp, parked for its owner.
 void TBaseNPC::requestNpcAnm_(EnumNpcAnmKind param_1,
                               EnumNpcStopMotionBlendOnOff param_2)
 {

@@ -377,6 +377,9 @@ void TCardSave::init(int param_1)
 // reuses r30 for the scissor rect). Inert (k5): nested `if (!unk2DF)`, raw
 // mScissorRect/mViewportRect, a scissor pointer local, `if (!(cue & CUE_DRAW))
 // return;`, execIssueGX_ without the graph scope (breaks), a cast pointer.
+// Register model: `graphics` has degree 30 with two lower neighbours, so it is
+// pushed in the first sweep and coloured after the scissor reference; one more
+// interfering argument copy would defer it. A TU-local draw level is worse.
 void TCardSave::perform(u32 cue, JDrama::TGraphics* graphics)
 {
 	if (unk2DF)
@@ -483,6 +486,10 @@ void TCardSave::setMessageC(J2DTextBox* text_box, s32 message_id, u32 size)
 // constants (1 in r31, 0x4330 in r30), we give them r30/r31. Inert:
 // case-body helpers, one shared top-level `done` (either order), `bool done`,
 // a separate `result = -1;` assignment.
+// Register model (docs/catalog/register-model.md): `this` and `result` keep
+// remaining degree 31 after the first simplify sweep because nine argument
+// copies coalesced into r3/r4 never leave it; any three fewer replays retail
+// exactly. Naming setMessage's message or buffer pointer is inert.
 s8 TCardSave::waitForStop(TEProgress param_1)
 {
 	s8 result = -1;
