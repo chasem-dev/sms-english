@@ -193,35 +193,24 @@ void CPolarSubCamera::execNoticeOnOffProc_(EnumNoticeOnOffMode mode)
 	}
 }
 
-// TODO (closure batch 152): 93.9%, up from 92.0%. The angle factor is
-// `|angle| * (2.0f / 65536.0f)` (a 0..1 fraction of a half turn), not
-// DEG2SHORTANGLE(1.0f) -- the old 182.04445f literal was displacing the whole
-// `.sdata2` pool. The angle difference is `mCurrentTarget.mYaw - ang` in that
-// operand order, held in an `s16` (batch 152: two of the five missing
-// instructions). What is left:
-//   - frame 0xa8 vs 0x88: 36 bytes short in the low pool and 4 long in the
-//     named block, with seven cameralib templates inlined here.
-//   - retail truncates the yaw difference at each of its three uses
-//     (`extsh.` for the test, `extsh` in each ternary arm) off one un-extended
-//     `subf`; an `s16` local truncates once at the assignment instead.
-//     Rejected: `CLBAbs<s16>` (88.4%, it truncates its parameter on entry),
-//     and repeating `(s16)(mYaw - ang)` in all three positions (91.2%).
-//   - the `fmadds` pair for `diff * 500 + mPos` is exact with a named 500.0f
-//     distance; spelling the literal at each site put it on the wrong side of
-//     both multiplies. Rejected: swapping the written operand order, and
-//     folding both terms into the `matan`
-//     arguments -- MWCC still evaluates the z term first where retail, doing
-//     arguments right to left, does x first.
+// TODO: 97.2%. The two squared distances were swapped (retail tests the
+// minimum first, then the fast minimum inside), the speed product is
+// base * (chase * (ratio * speed)), dist2 is one unnamed sum, and the
+// absolute angle is CLBAbs<int> of the truncated difference.
+// Left: retail sign-extends matan's result (`extsh r4, r3`) and redoes the
+// `extsh` in each abs arm (3 instructions); `(s16)ang`, `(int)ang`, an int
+// ang and CLBAbs<s16> are inert or worse. Frame 0xa8 vs 0x90.
+// The named 500.0f distance is what keeps the fmadds operands exact.
 void CPolarSubCamera::calcNoticeTargetYrot_(const Vec& target)
 {
 	Vec mPos     = gpCameraMario->unk0;
-	f32 dz2      = CLBSquared<f32>(mPos.z - target.z);
-	f32 dx2      = CLBSquared<f32>(mPos.x - target.x);
-	f32 dist2    = dx2 + dz2;
-	f32 farClip2 = CLBSquared<f32>(mSaveNotice->mRotateMinDistXZ.get());
-	f32 near2    = CLBSquared<f32>(mSaveNotice->mRotateFastMinDistXZ.get());
+	f32 dist2 = CLBSquared<f32>(mPos.x - target.x)
+	            + CLBSquared<f32>(mPos.z - target.z);
+	f32 minDist2 = CLBSquared<f32>(mSaveNotice->mRotateMinDistXZ.get());
+	f32 fastDist2
+	    = CLBSquared<f32>(mSaveNotice->mRotateFastMinDistXZ.get());
 
-	if (dist2 > near2) {
+	if (dist2 > minDist2) {
 		JGeometry::TVec3<f32> diff(mPos.x - target.x, mPos.y - target.y,
 		                           mPos.z - target.z);
 		MsVECNormalize(&diff, &diff);
@@ -231,22 +220,21 @@ void CPolarSubCamera::calcNoticeTargetYrot_(const Vec& target)
 		f32 dz       = diff.z * distance + mPos.z;
 		s16 ang      = matan(dz - mCurrentTarget.mTarget.z,
 		                     dx - mCurrentTarget.mTarget.x);
-		s16 yawDiff  = mCurrentTarget.mYaw - ang;
-		int absAngle = yawDiff >= 0 ? yawDiff : -yawDiff;
+		int absAngle = CLBAbs<int>((s16)(mCurrentTarget.mYaw - ang));
 		f32 ratio    = (f32)absAngle * (2.0f / 65536.0f);
 
 		f32 chase;
-		if (dist2 > farClip2) {
+		if (dist2 > fastDist2) {
 			chase = 1.0f;
 		} else {
-			chase = CLBCalcRatio<f32>(near2, farClip2, dist2);
+			chase = CLBCalcRatio<f32>(minDist2, fastDist2, dist2);
 		}
 		f32 base = CLBLinearInbetween<f32>(
 		    1.0f, mSaveNotice->mRotateMagnifXmax.get(), mCurrentTarget.unk28);
 		f32 speed
 		    = unk288
-		      * (chase
-		         * (ratio * ((f32)mSaveNotice->mRotateYSpeed.get() * base)));
+		      * (base
+		         * (chase * (ratio * (f32)mSaveNotice->mRotateYSpeed.get())));
 		if (speed > 32766.998f)
 			speed = 32766.998f;
 		s16 delta = CLBRoundf<s16>(speed);

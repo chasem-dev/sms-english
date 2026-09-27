@@ -386,6 +386,10 @@ void TAmenbo::decideTarget()
 	// temporary's set<f> call and subtracts from 1.5f after it; ours hoists
 	// the subtraction too. Inert (cc48): a named r or angle, M_PI first,
 	// (f32)M_PI, a literal pi, -(r - 1.5f); a named axis is worse.
+	// 2026-09-27: JGQuat4's setRotate(axis, angle) with one named
+	// `f32 halfAngle = pAngle * 0.5f;` fixes every instruction here (Search
+	// 97.9 -> 99.75, Kumokun Search 98.3 -> 99.8) but costs Kazekun Attack,
+	// makeQuat, makeKillerVelocity, moveCoaster (constant angle reloads).
 	q.setRotate(JGeometry::TVec3<f32>(0.0f, 1.0f, 0.0f),
 	            (1.5f - MsRandF()) * M_PI);
 	setWalkDir(q);
