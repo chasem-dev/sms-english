@@ -797,6 +797,8 @@ void JPADrawExecRotDirectional::exec(const JPADrawContext* dc,
 // JPADrawExecRotDirectional.
 // Direct-return levels over mScaleX/mScaleY at any site subset flip fmuls
 // operand order.
+// Frame-inert (c-m15): no pt.zero(), pt(0,0,0) ctor, header cross for
+// JPACross, cross for cross2, setLength(1.0f) for normalize.
 void JPADrawExecDirectionalCross::exec(const JPADrawContext* dc,
                                        JPABaseParticle* particle)
 {
@@ -1146,6 +1148,8 @@ void JPADrawExecPoint::exec(const JPADrawContext* dc, JPABaseParticle* particle)
 // declarations is inert, swapping the two getter calls worse (k5).
 // Also inert: scale()/named length, raw mGlobalPosition set, interleaved
 // declarations; setLength, a separate end vector or params local are worse.
+// c-m15: both declaration orders x {scale(k), scale(k, v), named length,
+// params local} inert; TWW's `if (!isZero()) {...}` shape is far worse.
 void JPADrawExecLine::exec(const JPADrawContext* dc, JPABaseParticle* particle)
 {
 	if (particle->isInvisibleParticle())
