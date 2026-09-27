@@ -523,6 +523,12 @@ static inline TYumbo* YunboDanceBody(TSpineBase<TLiveActor>* s)
 // subset of the four mario-position reads (Dancing and isFindOutMario), naming
 // or un-naming isFindOutMario's search values, `toMario` and `yaw` declared at
 // the top, and `pos` as a reference-bound or copy-initialised temporary.
+// c-d22 (debugger): the object between `toMario` and `pos` is the
+// SMS_GetMarioPos() result (with `*gpMarioPos`, the copy constructor's argument
+// binding); retail has none there and two more words created after `pos`.
+// `*gpMarioPos` plus `yumbo->getPosition()` in the sub gives the frame but puts
+// both bindings between them (pos 0x6c); the two-argument `sub(a, b)` changes
+// the code.
 DEFINE_NERVE(TNerveYumboDancing, TLiveActor)
 {
 	TYumbo* yumbo = YunboDanceBody(spine);

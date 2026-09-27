@@ -326,3 +326,8 @@ Marker method: `int mk; extp(&mk);` declared first sits right above the dead reg
 - **A converting argument binding is a 3-word carrier at depth 2.** The remaining 12 bytes below the volatile were `static inline f32 MsShortAngleToDegree(f32 angle) { angle = k * angle; return angle; }` fed matan's `s16` result at one site in the yaw helper (closed); at two or three sites it overshoots. `return k * angle;` or `angle *= k` give the same frame with a swapped FPR or operand order.
 - `TMapStaticObj::init`: calling `setUpUnk8TRS` directly (no `setUpCollision` level) puts its Mtx above the push_back iterator pool as in retail (all slots uniformly 4 high), but setMtx then inlines, so the weak-plus-`bl` class still blocks it.
 - `genEnemyFromPollution`: declaring `maxR` before `minR` makes MsRandF's result reuse `minR`'s register as retail does, but ranks `maxR` into f31; the residue is web coalescing, not declaration order.
+## Refinements (unit agent c-d22, 2026-09-27)
+
+- **Price combinations, not ladders.** `TMario::incHP` (closed) needed 0x20 of low region; the `SMSGetMSound()` binder's rungs (+0x10/+0x18/+0x28/+0x30) and `getHealth()` at the clamp (+8) each miss it, but together they land it exactly (non-additive: binder at both sites alone is +0x18, with `getHealth()` +0x20).
+  A 72-cell grid (six receiver spellings per sound site x accessor on/off) in one `score-variant.sh` call found seven exact cells; pick the one with a single helper.
+- `TNerveYumboDancing` (open): the one object between `toMario` and isFindOutMario's `pos` is the SMS_GetMarioPos() result (the copy constructor's argument binding under `*gpMarioPos`); retail has none there and two more words after `pos`.
