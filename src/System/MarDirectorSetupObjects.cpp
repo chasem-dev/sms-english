@@ -141,17 +141,37 @@ void TMarDirector::decideMarioPosIdx()
 	}
 }
 
-// TODO: 99.0%. The final heap virtual call is getTotalFreeSize() (slot
-// 0x28); the earlier call is freeTail() (slot 0x18). "ゲームオブジェクト" is a
-// TViewObjPtrListT (its list sits at +0x10, which the ROM's `addi rN, rM,
-// 0x10` before each end() shows); typing it as a TNameRefPtrListT wrote
-// every insert 4 bytes low and corrupted the group at boot. The rest is the
-// `mr` vs `addi rD, rS, 0` family: the ROM
-// has `mr. r20, r3` (assign-and-test on a `new` result) and `mr r3, r20` where
-// we emit the cast form, which fits batch 105's note that search2's ROM return
-// type is looser than JDrama::TNameRef* (the identity cast below is
-// load-bearing for exactly that reason), and a frame 0x160 bytes short.
-// cc32: not attempted beyond triage; the function is 8 KB.
+// Name fabricated. Both directory scans expand from one body: spelled
+// twice in setupObjects, the first `delete finder` loads its receiver
+// before the null test (`addi r3, r20, 0`), where retail has `mr r3, r20`
+// after it.
+static inline void MarDirectorLoadEventWatchers(TMarDirector* director, const char* dir)
+{
+	JKRFileFinder* finder = JKRFileLoader::findFirstFile(dir);
+	if (finder) {
+		JKRFileLoader::changeDirectory(dir);
+		do {
+			if (strstr(finder->mBase.mFileName, ".sb")) {
+				director->registerEventWatcher(new TEventWatcher(
+				    "<EventWatcher>", finder->mBase.mFileName));
+			}
+		} while (finder->findNextFile());
+		delete finder;
+		JKRFileLoader::changeDirectory("/");
+	}
+}
+
+// TODO: instruction-exact except one CSE: retail computes `root + 0x10` once
+// for the PERF Event Group push_back (`addi r20, r28, 0x10`). The frame is
+// 0x158 short (0x9d0 vs 0xb28): 0xfc of it is created below every object
+// we have (three or so words per list insert site), and retail has no dead
+// `cam` slot, one more word beside measurementGroup and the GXTexObj copy
+// below the PerformLists streams. The final heap virtual call is
+// getTotalFreeSize() (slot 0x28); the earlier call is freeTail() (slot
+// 0x18). "ゲームオブジェクト" is a TViewObjPtrListT (its list sits at +0x10);
+// typing it as a TNameRefPtrListT wrote every insert 4 bytes low and
+// corrupted the group at boot. Spelling the inserts as push_back or
+// getChildren().push_back breaks >100 instructions.
 bool TMarDirector::setupObjects()
 {
 	TFlagManager::getInstance()->resetStage();
@@ -225,15 +245,17 @@ bool TMarDirector::setupObjects()
 		break;
 	}
 	case 5:
-		if (currArea.unk1 != 3)
-			(void)currArea.unk1;
-		else
+		switch (currArea.unk1) {
+		case 3:
 			TFlagManager::getInstance()->setBool(true, 0x50003);
+			break;
+		}
 		break;
 	}
 
 	u32 bVar28 = SMS_getShineStage(currArea.unk0);
-	TFlagManager::getInstance()->setBool(true, 0x103A5 + bVar28);
+	u32 flag = 0x103A5 + bVar28;
+	TFlagManager::getInstance()->setBool(true, flag);
 
 	MSMainProc::setMSoundEnterStage(mMap, unk7D);
 	if (!TFlagManager::getInstance()->getBool(0x30007)) {
@@ -322,7 +344,7 @@ bool TMarDirector::setupObjects()
 	gpConductor->makeGraphGroup(JKRGetResource("/scene/map/scene.ral"));
 
 	{
-		void* tables = JKRGetResource("/scene/map/tables.bin");
+		void* tables = JKRFileLoader::getGlbResource("/scene/map/tables.bin");
 		if (tables) {
 			u32 size = unkB8->getResSize(tables);
 			JSUMemoryInputStream stream(tables, size);
@@ -338,7 +360,7 @@ bool TMarDirector::setupObjects()
 	}
 
 	{
-		void* scene = JKRGetResource("/scene/map/scene.bin");
+		void* scene = JKRFileLoader::getGlbResource("/scene/map/scene.bin");
 		u32 size    = unkB8->getResSize(scene);
 		JSUMemoryInputStream stream(scene, size);
 		JSUMemoryInputStream leftoversStream(nullptr, 0);
@@ -358,29 +380,8 @@ bool TMarDirector::setupObjects()
 	unk80 = new JDrama::TViewObjPtrListT<JDrama::TViewObj>("イベントグループ");
 	root->insert(unk80);
 
-	if (JKRFileFinder* finder = JKRFileLoader::findFirstFile("/common/sp")) {
-		JKRFileLoader::changeDirectory("/common/sp");
-		do {
-			if (strstr(finder->mBase.mFileName, ".sb")) {
-				registerEventWatcher(new TEventWatcher(
-				    "<EventWatcher>", finder->mBase.mFileName));
-			}
-		} while (finder->findNextFile());
-		delete finder;
-		JKRFileLoader::changeDirectory("/");
-	}
-
-	if (JKRFileFinder* finder = JKRFileLoader::findFirstFile("/scene/map/sp")) {
-		JKRFileLoader::changeDirectory("/scene/map/sp");
-		do {
-			if (strstr(finder->mBase.mFileName, ".sb")) {
-				registerEventWatcher(new TEventWatcher(
-				    "<EventWatcher>", finder->mBase.mFileName));
-			}
-		} while (finder->findNextFile());
-		delete finder;
-		JKRFileLoader::changeDirectory("/");
-	}
+	MarDirectorLoadEventWatchers(this, "/common/sp");
+	MarDirectorLoadEventWatchers(this, "/scene/map/sp");
 
 	TParams::finalize();
 
@@ -424,7 +425,7 @@ bool TMarDirector::setupObjects()
 	    ->setMatAnmSort();
 	gpLightManager->addChildGroupObj(drawBufferGroup);
 	unk40->push_back(drawInit, CUE_DRAW);
-	initECTGft(unk38, unk3C, perfEventGroup, normalScene);
+	initECTGft(unk38, unk3C, perfEventGroup, root);
 	initECTMir(mPerformListGX, perfEventGroup);
 
 	JDrama::TEfbCtrlTex* normalSceneDrawStage
@@ -479,7 +480,7 @@ bool TMarDirector::setupObjects()
 	mShinePfLstAnm
 	    = (TPerformList*)JDrama::TNameRefGen::search2("Shine PfLst Anm");
 
-	initECDisp(mPerformListGXPost, perfEventGroup, normalScene);
+	initECDisp(mPerformListGXPost, perfEventGroup, root);
 
 	JDrama::TViewObj* composite3
 	    = (JDrama::TViewObj*)JDrama::TNameRefGen::search2("合成3");
