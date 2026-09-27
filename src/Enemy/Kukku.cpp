@@ -69,19 +69,6 @@ TKukkuBall::TKukkuBall(MActor* actor)
 {
 }
 
-// Binding level worth +8 of low region, landing TKukkuBall::init's frame at
-// 0x88 (batch 121).
-static inline J3DModel* KukkuGetModel(const MActor* p)
-{
-	J3DModel* model = p->getModel();
-	return model;
-}
-
-// TODO: 99.9%, slot-only: the end()/`what` pair of the push_back sits 4 bytes
-// high (0x6c/0x70 against 0x68/0x6c). Inert or worse: the chained search<T>
-// receiver, `group->insert(this)`, a `(THitActor*)this` or named `self`
-// argument, `image != nullptr`, raw mMActor->getModel(), one combined
-// onHitFlag.
 void TKukkuBall::init()
 {
 	initHitActor(0x1000002E, 1, -0x80000000, 30.0f, 30.0f, 0.0f, 0.0f);
@@ -95,9 +82,10 @@ void TKukkuBall::init()
 
 	ResTIMG* image = (ResTIMG*)JKRFileLoader::getGlbResource(
 	    "/scene/map/pollution/H_ma_rak.bti");
-	if (image)
-		SMS_ChangeTextureAll(KukkuGetModel(mMActor)->getModelData(),
-		                     "K_name_dummy", *image);
+	if (image) {
+		J3DModelData* data = mMActor->getModel()->getModelData();
+		SMS_ChangeTextureAll(data, "K_name_dummy", *image);
+	}
 }
 
 // TODO: 97.2%. Frame is 0x98 against retail 0xb0 (bind()'s pos sits 0x20
