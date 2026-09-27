@@ -1433,22 +1433,34 @@ void TBossMantaManager::perform(u32 cue, JDrama::TGraphics* graphics)
 		mCollisionSets[i]->update(cue, graphics);
 }
 
-void TBossMantaManager::setupEfbAlpha(JDrama::TGraphics* graphics)
+// Two inline levels: their matrices are created after the GXColor
+// temporaries of setupEfbAlpha's own body, which puts those above them.
+static inline void BossMantaSetOrtho()
 {
-	ReInitializeGX();
-
 	Mtx44 proj;
 	C_MTXOrtho(proj, (f32)SMSGetGameRenderHeight(), 0.0f, 0.0f,
 	           (f32)SMSGetGameRenderWidth(), 0.0f, 1000.0f);
 	GXSetProjection(proj, GX_ORTHOGRAPHIC);
+}
+
+static inline void BossMantaLoadIdentity()
+{
+	Mtx m;
+	MTXIdentity(m);
+	GXLoadPosMtxImm(m, GX_PNMTX0);
+}
+
+void TBossMantaManager::setupEfbAlpha(JDrama::TGraphics* graphics)
+{
+	ReInitializeGX();
+
+	BossMantaSetOrtho();
 	GXSetColorUpdate(GX_FALSE);
 	GXSetAlphaUpdate(GX_TRUE);
 	GXSetDstAlpha(GX_TRUE, 0);
 	GXSetZMode(GX_TRUE, GX_ALWAYS, GX_FALSE);
 
-	Mtx m;
-	MTXIdentity(m);
-	GXLoadPosMtxImm(m, GX_PNMTX0);
+	BossMantaLoadIdentity();
 	GXSetCurrentMtx(GX_PNMTX0);
 	GXSetCullMode(GX_CULL_NONE);
 	GXClearVtxDesc();
@@ -1472,9 +1484,6 @@ void TBossMantaManager::setupEfbAlpha(JDrama::TGraphics* graphics)
 	GXSetNumTevStages(1);
 	GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD_NULL, GX_TEXMAP_NULL, GX_COLOR0A0);
 	GXSetTevOp(GX_TEVSTAGE0, GX_PASSCLR);
-	// TODO: instruction-identical; the GXColor by-value copy sits at
-	// 0x14/0x18 (low pool) where retail has it at 0x84/0x88 (named).
-	// Naming the colour or using TColor drops the two-slot copy.
 	GXSetChanMatColor(GX_COLOR0A0, (GXColor) { 0, 0, 0, 0x4 });
 	GXSetAlphaUpdate(GX_TRUE);
 	GXSetDstAlpha(GX_FALSE, 0);
