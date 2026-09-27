@@ -53,8 +53,8 @@ public:
 	virtual void moveObject();
 	virtual void kill();
 
-	BOOL isEndWire() const;
-	BOOL isStartWire() const;
+	bool isEndWire() const;
+	bool isStartWire() const;
 	TWireBinder* getWireBinder() const;
 	TWireBinder* getWireBinder();
 	f32 getRangePosInWire() const;

@@ -370,6 +370,12 @@ void TWireTrap::moveObject()
 // Measured and rejected: a `const TVec3&` binding of getWireDir() before the
 // copy (99.5/99.0/98.4 -> 98.5/96.2/93.2) and `momentum.set(getWireDir())`
 // (-> 97.9/93.3/96.2).
+// Map-size finding (c-m19): the level is ABOVE calcMomentum. With a one-line
+// inline between each doXxxMove and calcMomentum, getWireDir() called direct
+// and `mLinearVelocity = momentum` (setLinearVelocity would push operator=
+// past the limit), all three do*Move hit their map sizes and all three nerves
+// are instruction-exact, but frames are 8/8/0x18 short (Return/Oneway/Search);
+// no content-bearing helper found yet (param/rate splits, isEndWire() inert).
 void TWireTrap::calcMomentum()
 {
 	JGeometry::TVec3<f32> momentum = WireTrapWireDir(this);
@@ -619,13 +625,13 @@ TWireBinder* TWireTrap::getWireBinder() const
 
 // UNUSED, 0x30 in the map -- the same size as isEndWire, so this really
 // returns the binder's answer.
-BOOL TWireTrap::isStartWire() const
+bool TWireTrap::isStartWire() const
 {
 	return getWireBinder()->isStartWire(mPosition, mMoveDir);
 }
 
 // UNUSED, 0x30 in the map.
-BOOL TWireTrap::isEndWire() const
+bool TWireTrap::isEndWire() const
 {
 	return getWireBinder()->isEndWire(mPosition, mMoveDir);
 }
