@@ -4,6 +4,29 @@ Written 2026-09-18 by the session that ran batches 92 to 181.
 Read this before `docs/ORCHESTRATION.md`; it is the judgement that document does not carry.
 Keep it current: every orchestrator appends a dated "State" entry below and rewrites the advice when it stops being true.
 
+## State 2026-09-27 (session 5237deed): compiler-internals tooling
+
+| | Fuzzy | Perfect match | Linked units |
+| --- | ---: | ---: | ---: |
+| Game | 99.39% | 65.7% | 193 / 385 |
+| JSystem | 99.89% | 93.4% | 186 / 198 |
+| SDK | 100.00% | 99.71% | 148 / 149 |
+| All | 99.50% | 72.03% (from 70.57%) | 527 / 732 |
+
+About 75 functions closed this session in ~45 agent batches, zero regressions, DOL byte-identical throughout.
+This clone has no linker map (`marioUS.MAP` is not on this US disc), so agents were told not to add/remove/reorder functions and to skip `validate-symbol-order.py`.
+
+What changed the game:
+- **`tools/mwcc-stack/`**: `mwcc-debugger` + retrowin32 (built in the session scratch; rebuild per `tools/mwcc-stack/README.md`) dumps MWCC's own stack objects and register-allocator state for one function.
+  `docs/catalog/frame-model.md` is the dead-stack model built from it (read it before any frame-only/slots-only work); `docs/catalog/register-model.md` is an exact register-colouring model with `regalloc.py`, a replay tool that reproduced every register of every dumped function.
+- Debugger-guided unit batches closed 1-13 functions each; blind ladder batches before it closed 0-2. Batches are now cheap to aim: `census.py` classifies every function (exact/frame/slots/other).
+- **Fabricated helpers are the main source of wrong structure.** Big wins came from deleting invented per-state helpers and restoring retail's inlined blocks (TGCConsole2::perform 97.2 -> 99.9, TSelectMenu::perform, TPauseMenu2::perform, TLensFlare::perform), or calling existing UNUSED stubs instead of pasted bodies (GraphWander 96.8 -> 99.1). Reversed stack-object order vs retail = that block was an inlined callee (`inv.py` scanner in the c-s2 scratch; worth committing to `tools/` next session).
+
+Open structural questions (each blocks dozens of functions; all ruled out as single header changes):
+- `a = b - c` TVec3 copy-out: retail's operator- returns by value (binary-proven), but every copy-out site is one dead 4-byte object short and no header spelling supplies it only there. Partial migration on local branch `wt/c-m1-wip` (not pushed). The decompiled compiler source (`RootCubed/mwcceppc-decomp`) may settle it; this session had no access.
+- Director-class frame deficits (every JDrama director, e.g. currentStateFinalize 0x90 short with no stack access): not a name-search header level, not the precompiled header, not the compiler build.
+- JGadget iterator stride, `new JUTTexture` storeTIMG copy, setEular expansion dead words.
+
 ## Where things stand (2026-09-18, late night, session 110dc638)
 
 | | Matched code | Linked units |
