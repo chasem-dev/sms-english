@@ -167,7 +167,10 @@ void TBPPolDrop::move()
 			// (`fadds f31, f1, f0`); `checkGround() + 1.0f` swapped them.
 			// TODO: 99.8%, frame 0x30 vs retail 0x70. drop() is UNUSED 0xa8
 			// and already spelled out here; the remaining 0x40 is accessor
-			// pool inside that expansion.
+			// pool inside that expansion. Measured (c-m23): the three sounds
+			// through SMSGetMSound()->startSoundActor* +0x10, is2ndFightNow
+			// via SMSGetMarDirector() +8, `pos = getPosition()` +8 (0x50);
+			// the low region is still 0x20 short of retail's.
 			f32 groundY
 			    = gpMap->checkGround(pos.x, mPosition.y, pos.z, &ground);
 			groundY += 1.0f;
