@@ -359,7 +359,8 @@ f32 TMapCollisionData::checkGround(f32 x, f32 y, f32 z, u8 flags,
 	}
 }
 
-static f32 angle_between(const JGeometry::TVec3<f32>& a,
+// The map lists no angle_between, so it is not an out-of-line static.
+static inline f32 angle_between(const JGeometry::TVec3<f32>& a,
                          const JGeometry::TVec3<f32>& b)
 {
 	JGeometry::TVec3<f32> cross;
@@ -375,7 +376,9 @@ static f32 angle_between(const JGeometry::TVec3<f32>& a,
 // (a/b/c reserve slots) -- early declarations, by-value angle_between
 // parameters and `a = p - hit` are all worse. The rest is FPR scheduling.
 // Also inert: a/b/c declared after dir or before hit; angle_between with
-// fewer named results or marked inline.
+// fewer named results or marked inline. Map check: retail has 0x24 more
+// between dir and hit and 0x40 more between hit and the add temp; named
+// point copies, `a(p); a -= hit` and an inlined cross (c-m7) are worse.
 static bool bgIntersectLine(const TBGCheckData* data,
                             const JGeometry::TVec3<f32>& start,
                             const JGeometry::TVec3<f32>& end, bool front_only,
