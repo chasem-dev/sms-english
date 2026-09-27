@@ -302,7 +302,21 @@ void TSpineEnemy::setGoalPathFromGraph()
 	setGoalPath(TPathNode(local_48));
 }
 
-void TSpineEnemy::goToInitialVisibleNode(f32, f32) { }
+// UNUSED (0xfc); TBossHanachan::goToInitialRecoverGraphNode is the same
+// search with its own fallback.
+void TSpineEnemy::goToInitialVisibleNode(f32 dist, f32 degree)
+{
+	unk124->reset();
+	unk124->reset2();
+	int node = unk124->getGraph()->findNearestVisibleIndex(
+	    mPosition, mRotation.y, dist, degree, 0xffffffff);
+	if (node >= 0) {
+		unk124->setTo(node);
+		setGoalPathFromGraph();
+		unk128 = 0;
+		unk12C = 0.0f;
+	}
+}
 
 void TSpineEnemy::goToInitialGraphNodeCheckY(f32 param_1) { }
 

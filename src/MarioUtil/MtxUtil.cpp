@@ -401,9 +401,33 @@ void TMultiMtxEffect::setUserArea()
 	}
 }
 
-void TMultiMtxEffect::add() { }
+void TMultiMtxEffect::add()
+{
+	for (int i = 0; i < mNumBones; i++) {
+		J3DJoint* joint
+		    = mModel->getModelData()->getJointNodePointer(mBoneIDs[i]);
+		switch (mMtxEffectType[i]) {
+		case TMTX_EFFECT_TIME_LAG:
+			joint->setCallBack(TMtxTimeLagCallBack);
+			break;
+		case TMTX_EFFECT_SWING_RZ:
+			joint->setCallBack(TMtxSwingRZCallBack);
+			break;
+		case TMTX_EFFECT_SWING_RZ_REVERSE_XZ:
+			joint->setCallBack(TMtxSwingRZReverseXZCallBack);
+			break;
+		}
+	}
+}
 
-void TMultiMtxEffect::remove() { }
+void TMultiMtxEffect::remove()
+{
+	for (u16 i = 0; i < mNumBones; i++) {
+		mModel->getModelData()
+		    ->getJointNodePointer(mBoneIDs[i])
+		    ->setCallBack(nullptr);
+	}
+}
 
 void SMS_MakeJointsToArc(J3DModel* model, const JGeometry::TVec3<f32>& start,
                          const JGeometry::TVec3<f32>& upDir,
@@ -585,9 +609,22 @@ void TRope::moveHead(const JGeometry::TVec3<f32>& param)
 	}
 }
 
-void TRope::moveHeadAndTail(const JGeometry::TVec3<f32>&,
-                            const JGeometry::TVec3<f32>&)
+void TRope::moveHeadAndTail(const JGeometry::TVec3<f32>& head,
+                            const JGeometry::TVec3<f32>& tail)
 {
+	for (int i = 0; i < mNumPoints; ++i) {
+		mPoints[i].unkC.y += unkC;
+		mPoints[i].unkC += mPoints[i].unk18;
+	}
+	constraintHead(head);
+	constraintTail(tail);
+	for (int i = 0; i < mNumPoints; ++i) {
+		f32 scale               = unk8;
+		JGeometry::TVec3<f32> v;
+		v = mPoints[i].unkC - mPoints[i].unk0;
+		mPoints[i].unk18        = v * scale;
+		mPoints[i].unk0         = mPoints[i].unkC;
+	}
 }
 
 void SMS_GetActorMtx(const THitActor& actor, MtxPtr mtx)
