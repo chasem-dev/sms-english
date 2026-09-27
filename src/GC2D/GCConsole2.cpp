@@ -2432,7 +2432,8 @@ void TGCConsole2::changeNum(TBlendPane* pane, int digit, int frames)
 	JUTRect bounds(p->mGlobalBounds);
 	JGeometry::TVec3<f32> position(bounds.x1 + bounds.getWidth() * 0.5f,
 	                               bounds.y1 + bounds.getHeight() * 0.5f, 0.0f);
-	gpEmitterManager4D2->createEmitter(position, 0x1FC, nullptr, nullptr);
+	JPAEmitterManager* manager = gpEmitterManager4D2;
+	manager->createEmitter(position, 0x1FC, nullptr, nullptr);
 }
 
 // TODO: frame 0x50 short, instructions exact. The getWhite()/mWhite temps sit
@@ -2512,9 +2513,8 @@ void TGCConsole2::setTimer(s32 param_1)
 
 // TODO: 0x68 bytes of frame short (0x240 vs 0x2a8): naming the pane in
 // changeNum() matches the ROM's 0x20/0x28 site spacing, but its hole under the
-// dead JUTRect is 0x50 (0x38 here) and the rest is low region. Inside each changeNum() expansion
-// the emitter position's int-to-float temps also take r5-r7 where we use
-// r3/r5-r9; the rect and position spellings tried there are inert.
+// dead JUTRect is 0x50 (0x38 here) and the rest is low region. The emitter
+// manager named in changeNum() gives retail's conversion registers.
 // `value` is s32 (long): as int, the `value % 10` test is kept in a saved
 // register and reused as the changeNum() digit instead of recomputed.
 void TGCConsole2::countShine()
@@ -2619,8 +2619,8 @@ void TGCConsole2::countShine()
 // per-site emitCounterParticle helper rebuilds the rect and costs 20 points;
 // a fresh JUTRect and/or TVec3 for the second emitter (-4..-20 points), a
 // shared loop counter, a ternary clamp. The `-=` keeps blueCoins in the loop
-// counter's register as retail does; the second emitter's `subf` width still
-// lands after the x1 conversion store where retail has it before.
+// counter's register as retail does; the named manager at the second emitter
+// gives its `subf` placement (naming it at the first too misschedules).
 void TGCConsole2::countBlueCoin()
 {
 	int blueTotal = TFlagManager::getInstance()->getFlag(0x40001);
@@ -2657,8 +2657,8 @@ void TGCConsole2::countBlueCoin()
 				position.x = bounds.x1 + bounds.getWidth() * 0.5f;
 				position.y = bounds.y1 + bounds.getHeight() * 0.5f;
 				position.z = 0.0f;
-				gpEmitterManager4D2->createEmitter(position, 0x1FC, nullptr,
-				                                   nullptr);
+				JPAEmitterManager* manager = gpEmitterManager4D2;
+				manager->createEmitter(position, 0x1FC, nullptr, nullptr);
 			}
 		} else {
 			startAppearStar();

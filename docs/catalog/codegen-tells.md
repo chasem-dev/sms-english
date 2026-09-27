@@ -1744,3 +1744,11 @@ Three exact and three lifts in `Enemy/fireWanwan` (37.76% -> 41.99%, 66 -> 69 ex
 - Dropping a reference-returning header accessor for the raw member is -0x10, not -8, inside a loop (`getNormal()` -> `mNormal`, `bindBody`); declaring `TBGWallCheckRecord` first in the loop body orders the block objects as retail.
 - A setter level over a pointer member assignment is a +4 pool rung (`mGroundPlane = plane`, `bindPoint`); the same setter over a `TVec3` member prices 0, and research 312's vector-assignment level is -4.
 - Open: an FPR colouring where retail gives the first-loaded operand the higher volatile (`TTailRubber::bindOne`'s three `fadds`, `bindPoint`'s `point.y > actualPoint.y`); and `TTailRubber::getNode`'s `idx * 0.25f * 4.0f`, where retail is `fmuls f0, f0, 0.25` (value first) and MWCC canonicalises every reassociation to the constant-first form.
+
+## Rect-centre emitters: name the manager (research c-h15)
+
+Tell: after `JUTRect::copy`, retail loads `x1` into r5 and converts it in place (`xoris r5, r5`), the width conversion in r6, `y1` in r7, and hoists `li r5, <id>` where the unnamed receiver spelling puts `x1` in r6 (or r7), its conversion in r3 and `y1` in r9.
+The rect spelling is not the cause: 13 scratch variants of `x1 + getWidth() * 0.5f` (raw `x2 - x1`, operand order, casts, named ints/floats, `set()`, members, a helper) all give the same code.
+The receiver is: `JPAEmitterManager* manager = gpEmitterManager4D2; manager->createEmitter(pos, id, ...)` with a named `TVec3 pos` gives retail's registers and schedule at every GC2D site (an inline accessor returning the global does the same; naming the manager with an unnamed `TVec3` temporary argument misschedules).
+Applied: `countShine` (via the UNUSED `changeNum`), `countBlueCoin`'s second emitter, `TPauseMenu2::drawAppearPane`/`perform`, `TConsoleStr::processShineGet`/`processMiss`/`processGo`, and the five `0x1FA` sites of `TCardSave`/`TCardLoad`: all instruction-exact now, each left with its frame gap (a `Vec pos` there was 0x10 closer in frame but misscheduled).
+Not this tell: `processAppearStar`'s `mGlobalTranslation.set()` centres (no call receiver; named emitter/centre spellings inert).

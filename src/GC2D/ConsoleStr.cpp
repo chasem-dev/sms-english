@@ -499,8 +499,8 @@ bool TConsoleStr::processGo(f32 param_1)
 				JGeometry::TVec3<f32> pos(rect.x1 + rect.getWidth() * 0.5f,
 				                          rect.y1 + rect.getHeight() * 0.5f,
 				                          0.0f);
-				gpEmitterManager4D2->createEmitter(pos, 0x1FD, nullptr,
-				                                   nullptr);
+				JPAEmitterManager* manager = gpEmitterManager4D2;
+				manager->createEmitter(pos, 0x1FD, nullptr, nullptr);
 				unk2A8[i] = gpEmitterManager4D2->unkC8[0][0];
 			}
 		} else if (param_1 < 175.0f) {
@@ -573,8 +573,8 @@ bool TConsoleStr::processShineGet(int param_1)
 			JGeometry::TVec3<f32> local_80(
 			    local_74.x1 + local_74.getWidth() * 0.5f,
 			    local_74.y1 + local_74.getHeight() * 0.5f, 0.0f);
-			gpEmitterManager4D2->createEmitter(local_80, 0x1FE, nullptr,
-			                                   nullptr);
+			JPAEmitterManager* manager = gpEmitterManager4D2;
+			manager->createEmitter(local_80, 0x1FE, nullptr, nullptr);
 		}
 
 		if (param_1 == i * 6 + 40) {
@@ -587,8 +587,8 @@ bool TConsoleStr::processShineGet(int param_1)
 			JGeometry::TVec3<f32> local_80(
 			    local_94.x1 + local_94.getWidth() * 0.5f,
 			    local_94.y1 + local_94.getHeight() * 0.5f, 0.0f);
-			gpEmitterManager4D2->createEmitter(local_80, 0x1FF, nullptr,
-			                                   nullptr);
+			JPAEmitterManager* manager = gpEmitterManager4D2;
+			manager->createEmitter(local_80, 0x1FF, nullptr, nullptr);
 		}
 
 		if (param_1 == i * 6 + 200) {
@@ -645,11 +645,11 @@ bool TConsoleStr::processMiss(int param_1)
 
 		if (param_1 == i * 10 + 1) {
 			JUTRect local_9c = unk25C[i]->getPane()->getBounds();
-			gpEmitterManager4D2->createEmitter(
-			    JGeometry::TVec3<f32>(local_9c.x1 + local_9c.getWidth() * 0.5f,
+			JGeometry::TVec3<f32> pos(local_9c.x1 + local_9c.getWidth() * 0.5f,
 			                          local_9c.y1 + local_9c.getHeight() * 0.5f,
-			                          0.0f),
-			    0x1F9, nullptr, nullptr);
+			                          0.0f);
+			JPAEmitterManager* manager = gpEmitterManager4D2;
+			manager->createEmitter(pos, 0x1F9, nullptr, nullptr);
 		}
 
 		if (param_1 == i * 10 + 60) {

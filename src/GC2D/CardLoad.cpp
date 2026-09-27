@@ -1167,17 +1167,14 @@ s8 TCardLoad::waitForChoice(TEProgress param_1, TEProgress param_2, int param_3)
 			                               unk48C[unkB7].getWidth(),
 			                               unk48C[unkB7].getHeight());
 			JUTRect bounds = unk484[unkB7]->getPane()->mGlobalBounds;
-			// TODO: retail hoists `li r5, 0x1FA` above the centre conversion (its
-			// xoris temps take r7/r6) and keeps pos right below bounds. A named
-			// TVec3 pos (set/ctor/members) hoists li and fixes the layout but
-			// recolours x1/y1 (r7/r9, -0.3%); f32 locals, aggregate init, an id
-			// local and a (bounds, id) helper are inert. Same tell at all 1FA sites.
-			Vec local_108;
-			local_108.x = bounds.x1 + bounds.getWidth() * 0.5f;
-			local_108.y = bounds.y1 + bounds.getHeight() * 0.5f;
-			local_108.z = 0.0f;
-			gpEmitterManager4D2->createEmitter(local_108, 0x1FA, nullptr,
-			                                   nullptr);
+			// TODO: instructions exact; the frame is the open residue (below every
+			// accessed slot). A named manager gives retail's early `li r5, 0x1FA`
+			// and x1/y1 registers with the named TVec3 pos (Vec pos: 0x10 more frame,
+			// but the li misschedules).
+			JGeometry::TVec3<f32> local_108(bounds.x1 + bounds.getWidth() * 0.5f,
+			                                bounds.y1 + bounds.getHeight() * 0.5f, 0.0f);
+			JPAEmitterManager* manager = gpEmitterManager4D2;
+			manager->createEmitter(local_108, 0x1FA, nullptr, nullptr);
 			unkAC = gpEmitterManager4D2->unkC8[0][0];
 			unkAC->setRotation(0, 0, DEG2SHORTANGLE(12));
 			unkAC->setEmitterScale(JGeometry::TVec3<f32>(0.9f, 1.0f, 0.1f));
@@ -1352,13 +1349,11 @@ s8 TCardLoad::waitForChoiceBM(TEProgress param_1, TEProgress param_2,
 			                               unk4E0[unkB7].getWidth(),
 			                               unk4E0[unkB7].getHeight());
 			JUTRect bounds = unk4D8[unkB7]->getPane()->mGlobalBounds;
-			// TODO: same li r5 / pos-layout tell as the first 0x1FA site.
-			Vec local_108;
-			local_108.x = bounds.x1 + bounds.getWidth() * 0.5f;
-			local_108.y = bounds.y1 + bounds.getHeight() * 0.5f;
-			local_108.z = 0.0f;
-			gpEmitterManager4D2->createEmitter(local_108, 0x1FA, nullptr,
-			                                   nullptr);
+			// TODO: frame only; see the first 0x1FA site.
+			JGeometry::TVec3<f32> local_108(bounds.x1 + bounds.getWidth() * 0.5f,
+			                                bounds.y1 + bounds.getHeight() * 0.5f, 0.0f);
+			JPAEmitterManager* manager = gpEmitterManager4D2;
+			manager->createEmitter(local_108, 0x1FA, nullptr, nullptr);
 			unkAC = gpEmitterManager4D2->unkC8[0][0];
 			unkAC->setRotation(0, 0, DEG2SHORTANGLE(12));
 			unkAC->setEmitterScale(JGeometry::TVec3<f32>(0.9f, 1.0f, 0.1f));
@@ -2152,13 +2147,11 @@ s8 TCardLoad::selectFunction()
 
 				JUTRect rect
 				    = unk378[unkB0][unkB6]->getPane()->getGlobalBounds();
-				// TODO: same li r5 / pos-layout tell as the first 0x1FA site.
-				Vec pos;
-				pos.x = rect.x1 + rect.getWidth() * 0.5f;
-				pos.y = rect.y1 + rect.getHeight() * 0.5f;
-				pos.z = 0.0f;
-				gpEmitterManager4D2->createEmitter(pos, 0x1FA, nullptr,
-				                                   nullptr);
+				// TODO: frame only; see the first 0x1FA site.
+				JGeometry::TVec3<f32> pos(rect.x1 + rect.getWidth() * 0.5f,
+				                          rect.y1 + rect.getHeight() * 0.5f, 0.0f);
+				JPAEmitterManager* manager = gpEmitterManager4D2;
+				manager->createEmitter(pos, 0x1FA, nullptr, nullptr);
 				unkAC = gpEmitterManager4D2->unkC8[0][0];
 				unkAC->setRotation(0, 0, DEG2SHORTANGLE(12));
 				unkAC->setEmitterScale(JGeometry::TVec3<f32>(0.9f, 1.0f, 0.1f));

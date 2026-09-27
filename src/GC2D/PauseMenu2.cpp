@@ -470,13 +470,11 @@ inline void TPauseMenu2::move()
 			JUTRect itemBounds
 			    = mMenuItems[mSelectedItem]->getGlobalBounds();
 
-			// TODO: This doesn't fully match.
-			gpEmitterManager4D2->createEmitter(
-			    JGeometry::TVec3<f32>(
-			        itemBounds.x1 + 0.5f * itemBounds.getWidth(),
-			        itemBounds.y1 + 0.5f * itemBounds.getHeight(),
-			        0.0f),
-			    0x1FA, nullptr, nullptr);
+			JGeometry::TVec3<f32> pos(
+			    itemBounds.x1 + 0.5f * itemBounds.getWidth(),
+			    itemBounds.y1 + 0.5f * itemBounds.getHeight(), 0.0f);
+			JPAEmitterManager* manager = gpEmitterManager4D2;
+			manager->createEmitter(pos, 0x1FA, nullptr, nullptr);
 
 			mEmitter = gpEmitterManager4D2->unkC8[0][0];
 			mEmitter->setEmitterScale(
@@ -517,11 +515,8 @@ inline void TPauseMenu2::move()
 	}
 }
 
-// TODO: frame 0x570 vs retail 0x5f8; the only instruction difference is the
-// createEmitter position's schedule (retail loads the id early and converts
-// the width before x1). Every stack object but that TVec3 temporary is in
-// retail's order; retail's sits below itemBounds, as a named `pos` declared
-// after it would, but that spelling reschedules the conversions differently.
+// TODO: frame 0x570 vs retail 0x5f8, instructions exact. The named `pos`
+// and emitter manager give retail's conversion schedule and registers.
 void TPauseMenu2::perform(u32 cue, JDrama::TGraphics* graphics)
 {
 	if (SMSGetMarDirector()->mState == TMarDirector::STATE_UNK5) {
@@ -662,14 +657,14 @@ void TPauseMenu2::drawAppearPane(J2DPicture* picture, f32 anim, JUTRect& rect,
 		if (anim == 2.0f) {
 			JUTRect rect = picture->getGlobalBounds();
 
-			// TODO: This doesn't fully match: retail stores the width conversion
-			// after both xoris (r6/r5 swap) and loads the 0.0f later; frame +8.
-			// Tried (cc50): operand orders, `/ 2.0f`, a named TVec3 (ctor or set),
-			// integer 0, named x/y, the copy-ctor and raw mGlobalBounds forms.
-			gpEmitterManager4D2->createEmitter(
-			    JGeometry::TVec3<f32>(rect.x1 + 0.5f * rect.getWidth(),
-			                          rect.y1 + 0.5f * rect.getHeight(), 0.0f),
-			    0x1F9, nullptr, nullptr);
+			// TODO: instructions exact; frame 0x10 short (0x98 vs 0xa8): retail
+			// has one word between the rect and the conversion temps and three
+			// more at the bottom. The named manager gives retail's x1-in-r5
+			// colouring; with an unnamed temporary vec it misschedules (0xa0).
+			JGeometry::TVec3<f32> pos(rect.x1 + 0.5f * rect.getWidth(),
+			                          rect.y1 + 0.5f * rect.getHeight(), 0.0f);
+			JPAEmitterManager* manager = gpEmitterManager4D2;
+			manager->createEmitter(pos, 0x1F9, nullptr, nullptr);
 		}
 
 		f32 normalisedAngle = 0.05f * anim;

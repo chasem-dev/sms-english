@@ -702,21 +702,14 @@ s8 TCardSave::waitForChoice(TEProgress param_1, TEProgress param_2, s8 param_3)
 			                              selectedRect.getHeight());
 			if (!unk18) {
 				JUTRect bounds = selectedPane->getPane()->mGlobalBounds;
-				// TODO: retail hoists `li r5, 0x1FA` above the centre conversion (its
-				// xoris temps take r7/r6) and keeps pos right below bounds. A named
-				// TVec3 pos (set/ctor/members) hoists li and fixes the layout but
-				// recolours x1/y1 (r7/r9, -0.3%); f32 locals, aggregate init, an id
-				// local and a (bounds, id) helper are inert. Same tell at all 1FA sites.
-				// Also inert (frame goes 8-0x10 further from 0x428): an in-call
-				// TVec3<f32>(x, y, 0) temporary, with or without named f32s, or
-				// with the width spelled x2 - x1. The 0x18 frame gap is below
-				// every accessed slot (dead low region).
-				Vec pos;
-				pos.x = bounds.x1 + bounds.getWidth() * 0.5f;
-				pos.y = bounds.y1 + bounds.getHeight() * 0.5f;
-				pos.z = 0.0f;
-				gpEmitterManager4D2->createEmitter(pos, 0x1FA, nullptr,
-				                                   nullptr);
+				// TODO: instructions exact; the frame is the open residue (below every
+				// accessed slot). A named manager gives retail's early `li r5, 0x1FA`
+				// and x1/y1 registers with the named TVec3 pos (Vec pos: 0x10 more frame,
+				// but the li misschedules).
+				JGeometry::TVec3<f32> pos(bounds.x1 + bounds.getWidth() * 0.5f,
+				                          bounds.y1 + bounds.getHeight() * 0.5f, 0.0f);
+				JPAEmitterManager* manager = gpEmitterManager4D2;
+				manager->createEmitter(pos, 0x1FA, nullptr, nullptr);
 
 				unk44 = gpEmitterManager4D2->unkC8[0][0];
 				unk44->setRotation(0, 0, DEG2SHORTANGLE(12));
@@ -935,13 +928,11 @@ s8 TCardSave::waitForChoiceBM(TEProgress param_1, TEProgress param_2,
 			                              selectedRect.getHeight());
 			if (!unk18) {
 				JUTRect bounds = selectedPane->getPane()->getGlobalBounds();
-				// TODO: same li r5 / pos-layout tell as the first 0x1FA site.
-				Vec pos;
-				pos.x = bounds.x1 + bounds.getWidth() * 0.5f;
-				pos.y = bounds.y1 + bounds.getHeight() * 0.5f;
-				pos.z = 0.0f;
-				gpEmitterManager4D2->createEmitter(pos, 0x1FA, nullptr,
-				                                   nullptr);
+				// TODO: frame only; see the first 0x1FA site.
+				JGeometry::TVec3<f32> pos(bounds.x1 + bounds.getWidth() * 0.5f,
+				                          bounds.y1 + bounds.getHeight() * 0.5f, 0.0f);
+				JPAEmitterManager* manager = gpEmitterManager4D2;
+				manager->createEmitter(pos, 0x1FA, nullptr, nullptr);
 
 				unk44 = gpEmitterManager4D2->unkC8[0][0];
 				unk44->setRotation(0, 0, DEG2SHORTANGLE(12));
