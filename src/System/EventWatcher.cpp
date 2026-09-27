@@ -1421,6 +1421,15 @@ static void evAppearReadyGo(TSpcTypedInterp<TEventWatcher>* interp, u32 arg_num)
 	interp->push();
 }
 
+// Binding level over the console accessor, the evInvalidatePad shape: the
+// director binder chained in the caller kept both of its words above the nil
+// push; binding the console leaves one of them below it.
+static inline TGCConsole2* EventWatcherTimerConsole()
+{
+	TGCConsole2* console = gpMarDirector->getConsole();
+	return console;
+}
+
 static void evAppear8RedCoinsAndTimer(TSpcTypedInterp<TEventWatcher>* interp,
                                       u32 arg_num)
 {
@@ -1431,16 +1440,6 @@ static void evAppear8RedCoinsAndTimer(TSpcTypedInterp<TEventWatcher>* interp,
 	// .rodata base pointer and addresses both the name and the stack-overflow
 	// string through it, which renumbers every register in the function
 	// (92.2% -> 99.9%).
-	// TODO: all 122 instructions match and the frame is now retail's 0xa0
-	// (the director binder below at all three sites is worth the whole 24
-	// bytes; at one or two sites it is only 8 each). The one residue is the
-	// nil-push slice temporary: retail puts it at 0x54, `interp->push()`
-	// puts it at 0x4c and `interp->push(TSpcSlice())` at 0x60, and nothing
-	// on the caller side lands the 8 in between -- see the note above
-	// evGameOver.
-	// Ruled out (no frame change): a named `f32` for the timer seconds, a
-	// named `MtxPtr` for the animation matrix, a named `int` for the
-	// per-coin kill timer; a `getConsole()` binder overshoots to 0xb0.
 	const char* switchName = "赤コイン用スイッチ";
 	TRedCoinSwitch* swtch
 	    = JDrama::TNameRefGen::search<TRedCoinSwitch>(switchName);
@@ -1458,10 +1457,9 @@ static void evAppear8RedCoinsAndTimer(TSpcTypedInterp<TEventWatcher>* interp,
 		gpMarioParticleManager->emit(PARTICLE_MS_ENM_DISAP_B,
 		                             &coin->getUnk158(), 0, nullptr);
 	}
-	EventWatcherGetMarDirector()->getConsole()->startAppearTimer(
-	    1, iVar9 * 0.008333334f);
+	EventWatcherTimerConsole()->startAppearTimer(1, iVar9 * 0.008333334f);
 	EventWatcherGetMarDirector()->startTimer();
-	EventWatcherGetMarDirector()->getConsole()->startMoveTimer(10);
+	EventWatcherTimerConsole()->startMoveTimer(10);
 	interp->push();
 }
 
