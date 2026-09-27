@@ -218,6 +218,9 @@ void TMarDirector::movement()
 // among the flag temporaries (0x28/0x34) rather than retail's hole at
 // 0x30-0x37 under `next`; refused as an alias (decideNextStage: same
 // frame, same misplacement, no gain).
+// c-m25: without the named `cur` (curr.getStage() at each compare) all four
+// flag temporaries sit on retail's 0x2c/0x28/0x24/0x20; `next` is still 8
+// low (0x30) and the frame 0x48: 8 bytes created before the ctor's temps.
 // Reference-returning accessor: retail folds the TGameSequence stores onto
 // the &gpApplication base (0x12/0x13/0x14) instead of binding &mNextArea.
 static inline TApplication& MDEApp() { return gpApplication; }
@@ -243,10 +246,9 @@ void TMarDirector::setNextStage(u16 param_1, JDrama::TActor* param_2)
 		onUnk4CFlag(0x4);
 		unk250 = param_2;
 	} else {
-		u8 cur = curr.getStage();
-		if ((cur == 1 && next.getStage() == 5)
-		    || (cur == 1 && next.getStage() == 6)
-		    || (cur == 1 && next.getStage() == 8)) {
+		if ((curr.getStage() == 1 && next.getStage() == 5)
+		    || (curr.getStage() == 1 && next.getStage() == 6)
+		    || (curr.getStage() == 1 && next.getStage() == 8)) {
 			onUnk4CFlag(0x8);
 		} else {
 			onUnk4CFlag(0x2);
