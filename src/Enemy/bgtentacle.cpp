@@ -941,8 +941,8 @@ void TBGTentacle::returnToDefaultState() { }
 
 void TBGTentacle::moveNode()
 {
-	f32 fVar1 = mParams->mVibrationSpeed.get();
 	f32 fVar2 = mParams->mVibrationForce.get();
+	f32 fVar1 = mParams->mVibrationSpeed.get();
 
 	if (mState == 4) {
 		fVar2 *= mParams->mDamagePropF.get();
@@ -1000,7 +1000,7 @@ void TBGTentacle::moveNode()
 	for (int i = 0; i < mNodeNum; ++i) {
 		mNodes[i].calcPosition(this);
 
-		if (i <= 1 && mOwner->getAttackMode() == 6)
+		if ((i == 0 || i == 1) && mOwner->getAttackMode() == 6)
 			continue;
 
 		TNode* node = &mNodes[i];
@@ -1033,9 +1033,10 @@ void TBGTentacle::moveNode()
 			                         local_ac.z, &pTStack_b0);
 		}
 
-		if (local_ac.y < dVar16 + 20.0f) {
+		dVar16 += 20.0f;
+		if (local_ac.y < dVar16) {
 			mNodes[i].setVelocity(JGeometry::TVec3<f32>(0.0f, 0.0f, 0.0f));
-			local_ac.y = dVar16 + 20.0f;
+			local_ac.y = dVar16;
 		}
 
 		if (mState == 5 && local_ac.y < mOwner->mPosition.y) {
