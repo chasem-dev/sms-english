@@ -168,6 +168,8 @@ s16 matan(f32 param_1, f32 param_2)
 	// 2026-09-22, inert or worse: `-param_1` unnamed at each use (99.9),
 	// quadrant helpers negating their value parameter in place, naming it,
 	// or taking it pre-negated (99.1-99.2), a by-value `-x` level (99.4).
+	// c-m25: GetAtanTable with a named `u16 ret` if/else (99.5-99.7, frame
+	// +0x10), `-GetAtanTable(...)` for `0x0000 -` (inert).
 	if (param_2 >= 0.0f) {
 		if (param_1 >= 0.0f) {
 			if (param_1 >= param_2)

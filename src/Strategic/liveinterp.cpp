@@ -463,6 +463,8 @@ static void linSetAnmRate(TSpcTypedInterp<TLiveActor>* interp, u32 arg_num)
 // instruction-exact and puts pop temps and every slice in retail's source
 // order (slices become depth-1 callee locals); retail then still has one
 // 4-byte object under each float slice (the arg is simple, so no binding).
+// c-m25, on that helper: setDataFloat(value) inside it loads the member one
+// slot early (96.1), accessor arguments overshoot (+0x48), `+member` is inert.
 static void linGetSRT(TSpcTypedInterp<TLiveActor>* interp, u32 arg_num)
 {
 	interp->verifyArgNum(2, &arg_num);

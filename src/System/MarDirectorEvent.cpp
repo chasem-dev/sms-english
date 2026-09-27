@@ -221,6 +221,8 @@ void TMarDirector::movement()
 // c-m25: without the named `cur` (curr.getStage() at each compare) all four
 // flag temporaries sit on retail's 0x2c/0x28/0x24/0x20; `next` is still 8
 // low (0x30) and the frame 0x48: 8 bytes created before the ctor's temps.
+// Inert or worse there: raw `unk4C & 2`, `next` above the guard, `next(0, 0)`,
+// `next = TGameSequence()`, a named switch value.
 // Reference-returning accessor: retail folds the TGameSequence stores onto
 // the &gpApplication base (0x12/0x13/0x14) instead of binding &mNextArea.
 static inline TApplication& MDEApp() { return gpApplication; }
