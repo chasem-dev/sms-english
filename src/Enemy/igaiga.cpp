@@ -1273,6 +1273,10 @@ void TGorogoro::forceKill()
 // TODO: 99.6%. The inlined calcHitScale's attack-radius and damage-radius
 // conversions take f31/f29 where retail has f29/f31. Inert: unnamed params,
 // ratio first, `ratio * x` products, C-style declarations in reverse order.
+// Register model (c-g4): the four locals are depth-2 objects @2261/5/9/73
+// created in declaration order, so attackRadius is coloured first (f31);
+// retail's f29/f30/f31 is the reverse creation order. C-style declarations
+// in forward order with later assignments are inert too.
 void TGorogoro::behaveToWater(THitActor* param_1)
 {
 	TRollEnemy::behaveToWater(param_1);

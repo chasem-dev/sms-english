@@ -29,6 +29,11 @@
    four reply locals) scoped to the `need_reply` block is worse (27/39). */
 /* Lib pass 2026-09-23: a `u8 replyIOResult` read without the cast is
    identical; the error/replyBufferId/.../exit declaration order is worse (41). */
+/* Register model (c-g4, dumped with GC/1.1p1 and this unit's flags): done and
+   replyBuffer both have degree >= K and are pushed by the blocked rule, lowest
+   cost/degree first: done 91/28 = 3.25, replyBuffer 88/28 = 3.14, so done is
+   coloured first (r29). Retail needs replyBuffer's ratio higher; declaration
+   order cannot reach that (replyBuffer first, or done after it: 27 markers). */
 DSError TRKSuppAccessFile(u32 file_handle, u8* data, size_t* count,
                           DSIOResult* io_result, BOOL need_reply, BOOL read)
 {

@@ -653,6 +653,10 @@ static void evIsGraffitoCoverage0(TSpcTypedInterp<TEventWatcher>* interp,
 
 // TODO: 99.2%, frame exact; only the loop counter/layer registers differ
 // (retail i in r7 with the layer in r5 in both loops).
+// Register model (c-g4): the layer webs get r3/r4 because only the own loop's
+// strength-reduced counter interferes with them; retail's r5 needs both
+// counters (r3 and r4) live across both loops, i.e. different liveness, not
+// a colouring order (no single move in the replay reaches retail).
 static void evSetGraffitoMultiplied(TSpcTypedInterp<TEventWatcher>* interp,
                                     u32 arg_num)
 {

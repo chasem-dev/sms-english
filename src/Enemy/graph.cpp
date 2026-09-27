@@ -1021,6 +1021,12 @@ BOOL TGraphTracer::traceSpline(f32 param_1)
 	// rail; rail locals, accessor sites and operand order are inert.
 	// Also inert: `== nullptr`, getSplineRail() in the guard, a named isLoop
 	// BOOL (+8 frame), getNodeNum() for unk8.
+	// Register model (c-g4): unk0 and its rail are IRO CSE temps (@1034,
+	// @1033) and the rail's is created first, so it is coloured first and
+	// takes r4; retail needs unk0's created first (replay: move @1034 before
+	// @1033 gives retail exactly). A named rail or web does it but drops the
+	// accessors' dead objects (frame 0x58/0x80); a named guard-only rail is
+	// propagated away (byte-identical).
 	BOOL result;
 	if ((param_1 >= 0.0f && dVar8 <= dVar10 && dVar10 <= dVar9)
 	    || (param_1 < 0.0f && dVar9 <= dVar10 && dVar10 <= dVar8)) {

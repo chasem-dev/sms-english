@@ -208,6 +208,12 @@ void TMapObjTree::initEach()
 // Batch cc22, all worse or inert: zero-cost `static inline` factories for
 // `new TMapCollisionMove` and/or `new TMapObjLeaf[n]` (6-7 markers; the array
 // one +8 frame, cancelled by the raw manager read back to 3 markers).
+// Register model (c-g4): the new[] count is the parse-time object @1206, the
+// first-created `@` object, so it is coloured first and takes r26; the replay
+// gives retail exactly once it is coloured after the loop's @1473/@1475
+// (created later). A named count is forward-substituted (inert); a
+// `new TMapObjLeaf[tree->mLeafNum]` static inline keeps it first (and moves
+// buffer by 4).
 void TMapObjTree::initMapObj()
 {
 	TMapObjGeneral::initMapObj();
