@@ -186,16 +186,15 @@ BOOL TNerveKoopaWait::execute(TSpineBase<TLiveActor>* spine) const
 	return FALSE;
 }
 
-// TODO: instruction-exact, frame 0x68 vs retail 0x78. KoopaGetBody(spine)
-// lands the frame but keeps a second copy of koopa (stmw r27); a named
-// speed, .value, and a nested anm-end test are inert.
 BOOL TNerveKoopaTumble::execute(TSpineBase<TLiveActor>* spine) const
 {
 	TKoopa* koopa = (TKoopa*)spine->getBody();
 
 	koopa->changeAnm(KOOPA_ANM_HIPDROP, 0,
 	                 koopa->getParam()->tumbleSpeed.get());
-	koopa->getMActor()->getFrameCtrl(ANM_TYPE_BCK);
+	// Unused: retail keeps only the getFrameCtrl call, and the frame read's
+	// dead objects are what fill this nerve's frame.
+	f32 frame = koopa->getMActor()->getFrameCtrl(ANM_TYPE_BCK)->getFrame();
 
 	if (spine->getTime() == 190) {
 		gpCameraShake->startShake(CAM_SHAKE_MODE_KOOPA_HIPDROP, 1.0f);
