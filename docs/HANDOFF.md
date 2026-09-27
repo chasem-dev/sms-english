@@ -25,7 +25,8 @@ What changed the game:
 Open structural questions (each blocks dozens of functions; all ruled out as single header changes):
 - `a = b - c` TVec3 copy-out: retail's operator- returns by value (binary-proven), but every copy-out site is one dead 4-byte object short and no header spelling supplies it only there. Partial migration on local branch `wt/c-m1-wip` (not pushed). The decompiled compiler source (`RootCubed/mwcceppc-decomp`) may settle it; this session had no access.
 - Director-class frame deficits (every JDrama director, e.g. currentStateFinalize 0x90 short with no stack access): not a name-search header level, not the precompiled header, not the compiler build.
-- JGadget iterator stride, `new JUTTexture` storeTIMG copy, setEular expansion dead words.
+- `new JUTTexture` storeTIMG copy, setEular expansion dead words.
+- The "JGadget iterator stride" is NOT a header class (c-r4 priced 24 std-list.hpp variants over 261 units; exact sites pin the header): it is per-site offsets between inline-depth groups. Pair slot offsets by depth and fix the statement that owns the missing word.
 
 ## Where things stand (2026-09-18, late night, session 110dc638)
 
