@@ -4,6 +4,18 @@ Written 2026-09-18 by the session that ran batches 92 to 181.
 Read this before `docs/ORCHESTRATION.md`; it is the judgement that document does not carry.
 Keep it current: every orchestrator appends a dated "State" entry below and rewrites the advice when it stops being true.
 
+## State 2026-09-27 evening (session 5237deed, batches c-h1..c-h23)
+
+All 72.50 -> 72.72% matched, 530/732 linked, DOL identical, zero regressions; about 20 batches closed ~15 functions (0-3 each).
+Levers that paid (all in the catalog or TODOs):
+- One-line TU-local inline with real content above a call retail `bl`s at one site (KoopaFireEnd, chaseRoll -> MsClamp<f>, wrapAngle -> MsWrap<f>).
+- GC2D raw pane/texture field accesses written as the header accessors (show/hide, getTexInfo, get/setAlpha, getBounds, getGlobalBounds, setWhite): 8-16 bytes of frame per site, measured per site (Guide, GCConsole2).
+- Naming the global receiver before `gpEmitterManager4D2->createEmitter(...)` fixed eight GC2D functions' argument registers.
+- `.length()` on the unnamed operator- result restores retail's `bl TUtil<f32>::sqrt`; `dst.set(expr, expr, expr)` in place of getZDir at one site.
+- TQuat4::rotate now has rotateQ's one-level body (+2 exact; doAttackPose/makeQuat/bindBody costs recorded in JGQuat4.hpp).
+Rejected as fakematches (recorded in TODOs, do not re-land): bare forwarders (`return a->getMActor();`, binder returning a named search<T> result), an invented enum temporary in one arm (decideUseSector), empty `if (cue & X) {}` (effectObj perform).
+Remaining wall: every batch now reports "frame short with every instruction right" or known-open classes. The two inputs that would move it are the retail map (marioUS.MAP or the JP mario.MAP, for UNUSED helper names/sizes) and the decompiled compiler (RootCubed/mwcceppc-decomp, for dead-stack and inliner rules); both are waiting on the user.
+
 ## State 2026-09-27 (session 5237deed): compiler-internals tooling
 
 | | Fuzzy | Perfect match | Linked units |
