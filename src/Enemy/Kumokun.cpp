@@ -467,9 +467,10 @@ bool TKumokun::checkOnMovingRoof(JGeometry::TVec3<f32>* param_1,
 	return uVar7;
 }
 
-// TODO: named slots sit 4 low (retail puts the final `local_74 - mPosition`
-// temporary at 0x14 below the wall record); the inlined roof check swaps
-// f30/f31 (param_2 vs y).
+// TODO: registers exact since checkRoofPlane/checkFloorPlane reached their
+// map sizes; slots only: retail's `local_74 - mPosition` temporary sits at
+// 0x14 below the wall record (ours is the parse-time @ temp at 0x58, above
+// the inlined roof/floor objects) and local_74 is 4 higher.
 void TKumokun::bindOnFlying()
 {
 	bool hit = false;
@@ -1017,15 +1018,13 @@ const TBGCheckData* TKumokun::checkFloorPlane(JGeometry::TVec3<f32>* param_1,
 {
 	const TBGCheckData* floor = nullptr;
 
-	f32 yTmp2 = param_1->y;
-	f32 fVar7
-	    = gpMap->checkGround(param_1->x, yTmp2 + param_2, param_1->z, &floor);
+	f32 fVar7 = gpMap->checkGround(param_1->x, param_1->y + param_2,
+	                               param_1->z, &floor);
 	fVar7 += 1.0f;
-	if (yTmp2 <= fVar7 + 0.05f) {
+	if (param_1->y <= fVar7 + 0.05f) {
 		param_1->y = fVar7;
 	} else {
 		floor = nullptr;
-		fVar7 = param_1->y;
 	}
 	return floor;
 }
@@ -1034,11 +1033,11 @@ const TBGCheckData* TKumokun::checkRoofPlane(JGeometry::TVec3<f32>* param_1,
                                              f32 param_2)
 {
 	const TBGCheckData* roof = nullptr;
-	f32 y                    = param_1->y;
-	f32 dVar6 = gpMap->checkRoof(param_1->x, y, param_1->z, &roof);
-	f32 fVar8 = dVar6 - 1.0f - y;
-	if (0.0f <= fVar8 && fVar8 < param_2)
-		param_1->y = fVar8;
+	f32 roofY = gpMap->checkRoof(param_1->x, param_1->y, param_1->z, &roof)
+	            - 1.0f;
+	f32 dist = roofY - param_1->y;
+	if (0.0f <= dist && dist < param_2)
+		param_1->y = roofY;
 	else
 		roof = nullptr;
 
