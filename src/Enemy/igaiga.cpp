@@ -382,6 +382,7 @@ bool TRollEnemy::isReachedToGoalXZ()
 // z, 32 * range, x order. Left: retail loads 32.0f after z's fmadds and
 // gpPollution last; inert: raw gpPollution, `range * 32.0f`, sums spelled
 // position-first, a named receiver (+8 frame), a named x.
+// c-m14 also inert: named x and z position-first, a named `32.0f * range`, `range *= 32.0f`.
 void TRollEnemy::setBehavior()
 {
 	if (getPosition().y > 50.0f + mGroundHeight)

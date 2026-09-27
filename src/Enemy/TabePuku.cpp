@@ -668,6 +668,8 @@ DEFINE_NERVE(TNerveTabePukuFound, TLiveActor)
 	}
 
 	// setMomentumFromQuat() spelled out, as in swimTo().
+	// TODO: forward.x/y swap f30/f31 (retail coalesces getZDir's _x into forward.x).
+	// getZDir as one `set(...)` gives retail's FPRs at -8 frame; in the header it costs 6 units.
 	JGeometry::TVec3<f32> forward;
 	puku->mQuat.getZDir(forward);
 	forward.scale(puku->mMarchSpeed);
