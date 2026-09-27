@@ -124,8 +124,9 @@ void TBossHanachan::setRandomWeakBodyIndex()
 // Frame 0x188 exact: accessor reads in the inlined execHeadCalcAnim_ and
 // execBodyCalcAnim_ plus the three getPosition()/getRotation() part copies.
 // TODO: the sphere-link and CalcAnim temporaries still sit 0x10-0x4c low
-// (0x140/0x100/0xc4/0xd0 against 0x150/0x11c/0x110/0xe0), and the last loop
-// swaps r28/r29 for `group` and `i`.
+// (0x140/0x100/0xc4/0xd0 against 0x150/0x11c/0x110/0xe0). The last loop's
+// `int i;` is declared ahead of `group`, which numbers `group` below it and
+// gives retail's r29/r28.
 void TBossHanachan::init(TLiveManager* manager)
 {
 	mManager = manager;
@@ -180,9 +181,10 @@ void TBossHanachan::init(TLiveManager* manager)
 	setHeadAndBodyAnm(BOSS_HANACHAN_ANM_UNK0, BOSS_HANACHAN_STOP_MOTION_BLEND_OFF);
 	execHeadCalcAnim_();
 	execBodyCalcAnim_();
+	int i;
 	TIdxGroupObj* group = JDrama::TNameRefGen::search<TIdxGroupObj>("敵グループ");
 	mHead->initMapCollisionAndHitActor_(group);
-	for (int i = 0; i < 8; ++i) {
+	for (i = 0; i < 8; ++i) {
 		mBodies[i]->initMapCollisionAndHitActor_(group);
 		mBodies[i]->initFootHitActor_(group);
 	}
