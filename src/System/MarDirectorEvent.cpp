@@ -28,17 +28,12 @@ void TMarDirector::getTalkMsgID(TBaseNPC*) { }
 
 void TMarDirector::updateFlag(TBaseNPC*, u32, u32) { }
 
-// TODO: every instruction and slot exact; the frame is 0x50 against retail's
-// 0x58. The getStatus()/getPosition() accessors (+8 and +0x18) put `marioPos`
-// on retail's 0x44, so retail has 8 more bytes *above* it, not in the low
-// region. SMS_GetMarioPos() reaches 0x58 but only by adding 4 of low region
-// (marioPos 0x48). Inert (l5): marioPos declared before bestDist, copy-ctor
-// or assignment spellings, `it` at function scope, `it++`, a named `npc` or
-// `dist` split, raw mPosition at one or two sites.
+// The named Mario status is the 8 bytes retail has above `marioPos`.
 TBaseNPC* TMarDirector::findNearestTalkNPC()
 {
 	TBaseNPC* result = nullptr;
-	if (gpMarioOriginal->getStatus() == MARIO_STATUS_WAIT) {
+	u32 status = gpMarioOriginal->getStatus();
+	if (status == MARIO_STATUS_WAIT) {
 		f32 bestDist                   = 5000000.0f;
 		JGeometry::TVec3<f32> marioPos = *gpMarioPos;
 		JGadget::TVector_pointer<TBaseNPC*>::iterator it;
