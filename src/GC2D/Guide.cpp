@@ -834,8 +834,10 @@ void TGuide::changeBotStatus(int stage)
 
 // The scaled position is one TVec3::set: its right-to-left arguments request
 // 21200.0f (@2954) before 25000.0f (@2955), retail's pool order.
-// TODO: frame 0x88 against retail's 0x100, and our x clamp stores the
-// fctiwz result twice (two extra instructions).
+// x and y are s32 (long): an `int` x made a second
+// conversion object and stored x's fctiwz result twice.
+// TODO: frame 0x80 against retail's 0x100; retail's pos sits at 0xac with a
+// 0x84-byte dead region below it (a missing inline level around the pos math?).
 void TGuide::placeMario()
 {
 	if ((u8)SMS_getShineStage(gpMarDirector->mMap) != 1) {
@@ -852,10 +854,8 @@ void TGuide::placeMario()
 	J2DPane* marker = mMarioMarker;
 	int paneWidth   = marker->getWidth();
 	int paneHeight  = marker->getHeight();
-	int x           = (int)(0.5f * (f32)mapWidth + pos.x
-	                        - 0.5f * (f32)paneWidth - 2.0f);
-	int y           = (int)(0.5f * (f32)mapHeight + pos.z
-	                        + 0.5f * (f32)paneHeight);
+	s32 x = 0.5f * (f32)mapWidth + pos.x - 0.5f * (f32)paneWidth - 2.0f;
+	s32 y = 0.5f * (f32)mapHeight + pos.z + 0.5f * (f32)paneHeight;
 	if (x > mapWidth - paneWidth)
 		x = mapWidth - paneWidth;
 	if (x < 0)
