@@ -3,76 +3,28 @@
 #include <M3DUtil/M3UJoint.hpp>
 #include <JSystem/JMath.hpp>
 
-// TODO: 98.8%, frame 0x100 exact and all 233 instructions in the right order;
-// the only residue is a rotation of the callee-saved registers. Retail ranks
-// them r31 = &J3DSys::mCurrentS, r30 = &j3dSys.mModel, r29 = (u32)param_1,
-// r28 = basic, r27 = param_3, r26 = param_2, r25 = bVar5, r24 = pQuat; we agree
-// on r31 and r24 but put the j3dSys model address last (r25) and shift the
-// other five up one.
-// Diagnostic: `setScaleFlag(param_1, bVar5 != 0)` reproduces retail's ranking
-// exactly and leaves only the five bool-normalisation instructions it adds
-// (neg/subic/subfe plus the moved mScaleFlagArr load) -- so the body is right
-// and something about bVar5's live range is what orders the allocator. A
-// cheaper spelling of that extra step is the open question.
-// Measured as no improvement: j3dSys.mModel raw (98.5%), a J3DSys&/J3DSys*/
-// J3DModel*& /J3DModel** local for the model (95.9-96.1%), a TU-local
-// M3UGetModel() wrapper (unchanged), bool/u8 bVar5, an explicit (u8) cast on
-// the argument, declaring bVar5 at its initialiser, moving `currentS` first,
-// hoisting pQuat, a named copy of bVar5 or of the joint index, a named
-// J3DModel* before setScaleFlag, and spelling J3DSys::mCurrentS out instead of
-// the currentS reference (90.7%).
-// Closure batch 120 added twenty more measurements, all keeping the model
-// address in r25 (the bottom of the callee-saved group):
-//   - a TU-local `static inline` binding level around setScaleFlag, around the
-//     three setAnmMtx sites, or both: byte-identical (levels are inert here);
-//   - `J3DModel** ppModel = &j3dSys.mModel;` / `J3DModel*& model` declared at
-//     the setScaleFlag site or just after it, used at the setAnmMtx sites:
-//     98.5%, 128 differing operands (making the address a source variable does
-//     not raise its rank);
-//   - `j3dSys.mModel` raw at the setAnmMtx sites only 98.5%, at the
-//     setScaleFlag site only 98.8% (unchanged);
-//   - bVar5 declared first 98.6%, declared last 98.7% (current position is the
-//     best); three named `f32`s for the blended scale instead of local_98
-//     97.8%; `Vec* currentS` instead of the reference, and
-//     `local_8c = J3DSys::mCurrentS` in the else branch: both unchanged.
-// A named `J3DModel* model = j3dSys.getModel();` before setScaleFlag is a
-// zero-instruction "+4 named / -4 low" lever: the by-value checkScaleOne Vec
-// temporary moves 0x2c -> 0x28 with the frame still 0x100. Retail's is 0x2c,
-// so this function does not want it, but the lever is reusable.
-// The temp is *not* pinned to the bottom of the group: shortening `currentS`'s
-// live range promotes it straight to r31 (spelling J3DSys::mCurrentS out in
-// the tail pointer-walk block 96.5%, or everywhere except the checkScaleOne
-// argument 90.5%). So its priority sits between `currentS`'s and the
-// parameters', and the lever has to lower the parameters' priority (or add one
-// short-lived value between the address's definition and `clrlwi r29`, which
-// is exactly what the bVar5 normalisation supplies) -- not add an inline level.
-// Batch 131 added the batch-127 fork-plus-binding shapes, which are the last
-// untried family and all make it worse by perturbing the frame instead:
-// a binding level reading `j3dSys.mModel` raw at all four sites (frame 0x120),
-// at the setScaleFlag site only (0x108), the same nested twice (0x150) and a
-// `static inline J3DSys* M3UJointSys()` fork above `getModel()` (0x150) -- 127
-// differing operands each against the base's 55, with the model address still
-// in r25. So levels really are inert on this ranking (batch 120) and a level
-// that is *not* inert only buys frame; the lever must change the live ranges.
-// The cheapest diagnostics are `bVar5 != 0` and `bVar5 ? 1 : 0` (97.0/97.5%,
-// nine differing lines: the neg/subic/subfe triple plus the moved
-// mScaleFlagArr load); `(bool)bVar5` and `!!bVar5` cost one more.
-// Batch 151: the residue is batch 144's pool-vs-local boundary -- the
-// `&j3dSys + 0x38` base temp ranks first in retail (r30, under `currentS`'s
-// r31) and last here (r25), with the three parameters shifted one register up
-// as a consequence -- and its only known mover, the number of named scalar
-// locals, has already been exercised in both directions by earlier batches
-// (dropping `pQuat` and the `currentS` reference lowers the count, naming the
-// blended-scale components raises it; all inert). Batch 145 exhausted the
-// declaration-order knob (`bVar5` at all seven positions). No new rule reaches
-// it; it needs the boundary itself researched.
-// cc26 (inert or worse, model address still r25): a named-result level
-// `BOOL r = checkScaleOne(v); return r;` (by value 90.2%, by const& 98.5%), a
-// TU-local setScaleFlag level taking the BOOL (byte-identical), one that
-// computes, stores and returns the flag (98.5%), a named-result model
-// accessor (98.5%), `setScaleFlag(param_1, bVar5 = checkScaleOne(...))`
-// (98.6%), an if/else or ternary assignment (96.5/96.7%), a named u16 copy of
-// the index (98.6%), and J3DSys::mCurrentS as the argument (95.6%).
+// Copies the 3x4 matrix at q to p, scaling each row's first three columns.
+static inline void M3UScaleMtxCopy(f32* p, const f32* q, const Vec& s)
+{
+	*p++   = *q++ * s.x;
+	*p++   = *q++ * s.y;
+	*p++   = *q++ * s.z;
+	*p++   = *q++;
+	*p++   = *q++ * s.x;
+	*p++   = *q++ * s.y;
+	*p++   = *q++ * s.z;
+	*p++   = *q++;
+	*p++   = *q++ * s.x;
+	*p++   = *q++ * s.y;
+	*p++   = *q++ * s.z;
+	*p++   = *q++;
+}
+
+// The scaled copy is an inline level: as named locals of this body, `p` and
+// `q` are numbered below the `&j3dSys.mModel` temporary and are pushed before
+// it in the first simplify sweep, which leaves it one short of K (28) so it
+// is coloured last (r25). As the helper's parameter bindings they are numbered
+// above it; it meets the sweep at 30, is deferred, and takes retail's r30.
 void M3UMtxCalcBlendAux(u16 param_1, J3DTransformInfo* param_2,
                         J3DTransformInfo* param_3, f32 param_4, bool basic)
 {
@@ -142,20 +94,7 @@ void M3UMtxCalcBlendAux(u16 param_1, J3DTransformInfo* param_2,
 		if (bVar5) {
 			j3dSys.getModel()->setAnmMtx(param_1, J3DSys::mCurrentMtx);
 		} else {
-			f32* p = local_7c[0];
-			f32* q = J3DSys::mCurrentMtx[0];
-			*p++   = *q++ * currentS.x;
-			*p++   = *q++ * currentS.y;
-			*p++   = *q++ * currentS.z;
-			*p++   = *q++;
-			*p++   = *q++ * currentS.x;
-			*p++   = *q++ * currentS.y;
-			*p++   = *q++ * currentS.z;
-			*p++   = *q++;
-			*p++   = *q++ * currentS.x;
-			*p++   = *q++ * currentS.y;
-			*p++   = *q++ * currentS.z;
-			*p++   = *q++;
+			M3UScaleMtxCopy(local_7c[0], J3DSys::mCurrentMtx[0], currentS);
 
 			j3dSys.getModel()->setAnmMtx(param_1, local_7c);
 		}
