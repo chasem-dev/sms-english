@@ -114,3 +114,12 @@ A web whose degree is still at least K when its sweep reaches it is pushed in a 
 - **Reuse picks the lowest in-use callee-saved FPR** (`JPADrawExecRotDirectional[Cross]::exec`): pt's components are IRO temps created in store order, and the first coloured takes f29 (lowest in use), not f31.
   Retail's x-first loads with x in f31 therefore need x's temp created last but loaded first; `set()`, scalars, and `getGlobalPosition` all create it first.
 - **A two-definition named local below K is coloured last** (`TFireWanwan::updatePollute`): `radius` (degree 30) needs two more neighbours or an `@` home; an uninitialised top declaration is inert and a TU-local radius helper changes instructions.
+
+## Additions (c-e7)
+
+- **Declare the loop's other named scalars ahead of a long-lived one to colour it first** (closed `TBigWindmill::control`).
+  `angle` (degree exactly K) was numbered above the loop's `rad` and `offset`, so their first-sweep pushes lowered its remaining degree and it was pushed early, coloured after the three hoisted loop literals (f28; retail f31).
+  `f32 rad; f32 offset;` declared before `f32 angle = ...` numbers `angle` lowest of the three: it meets the first sweep at full degree, is deferred, and is coloured first.
+  Tell: `--search` fixes everything by moving one named web to position 0, and that web's degree is at or just above K.
+- **A named call result can restore retail's call order** (`TBaseNPC::perform`, +0.4): `f32 dist = getAnmOffDist_();` before `NpcSquaredDist(...) > CLBSquared(dist)` puts the out-of-line `getAnmOffDist_` call first and the square sum (into f31) between the two calls, where the nested `CLBSquared(getAnmOffDist_())` ran both calls before the sum.
+- Declaring three named squares last-to-first (`sqZ`, `sqY`, `sqX`) gives retail's f2/f0/f1 in `ModelGateLength`, but not its x-first load order.
