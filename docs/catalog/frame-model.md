@@ -266,3 +266,13 @@ Marker method: `int mk; extp(&mk);` declared first sits right above the dead reg
 - `TSelectDir::direct` pairs as: 1-2 words above `res` (created before it), one word between `res` and the `setColor` by-value copy, 29 words below every object; `isFullyFadedOut()` for the last compare supplies one of the low words, and no colour spelling adds the middle one without reordering.
 - The class covers every director, not only MarDirector: `TGCLogoDir::direct` (0x30: one word between its JUTRect and TColor temporaries, 14 below), `direct_nlogo` 0xa8, `TMenuDirector::direct` 0xb0, and the three `setup`s (0x18, the JDRDStageGroup.hpp TODO). Look for one shared construct, not per-site accessors.
 - `decideNextScenario` is instruction-exact with `int scenario = 0;` and an else-if chain ending `else scenario = 0;` (retail hoists the first `li r3, 0`); its 5-7 dead words are still unexplained.
+## Refinements (unit agent c-g2, 2026-09-27)
+
+- **Reversed-pair targets closed structurally (order only).** `TSelectMenu::perform` is `if (flags & 1) update(); if (flags & 8) { if (bad state) return; draw(gfx); }`, both inline members: all 6670 slot pairs in retail order.
+  The early `return` stays at depth 0; inside the inline it becomes `blt` where retail has `bge; b`.
+  `TPauseMenu2::perform`: the move switch is an inline `move()` and `draw()` *is* the draw switch with an orthograph per case (the pair per site is reversed); `TLensFlare::perform`: move/calcAnim/entry inline members (107 -> 42 instruction diffs).
+- **Helpers reached at depth 2 must be written out.** With the switch one level down, `inline` helpers it called (selectPrev/selectNext/animateArrows, the letterbox fade) are refused; retail's calls one level down confirm their bodies sit directly in the switch callee.
+  An extra level also pushes a fabricated depth ladder one step down: drop one wrapper (lensflare's `CalcLensNearNinePos`, `LensDirTo`) to keep the out-of-line call set.
+- **A callee local passed into a deeper inline gets a binding.** `s32 time` (an `update()` local) fed to TExPane's inline setters was re-converted from the float (two `fctiwz` stores) and rescheduled; `int time` keeps one conversion and retail's schedule.
+- **Callee-saved order follows adjusted cost, then vreg number; vregs are numbered in reverse object creation.** An IRO-split web of a reused variable gets a fresh object created last (lowest vreg), so sharing `u32 var1, var2` across the two letterbox blocks gave the second block retail's r21/r22 order; the first block, which keeps the original object, stays swapped.
+  Reusing one variable for a load and its update (`u16 a = pane->getAlpha(); a += k;`) put the value in the load's callee-saved register (SelectMenu APPEAR case).
