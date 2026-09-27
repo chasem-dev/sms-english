@@ -24,6 +24,8 @@ For every function measured so far, 1.1 gives the same frames as our GC/1.2.5 (j
   - `frontend-00-ast-initial-code.txt`: the AST after inlining, which shows which inline expansion created each `@NNN`.
   - `frontend-01-*`: the AST after the IR optimiser.
     An `@NNN` that is absent from `frontend-00` was created by the optimiser.
+- `regalloc.py DUMPDIR UNIT SYMBOL [gpr|fpr]` replays MWCC's register colouring from a `dbg.sh` dump and lists the webs whose register differs from retail, with options to test a colouring order or removed interference edges.
+  The model it implements is `docs/catalog/register-model.md`.
 - `census.py [out.tsv]`: classifies every function of every source-built unit.
   The classes are `exact`, `frame` (equal modulo `r1` displacements, but the frame differs), `slots` (same frame, but `r1` offsets differ) and `other`.
   It takes about 8 s after a full build.
