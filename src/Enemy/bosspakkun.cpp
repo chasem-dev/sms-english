@@ -1536,10 +1536,13 @@ TBossPakkunManager::TBossPakkunManager(const char* name, int is_light_version)
 {
 }
 
-// UNUSED, 0x280 in the map: TBossPakkunManager::load loads the twelve .jpa
-// files inline.
+// UNUSED, 0x280 in the map (the light-version guard is its own):
+// TBossPakkunManager::load loads the twelve .jpa files inline.
 void TBossPakkunManager::initJParticle()
 {
+	if (mIsLightVersion)
+		return;
+
 	SMS_LoadParticle("/scene/bosspakkun/jpa/ms_bopa_blur1.jpa",
 	                 BOSSPAKKUN_JPA_MS_BOPA_BLUR1);
 	SMS_LoadParticle("/scene/bosspakkun/jpa/ms_bopa_down.jpa",
@@ -1595,8 +1598,7 @@ void TBossPakkunManager::load(JSUMemoryInputStream& stream)
 {
 	unk38 = new TBossPakkunParams("/enemy/bosspakkun.prm");
 	TEnemyManager::load(stream);
-	if (!mIsLightVersion)
-		initJParticle();
+	initJParticle();
 }
 
 // TODO: instruction-exact; the frame is 0x38 short (0x180 vs 0x1b8), every
