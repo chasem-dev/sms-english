@@ -190,6 +190,11 @@ void TPaneScalingControl::stopAnm()
 // the progress FPRs frame f2, pool f0, end f1 (fmuls progress first); ours
 // is f1/f2/f0. Inert: named angle/deg, TAU first, /=, folded 360, `*=`
 // TAU, named frame or end, sin result named, MsSin, unnamed progress.
+// Retail's `fmuls` is progress-first with TAU coloured first (TAU's load is
+// generated after frame/end in retail, before them here). A named
+// `f32 angle = progress; angle *= TAU;` gets that operand order but
+// recolours the whole block; a `const f32` or static TAU and `progress *=`
+// inside the call are inert or worse.
 void TPaneScalingControl::update()
 {
 	int iVar10 = mInitialBounds.getWidth();
@@ -1154,23 +1159,11 @@ void TOptionControl::writeValue()
 
 bool TOptionControl::isChangedSetting() const
 {
-	// TODO: retail `mr r29, r31` copies result into soundResult; MWCC
-	// folds `bool soundResult = result` to a second `li r29, 1`; chained
-	// assignments and a separate `soundResult = result` fold the same way,
-	// as does a `bool changed = a != x || b != y;` expression (+8 frame).
-	bool result      = true;
-	bool soundResult = result;
-	if (mInitialRumbleValue == getRumbleOption()->mSelectionText->getNumber()
-	    && mInitialSoundValue == OptionSoundOption(this)->getValue())
-		soundResult = false;
-
-	if (!soundResult) {
-		if (mInitialSubtitleValue
-		    == OptionSubtitleOption(this)->mSelectionText->getNumber())
-			result = false;
-	}
-
-	return result;
+	return mInitialRumbleValue
+	           != getRumbleOption()->mSelectionText->getNumber()
+	       || mInitialSoundValue != OptionSoundOption(this)->getValue()
+	       || mInitialSubtitleValue
+	              != OptionSubtitleOption(this)->mSelectionText->getNumber();
 }
 
 void TOptionControl::resetChangedSetting()
