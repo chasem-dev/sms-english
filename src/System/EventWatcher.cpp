@@ -1523,16 +1523,21 @@ static void evOnNeutralMarioKey(TSpcTypedInterp<TEventWatcher>* interp,
 	interp->push(TSpcSlice());
 }
 
-// TODO: the pushed slice sits at 0x34 against retail's 0x38. Through the
-// EventWatcherMarDirector accessor binder the slice and fctiwz slots land but
-// the popped slice is 4 high (0x4c); push(TSpcSlice()) with SMSGetMarDirector
-// lands the slice at frame 0x60; named pad/director locals move everything.
+// Binding level over the pad accessor. With the director binder chained in
+// the caller, its local sits above the pushed slice; binding the pad instead
+// creates the word below it, retail's layout.
+static inline TMarioGamePad* EventWatcherGetGamePad()
+{
+	TMarioGamePad* pad = gpMarDirector->getGamePad();
+	return pad;
+}
+
 static void evInvalidatePad(TSpcTypedInterp<TEventWatcher>* interp, u32 arg_num)
 {
 	interp->verifyArgNum(1, &arg_num);
 	int frames = interp->pop().getDataInt();
 
-	EventWatcherGetMarDirector()->getGamePad()->mDisabledFrames = frames;
+	EventWatcherGetGamePad()->mDisabledFrames = frames;
 
 	interp->push();
 }
