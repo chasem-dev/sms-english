@@ -345,11 +345,21 @@ BOOL TMario::hangonCheck(const TBGCheckData* wall, const Vec& prev,
 	return true;
 }
 
-// TODO: retail tests "can hang" inside the wall `if` condition (a false result
-// falls to the `else if`) and folds the roof check into one
-// `if ((param_2 & 2) && canHang && isFence()) roofCode = 4; else roofCode = 0;`.
-// Two TU-local hang helpers (one returning a named bool for the 8-byte slot
-// below `pos`) close it exactly; refused as a duplicate frame carrier.
+static inline bool MarioCanHang(TMario* mario)
+{
+	bool ok = false;
+	if (mario->mHeldObject == nullptr && !mario->onYoshi())
+		ok = true;
+	return ok;
+}
+
+// TODO: 99.8%, every instruction exact. Retail tests "can hang" inside the
+// wall `if` condition (`== 1`) and folds the roof check into one `if`, both
+// through the same no-held-object/no-Yoshi test other TMario code spells out
+// (changeWireHanging, wireWaitToHang, hangPole). Left: frame 0x88 vs 0x90;
+// retail's `pos` sits at 0x58 (ours 0x54) with a word above it, i.e. one
+// 4-byte named local declared before `pos` and 4 more low bytes. A member
+// inline in Mario.hpp is the same as the TU-local helper.
 int TMario::checkGroundAtJumping(const Vec& target, int param_2)
 {
 	Vec pos             = target;
@@ -411,13 +421,10 @@ int TMario::checkGroundAtJumping(const Vec& target, int param_2)
 				if (checkFlag(MARIO_FLAG_VISIBLE))
 					onFlag(MARIO_FLAG_UNK200);
 
-				if (param_2 & 0x2) {
-					BOOL canHang = (mHeldObject == nullptr && !onYoshi());
-					if (canHang && mRoofPlane->isFence())
-						roofCode = 4;
-					else
-						roofCode = 0;
-				}
+				if ((param_2 & 0x2) && MarioCanHang(this) && mRoofPlane->isFence())
+					roofCode = 4;
+				else
+					roofCode = 0;
 			}
 		}
 	}
@@ -439,15 +446,13 @@ int TMario::checkGroundAtJumping(const Vec& target, int param_2)
 		wall2Passable = true;
 	}
 
-	if ((param_2 & 0x1) && wall1Passable == 1 && wall2Passable == 0) {
-		BOOL canHang = (mHeldObject == nullptr && !onYoshi());
-		if (canHang == 1) {
-			mWallPlane = wall2;
-			if (hangonCheck(wall2, target, pos))
-				wallCode = 3;
-			else
-				wallCode = 0;
-		}
+	if ((param_2 & 0x1) && wall1Passable == 1 && wall2Passable == 0
+	    && MarioCanHang(this) == true) {
+		mWallPlane = wall2;
+		if (hangonCheck(wall2, target, pos))
+			wallCode = 3;
+		else
+			wallCode = 0;
 	} else if (wall1Passable == 0 || wall2Passable == 0) {
 		mWallPlane = wall1 != nullptr ? wall1 : wall2;
 		s16 diff   = matan(mWallPlane->getNormal().z, mWallPlane->getNormal().x)

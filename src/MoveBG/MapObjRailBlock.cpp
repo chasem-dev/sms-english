@@ -411,9 +411,11 @@ void TRailBlock::calcRootMatrix()
 	model->setBaseScale(mScaling);
 }
 
-// TODO: every instruction matches; frame 0x158 vs retail 0x1b0. Slot anchors:
-// retail's point copy sits 0x3c higher (15 more low-region words) and zDir
-// 0x58 higher (7 more words between them). TVec3 ctor/set() for the columns: worse.
+// TODO: every instruction matches; frame 0x160 vs retail 0x1b0 (the angle
+// wraps are MsWrap, +8 over hand-written loops). Retail has 7 more words
+// between `point` (0x110) and resetStep's indexToPoint temporary (0xd8, ours
+// 0x10 apart) and 12 more below its copy (0xcc). TVec3 ctor/set() for the
+// columns: worse.
 void TRailBlock::control()
 {
 	TMapObjBase::control();
@@ -504,26 +506,9 @@ void TRailBlock::control()
 			unk168.y += unk154;
 			unk168.z += unk158;
 
-			f32 pitch = mRotation.x;
-			while (pitch >= 360.0f)
-				pitch -= 360.0f;
-			while (pitch < 0.0f)
-				pitch += 360.0f;
-			mRotation.x = pitch;
-
-			f32 yaw = mRotation.y;
-			while (yaw >= 360.0f)
-				yaw -= 360.0f;
-			while (yaw < 0.0f)
-				yaw += 360.0f;
-			mRotation.y = yaw;
-
-			f32 roll = mRotation.z;
-			while (roll >= 360.0f)
-				roll -= 360.0f;
-			while (roll < 0.0f)
-				roll += 360.0f;
-			mRotation.z = roll;
+			mRotation.x = MsWrap(mRotation.x, 0.0f, 360.0f);
+			mRotation.y = MsWrap(mRotation.y, 0.0f, 360.0f);
+			mRotation.z = MsWrap(mRotation.z, 0.0f, 360.0f);
 		}
 	}
 }
