@@ -882,10 +882,8 @@ void TElecCarapace::calcRootMatrix()
 // The splash-angle draws below as their own level: the loop counter then
 // shares the callee-saved zero the spread's minimum is stored from (retail
 // r24).
-// TODO: the spread sits at 0x60 with frame 0xa8 (retail 0x54 / 0xa0): 0xc
-// more above it in retail. One reused angle local instead of three lands
-// the frame but not the slot (cc48). Also inert: the loop in the caller's
-// body, top-declared angles, a TVec3<s16> of angles (+8).
+// The spread's slot and the 0xa0 frame come from sendMessage reading the
+// raw collision count and the raw collision array at its last two tests.
 static inline void ElecDrawSplashAngles()
 {
 	TMsRange<s32> spread(0, 360);
@@ -898,7 +896,7 @@ static inline void ElecDrawSplashAngles()
 
 void TElecCarapace::sendMessage()
 {
-	for (int i = 0; i < getColNum(); i++) {
+	for (int i = 0; i < mColCount; i++) {
 		if (getCollision(i)->isActorType(0x80000001)) {
 			// Mario: shock him and then sit still for a second.
 			if (SMS_SendMessageToMario(this, HIT_MESSAGE_ELECTRIC_SHOCK)) {
@@ -907,9 +905,9 @@ void TElecCarapace::sendMessage()
 				    != &TNerveElecCarapaceWait::theNerve())
 					mSpine->pushNerve(&TNerveElecCarapaceWait::theNerve());
 			}
-		} else if (getCollision(i) == mNokonoko) {
+		} else if (mCollisions[i] == mNokonoko) {
 			offHitFlag(HIT_FLAG_NO_COLLISION);
-		} else if (getCollision(i)->isActorType(0x01000001)) {
+		} else if (mCollisions[i]->isActorType(0x01000001)) {
 			// Mario's water jet. The retail object draws three angles out of
 			// a 0..360 range five times over and uses none of them, so the
 			// five splashes those angles aimed are gone and only the draws
