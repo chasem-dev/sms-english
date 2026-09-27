@@ -71,3 +71,27 @@ A web whose degree is still at least K when its sweep reaches it is pushed in a 
 - **Deferral by one degree.** `JPAVortexField::affect`: thing3.z (IRO temp) reaches the first sweep with remaining degree 31 and is pushed there, so fVar2 (deferred) is coloured before it; retail defers both. Count remaining degree at the sweep, not the total.
 - **Mapping limits.** `regalloc.py` needs the pcode row count to equal the diff's; matan, Hxs2_Circle, xFadeBgm, walkAnmRateChange_ and several big functions differ by one or two rows and their "retail" registers are misaligned. C units need the unit's own flags without `-lang=c++` (`hx_wiper.c`: game flags plus `-inline noauto`).
 - Readings recorded as TODOs: `TGraphTracer::traceSpline` (rail/web IRO CSE temps created in the wrong order), `TMapObjTree::initMapObj` (the new[] count is the first-created parse-time object), `evSetGraffitoMultiplied` (liveness, not order), `TGorogoro::behaveToWater` (depth-2 locals created in declaration order, retail reverse).
+## Refinements (unit agent c-g3, list A)
+
+- **IRO split temporaries.** A named local initialised from a load is usually replaced by an IRO temporary (`@N`, `x = @N`, then every use reads `@N` and `x` dies to a stack slot).
+  These temporaries are created in statement order after all inline objects, so the local is coloured as an IRO temporary, and its declaration order is inert.
+  `SMS_UnifyMaterial`: `unifier` is `@815` and `mat` is `@817`, and retail needs them the other way round; moving the declarations cannot change that.
+  A local with two definitions (`f32 d = y; d -= ty;`) is not split and stays a named web, which is coloured after every `@`.
+- **Constant operands come first.** In `k * (f32)dir` the pool load of `k` is generated before the conversion's pcode for every spelling (`dir * k`, `angle *= k` after `angle = dir`, and a TU-local helper with an `f32` parameter).
+  So `k` gets the lowest pcode number and is coloured last (`TBathtub::getNearGrip`, closed by none of 7 spellings).
+- **IRO reassociation.** `(m00 + m11) + m22 + 1.0f` becomes `1 + (m22 + (m00 + m11))`, because the leaf operand goes first.
+  Naming the partial sum (`f32 t = m00 + m11;`) gives retail's order but costs a dead 4-byte slot (`MtxToQuat`, frame 0x28 to 0x30).
+- **Measured, not landed:**
+  - `TSpineEnemy::calcTurnSpeedToReach`: `double guess = __frsqrte(x); volatile f32 f = x * guess;` fixes both FPRs.
+    `f32 result = 90.0f - tmp; return result;` then puts `f` at retail's 0x1c.
+    Still missing: one 4-byte dead object above `f` (0x28 against 0x30).
+  - `CPolarSubCamera::isNeedGroundCheck_`: `f32 a = JMASSin(min); a = mDistMin * a;` fixes the loads.
+    Then `distY` (named, two definitions) must be coloured before `a`'s IRO temporary `@866`.
+  - `TLiveActor::calcRideMomentum`: a named `diff`, then a named `vel` with `vel += diff`, fixes the diff and member registers.
+    It costs 8 bytes of frame and moves the sum into `vel`'s register.
+  - `TBGBeakHit::moveRequest`: `mag` is the IRO temporary `@6868` and `stretch` is a pcode temporary, so `stretch` is coloured first.
+    A named `stretch` is forward-substituted and changes nothing.
+- **List A triage.** Most `stack+reg` entries have frame gaps of 0x20 or more, or JGadget iterator slot strides.
+  Their register residue cannot close before the frame does.
+  With an equal frame and a single-move replay fix, only `startAppearStar`, `TShellCup::perform` (Mtx 8 low), `calcEmitterGlobalParams` (the `ref()` fix is -8 frame) and `TBossHanachan::init` (slots) remain.
+- Batch triage: running `dbg.sh` and `regalloc.py --search` over a whole list in one sequential background job (about 1 min per big TU) ranks the targets before any edit.
