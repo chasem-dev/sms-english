@@ -613,6 +613,8 @@ void TNameKuri::setWalkAnm() { setBckAnm(7); }
 // here: a direct-return `gpMSound` fork, and `TVec3 zero; zero.set(0,0,0);
 // setVelocity(zero);` (ladder 266's +0x10 named-block hole does not appear
 // in this pool). TNameKuri::init is short by the same 40 bytes.
+// c-h12: iro.py puts retail's temp right after the three depth-1 words (@2302,
+// @2297, @2296); a TU-local stop-moving inline gets 0x4c but `bl`s set<f> (96.7%).
 static inline MActor* NamekuriGetMActor(const TNameKuri* p);
 
 static inline MSound* NameKuriMSound()

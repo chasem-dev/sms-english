@@ -397,6 +397,8 @@ void TBeeHive::bind()
 // 98.6% but is a discarded statement, so the real consumer is still missing.
 // Also inert (89.4-89.6): reusing `index` for the second wrap, `++index`
 // in the test, reusing `bee`, and a TU-local wrap helper at all three sites.
+// c-h12: `unk154[index];` is the same 98.6% as `(void)index;`; both leave index/bee
+// swapped (r31/r29) and next in r0 not r4. Ternary wraps and a for-wrap are 88-89%.
 void TBeeHive::controlCollision()
 {
 	int index = mCheckBeeIndex;
