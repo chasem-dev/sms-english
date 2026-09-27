@@ -140,10 +140,16 @@ bool MSSetSoundGrp::startSoundSetGrp(u32 param1, const Vec* param2, u32 param3,
 // startShake/keepShake).
 //
 // 98.4%: the "Huh" else belongs to the outer `unk5C[unk59] != nullptr` test
-// (retail's null-sound arm jumps straight to the end). Still open: the
-// linearTransform argument loads (retail loads unk28 before unk30/unk34);
-// raw `unk0` for unk28 at any call, and dropping the named unk2C read, are
-// inert or worse. So is swapping the f30/f29 or f28/f27 declarations.
+// (retail's null-sound arm jumps straight to the end).
+// 99.4%: the linearTransform argument loads are fixed by reading the
+// last-loaded parameter raw (`unk30.unk0`, `unk34.unk0`, `unk48.unk0`,
+// `unk4C.unk0`: an inline get() is a call and is generated first), and the
+// 1.0f pairs by `f30 = f29 = 1.0f` (retail materialises f29, copies to f30).
+// Still open: uVar7 is an IRO split web (@932, with a dead 4-byte home) and
+// is coloured before the named bVar1; retail colours bVar1 first (r24) and
+// its local_94 sits 4 higher, i.e. retail has a 4-byte home declared after
+// local_94 and before uVar7's, and no home above it (dVar9 moved to the top
+// of the else block closes the slots, but it is a dead local: not taken).
 // The raw unk1E read is what puts it first in the fmuls: a simple right
 // operand moves left of the getRandom_0_1() call at parse, the accessor
 // (a call there too) does not.
@@ -263,33 +269,35 @@ bool MSSetSoundTL<T>::startSoundSetDyna(u32 param_1, const Vec* param_2,
 			JAISound* sound = unk5C[unk5A];
 			if (sound != nullptr) {
 				u32 uVar7 = sound->getPlayGameFrameCounter();
-				f32 f30   = 1.0f;
-				f32 f29   = 1.0f;
+				f32 f30;
+				f32 f29;
+				f30 = f29 = 1.0f;
 
 				f32 f1 = unk2C.get();
 				if ((f32)uVar7 < (f32)unk28.get() && f31 < f1) {
 					JALCalc::linearTransform(uVar7, unk1D.get(), unk28.get(),
 					                         unk38.get(), 0.0f, false);
 					f30 = JALCalc::linearTransform(uVar7, unk1D.get(),
-					                               unk28.get(), unk30.get(),
+					                               unk28.get(), unk30.unk0,
 					                               1.0f, false);
 					f29 = JALCalc::linearTransform(uVar7, unk1D.get(),
 					                               unk28.get(), 1.0f,
-					                               unk34.get(), false);
+					                               unk34.unk0, false);
 				}
 
-				f32 f28 = 1.0f;
-				f32 f27 = 1.0f;
+				f32 f28;
+				f32 f27;
+				f28 = f27 = 1.0f;
 				if ((f32)uVar7 < (f32)unk3C.get() && f31 < unk40.get()) {
 					unk58 = 1;
 					JALCalc::linearTransform((f32)unk54, 0.0f, unk44.get(),
 					                         0.0f, unk50.get(), false);
 					f27 = JALCalc::linearTransform((f32)unk54, 0.0f,
 					                               unk44.get(), 1.0f,
-					                               unk48.get(), false);
+					                               unk48.unk0, false);
 					f28 = JALCalc::linearTransform((f32)unk54, 0.0f,
 					                               unk44.get(), 1.0f,
-					                               unk4C.get(), false);
+					                               unk4C.unk0, false);
 				} else {
 					unk58 = 0;
 					unk54 = 0;
