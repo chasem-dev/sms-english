@@ -131,7 +131,7 @@ bool TMario::isForceSlip()
 // we reload them. Non-const, assigned, direct-init, add() calls inert.
 BOOL TMario::moveRequest(const JGeometry::TVec3<f32>& pos)
 {
-	const JGeometry::TVec3<f32> offset = pos - mPosition;
+	JGeometry::TVec3<f32> offset = pos - mPosition;
 	mPosition                          = pos;
 
 	unk160 += offset;
