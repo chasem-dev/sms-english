@@ -281,6 +281,15 @@ void TSandBombBase::withered()
 	mTrigger->sleep();
 }
 
+// Advances one of a sand bomb's frame controls by `speed`. Retail's f31/f30
+// order (the speed binding first, the inlined getFrame() second) needs the
+// speed to be this helper's argument rather than a named local of the caller.
+static inline void SandBombAddFrame(TLiveActor* actor, int ctrl, f32 speed)
+{
+	actor->getMActor()->getFrameCtrl(ctrl)->setFrame(
+	    speed + actor->getMActor()->getFrameCtrl(ctrl)->getFrame());
+}
+
 static inline bool SandBombIsSandBomb(const TSandBombBase* p)
 {
 	bool isSandBomb = p->isActorType(0x400000CE) ? true : false;
@@ -299,15 +308,9 @@ static inline MActor* SandBombMActor(const TLiveActor* p)
 	return actor;
 }
 
-// TODO: frame and instructions exact; retail puts `speed` in f31 and the
-// inlined getFrame() in f30, we swap them (open class, RULES "FPR order sweep
-// 364"); a named frame, `speed +=` and a named frame ctrl are inert.
 void TSandBombBase::expanded()
 {
-	TSandBomb* trigger = mTrigger;
-	f32 speed          = mExpandFrameSpeed;
-	trigger->getMActor()->getFrameCtrl(0)->setFrame(
-	    speed + trigger->getMActor()->getFrameCtrl(0)->getFrame());
+	SandBombAddFrame(mTrigger, 0, mExpandFrameSpeed);
 
 	gpMSound->startSoundActor(MSD_SE_OBJ_SAMDBOMB_REVERSE,
 	                          SandBombPos(mTrigger), 0, nullptr, 0, 4);
@@ -316,24 +319,17 @@ void TSandBombBase::expanded()
 		mState = STATE_WITHER;
 }
 
-// TODO: frame and instruction count are exact; the residue is FPR colouring,
-// retail putting mExplodeFrameSpeed in f31 and the read frame in f30 where we
-// swap them (the same inversion as TSandBombBase::control's STATE_GROWN arm).
 void TSandBombBase::exploding()
 {
-	f32 speed = mExplodeFrameSpeed;
-	SandBombMActor(this)->getFrameCtrl(0)->setFrame(
-	    speed + mMActor->getFrameCtrl(0)->getFrame());
+	SandBombAddFrame(this, 0, mExplodeFrameSpeed);
 
-	TSandBomb* trigger = mTrigger;
-	f32 speed2         = mExplodeFrameSpeed;
-	trigger->getMActor()->getFrameCtrl(0)->setFrame(
-	    speed2 + trigger->getMActor()->getFrameCtrl(0)->getFrame());
+	SandBombAddFrame(mTrigger, 0, mExplodeFrameSpeed);
 
 	f32 distance = getDistanceXZ(*gpMarioPos);
 
-	if (!SandBombIsSandBomb(this) && mMActor->getFrameCtrl(0)->getFrame() < 80.0f
-	    && SMS_GetMarioGrLevel() > gpMarioPos->y - 30.0f
+	if (!SandBombIsSandBomb(this)
+	    && SandBombMActor(this)->getFrameCtrl(0)->getFrame() < 80.0f
+	    && SMS_GetMarioGrLevel() > SMS_GetMarioPos().y - 30.0f
 	    && distance < mMarioJumpRange) {
 		SMS_SendMessageToMario(this, 7);
 		SMS_ThrowMario(JGeometry::TVec3<f32>(0.0f, 1.0f, 0.0f),
@@ -382,9 +378,6 @@ void TSandBombBase::waitBeforeExplode()
 
 void TSandBombBase::grow() { mState = STATE_FIRING; }
 
-// TODO: frame and instruction count are exact; the remaining difference is
-// FPR colouring in the STATE_GROWN arm, where retail gives `frame` f30 and we
-// give it f31 (retail reserves f31 for the STATE_FIRING speeds).
 void TSandBombBase::control()
 {
 	TMapObjBase::control();
@@ -403,19 +396,9 @@ void TSandBombBase::control()
 	}
 
 	case STATE_FIRING: {
-		f32 speed0 = mExplodeFrameSpeed;
-		trigger->getMActor()->getFrameCtrl(0)->setFrame(
-		    speed0 + SandBombMActor(trigger)->getFrameCtrl(0)->getFrame());
-
-		TSandBomb* t5 = mTrigger;
-		f32 speed5    = mExplodeFrameSpeed;
-		t5->getMActor()->getFrameCtrl(5)->setFrame(
-		    speed5 + t5->getMActor()->getFrameCtrl(5)->getFrame());
-
-		TSandBomb* t3 = mTrigger;
-		f32 speed3    = mExplodeFrameSpeed;
-		t3->getMActor()->getFrameCtrl(3)->setFrame(
-		    speed3 + t3->getMActor()->getFrameCtrl(3)->getFrame());
+		SandBombAddFrame(MapObjMammaBaseTrigger(this), 0, mExplodeFrameSpeed);
+		SandBombAddFrame(mTrigger, 5, mExplodeFrameSpeed);
+		SandBombAddFrame(mTrigger, 3, mExplodeFrameSpeed);
 		if (mTrigger->animIsFinished())
 			waitBeforeExplode();
 		break;
@@ -519,18 +502,14 @@ static inline MActor* SandCastleWitherActor(const TLiveActor* p)
 	return actor;
 }
 
-// TODO: 99.3%, frame-exact. Residue is the f30/f31 inversion (same class as
-// TSandBombBase::expanded); declaration order and a named getFrame() result
-// do not flip it.
+// TODO: every instruction matches (SandBombAddFrame fixed the f30/f31
+// inversion); the frame is 8 short (0x68 vs 0x70). Accessor forks for the
+// frame/end reads only move it in 0x10 steps; named speeds, a named
+// mChangeStage are inert.
 bool TSandCastle::withering()
 {
-	f32 speed = mWitherSpeed;
-	getMActor()->getFrameCtrl(0)->setFrame(
-	    speed + SandCastleWitherActor(this)->getFrameCtrl(0)->getFrame());
-
-	f32 speed5 = mWitherSpeed;
-	getMActor()->getFrameCtrl(5)->setFrame(
-	    speed5 + getMActor()->getFrameCtrl(5)->getFrame());
+	SandBombAddFrame(this, 0, mWitherSpeed);
+	SandBombAddFrame(this, 5, mWitherSpeed);
 
 	f32 frame  = SandCastleWitherActor(this)->getFrameCtrl(0)->getFrame();
 	f32 end    = SandCastleWitherActor(this)->getFrameCtrl(0)->getEnd();
@@ -551,9 +530,9 @@ bool TSandCastle::withering()
 	return false;
 }
 
-// TODO: 90.5%. Retail inlines TSandBombBase::expanded (the f31/f30 order
-// now matches) but calls TLiveActor::getMActor() out of line at both sites,
-// 0x10 less frame. Inert: TU-local getMActor binders at one or both sites.
+// TODO: 90.7%, frame-exact. Retail inlines TSandBombBase::expanded but calls
+// TLiveActor::getMActor() out of line at both of SandBombAddFrame's sites
+// (inline depth 3 here); ours expands it. Inert: TU-local getMActor binders.
 void TSandCastle::expanded()
 {
 	TSandBombBase::expanded();
