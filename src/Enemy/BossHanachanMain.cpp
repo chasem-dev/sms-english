@@ -260,10 +260,12 @@ void TBossHanachan::execBodyCalcAnim_()
 {
 	for (int i = 0; i < 8; ++i) {
 		TBossHanachanPartsBody* body = mBodies[i];
+		// Declared first: perform inlines this, and retail has the position
+		// above the matrix (callee locals are created last-declared first).
+		Mtx transform;
 		JGeometry::TVec3<f32> position = body->getPosition();
 		CalcRevisionPosByRotateZ(body->mRotation,
 		    mCommonParams->mSLBodyPlusYByRotateZ.get(), &position);
-		Mtx transform;
 		CLBCalcRotateZXYTranslateMatrix(transform, body->mRotation, position);
 		body->getMActor()->getModel()->setBaseTRMtx(transform);
 		body->getMActor()->calc();

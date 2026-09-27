@@ -480,13 +480,14 @@ void TBathtubKiller::makeInitialVelocity(JGeometry::TVec3<f32> velocity)
 	mQuat.mul(aim, mQuat);
 }
 
-// TODO: dead in the ROM (UNUSED 0x78) and reconstructed from bind()'s
-// integration step, which is the only place the acceleration is folded into the
-// velocity. Our body is smaller than the map's size.
+// UNUSED (0x78), inlined in the Wander nerve: the gravity pull and a
+// makeQuat with fixed rates is exactly 0x78 out of line, and inlining it moves
+// the makeQuat argument copy below the nerve's isAttackable/canChase objects
+// as in retail.
 void TBathtubKiller::moveParabolic()
 {
-	mVelocity += mAcceleration;
-	makeVelocityQuat();
+	mAcceleration.set(0.0f, -getGravityY(), 0.0f);
+	makeQuat(mVelocity, 1.0f, 0.1f);
 }
 
 // TODO: every instruction present; frame 0x88 against retail 0xa8 and the
@@ -518,6 +519,9 @@ void TBathtubKiller::moveChasing()
 	mVelocity.scale(mPersonality.mChaseSpeed, dir);
 }
 
+// Retail calls makeQuat here directly: the argument copy then sits above
+// `dir` (an inlined callee's temporaries are laid out last-first), where the
+// makeVelocityQuat level put it below.
 void TBathtubKiller::moveStraight()
 {
 	JGeometry::TVec3<f32> dir;
@@ -526,7 +530,7 @@ void TBathtubKiller::moveStraight()
 	dir.normalize();
 	dir.scale(mPersonality.mChaseSpeed);
 	mVelocity.set(dir);
-	makeVelocityQuat();
+	makeQuat(mVelocity, mPersonality.mAccelerationQuatRate, 0.1f);
 }
 
 void TBathtubKiller::makeVelocityQuat()
@@ -739,14 +743,17 @@ bool TBathtubKiller::isAttackable()
 
 	// A shine killer gives up once Mario is closer to the tub than it is.
 	if (unk194 == 2) {
-		JGeometry::TVec3<f32> marioPos = *gpMarioPos;
+		JGeometry::TVec3<f32> marioPos = SMS_GetMarioPos();
 		marioPos.y = 0.0f;
 		JGeometry::TVec3<f32> myPos = mPosition;
 		myPos.y = 0.0f;
-		JGeometry::TVec3<f32> bathtubPos = unk1CC->getPosition();
+		JGeometry::TVec3<f32> bathtubPos = unk1CC->mPosition;
 		bathtubPos.y = 0.0f;
-		if (myPos.distance(bathtubPos)
-		    > 100.0f + marioPos.distance(bathtubPos))
+		// Retail computes Mario's distance first and keeps both results as
+		// dead named words above the three vectors (Chase closed).
+		f32 marioDist = marioPos.distance(bathtubPos);
+		f32 myDist = myPos.distance(bathtubPos);
+		if (myDist > 100.0f + marioDist)
 			return false;
 	}
 
@@ -810,7 +817,8 @@ bool TBathtubKiller::canChase()
 	if (mTimers[1] > 0)
 		return false;
 
-	f32 chaseDistanceY = getSaveParam2()->mSLChaseDistanceY.get();
+	TBathtubKillerParams* params = getSaveParam2();
+	f32 chaseDistanceY = params->mSLChaseDistanceY.get();
 	f32 minY = unk200 + getBathtubY();
 	if (mPosition.y > minY + chaseDistanceY)
 		return false;
@@ -827,6 +835,10 @@ void TBathtubKiller::generateExplosion()
 		explosion->generate(mPosition, mScaling);
 }
 
+// TODO: frame exact; moveParabolic's makeQuat copy sits 8 above retail's
+// 0x38. Retail creates two more words before it and two fewer after, as if
+// the copy were one level deeper (below isAttackable's depth-2 TVec3 bindings);
+// named gravity, a named velocity copy and a raw param read all add words.
 DEFINE_NERVE(TNerveBathtubKillerWander, TLiveActor)
 {
 	TBathtubKiller* killer = (TBathtubKiller*)spine->getBody();
@@ -843,8 +855,7 @@ DEFINE_NERVE(TNerveBathtubKillerWander, TLiveActor)
 		return TRUE;
 	}
 
-	killer->mAcceleration.set(0.0f, -killer->getGravityY(), 0.0f);
-	killer->makeQuat(killer->mVelocity, 1.0f, 0.1f);
+	killer->moveParabolic();
 	return FALSE;
 }
 
@@ -902,9 +913,11 @@ DEFINE_NERVE(TNerveBathtubKillerChaseStraight, TLiveActor)
 	return FALSE;
 }
 
-// TODO: 87.0%, frame 0x58 vs 0x48: retail keeps moveStraight's dir at 0x1c
-// below makeQuat's axis copy and schedules the inlined TQuat4::getZDir with
-// the 1.0f load first. Inert: makeQuat called directly, mVelocity.scale(s, dir),
+// TODO: 87.0%, frame 0x58 vs 0x48: with makeQuat called directly in
+// moveStraight, dir and the axis copy are in retail's order but 0x10 high:
+// retail has 3 dead words below dir where ours has 7 (getZDir's _x/_y, set's
+// three copies, normalize's two), and schedules the inlined TQuat4::getZDir
+// with the 1.0f load first; both are JGQuat4.hpp/JGVec3.hpp shapes. Inert: makeQuat called directly, mVelocity.scale(s, dir),
 // `mVelocity = dir`, and moveStraight written out in the nerve; also
 // dir.set(x, 0, z) (84.9%), getZDir straight into mVelocity (80.3%), and a
 // TU-local helper level around the nerve's moveStraight call (68.8%).

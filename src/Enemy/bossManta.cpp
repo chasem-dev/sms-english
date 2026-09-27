@@ -1277,8 +1277,29 @@ const JUtility::TColor& TBossMantaManager::getMantaColor()
 	return unk80;
 }
 
-// TODO: retail's frame is 0x78 larger (0x278 vs 0x200) with the named block
-// 0x78 higher, and one r3/r0 swap in the unk84 clamp; a missing inline level.
+// Two inline levels: their matrices are created after the GXColor
+// temporaries of setupEfbAlpha's own body, which puts those above them.
+static inline void BossMantaSetOrtho()
+{
+	Mtx44 proj;
+	C_MTXOrtho(proj, (f32)SMSGetGameRenderHeight(), 0.0f, 0.0f,
+	           (f32)SMSGetGameRenderWidth(), 0.0f, 1000.0f);
+	GXSetProjection(proj, GX_ORTHOGRAPHIC);
+}
+
+static inline void BossMantaLoadIdentity()
+{
+	Mtx m;
+	MTXIdentity(m);
+	GXLoadPosMtxImm(m, GX_PNMTX0);
+}
+
+// TODO: retail's frame is 0x78 larger (0x278 vs 0x200). With the ortho and
+// identity blocks as the TU's helpers every slot is in retail's order: texObj,
+// the colour copy and proj are 0x78 low, m 0x20 low, so retail has 22 more
+// words created between proj and m (getMantaColor's depth-1 objects) and 8
+// below m. One r3/r0 swap in the unk84 clamp; a named `next` with if or
+// ternary is inert.
 void TBossMantaManager::drawMantaShadow(JDrama::TGraphics* graphics)
 {
 	setupEfbAlpha(graphics);
@@ -1308,10 +1329,7 @@ void TBossMantaManager::drawMantaShadow(JDrama::TGraphics* graphics)
 	GXCopyTex(unk7C, GX_FALSE);
 	GXPixModeSync();
 
-	Mtx44 proj;
-	C_MTXOrtho(proj, (f32)SMSGetGameRenderHeight(), 0.0f, 0.0f,
-	           (f32)SMSGetGameRenderWidth(), 0.0f, 1000.0f);
-	GXSetProjection(proj, GX_ORTHOGRAPHIC);
+	BossMantaSetOrtho();
 	GXSetNumTevStages(1);
 	GXSetNumChans(0);
 	GXSetNumTexGens(1);
@@ -1349,9 +1367,7 @@ void TBossMantaManager::drawMantaShadow(JDrama::TGraphics* graphics)
 	GXSetAlphaUpdate(GX_FALSE);
 	GXSetColorUpdate(GX_TRUE);
 
-	Mtx m;
-	MTXIdentity(m);
-	GXLoadPosMtxImm(m, GX_PNMTX0);
+	BossMantaLoadIdentity();
 	GXSetCurrentMtx(GX_PNMTX0);
 	GXSetCullMode(GX_CULL_NONE);
 	GXClearVtxDesc();
@@ -1433,23 +1449,6 @@ void TBossMantaManager::perform(u32 cue, JDrama::TGraphics* graphics)
 	}
 	for (int i = 0; i < 8; ++i)
 		mCollisionSets[i]->update(cue, graphics);
-}
-
-// Two inline levels: their matrices are created after the GXColor
-// temporaries of setupEfbAlpha's own body, which puts those above them.
-static inline void BossMantaSetOrtho()
-{
-	Mtx44 proj;
-	C_MTXOrtho(proj, (f32)SMSGetGameRenderHeight(), 0.0f, 0.0f,
-	           (f32)SMSGetGameRenderWidth(), 0.0f, 1000.0f);
-	GXSetProjection(proj, GX_ORTHOGRAPHIC);
-}
-
-static inline void BossMantaLoadIdentity()
-{
-	Mtx m;
-	MTXIdentity(m);
-	GXLoadPosMtxImm(m, GX_PNMTX0);
 }
 
 void TBossMantaManager::setupEfbAlpha(JDrama::TGraphics* graphics)

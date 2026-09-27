@@ -228,8 +228,14 @@ void TKumokun::initAttachPlane()
 
 void TKumokun::reset() { }
 
-// TODO: frame 0x198 vs retail 0x188; retail keeps the mVelocity copy at 0x104,
-// below local_110 rather than under local_168. Every instruction is right.
+// TODO: frame 0x190 vs retail 0x188; every instruction is right. Retail's
+// named block is local_168, local_15C, local_150, floor (declared after
+// them), then the branch vectors; the mVelocity copy (0x104) and local_f8
+// (0xf8) are parse-time temporaries below it: `local_168 +=
+// JGeometry::TVec3<f32>(mVelocity);` with floor moved and `local_15C +=
+// local_110 - local_11C;` lands the frame and every upper slot, but under
+// the header's by-value-parameter operator- the copy out of the difference
+// (retail 0x94 -> 0xf8) disappears (+6 lines): the open `a - b` class.
 void TKumokun::bind()
 {
 	if (checkLiveFlag(LIVE_FLAG_UNK10))
