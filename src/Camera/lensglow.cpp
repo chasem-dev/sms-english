@@ -100,24 +100,72 @@ TLensGlow::TLensGlow(bool param_1, const char* name)
 	unk60 = unk64 = unk6C;
 }
 
-// TODO: 99.1%, frame exact (0x178). The 88 missing bytes of pool were the
-// `gpSunModel` reads: a TU-local accessor that names and returns the pointer
-// is ~+8 of pool per site, and taking it at every read except `tx`'s is
-// retail's frame (a 2187-way per-site raw/named/plain sweep found this as the
-// only frame-exact assignment; naming the loop's second read changes the
-// `addi` pair, and a plain `return gpSunModel;` accessor prices ~+4).
-// Left: (a) closed (isInBounds names its `x`, c-m6); (b) getUnk194 in
-// f31 instead of f29, rotating f27-f31 (regalloc: cx/cy must colour before
-// dispRatio's IRO temp @574; top declarations of cx/cy and a TVec2 centre
-// are inert); (c) closed by `t *= ...` (value-first product, c-m27);
-// (d) the named block (c, mtx, scaleV) sits 4 low with 4 extra bytes above
-// scaleV; (e) avg's f5/f6 closed by avg.zero(); r4/r5 in the avg walk and
-// r26/r27/r31 in the colour loop remain. Measured and rejected on top of
-// the accessors: `u32 inBounds` (+3 instructions), `1.0f / n` as a returning
-// helper (+8 frame, swap kept), a named `inv` local (+8), a named `sun`
-// receiver for isInBounds (named block exact but upper region +8 with the
-// division helper), isInBounds wrapped in TU-local helpers (inert).
+// TODO: 99.8%, frame exact (0x178), all instructions right. The 88 missing
+// bytes of pool were the `gpSunModel` reads: a TU-local accessor that names
+// and returns the pointer is ~+8 of pool per site (a 2187-way per-site sweep
+// found retail's frame with every read through it except `tx`'s; with the
+// screen-centre level below, `ty` is read raw too).
+// Closed (c-m27): the f27-f31 rotation (cx/cy have to colour before
+// dispRatio's IRO temp, which they do as locals of an inlined callee: the
+// screen-centre block below), the `t` conversion pair (`t *= ...`), the avg
+// f5/f6 pair (then reopened by the level), the colour-loop counter (`u16 i`
+// declared ahead of matCount).
+// Left: avg's zero lands in f5 and is copied to f6 (retail loads f6; ctor,
+// zero(), set(), both chained orders are inert); the named block (c, mtx,
+// scaleV) sits 8 high; matCount r26 vs r27 against the `i * 4` web.
 static inline TSunModel* lgSunN() { TSunModel* m = gpSunModel; return m; }
+// The screen-centre and target-offset block of the move cue. Its cx/cy have
+// to be callee locals: as the perform's own named locals they colour after
+// dispRatio's IRO temporary (regalloc), where retail has them f31/f30.
+static inline void LGCalcCenter(TLensGlow* lg, u8 thing, f32 dispRatio)
+{
+	f32 cy, cx, b, a;
+	a  = lgSunN()->unkF8[0].x;
+	cx = (f32)(SMSGetGameRenderWidth() >> 1) * a;
+	b  = lgSunN()->unkF8[0].y;
+	cy = (f32)(SMSGetGameRenderHeight() >> 1) * b;
+
+	if (thing == 0) {
+		lg->unk8C = 0.0f;
+		lg->unk88 = 0.0f;
+	} else {
+		if (dispRatio >= 0.5f) {
+			lg->unk8C = 0.0f;
+			lg->unk88 = 0.0f;
+		} else {
+			JGeometry::TVec2<f32> avg;
+			avg.zero();
+
+			const JGeometry::TVec2<f32>* it2 = lgSunN()->unkF8;
+			const bool* it1                  = lgSunN()->unk180;
+			for (int i = 0; i < 17; ++i, ++it2, ++it1)
+				if (*it1)
+					avg += *it2;
+
+			f32 avgx = avg.x * (1.0f / (f32)thing);
+			f32 avgy = avg.y * (1.0f / (f32)thing);
+
+			f32 tx = CLBLinearInbetween(avgx, gpSunModel->unkF8[0].x,
+			                            dispRatio * 2.0f);
+			f32 ty = CLBLinearInbetween(avgy, gpSunModel->unkF8[0].y,
+			                            dispRatio * 2.0f);
+
+			u16 w  = SMSGetGameRenderWidth();
+			u16 h  = SMSGetGameRenderHeight();
+			f32 ax = tx * (w >> 1);
+			f32 ay = ty * (h >> 1);
+			lg->unk88  = ax - cx;
+			lg->unk8C  = ay - cy;
+		}
+	}
+
+	CLBChaseDecrease(&lg->unk80, lg->unk88, lg->unk90, 0.0f);
+	CLBChaseDecrease(&lg->unk84, lg->unk8C, lg->unk90, 0.0f);
+
+	lg->unk74.x = cx + lg->unk80;
+	lg->unk74.y = cy + lg->unk84;
+}
+
 void TLensGlow::perform(u32 cue, JDrama::TGraphics* graphics)
 {
 	bool inBounds = false;
@@ -156,50 +204,7 @@ void TLensGlow::perform(u32 cue, JDrama::TGraphics* graphics)
 
 		// Compute base screen-space center
 
-		f32 a  = lgSunN()->unkF8[0].x;
-		f32 cx = (f32)(SMSGetGameRenderWidth() >> 1) * a;
-		f32 b  = lgSunN()->unkF8[0].y;
-		f32 cy = (f32)(SMSGetGameRenderHeight() >> 1) * b;
-
-		if (thing == 0) {
-			unk8C = 0.0f;
-			unk88 = 0.0f;
-		} else {
-			if (dispRatio >= 0.5f) {
-				unk8C = 0.0f;
-				unk88 = 0.0f;
-			} else {
-				JGeometry::TVec2<f32> avg;
-				avg.zero();
-
-				const JGeometry::TVec2<f32>* it2 = lgSunN()->unkF8;
-				const bool* it1                  = lgSunN()->unk180;
-				for (int i = 0; i < 17; ++i, ++it2, ++it1)
-					if (*it1)
-						avg += *it2;
-
-				f32 avgx = avg.x * (1.0f / (f32)thing);
-				f32 avgy = avg.y * (1.0f / (f32)thing);
-
-				f32 tx = CLBLinearInbetween(avgx, gpSunModel->unkF8[0].x,
-				                            dispRatio * 2.0f);
-				f32 ty = CLBLinearInbetween(avgy, lgSunN()->unkF8[0].y,
-				                            dispRatio * 2.0f);
-
-				u16 w  = SMSGetGameRenderWidth();
-				u16 h  = SMSGetGameRenderHeight();
-				f32 ax = tx * (w >> 1);
-				f32 ay = ty * (h >> 1);
-				unk88  = ax - cx;
-				unk8C  = ay - cy;
-			}
-		}
-
-		CLBChaseDecrease(&unk80, unk88, unk90, 0.0f);
-		CLBChaseDecrease(&unk84, unk8C, unk90, 0.0f);
-
-		unk74.x = cx + unk80;
-		unk74.y = cy + unk84;
+		LGCalcCenter(this, thing, dispRatio);
 	}
 
 	if (cue & CUE_CALC_ANIM) {
@@ -217,8 +222,9 @@ void TLensGlow::perform(u32 cue, JDrama::TGraphics* graphics)
 	}
 
 	if ((cue & CUE_ENTRY) != 0 && inBounds) {
+		u16 i;
 		int matCount = unk10->getMaterialNum();
-		for (u16 i = 0; i < matCount; ++i) {
+		for (i = 0; i < matCount; ++i) {
 			J3DGXColorS10 c;
 			c         = *unk10->getMaterialNodePointer(i)->getTevColor(0);
 			c.color.a = (s16)unk48;
