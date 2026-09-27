@@ -618,6 +618,7 @@ void TKiller::behaveToWater(THitActor* water)
 // add-returning fork (+frame), getPosition().x raw (-8 frame).
 void TKiller::genEventCoin()
 {
+	f32 yaw;
 	MtxPtr spreadMtx;
 	int coinNum = 2;
 	if (mIsGold)
@@ -628,7 +629,7 @@ void TKiller::genEventCoin()
 	spreadMtx = spread;
 	for (int i = 0; i < coinNum; i++) {
 		offset.set(0.0f, 0.0f, 30.0f);
-		f32 yaw = 360.0f * (1.0f / coinNum) * (i + 1);
+		yaw = 360.0f * (1.0f / coinNum) * (i + 1);
 
 		f32 s        = JMASin(yaw);
 		f32 c        = JMACos(yaw);
@@ -646,8 +647,9 @@ void TKiller::genEventCoin()
 		spread[2][3] = 0.0f;
 		MTXMultVec(spreadMtx, (Vec*)&offset, (Vec*)&offset);
 
+		f32 killerPosX = KillerPosX(this);
 		TMapObjBase* coin = gpItemManager->makeObjAppear(
-		    KillerPosX(this) + offset.x, mPosition.y, mPosition.z + offset.z,
+		    killerPosX + offset.x, mPosition.y, mPosition.z + offset.z,
 		    0x2000000E, true);
 		if (coin) {
 			coin->mPosition.y = mPosition.y;

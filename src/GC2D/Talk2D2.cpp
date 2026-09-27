@@ -221,6 +221,18 @@ void TTalk2D2::load(JSUMemoryInputStream& stream)
 	mBoardCursorOn  = mBoardScreen->search('cs_1');
 }
 
+static inline const ResFONT* Talk2D2GetResFont()
+{
+	const ResFONT* r = gpSystemFont->getResFont();
+	return r;
+}
+
+static inline const u8* Talk2D2GetMessageData(TTalk2D2* self)
+{
+	const u8* r = self->mSysMessage->getMessageData();
+	return r;
+}
+
 // TODO: every instruction matches; the frame is 0x18 short (0x1d0 vs 0x1e8).
 // Retail's named arrays sit 0x14 higher and the conversion slots 0x18 higher,
 // so 0x14 is missing in the low temporaries and 4 above the name table.
@@ -231,7 +243,8 @@ void TTalk2D2::loadAfter()
 
 	// Walk the middle line's Bezier once at 1/100 steps; the reciprocal of
 	// its arc length is how far one pixel of glyph width advances t.
-	JUTPoint start(mBezierStart[1]->getBounds().x1,
+	const JUTRect& bounds = mBezierStart[1]->getBounds();
+	JUTPoint start(bounds.x1,
 	               mBezierStart[1]->getBounds().y1);
 	JUTPoint ctrl(0, mBezierCtrl[1]->getBounds().y1 - unk220);
 	JUTPoint end(mBezierEnd[1]->getBounds().x2 - 10,
@@ -262,7 +275,7 @@ void TTalk2D2::loadAfter()
 
 	for (int i = 0; i < CHAR_NUM; i++) {
 		mCharBox[i] = new J2DTextBox(0, JUTRect(0, 0, 20, 20),
-		                             gpSystemFont->getResFont(), "あ",
+		                             Talk2D2GetResFont(), "あ",
 		                             HBIND_LEFT, VBIND_CENTER);
 		mCharBox[i]->setFontSize(20, 24);
 		mCharBox[i]->setBlackWhite(0xffffff00, 0xffffffff);
@@ -291,7 +304,7 @@ void TTalk2D2::loadAfter()
 	select[93] = '\0';
 	mSelectTextBox->setString(select);
 
-	setupTextBox(mSysMessage->getMessageData(), mSysMessage->getMessageEntry(3));
+	setupTextBox(Talk2D2GetMessageData(this), mSysMessage->getMessageEntry(3));
 	mCurMessage = mSysMessage;
 
 	const char* names[10] = {

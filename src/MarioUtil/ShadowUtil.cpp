@@ -1311,9 +1311,10 @@ void TMBindShadowManager::drawShadow(u32 param_1, JDrama::TGraphics* param_2)
 void TMBindShadowManager::request(const TCircleShadowRequest& param_1,
                                   u32 param_2)
 {
+	f32 dist;
 	JGeometry::TVec3<f32> delta = param_1.mPosition;
-	delta -= gpCamera->unk124;
-	f32 dist = delta.squared();
+	delta -= gpCamera->getUnk124Vec();
+	dist = delta.squared();
 
 	f32 range = 6.0f;
 	if (param_1.mShadowType == SHADOW_TYPE_TREE)

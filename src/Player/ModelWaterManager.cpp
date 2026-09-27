@@ -1021,6 +1021,12 @@ void TModelWaterManager::drawTouchingMask()
 	}
 }
 
+static inline TSilhouette* ModelWaterGetSilhouette()
+{
+	TSilhouette* r = gpSilhouetteManager;
+	return r;
+}
+
 // TODO: 99.9%. Every instruction is right; the frame is 0x20 short (0x90 vs
 // 0xb0), a uniform 0x1c shift of every slot, so retail has inline
 // temporaries below the Mtx that this body does not expand.
@@ -1061,16 +1067,16 @@ void TModelWaterManager::drawSilhouette(MtxPtr param_1)
 	GXSetTevOp(GX_TEVSTAGE0, GX_PASSCLR);
 
 	SMS_SettingDrawShape(unk5D54, 0);
-	for (int i = 0; i < mParticleCount; ++i) {
-		if ((mParticleFlagSOA[i] & 0xf) == 2) {
+	for (int i = 0; i < getParticleCount(); ++i) {
+		if ((getParticleFlagSOA()[i] & 0xf) == 2) {
 			GXLoadPosMtxImm(unk2D14[i], GX_PNMTX0);
 			SMS_DrawShape(unk5D54, 0);
 		}
 	}
 
 	SMS_SettingDrawShape(unk5D58, 0);
-	for (int i = 0; i < mParticleCount; ++i) {
-		if ((mParticleFlagSOA[i] & 0xf) == 3) {
+	for (int i = 0; i < getParticleCount(); ++i) {
+		if ((getParticleFlagSOA()[i] & 0xf) == 3) {
 			GXLoadPosMtxImm(unk2D14[i], GX_PNMTX0);
 			SMS_DrawShape(unk5D58, 0);
 		}
@@ -1085,7 +1091,7 @@ void TModelWaterManager::drawSilhouette(MtxPtr param_1)
 	GXSetChanMatColor(
 	    GX_COLOR0A0,
 	    (GXColor) { 0xff, 0xff, 0xff,
-	                unk5D5D * (gpSilhouetteManager->unk48 / 256.0f) });
+	                unk5D5D * (ModelWaterGetSilhouette()->unk48 / 256.0f) });
 	GXSetBlendMode(GX_BM_BLEND, GX_BL_DSTALPHA, GX_BL_ZERO, GX_LO_NOOP);
 	if (unk5D60 & 0x20)
 		SMS_DrawCube(unk5D70, unk5D7C);
@@ -1974,7 +1980,7 @@ void TModelWaterManager::drawRefracAndSpec() const
 	unk5D34->load(GX_TEXMAP0);
 	unk5D38->load(GX_TEXMAP1);
 	unk5D3C->load(GX_TEXMAP2);
-	GXSetTevColor(GX_TEVREG0, (GXColor) { 0, 0, 0, getWaterAlpha() });
+	GXSetTevColor(GX_TEVREG0, (GXColor) { 0, 0, 0, unk5D65 });
 	GXSetNumTevStages(2);
 	GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR_NULL);
 	GXSetTevColorIn(GX_TEVSTAGE0, GX_CC_ZERO, GX_CC_ZERO, GX_CC_ZERO,
@@ -2000,7 +2006,8 @@ void TModelWaterManager::drawRefracAndSpec() const
 	GXSetColorUpdate(GX_TRUE);
 	GXSetAlphaUpdate(GX_FALSE);
 	GXSetDstAlpha(GX_FALSE, 0);
-	if (unk5D60 & 2)
+	u16 flags = unk5D60;
+	if (flags & 2)
 		unk5D30->draw();
 
 	GXSetNumIndStages(0);
