@@ -4,6 +4,14 @@ Written 2026-09-18 by the session that ran batches 92 to 181.
 Read this before `docs/ORCHESTRATION.md`; it is the judgement that document does not carry.
 Keep it current: every orchestrator appends a dated "State" entry below and rewrites the advice when it stops being true.
 
+## Known fakematch debt (flagged 2026-09-27, not yet removed)
+
+Agents this session found pre-existing constructs that break the no-fakematch rules; removing them may drop currently-exact functions, so they are listed for a deliberate cleanup pass rather than removed piecemeal:
+- pass-through binders that only return a global/member: `EventWatcherRawMSound`, `EventWatcherDirectorForTalkNPC` (EventWatcher), `TabePukuGetSaveParams`, `IgaigaGoroAt`/`IgaigaInitTracer`, `MapObjBallWaterDrag`, `CannonBody`, `NameKuriMSound`, the `ApplicationCrTimeAry1-3` chain, `lgSunN()` (lensglow), `CNParams` (CameraNormal), `KoopaGetParam` (Koopa);
+- empty/no-op statements: `if (mGroundPlane) { (void)mGroundPlane; }` in `TBaseNPC::bind`, `(void)&mtx;` in both JPADrawVisitor stripe draws (load-bearing: removing it costs 22 instructions), the empty `if (cue & CUE_MOVE) { }` in coasterkiller.cpp:89;
+- a no-op cast `(Vec*)&point` in `TGorogoroManager::initSetEnemies`.
+The rule for new work is in docs/agent-brief.md (no pass-through helpers).
+
 ## State 2026-09-27 night (session 5237deed, map + compiler-research round)
 
 All 72.72 -> 72.82% matched, 531/732 linked (MarNameRefGen linked), DOL identical, zero regressions.
