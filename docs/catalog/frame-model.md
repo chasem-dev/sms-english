@@ -202,3 +202,10 @@ Marker method: `int mk; extp(&mk);` declared first sits right above the dead reg
 - `TBGTentacle` ctor (open): the tree's usual `TIdxGroupObj* group = search<TIdxGroupObj>(...); group->getChildren().push_back(this);` in both inlined hit-actor constructors makes every slot uniformly 8 low (frame 0x198 vs 0x1a0), so retail has two more words below the push_back iterator chain; `group->push_back`, `.value`/`mParams` params and `mHitFlags &=` are worse.
   Spelling the `getInstance()->getRootNameRef()->search()` chain in the constructor moves the TNameRefGen binding up to the getChildren binding's level.
 - `TBGAttackHit::perform` (open): retail has one more word before each throwMario expansion's copy and 15 below; an attack-mode helper stops throwMario inlining (49%).
+
+## Refinements (unit agent c-e2, 2026-09-27)
+
+- **Pairing slots across the whole body.** When instructions match, pair every `(r1)`/`addi rX, r1` operand of ours with retail's on the same row and tag ours with the debugger's object names: sorted by our offset, `retail - ours` is constant inside a run and each step between consecutive objects is exactly the extra bytes retail created between them (a negative step is an object retail created elsewhere). `setupObjects` read that way: no dead `cam` word, one more word beside `measurementGroup`, the `GXTexObj` copy below the PerformLists streams (a temporary, not a named local), and 0xf8 below every object we have.
+- **Unnaming a local removes its slot but can add an IRO temp.** Dropping `setupObjects`' dead `cam` (a store base) freed its word and shifted every object below it by 4, frame unchanged (rule 8).
+- **An accessor instead of a raw member can remove a result copy.** `TWaterGun::init`'s `mMario->mModel->unk8->getAnmMtx(i)` made a copy (`add r5; mr r24, r5`); `->getModel()->getAnmMtx(i)`, the spelling the rest of the body uses, computes straight into the local and is +0x10 frame toward retail.
+- **A `new` result passed straight to a call is copied with `addi rD, rS, 0`; through a named local it is `mr`** (`setModel(new J3DModel(...), 0)` in `TWaterGun::init`).
