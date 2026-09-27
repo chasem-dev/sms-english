@@ -636,8 +636,11 @@ void TMapObjBase::concatOnlyRotFromRight(MtxPtr param_1, MtxPtr param_2,
 }
 
 // TODO: frame 0x90 vs retail 0x80; the rotation body is exact up to
-// registers. Spelling TRotation3::setRotate without its mul() temporary
-// gives 0x78, so retail's setRotate keeps 8 of those 16 bytes.
+// registers. iro.py: the extra words are three S temporaries (scalar
+// replacement of setRotate's f2f3f0 mul() TVec3). Header setRotate with named
+// f32 squares and `(1.0f - f1)` unnamed lands the frame (99.3%, x/z CSE webs
+// f5/f7 swapped) but drops both weak setRotate copies 100 -> 98.6, so not made.
+// Inert or worse: TRotation3f locals/ctor, identity33, member reads for src.
 void TMapObjBase::makeMtxRotByAxis(const JGeometry::TVec3<f32>& param_1,
                                    f32 param_2, MtxPtr param_3)
 {
@@ -1156,7 +1159,8 @@ void TMapObjTurn::turn()
 // MsWrap store) rather than before the switch, and its frame is 0x10 larger in
 // the dead low region below the case-2 yRot block. Worse or inert (c-mbg):
 // `mtx` passed directly (91.5), `ptr = mtx;` inside each case (94.2), a
-// TMtx34f matrix (96.2), one function-scope yRot (frame 0x100).
+// TMtx34f matrix (96.2), one function-scope yRot (frame 0x100), a block-local
+// `MtxPtr p = mtx` in cases 0/2 with case 1 on `mtx` (94.2).
 void TMapObjTurn::control()
 {
 	TMapObjBase::control();
