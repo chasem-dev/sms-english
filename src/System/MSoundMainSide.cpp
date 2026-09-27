@@ -915,13 +915,9 @@ void MSStageCubeFade::proc()
 
 void MSStageCubeFade::setBgmVolumeForce()
 {
-	s32 r30 = gpCubeSoundChange->getInCubeNo(MSGetEarPos(*gpMarioPos));
+	s32 r30 = gpCubeSoundChange->getInCubeNo(MSGetEarPos(SMS_GetMarioPos()));
 
-	f32 fVar1;
-	if (r30 != -1)
-		fVar1 = calcParamRatioInCube(r30);
-	else
-		fVar1 = 0.0f;
+	f32 fVar1 = r30 != -1 ? calcParamRatioInCube(r30) : 0.0f;
 
 	gpMSound->unk9C->xFadeBgmForce(fVar1);
 }
@@ -1064,33 +1060,30 @@ static inline TCubeGeneralInfo* getSoundCube(s32 id)
 // UNUSED, 0x108: inlined into all four callers (proc, MSStageCubeFadeMonte and
 // MSStageCubeFadeDouble's procs and setBgmVolumeForce).
 //
-// TODO: every caller's frame is still short of the ROM's (setBgmVolumeForce
-// 0x90 vs 0xa0, the procs 0x80-0xc0 short), and setBgmVolumeForce's result
-// `fmr` sits inside the ratio branch instead of after the join (retail keeps
-// the result in f0 for all callers; a result flag, a ternary, the inverted
-// test or an early `ratio` declaration all leave it in f1). The named dx/dz
-// give retail's x-before-z fabs order.
+// The named dx/dz give retail's x-before-z fabs order; declared ahead of the
+// ratios they sit below them in the frame. The ternary `ratio` (with the
+// caller's ternary) keeps the result in f0 up to the caller's join.
+// TODO: the three procs' frames are still 0x80-0xc0 short of the ROM's.
 f32 MSStageCubeFade::calcParamRatioInCube(s32 id)
 {
+	f32 dx;
+	f32 dz;
 	f32 ratioX = 0.0f;
 	f32 ratioY = 0.0f;
 	f32 ratioZ = 0.0f;
 
 	Vec local_68 = *gpMarioPos;
-	local_68.y = 75.0f + getSoundCube(id)->unkC.y;
+	TCubeGeneralInfo* cube = getSoundCube(id);
+	local_68.y = 75.0f + cube->unkC.y;
 
 	gpCubeSoundChange->calcPointInCubeRatio(local_68, id, &ratioX,
 	                                        &ratioY, &ratioZ);
 
-	f32 dx    = std::fabs(ratioX - 0.5f);
-	f32 dz    = std::fabs(ratioZ - 0.5f);
+	dx        = std::fabs(ratioX - 0.5f);
+	dz        = std::fabs(ratioZ - 0.5f);
 	f32 fVar2 = std::max(dx, dz);
 
-	f32 ratio;
-	if (fVar2 < unkC)
-		ratio = 1.0f;
-	else
-		ratio = (0.5f - fVar2) / (0.5f - unkC);
+	f32 ratio = fVar2 < unkC ? 1.0f : (0.5f - fVar2) / (0.5f - unkC);
 	return ratio;
 }
 
