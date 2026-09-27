@@ -529,27 +529,29 @@ BOOL TKoopaFlame::receiveMessage(THitActor*, u32 message)
 	return TRUE;
 }
 
-// TODO: 18.3%. Retail `bl`s TKoopa::changeAnm from here while MWCC expands it,
-// and this is a *per-site* refusal, not a budget: seven extra zero-codegen
-// statements in changeAnm take this function from 18.4% to 99.8% and leave
-// changeAnm itself byte-exact, but they also turn changeAnm into a call in
-// every other site in the TU and cost eleven functions their match (Wait,
-// Tumble, Fall, Flame, Provoke, Stagger, GetShowered, GetDown, init, reset:
-// the unit drops 85.1 -> 76.1). So retail inlines the same 8-statement body
-// everywhere else and calls it only here -- the emergent per-expansion class
-// of docs/catalog/codegen-tells.md "round 38" (SMS_getShineID in
-// TSelectMenu::perform), not a statement count. The r30/r31 inversion below
-// (retail ranks the `other` parameter above `this`) is a second, independent
-// residue.
+// A binder over the UNUSED getParam(): its extra level is 8 bytes of low
+// region at each of attack_'s two param reads.
+static inline TKoopaParams* KoopaGetParam(const TKoopa* koopa)
+{
+	TKoopaParams* param = koopa->getParam();
+	return param;
+}
+
+// Retail `bl`s changeAnm only from attack_: this helper is the inline level
+// above that one site (measured: without it MWCC expands changeAnm here).
+static inline void KoopaFireEnd(TKoopa* k)
+{
+	k->changeAnm(KOOPA_ANM_FIRE_END, 0, KoopaGetParam(k)->fireSpeed.get());
+}
+
 void TKoopaFlame::attack_(THitActor* other)
 {
 	if (other->receiveMessage(this, HIT_MESSAGE_UNKA)
 	    && other == (THitActor*)gpMarioAddress) {
-		f32 jump = mOwner->getParam()->flameJump.get();
+		f32 jump = KoopaGetParam(mOwner)->flameJump.get();
 		SMS_ThrowMario(JGeometry::TVec3<f32>(0.0f, 1.0f, 0.0f), jump);
 		mOwner->mLaughPending = true;
-		mOwner->changeAnm(KOOPA_ANM_FIRE_END, 0,
-		                  mOwner->getParam()->fireSpeed.get());
+		KoopaFireEnd(mOwner);
 		mOwner->mWaitTimer = 240;
 	}
 }
@@ -1332,12 +1334,6 @@ const char** TKoopa::getBasNameTable() const { return koopa_bastable; }
 MtxPtr TKoopa::getHeadMtx() const
 {
 	return getMActor()->getModel()->getAnmMtx(mHeadJntIndex);
-}
-
-static inline TKoopaParams* KoopaGetParam(const TKoopa* koopa)
-{
-	TKoopaParams* param = koopa->getParam();
-	return param;
 }
 
 void TKoopa::reset()
