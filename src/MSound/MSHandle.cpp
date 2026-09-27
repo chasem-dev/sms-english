@@ -239,7 +239,11 @@ void MSHandle::setSeDistanceVolume(u8 moveTime)
 
 	f32 volume;
 	if (!(swBit & JAISeSwBit_NoDistanceVolume)) {
-		// TODO: inline?
+		// TODO: registers only: get_thing's `>> 30` (@579) takes r3 where
+		// retail has r5, i.e. retail keeps getSwBit's r3 (or the call's
+		// receiver) live across it before the first scheduling pass. Inert:
+		// the shift inline in the call (reorders), a named get_thing index,
+		// a named getSwBit copy (adds a copy).
 		u32 tmp = getSwBit() >> JAISeSwBit_DistanceVolumeCurveShift & 0x7;
 		volume = setDistanceVolumeCommon(
 		    smSeCategory[get_thing(getID())].unk4, tmp);

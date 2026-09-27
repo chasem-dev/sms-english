@@ -339,6 +339,11 @@ void JPAVortexField::set()
 // z,y,x / y,x,z / field-wise or via the 3-float ctor, the blend's operands
 // swapped or `1 - ratio` named, a named dot, a copy or reference localPos,
 // thing3 normalised in place, and localPos reused as thing3.
+// Register model (c-g4): thing3.z is the IRO temp @1329 with remaining degree
+// 31 when the first simplify sweep reaches it (fVar1, ratio and three lower
+// IRO temps already pushed), so it is coloured after fVar2; retail defers it
+// to the second sweep (one more neighbour, or one fewer lower-numbered one).
+// Inert: `ratio` reused for the clamp, fVar2 declared then assigned.
 void JPAVortexField::affect(JPAParticle* particle)
 {
 	JGeometry::TVec3<f32> localPos;
