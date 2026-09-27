@@ -231,16 +231,14 @@ TTabePuku::TTabePuku(const char* name)
 	onLiveFlag(LIVE_FLAG_UNK1000);
 }
 
-// TODO: SMS_Eular2Quat's return slot is 4 bytes high (0x2c, retail 0x28): a
-// codeless low slot before initParams. Inert or worse: `mQuat =`, a named
-// quat, raw/accessor mPosition and mRotation, live_manager->manageActor.
 void TTabePuku::init(TLiveManager* live_manager)
 {
 	mManager = live_manager;
 	mManager->manageActor(this);
 	setMActorAndKeeper();
 
-	mSpine->initWith(&TNerveTabePukuGraphWander::theNerve());
+	TNerveBase<TLiveActor>* nerve = &TNerveTabePukuGraphWander::theNerve();
+	mSpine->initWith(nerve);
 
 	initCollision();
 	initParams();
