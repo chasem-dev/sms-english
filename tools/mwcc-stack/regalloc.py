@@ -14,6 +14,10 @@ MWCC's colouring order, and then (options):
   --search N        try moving each differing web to positions 0..N (and last)
   --move V:bW,...   move web V before (bW) / after (aW) web W, or to index N
   --drop V:U,U;...  delete interference edges V-U, re-run simplify and colour
+  --why V           web V's remaining degree when the first simplify sweep
+                    reaches it, and which lower-numbered neighbours were pushed
+                    before it (a web deferred past that sweep is coloured
+                    before every web pushed in it)
 Retail registers are recovered per web by aligning the dump's pcode with
 decomp-diff's target column, so a few volatile webs may be unmatched.
 """
@@ -127,6 +131,7 @@ def main():
     ap.add_argument("--search", type=int)
     ap.add_argument("--move")
     ap.add_argument("--drop")
+    ap.add_argument("--why", type=int)
     a = ap.parse_args()
     c = "r" if a.cls == "gpr" else "f"
 
@@ -210,6 +215,20 @@ def main():
                     found.append((m, v, pos[v], p))
         for m, v, s, p in sorted(found)[:15]:
             print(f"move {c}{v} {allg[v]['name']} from {s} to {p}: misses {m}")
+    if a.why is not None:
+        v, deg, pushed = a.why, {x: len(n["nb"]) for x, n in allg.items()}, []
+        for x in sorted(allg):
+            if x == v:
+                break
+            if "fCoalesced" not in allg[x]["flags"] and deg[x] < K[c]:
+                pushed.append(x)
+                for u in allg[x]["nb"]:
+                    if u in deg:
+                        deg[u] -= 1
+        print(f"{c}{v} {allg[v]['name']}: degree {len(allg[v]['nb'])}, {deg[v]} left at its "
+              f"first-sweep turn (K {K[c]}): {'deferred' if deg[v] >= K[c] else 'pushed'}")
+        print("  lower neighbours pushed before it:",
+              " ".join(f"{c}{x}({allg[x]['name'] or '-'})" for x in pushed if v in allg[x]["nb"]))
     if a.drop:
         g = copy.deepcopy(allg)
         for part in a.drop.split(";"):

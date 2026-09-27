@@ -26,6 +26,9 @@ For every function measured so far, 1.1 gives the same frames as our GC/1.2.5 (j
     An `@NNN` that is absent from `frontend-00` was created by the optimiser.
 - `regalloc.py DUMPDIR UNIT SYMBOL [gpr|fpr]` replays MWCC's register colouring from a `dbg.sh` dump and lists the webs whose register differs from retail, with options to test a colouring order or removed interference edges.
   The model it implements is `docs/catalog/register-model.md`.
+  `--why V` prints web V's remaining degree when the first simplify sweep reaches it and the lower-numbered neighbours pushed before it.
+- `regsweep.py LIST OUTDIR` dumps every function of a TSV (unit, mangled symbol) with the unit's own flags, one debugger at a time, and runs `regalloc.py --search` on both register classes; `--report` ranks the rows with a single-move fix and an equal frame first, each fix annotated with its `--why` count.
+  Runs of other debugger users share the gdb stub's port, so a dump that loses the connection is retried; `--resume` re-runs only the failed ones.
 - `census.py [out.tsv]`: classifies every function of every source-built unit.
   The classes are `exact`, `frame` (equal modulo `r1` displacements, but the frame differs), `slots` (same frame, but `r1` offsets differ) and `other`.
   It takes about 8 s after a full build.
