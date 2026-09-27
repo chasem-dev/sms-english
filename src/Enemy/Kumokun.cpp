@@ -404,10 +404,10 @@ bool TKumokun::checkOnMovingFloor(JGeometry::TVec3<f32>* param_1,
 	return uVar7;
 }
 
-// TODO: the inline temporaries (getPlaneNormal copies, the wall record) sit
-// 4 low, and retail loads mHeadHeight after the `dVar10 - yTmp` subtraction
-// (spelling it `dVar10 - yTmp > mHeadHeight` fixes the registers but flips
-// the branch).
+// TODO: every inline object (getPlaneNormal copies, the wall record and the
+// bindings below it) sits 4 low: retail has one more word created after the
+// wall record. Inert: `*param_1 -= param_3`, `local_A8.sub(local_C0)`,
+// `scale()`, `if (*param_2)`, SMSGetMap(), roof declared first.
 bool TKumokun::checkOnMovingRoof(JGeometry::TVec3<f32>* param_1,
                                  const TBGCheckData** param_2,
                                  const JGeometry::TVec3<f32>& param_3,
@@ -435,7 +435,7 @@ bool TKumokun::checkOnMovingRoof(JGeometry::TVec3<f32>* param_1,
 	dVar10 -= 1.0f;
 	if (yTmp > dVar10 - 0.05f) {
 		local_A8.y = dVar10;
-	} else if (mHeadHeight < dVar10 - yTmp) {
+	} else if (dVar10 - yTmp < mHeadHeight) {
 		local_A8.y = dVar10;
 	} else {
 		uVar7 = true;
