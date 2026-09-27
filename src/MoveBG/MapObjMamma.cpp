@@ -281,21 +281,13 @@ void TSandBombBase::withered()
 	mTrigger->sleep();
 }
 
-// One inline level above getMActor(): TSandCastle::expanded, which inlines
-// TSandBombBase::expanded, then `bl`s it as retail does, while every direct
-// SandBombAddFrame site still expands it.
-static inline MActor* SandBombGetMActor(const TLiveActor* actor)
-{
-	return actor->getMActor();
-}
-
 // Advances one of a sand bomb's frame controls by `speed`. Retail's f31/f30
 // order (the speed binding first, the inlined getFrame() second) needs the
 // speed to be this helper's argument rather than a named local of the caller.
 static inline void SandBombAddFrame(TLiveActor* actor, int ctrl, f32 speed)
 {
-	SandBombGetMActor(actor)->getFrameCtrl(ctrl)->setFrame(
-	    speed + SandBombGetMActor(actor)->getFrameCtrl(ctrl)->getFrame());
+	actor->getMActor()->getFrameCtrl(ctrl)->setFrame(
+	    speed + actor->getMActor()->getFrameCtrl(ctrl)->getFrame());
 }
 
 static inline bool SandBombIsSandBomb(const TSandBombBase* p)
@@ -542,6 +534,9 @@ bool TSandCastle::withering()
 	return false;
 }
 
+// TODO: 90.7%, frame-exact. Retail inlines TSandBombBase::expanded but calls
+// TLiveActor::getMActor() out of line at both of SandBombAddFrame's sites
+// (inline depth 3 here); ours expands it. Inert: TU-local getMActor binders.
 void TSandCastle::expanded()
 {
 	TSandBombBase::expanded();
