@@ -2,7 +2,7 @@
 
 The thirty levers that close most near-exact functions, condensed from `RULES.md`.
 Read this card; grep `RULES.md` (518 one-line rules) only for a tell this card does not cover, and open a topic file only at the section a rule names.
-Run `tools/lever-search.py -u <unit> -f <symbol>` before trying anything by hand: it already tries levers 8-17 mechanically.
+Run `tools/lever-search.py -u <unit> -f <symbol>` before trying anything by hand: it already tries levers 8-17 mechanically, plus the frame-model levers (rotation helpers, file-scope colours, UNUSED stubs, chain-end binders, converting and read naming, declaration hoists, TVec3 ctor/set, indexed accessors and per-site subsets). Its `fork` and `name-call` parameter binds produce most implausible exact results: review every winner by eye.
 Prices are per site unless stated; always measure, since every price below has exceptions.
 
 ## Diagnose first
