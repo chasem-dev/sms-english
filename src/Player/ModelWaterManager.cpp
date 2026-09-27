@@ -44,7 +44,8 @@ GXColor gModelWaterManagerWaterColor[4] = {
 // frame 0xb0 vs 0x80. Since TVec3's copy constructor became `: Vec(other)`
 // retail's copy of each temporary into TParamVec's by-value parameter
 // (0x70 -> 0x34) elides here; that is a ParamInst.hpp question, not this
-// unit's. Defaults for mHitRadius/mHitHeight are 50/80 (the
+// unit's (TParamVec taking `const TVec3&`, or forwarding an explicit copy,
+// is inert). Defaults for mHitRadius/mHitHeight are 50/80 (the
 // @4623/@4624 literals), matching TNozzleBase and the static hit actor.
 TWaterEmitInfo::TWaterEmitInfo(const char* name)
     : TParams(name)

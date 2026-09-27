@@ -50,7 +50,8 @@ public:
 		// but the one fmuls still has its operands commuted: retail is
 		// (conversion, constant), ours (constant, conversion) whichever side
 		// the constant is written on, and moving the multiply after t or amp
-		// is worse (93.8).
+		// is worse (93.8). `angle = (f32)i * k` in one statement gets the
+		// operand order but swaps f1/f2 (conversion lands in f1).
 		f32 t;
 		f32 angle;
 		f32 amp;

@@ -676,7 +676,8 @@ void JPABaseEmitter::calcCurrentRateTimerStep()
 
 // TODO: instruction-exact; get_ufloat_1's `s` slot sits at 0x2c (retail
 // 0x24). Inert: raw mRng read, forks over getRandomRF/mChildSpawnRate,
-// eio as JPAGetEmitterInfoPtr() or declared first, `-=` timer spellings.
+// eio as JPAGetEmitterInfoPtr() or declared first, `-=` timer spellings,
+// no eio, getRandomRF spelled out; raw mStatus/mEmitFlags tests are worse.
 int JPABaseEmitter::calcCreateParticle()
 {
 	int numToCreate = 0;
