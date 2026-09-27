@@ -11195,12 +11195,10 @@ void TMapObjBase::initActorData()
 		unkE8 = 2;
 }
 
-// TODO: frame 0x10 short, and the inlined J3DTexture::setResTIMG schedules
-// `addi r5` before the offset load (header body; a local += fork is worse).
 void TMapObjBase::initMapObj()
 {
-	mInitialPosition = mPosition;
-	mInitialRotation = mRotation;
+	mInitialPosition = getPosition();
+	mInitialRotation = getRotation();
 	mInitialScaling  = mScaling;
 
 	initActorData();
@@ -11223,7 +11221,7 @@ void TMapObjBase::initMapObj()
 		    "スクリーンテクスチャ");
 		const ResTIMG* img = ref->getTexture()->getTexInfo();
 		getModel()->getModelData()->getTexture()->setResTIMG(2, *img);
-		mMActor->setLightType(LIGHT_TYPE_INDIRECT);
+		getMActor()->setLightType(LIGHT_TYPE_INDIRECT);
 	}
 
 	makeObjDead();
