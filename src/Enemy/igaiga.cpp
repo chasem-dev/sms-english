@@ -1377,31 +1377,9 @@ void TGorogoro::walkBehavior(int param_1, f32 param_2)
 	}
 }
 
-// Binding level unique to TGorogoro::flagJump so it does not share a
-// family with TRollEnemy::flagJump's IgaigaJumpTracer.
-static inline TGraphTracer* IgaigaGoroJumpTracer(TGorogoro* p)
-{
-	TGraphTracer* tracer = p->getTracer();
-	return tracer;
-}
-
-void TGorogoro::flagJump()
-{
-	JGeometry::TVec3<f32> target;
-	IgaigaGoroJumpTracer(this)->getCurrent().getPoint((Vec*)&target);
-	mPosition.y += 30.0f;
-
-	f32 speed = IgaigaGoroJumpTracer(this)->unkC;
-	JGeometry::TVec3<f32> vel
-	    = calcVelocityToJumpToY(target, speed, getGravityY());
-	unk1A8    = 1;
-	mVelocity = vel;
-	onLiveFlag(LIVE_FLAG_AIRBORNE);
-	// TODO: frame-exact; target and the jump-velocity return sit in
-	// each other's slots. Declaring vel first then assigning moves the
-	// copy and is worse; vel(calc(...)), a const-ref bind and assigning
-	// mVelocity directly are inert or worse.
-}
+// Retail's body is TRollEnemy::flagJump expanded one inline level down, which
+// is what puts the velocity return above the jump target.
+void TGorogoro::flagJump() { TRollEnemy::flagJump(); }
 
 void TGorogoro::setDeadAnm()
 {
