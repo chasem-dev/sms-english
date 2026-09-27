@@ -80,8 +80,13 @@ f32 TSplineRail::wrapT(f32 param_1)
 	return param_1;
 }
 
-// TODO: you'd think this is correct, but the size is wrong...
-f32 TSplineRail::getNthT(int n) { return unk0->mParametrization[n]; }
+// 0x24 in the map: a looped rail's parameter table carries a leading guard
+// point, so the looped index is shifted by one here (the tracers' general
+// cases rely on it; their loop-seam cases read the path's table directly).
+f32 TSplineRail::getNthT(int n)
+{
+	return unk0->getNthT(unk4 ? n + 1 : n);
+}
 
 JGeometry::TVec3<f32> TSplineRail::getPosition(f32 t)
 {
@@ -977,11 +982,10 @@ f32 TGraphTracer::calcSplineSpeed(f32 param_1)
 	// temporary (p at 0x88 copied to 0x100, then `-=`), which this spelling
 	// reproduces, but it builds v1 straight from the first getPoint's `p`
 	// (0x9c -> 0x10c) where we copy through a return temporary. Retail's frame
-	// is 0x158 against our 0xc8, with 0x58 bytes unused between the two
+	// is 0x158 against our 0x100, with 0x58 bytes unused between the two
 	// point blocks, so a missing inline level holds the rest. Taking VECMag of
-	// the `getPoint() -= getPoint()` temporary is worse (-3pp). The
-	// fVar1/fVar2 FPR pair is also swapped (retail colours the
-	// second-computed f0); declaration order does not move it. Neither an
+	// the `getPoint() -= getPoint()` temporary is worse (-3pp). (The FPR
+	// swap closed with the map-sized getNthT; frame now 0x100.) Neither an
 	// indexToPoint() spelling (frame 0xf0/0x100), a named second point, nor
 	// `operator-` (worse) reaches retail's layout.
 	JGeometry::TVec3<f32> v1 = unk0->unk0[mCurrIdx].getPoint();
@@ -994,21 +998,14 @@ f32 TGraphTracer::calcSplineSpeed(f32 param_1)
 	f32 fVar1;
 	f32 fVar2;
 	if (isLoop && mPrevIdx == unk0->unk8 - 1 && mCurrIdx == 0) {
-		fVar1 = rail->getNthT(0);
-		fVar2 = rail->getNthT(1);
+		fVar1 = rail->unk0->getNthT(0);
+		fVar2 = rail->unk0->getNthT(1);
 	} else if (isLoop && mPrevIdx == 0 && mCurrIdx == unk0->unk8 - 1) {
-		fVar1 = rail->getNthT(unk0->unk8 + 1);
-		fVar2 = rail->getNthT(unk0->unk8);
+		fVar1 = rail->unk0->getNthT(unk0->unk8 + 1);
+		fVar2 = rail->unk0->getNthT(unk0->unk8);
 	} else {
-		u32 uVar10 = mPrevIdx;
-		if (isLoop)
-			uVar10 += 1;
-		fVar1 = rail->getNthT(uVar10);
-
-		u32 uVar7 = mCurrIdx;
-		if (isLoop)
-			uVar7 += 1;
-		fVar2 = rail->getNthT(uVar7);
+		fVar1 = rail->getNthT(mPrevIdx);
+		fVar2 = rail->getNthT(mCurrIdx);
 	}
 
 	return param_1 * (fVar2 - fVar1) / fVar13;
@@ -1024,29 +1021,14 @@ BOOL TGraphTracer::traceSpline(f32 param_1)
 
 	f32 dVar10;
 	if (unk0->getSplineRail()->isUnk4() && mPrevIdx == unk0->unk8 - 1 && mCurrIdx == 0) {
-		dVar10 = unk0->unk14->getNthT(unk0->unk8 + 1);
+		dVar10 = unk0->unk14->unk0->getNthT(unk0->unk8 + 1);
 	} else if (unk0->getSplineRail()->isUnk4() && mPrevIdx == 0
 	           && mCurrIdx == unk0->unk8 - 1) {
-		dVar10 = unk0->unk14->getNthT(unk0->unk8);
+		dVar10 = unk0->unk14->unk0->getNthT(unk0->unk8);
 	} else {
-		u32 uVar7 = mCurrIdx;
-		if (unk0->getSplineRail()->isUnk4())
-			uVar7 += 1;
-		dVar10 = unk0->getSplineRail()->getNthT(uVar7);
+		dVar10 = unk0->getSplineRail()->getNthT(mCurrIdx);
 	}
 
-	// TODO: the special-case indices are retail's (getNthT(unk8 + 1) and
-	// getNthT(unk8), offsets 0x68/0xa8; the old mPrevIdx spelling scored
-	// 99.42 but read the wrong nodes). Left: an r4/r5 swap of unk0 and its
-	// rail; rail locals, accessor sites and operand order are inert.
-	// Also inert: `== nullptr`, getSplineRail() in the guard, a named isLoop
-	// BOOL (+8 frame), getNodeNum() for unk8.
-	// Register model (c-g4): unk0 and its rail are IRO CSE temps (@1034,
-	// @1033) and the rail's is created first, so it is coloured first and
-	// takes r4; retail needs unk0's created first (replay: move @1034 before
-	// @1033 gives retail exactly). A named rail or web does it but drops the
-	// accessors' dead objects (frame 0x58/0x80); a named guard-only rail is
-	// propagated away (byte-identical).
 	BOOL result;
 	if ((param_1 >= 0.0f && dVar8 <= dVar10 && dVar10 <= dVar9)
 	    || (param_1 < 0.0f && dVar9 <= dVar10 && dVar10 <= dVar8)) {
