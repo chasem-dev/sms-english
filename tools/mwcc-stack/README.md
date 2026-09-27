@@ -34,3 +34,6 @@ For every function measured so far, 1.1 gives the same frames as our GC/1.2.5 (j
 - `inv.py`: for every source-built function with the same instruction count as retail, counts the stack-object pairs retail orders the reverse of ours (`reversed/total  unit  symbol`).
   A block whose objects are reversed was an inlined callee in retail; see `docs/catalog/frame-model.md`.
 - `ns.py UNIT SYMBOL [-v]`: counts the diff lines that are not pure `r1` offset differences, so register and instruction gains are visible under a frame gap.
+- `patch-debugger.py MWCC_DEBUGGER_PY` patches a copy of the debugger so every dump also writes `names.txt` (which compiler pass made each `@NNN`).
+- `iro.py DUMPDIR` tags each local of a patched dump as named, inliner object or IR-optimiser temporary (F/P/S/L/C), counts dead words per kind and attributes each F/P temporary to its source line.
+  The kinds are described in `docs/catalog/frame-model.md` ("IRO temporaries").

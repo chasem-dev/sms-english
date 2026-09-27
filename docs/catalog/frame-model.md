@@ -416,3 +416,35 @@ Marker method: `int mk; extp(&mk);` declared first sits right above the dead reg
 - The chained `search<TIdxGroupObj>(...)->getChildren().push_back(x)` sites (`TPoiHana::init`, `TBEelTearsDrop`, `TAmiNoko::init` via `TAmiHit`, `TMapObjBase::initAndRegister`) share one residue: retail creates the search's `TNameRefGen` binder before the insert temps, and ours creates it after them.
   The two-line `TIdxGroupObj* group = search<>(...); group->getChildren().push_back(x);` form gives retail's order at every site, but the optimizer-temp count at the bottom is then off by -1 (poihana, TBEelTearsDrop, amiNoko) or +2 (MapObjBase), so none is committed.
   A direct `getInstance()->getRootNameRef()->search()` does the same with a different temp count, and a named list reference fixes the depth-2 pair but drops the depth-1 pair by 4.
+
+## IRO temporaries: which expressions make them (research c-r5, 2026-09-27)
+
+- **Tooling.** `tools/mwcc-stack/patch-debugger.py` patches a copy of `mwcc_debugger.py` to break on MWCC's unique-name generator (`@NNN`) and write `names.txt`: every compiler name made while the dumped function compiles, with its phase (inliner or IR optimiser) and the stack's return addresses.
+  `tools/mwcc-stack/iro.py DUMPDIR` then tags every local of `variables.txt` as named, inliner object, or IRO temporary of a given kind, counts the dead words per kind, and pairs each F/P temporary with the `EFORCELOAD`/`ECOMMA` node and source line of `frontend-00` that made it (exact on every function tried except loop conditions with nested commas).
+  The kind comes from which GC/1.1 IRO routine called the temp-object constructor; the addresses are in `iro.py`.
+- **The kinds, all created inside the IR optimiser, so all below every inliner object (rule 7), in this order:**
+  1. **F, forced load (`EFORCELOAD`).** One per expansion of a value-returning inline in a value context, one per level for nested accessors (`(T*)Base::f()` or JSUList `getFirst()` is two; a JGadget `*it` is two).
+     None when the call is itself a condition (`if (f())`, `!f()`, `switch (f())`, `f() && ...`), when the body returns a constant, or when the body has control flow (the inliner's result object replaces it).
+  2. **P, comma value (`ECOMMA`).** One per inline expansion that is a comma in a value context: any non-simple argument or receiver (its binding is the comma's left side) or a statement body.
+     Commas on the discarded side of another comma mostly make none.
+  3. **S, scalar replacement.** A small class local or temporary used only through its members (a `TVec3` copy read by component, a JGadget iterator, a by-value `TFlagT`) gets one temporary per data member, and the object keeps its own slot: `TVec3 v(m); f = v.x;` is 3 + 3 words.
+  4. **L, loop unrolling.** Two per unrolled constant-count loop; a fully unrolled loop also leaves its counter dead (3 words), a partly unrolled one (16 iterations) only the two.
+  5. **C** (common subexpressions), **T** (`?:` values), **B** (`&&`/`||` values): register-allocated in every case measured, so they cost no slot.
+- **Which F/P temporaries die.** The same rule as bindings (rule 4): a temporary whose single use is a store value, a store base, a compare, an index or another inline's argument binding is copy-propagated away and keeps a slot of its type's size (1 for `bool`, 2 for `s16`).
+  It survives in a register when the value is directly an out-of-line call's argument (also inside arithmetic, `ext(f() + 1)`) or receiver, is used twice, or is live across a call.
+  With `int v = f(); g1 = v; g2 = v;` the named `v` dies (a slot at the top) and F carries the value; with a single store both die.
+- **So rule 5's "result objects" are these temporaries,** and they are not beside their expansion's bindings but at the bottom of the frame, in statement order.
+  Measured per site (4-byte words): `g = a->get()` 1 (F); `g = ga->get()` 3 (binding, F, P); `ext(ga->get())` 2 (binding, F; P lives); `if (ga->get())` 1 (binding only); `g = a->next()->get()` 4 (binding, F, F, P); `a->next()->y = 1` 1; `if (a->get() == 3)` 1; `if (a->get())` 0.
+  The register model's "IRO split temporaries" (a named local replaced by `@N`) are F temporaries taking over an inline's result.
+- **Reading a bottom residue.** When every accessed slot and the saved registers shift by the frame difference, the missing or extra words are all created after the last accessed object, which is IRO territory: count the dead F/P/S/L words with `iro.py` and look for the spelling that changes that count, not for an inline level.
+  Levers that change only the bottom, one word each unless noted: an accessor for a raw member read in a value context (+1 F; +2 or +3 with a non-simple receiver), `x == 0` against `!x` on an inline result (1), a direct call argument against a stored or compared result (1), a class copy read by component against direct member reads (3 per `TVec3`), a constant loop against written-out statements (3).
+  69 `frame` functions show this pure-bottom shape (every slot delta equal to the frame delta; 7 of them ours longer), among them `jumpingBasic` (18 words), `getSlideStickMult` (6), `TNerveCannonOpen` (2-3), `MSRandVol`/`MSRandPlay` ctors (1-2), `startSoundActorInner` (1-2), `deleteAllParticle` (-2) and `TNerveBWWakeup` (-4).
+- **Closed with it:** `TMammaMirrorMapOperator::TMammaMirrorMapOperator` (8 long, no stack use): its three-iteration `mMirrorPos[i].zero()` loop was fully unrolled and kept `i` and two L temporaries dead; the three statements written out are byte-exact.
+  The eight-iteration joint loop stays a loop: the function is byte-exact with its three words kept.
+- **Readings, not closed:**
+  - `deleteAllParticle`: nine dead F (two per `getFirst()`, one per `getNext()`), and retail has one or two fewer; reading `mNext` raw lands the frame but changes code, the loop spellings are inert.
+  - `TNerveBWWakeup`: `!spine->getTime()` and a raw `mMActor->curAnmEndsNext()` each drop one F (0x58 to 0x50 together), but `TNerveBWBark`, exact, uses both of today's spellings with the same `changeBck`, so the four extra words are elsewhere.
+  - `entryGroup`: ours has 12 dead F, 9 P and 2 S at the bottom; retail has one word fewer there and one more among the loop body's bindings, so the fix is a spelling that turns one dead F/P into an inliner object (not an iterator property).
+  - `TPoiHana::init`: the pair 4 high is inliner order, not IRO: our bottom region below 0x58 already equals retail's, and the two-line `group` form loses one P at the bottom *and* one inliner word above the pair.
+  - `currentStateFinalize`: each chained `search<T>(name)->unkC` costs 2 inliner words and 5 IRO words (3 F, 2 P); retail's 36 extra words would be nine per search site if they all came from there.
+  - `lenFromToeToMario` (loop unrolled by two): retail has five more words below `tipPos` and one above it; ours has only two dead F there.
