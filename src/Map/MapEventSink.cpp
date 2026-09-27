@@ -301,17 +301,13 @@ void TMapEventSinkInPollutionReset::loadAfter()
 	}
 }
 
-// Retail's `search<T>` binds its result before returning it (see
-// MarDirectorPreEntry.cpp): +12 of low region per expansion.
-template <class T> static inline T* MapEventSinkSearch(const char* name)
-{
-	T* result = JDrama::TNameRefGen::search<T>(name);
-	return result;
-}
-
 // TODO: `this` and the string-pool base are swapped (r31/r30, the known-open
-// this-vs-pool-base class). Frame exact via the binding search level and
-// SMSGetPollution() at the stopDecay loop; one shared `int i` is inert.
+// this-vs-pool-base class) and the frame is 0x20 short (the buffer sits 0x1c
+// low). A block-scoped buffer, named search results and calling
+// TMapEventSink::finishControl directly are inert or worse. The frame is
+// exact with a TU-local binder returning a named search<T> result at both
+// sites (+12 each) plus SMSGetPollution() in the stopDecay loop (+8), 97.74,
+// but that binder is a bare forwarder, so it is not used.
 void TMapEventSinkBianco::finishControl()
 {
 	char buffer[64];
@@ -319,13 +315,13 @@ void TMapEventSinkBianco::finishControl()
 		TMapObjBase::setJointTransY(unk64, 0.0f);
 		for (int i = 0; i < 6; ++i) {
 			snprintf(buffer, 0x40, "バナナツリー（スケール） %d", i);
-			MapEventSinkSearch<TLiveActor>(buffer)->receiveMessage(
+			JDrama::TNameRefGen::search<TLiveActor>(buffer)->receiveMessage(
 			    gpModelWaterManager->unk2514[0], HIT_MESSAGE_SPRAYED_BY_WATER);
 		}
 
 		for (int i = 0; i < 7; ++i) {
 			snprintf(buffer, 0x40, "落書き内%02d", i);
-			MapEventSinkSearch<TLiveActor>(buffer)->receiveMessage(
+			JDrama::TNameRefGen::search<TLiveActor>(buffer)->receiveMessage(
 			    gpModelWaterManager->unk2514[0], HIT_MESSAGE_SPRAYED_BY_WATER);
 		}
 	}
@@ -333,7 +329,7 @@ void TMapEventSinkBianco::finishControl()
 	TMapEventSinkInPollutionReset::finishControl();
 
 	for (int i = 0; i < gpPollution->getJointModelNum(); ++i)
-		SMSGetPollution()->getLayer(i)->stopDecay();
+		gpPollution->getLayer(i)->stopDecay();
 }
 
 static inline int MapEventSinkRaisingIdx(const TMapEventSink* p)
