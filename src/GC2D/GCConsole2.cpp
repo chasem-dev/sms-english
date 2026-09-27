@@ -2093,6 +2093,10 @@ void TGCConsole2::startAppearMario(bool param_1)
 // named bool/switch locals, pane binders (+8 at 4 sites), TU helpers (reorder).
 // c-m1: variables.txt shows ours has no dead object at all (only the nine
 // temps); GC/1.2.5n compiles the TU to the same 0x60, so it is not the compiler.
+// c-r10: a `JUTPoint(const int&, const int&)` ctor gives exactly 0xa8 (two dead
+// int temporaries per point) but loads the literals from .sdata; pane binders
+// are code-identical at +8..+0x20; -sym on, -opt level and dead depth-0 code
+// (parse-folded) are inert, so the low words need a real inline level here.
 void TGCConsole2::processMoveNozzle()
 {
 	if (!unk274->update())

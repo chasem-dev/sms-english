@@ -654,8 +654,10 @@ void TPauseMenu2::drawAppearPane(J2DPicture* picture, f32 anim, JUTRect& rect,
 			JUTRect rect = picture->getGlobalBounds();
 
 			// TODO: instructions exact; frame 0x10 short (0x98 vs 0xa8): retail
-			// has one word between the rect and the conversion temps and three
-			// more at the bottom. The named manager gives retail's x1-in-r5
+			// has three more words below the setBounds JUTRect temporary; the
+			// word above `rect` is only the 8-byte alignment of the conversion
+			// temps (c-r10). `picture->mBounds = JUTRect(...)` gives +8 with
+			// the temporary one word too high. The named manager gives retail's x1-in-r5
 			// colouring; with an unnamed temporary vec it misschedules (0xa0).
 			JGeometry::TVec3<f32> pos(rect.x1 + 0.5f * rect.getWidth(),
 			                          rect.y1 + 0.5f * rect.getHeight(), 0.0f);

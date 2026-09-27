@@ -247,6 +247,9 @@ static inline void SandBombAddFrame(TLiveActor* actor, int ctrl, f32 speed)
 
 // TODO: instruction-exact; frame 0x38 vs retail 0x68. The 12 missing words sit
 // below the saves (uniform shift); iro.py shows only the two helper temps here.
+// c-r10: the discarded getFrameCtrl(0) reads like an inline whose use of the
+// frame sits in an arm folded on a constant argument (such arms keep all their
+// objects); an unused named frame is +0x10, a soundBas wrapper inert.
 u32 TSandBomb::touchWater(THitActor* actor)
 {
 	SandBombAddFrame(this, 0, TSandBombBase::mFiringFrameSpeed);

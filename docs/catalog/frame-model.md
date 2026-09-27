@@ -457,3 +457,30 @@ Marker method: `int mk; extp(&mk);` declared first sits right above the dead reg
   So the NpcActor residue comes from the call site or the `JAIActor` ctor, not from the checkMonoSound body.
 - `goToDirectedNextGraphNode`: naming the else arm's `getTracer()->getGraph()` lands the frame (0x98), but setGoalPathFromGraph's block stays 0x14 low, since the four tracer bindings are still created before it.
   Retail's order needs the node choice's receivers created after that block, which the one-level helper gives only at the cost of the `mr` copies.
+
+## When MWCC homes a dead object (research c-r10, 2026-09-27)
+
+Compiler-side evidence, from the GC/1.2.5 decompilation at `/home/user/ext/jpb-mwcc` (`docs/DATA_MODEL.md`, `src/backend/CodeGen.c`, `src/frontend/COptimizerExpressions.c`, `src/backend/StackFrameEABI.c`):
+- **The home test.** CodeGen's reservation loop (`0x00436ce7`) walks the function's local-object list (`0x00587fb8`) and calls `StackFrameEABI_AllocateObjectSlot` (`0x004ac4a0`) for every object whose `RegisterInfo +0x24` (physical register) is 0; parameters are homed at a sibling site (`0x00437b54`).
+  So nothing about liveness decides a home: an object is homed unless it was given a register.
+- **Register candidacy.** Only `COptimizer_RecordObjectUse` (`0x004beef0`) marks an object a candidate (`+0x23`), and it is called only by `COptimizer_CountExpressionObjectUses` (`0x004beda0`) for `EOBJREF`s still present in the CodeGen items after the IR optimiser.
+  An object with no surviving reference is never a candidate and always homed (rules 1-2 above); a direct (address-taken) reference sets `+0x22`, which excludes it from registers (aggregates, `&local`).
+- **Slot order.** `AllocateObjectSlot` aligns a cursor to the type's alignment (`0x004aaa40`), writes it to the object (`+0x2a`) and advances by the size, in list order: rules 6-7 and 10 are that loop. `0x004ac240` then aligns the band and adds the save areas.
+- **Leaf functions home nothing** (jpb `Ground_801C20E0`), which is rule 9.
+- **Backend temporaries sit above the locals, 8-aligned.** The int-to-float conversion doubles (`temps:` in `variables.txt`) start at the next multiple of 8 above the top local, so one word between the top named local and them can be alignment, not an object (`TPauseMenu2::drawAppearPane`).
+
+**Dead code keeps its objects.** The object list is built by the parser and the inliner, before the IR optimiser folds branches, and is never pruned, so code the optimiser deletes still homes every object it created: argument bindings, callee locals, temporaries and even the IRO F/P temporaries (all dead, so all homed; often more words than the same code live).
+Measured in synthetic TUs (`ext(x); BODY; ext(x);` with a saved register, 4-byte words over the empty body):
+- kept: an inline callee's arm folded on a constant argument (`inl(0)` with `if (c) { ga = gA->get(); gb = gA->get(); }`: +6, the live block is +4); an early `if (c) return;` in the callee (+6); a `switch (c)` on a constant parameter (+6); `if (!yes())` with `yes()` an inline returning `true` (+6); `int c = 0; if (c) {...}` (+6); a zero-trip `for (i = 0; i < 0; ...)` (+10).
+- dropped by the parser (no objects): `if (0)`, `if (ENUM_ZERO)`, `if (kStaticConstFalse)`, a `?:` on a constant parameter, statements after `return` at depth 0 or inside an inline body.
+  Parse-time temporaries survive even there: `if (0) { f(JUTPoint(0, 0), ...); }` and code after `return` keep their temporaries' slots (+2 words per JUTPoint).
+- Where it applies: a shared inline called with a constant selector from several sites, whose other arms were written out as separate helpers in our tree.
+  `TNerveKoopaTurnR`/`TurnL` (Koopa, no stack access): one `KoopaTurn(koopa, diff, bool left)` with both directions, called with a constant, adds exactly the other direction's objects (0x98 -> 0x148, 0xa0 -> 0x150, instructions unchanged, arm order and spelling inert); retail is 0x1a0/0x1a8, so 0x58 is still missing.
+  Look for it when a frame deficit is large (0x40 and up), has no stack access to place it, and the function sits in a family of near-identical siblings (direction pairs, per-kind nerves, the `initSetEnemies` managers, where `TGessoManager` and `TIgaigaManager` have byte-identical code and frames 0xe8/0x98).
+- `JUTPoint(const int&, const int&)` is the cautionary case: a literal bound to a `const int&` makes a dead temporary per argument (processMoveNozzle reaches retail's 0xa8), but MWCC then loads the literal from a pooled `.sdata` constant, so the code changes.
+
+Specimens (all instruction-exact, frame only; none closed):
+- `TGCConsole2::processMoveNozzle`: pane-receiver binders are code-identical at +8..+0x20 per the site mix; `-sym on`, `-opt` levels and `-inline all` are inert; the 16 low words are created after all nine temporaries, so they belong to an inline level the site does not have.
+- `TSandBomb::touchWater`: the discarded `getFrameCtrl(0)` plus 12 dead words fits an inline whose use of the frame sits in an arm folded on a constant; an unused named frame is +0x10, a `soundBas` wrapper inert.
+- `TNerveHino2Turn::execute`: our dead set is 2 named, 4 inline and 9 IRO words; retail has two more below `posDiff` (unit held elsewhere, not edited).
+- `TPauseMenu2::drawAppearPane`: only the three words below the `setBounds` temporary are missing (the upper word is alignment); `picture->mBounds = JUTRect(...)` gives +8 with the temporary one word high.
