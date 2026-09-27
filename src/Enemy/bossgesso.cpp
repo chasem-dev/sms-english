@@ -1522,6 +1522,11 @@ void TBossGesso::doAttackRoll()
 // inSightAngle -> inSight chain has one more inline level in retail (the map
 // sizes agree: inSightAngle 0x16c vs our 0xc4, inSight 0x17c vs 0x184).
 // Dropping the sightAngle local or wrapping the guard body were inert.
+// Retail's guard expansion copies Mario's position inline but `bl`s both
+// SMS_GetMarioPos and TVec3::sub, i.e. only the position fetch sits one level
+// deeper than the copy. Inert or worse (c-h5, 2026-09-27): SMS_DistanceFromMarioVec,
+// a TU-local angle-to-Mario or to-Mario-vector helper in inSight, direct-init,
+// assign-init or `*gpMarioPos` copies, an extra level between inSightAngle and inSight.
 void TBossGesso::moveObject()
 {
 	TLiveActor::moveObject();
