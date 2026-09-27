@@ -98,6 +98,26 @@ Marker method: `int mk; extp(&mk);` declared first sits right above the dead reg
   A dead local in `operator-` declared before `r` (`const TVec3& bb = b; TVec3 r(a); ...`) makes `moveRequest` exact and puts every `bind` slot right, but evaluates `b` early (one scheduling swap), which is also why `nextPos - getPosition()` is not the answer (`TLiveActor::bind` 99.87 against 99.95 today).
   Inert: `operator=` spelled void, implicit, out of class, with `static_cast` or a `Vec*` local; `operator-` as a member template, `r.sub(b)`, `return TVec3(r)`, `TVec3 r = a`; a trivial destructor breaks the code.
 - Tool note: GC/1.1 rejects some TUs that 1.2.5 accepts (chuuhana: incomplete `J3DJoint`); prepend the missing `#include` to a scratch copy of the .cpp and pass that to `dbg.sh`.
+- **Why ours has no copy-out word (research c-r2, 2026-09-27): hoisting.** Not closed; no header committed.
+  A by-value call that is an argument of a *statement-level* inline call (`m = a - b`, `setX(a - b)`, `T v = a - b`) is hoisted: `operator-` is expanded as its own statements and the consumer gets `&temp`, which is simple, so nothing is bound.
+  In expression context (`f = (a - b).length()`) `operator-` is expanded in place (an ECOMMA) and the consumer binds it; the arguments are expanded first, so that binding sits directly below `r`.
+  At statement level a binding is made before the argument is expanded (above `r`).
+  Retail's copy-out word is not a consumer binding: every spelling that binds the temporary at a copy-out site (a `const Vec&` setter, an identity inline around `a - b`, `(void)(m = a - b)`) stops the copy propagation (+6 instructions, frame +0x18 to +0x20).
+  So the word is an object that stays dead off the copy chain (an IRO temp or a deeper callee local).
+- The only spellings found that add exactly that word with identical instructions return the assignment expression from `operator=`: `return (TVec3&)(*(Vec*)this = other);` (also `static_cast<TVec3&>`, `*(TVec3*)&(...)`, `(Vec&)*this = other` inside).
+  In a real-unit compile they make `TCoasterEnemy::bind` and `TLiveActor::bind` byte-exact.
+  The mechanism is a destination-pointer temp plus one IRO temp, and it is not specific to temporaries: at a plain `m = n` or `setX(n)` the pointer keeps a register (+1 `addi`, frame +8).
+  That hits every plain assignment, so it was not priced tree-wide.
+- Refuted in synthetic TUs, with instructions and slots compared at `setX(a - b)`, `m = a - b`, `T v = a - b`, `d; d = a - b`, `(a - b).length()` and five plain-assignment shapes:
+  a 150-cell grid of copy constructor (base-init, implicit, `Vec((const Vec&)o)`, cast statement, `(Vec&)*this = o`), `operator=` (uncast, `(Vec&)*this = o`, cast, implicit, `(const Vec&)o`, `Vec*` local) and `operator-` (local `r(a)`, `r = a`, by-value parameter, member, `r; r = a`).
+  None adds the word at copy-out without adding it at plain assignment; the implicit, cast and `(const Vec&)` `operator=` lose the propagation (+6).
+  Also inert or worse: `const` return, out-of-class and after-use definitions, a helper level, `return TVec3(r)`, `return *&r`, `return (const TVec3&)r`, `TVec3 s(r); return s;` (+16), a non-const `operator=(TVec3&)` overload (the setter's `const` parameter still takes the other one), a by-value `operator=`, a comma-expression body, a trivial destructor (stops `operator-` inlining).
+  Compilers GC/1.0, 1.1, 1.2.5 and 1.2.5n give identical layouts here; 1.3.x differs.
+- **The `.length()` sites are one word over, not exact, under the local-`r` shape.** With only the unwrap (`(a - b).length()`, no binder respelling), `soundTorocco`, `toroccoEffect` and `isTakeSituation` have `r` 4 high: the receiver binding.
+  With `friend TVec3 operator-(TVec3 a, const TVec3& b) { a -= b; return a; }` (the stock operator with a by-value return) all three are byte-exact with no other change.
+  c-m1's exact closes of those sites under the local-`r` shape came from retuning their binders, so they are not evidence that retail has no word there.
+  But `moveRequest`'s live copy is low in retail (0x14), where the by-value parameter puts it at 0x40; each shape is right at one class of site. `TPinnaCoaster::control` stays 8 over under both.
+- Tool note: on a synthetic TU `dbg.sh` takes about 3 s, and the source path must be absolute.
 
 - c-d7 closes (all instruction-exact before):
   `TCogwheel`/`TWireBell::initDraw`: the file-scope `static const GXColor` lever, as predicted.
