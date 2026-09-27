@@ -57,6 +57,11 @@ void SMS_GetMarioJumpIntoWaterModelData();
 TWaterGun* SMS_GetMarioWaterGun();
 
 f32 SMS_GetMarioGravity();
+
+// Fabricated name, after the SMS_GetMario* family: reading the throw power
+// through an inline level makes it an optimiser temporary instead of a named
+// web, which is what the thrown nerves in bombhei, tamaNoko and mameGesso need.
+inline f32 SMS_GetMarioThrowPower() { return *gpMarioThrowPower; }
 f32 SMS_GetMarioGrLevel();
 f32 SMS_GetMarioDamageRadius();
 s16 SMS_GetMarioHPMax();

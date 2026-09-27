@@ -888,10 +888,6 @@ DEFINE_NERVE(TNerveTamaNokoPickUp, TLiveActor)
 	return false;
 }
 
-// Fabricated name, after the other SMS_GetMario* accessors in
-// MarioAccess.hpp; kept TU-local until that shared header grows it.
-static inline f32 SMS_GetMarioThrowPower() { return *gpMarioThrowPower; }
-
 // Real bug fixed here: the horizontal components were swapped, so a thrown
 // koopa flew off at ninety degrees to the direction Mario was facing. The ROM
 // multiplies the *sine* of gpMarioAngleY into x and the cosine into z

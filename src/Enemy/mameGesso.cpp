@@ -576,10 +576,6 @@ DEFINE_NERVE(TNerveMameGessoPickUp, TLiveActor)
 	return false;
 }
 
-// Fabricated name, after the other SMS_GetMario* accessors in
-// MarioAccess.hpp; kept TU-local until that shared header grows it.
-static inline f32 SMS_GetMarioThrowPower() { return *gpMarioThrowPower; }
-
 DEFINE_NERVE(TNerveMameGessoThrown, TLiveActor)
 {
 	TMameGesso* self = (TMameGesso*)spine->getBody();
