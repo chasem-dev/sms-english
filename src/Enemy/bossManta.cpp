@@ -598,6 +598,16 @@ static inline int BossMantaGetVertebraeCount(const TSpineBase<TLiveActor>* p)
 	return vertebraeCount;
 }
 
+// Generations 4 and 5 die instead of splitting. Spelled as this predicate
+// the level gives retail's frame; the value binder BossMantaGeneration is
+// 8 bytes long in collidedWithWater, and no binder is one mGeneration load
+// short.
+static inline bool BossMantaIsFinalGeneration(const TBossManta* p)
+{
+	s32 generation = p->mGeneration;
+	return generation >= 4;
+}
+
 bool TBossManta::collidedWithWater()
 {
 	if (isDamageable()) {
@@ -617,12 +627,8 @@ bool TBossManta::collidedWithWater()
 			}
 			unk19C++;
 
-			// TODO: frame is 8 long.  Spelling the array out at both
-			// sites lands 0xa0 exactly but emits the literal twice and
-			// renumbers the whole pool (matched_data 100 -> 18), so the
-			// residue is one 8-byte level elsewhere in this body.
 			if (unk19C == BossMantaGetHitCountMax(this)) {
-				if (BossMantaGeneration(this) >= 4)
+				if (BossMantaIsFinalGeneration(this))
 					mSpine->pushAfterCurrent(&TNerveMantaDeath::theNerve());
 				else
 					mSpine->pushAfterCurrent(&TNerveMantaSpawn::theNerve());
