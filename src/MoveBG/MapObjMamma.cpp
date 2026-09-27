@@ -1672,7 +1672,8 @@ void TMammaMirrorMapOperator::loadAfter()
 	}
 }
 
-// TODO: frame 8 long with no stack use. Inert: set(0, 0, 0) for zero() in either loop.
+// The mirror positions are written out: a constant loop here would be
+// unrolled and leave its counter and two loop temporaries as dead words.
 TMammaMirrorMapOperator::TMammaMirrorMapOperator(const char* name)
     : JDrama::TViewObj(name)
 {
@@ -1683,8 +1684,9 @@ TMammaMirrorMapOperator::TMammaMirrorMapOperator(const char* name)
 		mJointHidden[i] = false;
 	}
 
-	for (int i = 0; i < MIRROR_NUM; i++)
-		mMirrorPos[i].zero();
+	mMirrorPos[0].zero();
+	mMirrorPos[1].zero();
+	mMirrorPos[2].zero();
 }
 
 u32 TSandEgg::getSDLModelFlag() const { return 0; }
