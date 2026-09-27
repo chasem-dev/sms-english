@@ -2864,7 +2864,9 @@ bool TGCConsole2::startAppearBalloon(u32 messageID, bool autoClose)
 // operands swapped; the pauseOut expansion also swaps r25/r26 on the unk160
 // pane. Inert: named/unnamed sum, +=, s16/int casts, raw unk26A, ~y2, -y2-1,
 // a named s16 unk26A local, a TExPane hide-offset helper (+8 frame), and
-// `getUnk26A() - (y2 + 1)` (emits subf).
+// `getUnk26A() - (y2 + 1)` (emits subf). Also inert: a named int unk26A
+// before or after `offset` in either sum order (93%), `getUnk26A() + offset`
+// with offset named, and `getUnk26A() + -(y2 + 1)` unnamed (folds to subf).
 void TGCConsole2::startDisappearStar()
 {
 	int offset = -(getUnk140()->mInitialBounds.y2 + 1);

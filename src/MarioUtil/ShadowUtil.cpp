@@ -136,6 +136,9 @@ void TMBindShadowParts::calc(f32 param_1)
 
 // Binding level worth +16 of low region, landing
 // TMBindShadowBody::TMBindShadowBody's frame at 0x98 (batch 121).
+// TODO: the inlined initEntry's push_back slots sit 0xc low (this at 0x54,
+// retail 0x60); a raw getJointNum() at either loop is -8 frame, a named
+// manager inert.
 static inline u16 ShadowUtilGetJointNum(const J3DModelData* p)
 {
 	u16 jointNum = p->getJointNum();

@@ -191,7 +191,8 @@ void TBossHanachan::init(TLiveManager* manager)
 // TODO: frame exact; the `*gpMarioPos - actor->mPosition` temporary sits at
 // 0x8c where retail has 0x68, and CLBAbs's positive arm copies into r0 (retail
 // keeps r3) with the 1 - k*|d| FPRs renumbered. Inert: a named or s16 abs,
-// the one-statement ratio, `ratio -=`, and product order.
+// the one-statement ratio, `ratio -=`, and product order; also an int
+// `if (d < 0) d = -d;`, an explicit s16 ternary and CLBAbs<int>((s16)(a - b)).
 void TBossHanachan::throwMario_(THitActor* actor)
 {
 	JGeometry::TVec3<f32> direction = *gpMarioPos - actor->mPosition;
@@ -236,7 +237,8 @@ static void CalcRevisionPosByRotateZ(const JGeometry::TVec3<f32>& rotation,
 		// TODO: 4 marks left, all volatile-FPR numbering (retail puts the
 		// rotated x in f3 and position->x in f2; declaration order and the
 		// `+=` spelling are both inert; so are swapped product order,
-		// inline JMASCos/JMASSin calls and a rotated TVec3 local).
+		// inline JMASCos/JMASSin calls and a rotated TVec3 local; also
+		// sine declared first and `pos = x + pos` / unnamed sums).
 		f32 x = offset.x * cosine + offset.z * sine;
 		f32 z = -offset.x * sine + offset.z * cosine;
 		position->x += x;
@@ -870,7 +872,9 @@ void TBossHanachan::execWalk(bool accelerate)
 
 // TODO: every instruction matches; `goal` and setGoalPath's node sit 0x10
 // low (0x50/0x40, retail 0x60/0x50). Inert or worse: an unnamed isZero()
-// test, an unnamed roll, a rotated TVec3, and unnamed angle/cos/sin.
+// test, an unnamed roll, a rotated TVec3, and unnamed angle/cos/sin; also
+// direction.add(side), add(direction, side), scaleAdd and side.set(). The
+// extra 0x10 above `goal` disappears only when `side` is dead entirely.
 void TBossHanachan::execSlip()
 {
 	CLBChaseGeneralConstantSpecifySpeed(&mMarchSpeed, 0.0f,

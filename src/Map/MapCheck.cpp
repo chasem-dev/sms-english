@@ -182,6 +182,8 @@ int TMapCollisionData::checkWalls(TBGWallCheckRecord* param_1) const
 // gives its FPR pairing.
 // TODO: retail still loads a.x into f31 and evaluates (ax - x) first, and
 // keeps the list entry in r3 (flags in r6/r7); ground's frame is 8 short.
+// Declaring ax before az (either b order) or naming ax - x / az - z costs
+// both roof and ground (97.6/97.7).
 static inline f32 MapCheckEdge(const JGeometry::TVec3<f32>& a,
                                const JGeometry::TVec3<f32>& b, f32 x, f32 z)
 {
@@ -227,7 +229,8 @@ f32 TMapCollisionData::checkRoofList(f32 x, f32 y, f32 z, u8 param_4,
 }
 
 // TODO: local_4c/local_50 sit at 0x48/0x44 vs retail 0x44/0x40. Inert: raw
-// mGridExtentX at every subset of sites, local_4c declared at the top.
+// mGridExtentX at every subset of sites, local_4c declared at the top, a
+// named roof-list pointer; a named `const TBGCheckListRoot&` drops 8 of frame.
 f32 TMapCollisionData::checkRoof(f32 x, f32 y, f32 z, u8 flags,
                                  const TBGCheckData** result) const
 {
