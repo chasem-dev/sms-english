@@ -180,6 +180,9 @@ BOOL TConductor::isBossDefeated()
 	// case 2 and `default:` above `case 2:` also fold (95.6%), and an
 	// if/else on map 3 is 95.0%. Until a matching spelling is found, maps
 	// other than 2 and 3 fall off the end (retail sends them to hinokuri).
+	// 2026-09-27: a third, folded label (`case 1: break;` after case 3)
+	// gives retail's pivot tree exactly (99.7, only default's target and
+	// the 4-low iterator slots left), so retail's case set had three values.
 	switch (gpMarDirector->mMap) {
 	case 2: {
 		TLiveManager* mgr = getManagerByName("ヒノクリ２マネージャー");

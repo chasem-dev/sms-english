@@ -488,6 +488,10 @@ void TKukku::updateRotation()
 // 0x78, so no frame lever applies; this is the known-open volatile-FPR class.
 // (96.3 before TVec3's copy constructor became `: Vec(other)`, 95.8 after;
 // inert under it: direct-init or assigned `quat`, `velocity.set(...)`.)
+// 2026-09-27, header rotate(v, rDest) landed: `quat.rotate(velocity,
+// velocity)` as the whole body is 98.9 here (9 markers, q.x/q.z product order)
+// but both nerves then inline it (RecoverGraph 100 -> 76.9); named x/y/z/w
+// copies in any order are what cost the 52 markers.
 JGeometry::TVec3<f32> TKukku::calcMomentum(f32 speed)
 {
 	JGeometry::TQuat4<f32> quat = SMS_Eular2Quat(mRotation);

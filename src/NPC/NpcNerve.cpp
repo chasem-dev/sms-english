@@ -64,6 +64,8 @@ DEFINE_NERVE(TNerveNPCGraphWander, TLiveActor)
 		// map). Note `getCurrent() const` reading `mCurrIdx` instead of
 		// `getCurGraphIndex()` is codegen-neutral today but cannot be right:
 		// the map emits getCurGraphIndex weak out of line *in this TU*.
+		// Inert (2026-09-27): defining hasOnlyOneNext above the two accessors
+		// in TGraphTracer (in-class bodies are not order-sensitive here).
 		if (self->getTracer()->hasOnlyOneNext()) {
 			bVar6 = true;
 			if (self->getTracer()->currPitchIsZero())
