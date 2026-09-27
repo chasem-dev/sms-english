@@ -985,24 +985,24 @@ TShine::TShine(const char* name)
 	unk1A8.zero();
 }
 
-// TODO: every instruction matches; frame 0x48 against retail's 0x68. The
-// director and map/stage accessors bring 0x20 of the low pool; the rand()
-// conversion buffers still sit 0x20 below retail's 0x50/0x58.
+// TODO: every instruction matches; frame 0x58 against retail's 0x68. The
+// director and map/stage accessors at each test (+8 per site, the map load
+// is still shared) bring the low pool; the rand() conversion buffers still
+// sit 0x10 below retail's 0x50/0x58. Inert: raw mName, `!strcmp`, s32/f32/
+// unnamed rand results, `4.0f` or the product reversed.
 void TEggYoshi::decideRandomLoveFruit()
 {
-	u8 map = SMSGetMarDirector()->getCurrentMap();
-
-	if (map == 7 && SMSGetMarDirector()->getCurrentStage() == 1) {
+	if (SMSGetMarDirector()->getCurrentMap() == 7 && SMSGetMarDirector()->getCurrentStage() == 1) {
 		unk14C = 0x40000392;
 		return;
 	}
 
-	if (map == 3) {
+	if (SMSGetMarDirector()->getCurrentMap() == 3) {
 		unk14C = 0x40000393;
 		return;
 	}
 
-	if (map == 1 && strcmp(getName(), "ヨッシーの卵（影マリオ用）") == 0) {
+	if (SMSGetMarDirector()->getCurrentMap() == 1 && strcmp(getName(), "ヨッシーの卵（影マリオ用）") == 0) {
 		unk14C = 0x40000394;
 		return;
 	}
