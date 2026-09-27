@@ -484,3 +484,15 @@ Specimens (all instruction-exact, frame only; none closed):
 - `TSandBomb::touchWater`: the discarded `getFrameCtrl(0)` plus 12 dead words fits an inline whose use of the frame sits in an arm folded on a constant; an unused named frame is +0x10, a `soundBas` wrapper inert.
 - `TNerveHino2Turn::execute`: our dead set is 2 named, 4 inline and 9 IRO words; retail has two more below `posDiff` (unit held elsewhere, not edited).
 - `TPauseMenu2::drawAppearPane`: only the three words below the `setBounds` temporary are missing (the upper word is alignment); `picture->mBounds = JUTRect(...)` gives +8 with the temporary one word high.
+
+### The initSetEnemies family and parse-dropped declarations (research c-r12, 2026-09-27)
+
+`TGessoManager::initSetEnemies` (0xe8, `new` binding at 0x68) and `TIgaigaManager::initSetEnemies` (0x98, binding at 0x48) carry dead code in their own bodies, not in the pollute-manager constructors they inline.
+Map evidence: `UNUSED __dt__11TMsRange<l>Fv` sits right after `initSetEnemies__13TGessoManagerFv` in gesso.cpp, and adding any `TMsRange<s32>` local to our initSetEnemies emits that weak dtor at exactly that spot (a weak is placed after its first referencer, between it and its source predecessor under `-inline deferred`).
+The map lists an UNUSED weak only once, under the first TU in link order (`__dt__18TWalkerEnemyParamsFv`, `TMsRange<f>` in effectObj), so igaiga, poihana and tamaNoko (all after gesso) may hold the same `TMsRange<s32>` without a trace.
+The same family has the large frame deficits: tamaNoko 0xe0/0x38, poihana 0xe0/0x40, gesso 0xe8/0x20, igaiga 0x98/0x20, while the managers that place enemies on a graph live (rocket, hauntLeg 0xe0, chuuhana) are frame-exact; a dead copy of that random-node placement loop is the likely carrier.
+Retail gesso needs +27 words created before the depth-3 `TViewObj` binding and +23 after it; igaiga +15/+15.
+Not closed: dead copies of the rocket, hauntLeg, chuuhana and gorogoro loops reach only 0x40..0x90 (binding 0x10..0x30), and gesso's `getObj` override adds at most 2 words over igaiga's, so the block is not identified and was not committed (any 50-word block could be tuned to fit).
+Refinement of the dead-code rule, measured in gesso: `if (0) {...}` and code after `return` drop *expression statements* but keep *declarations*.
+Their named locals are kept, and so is each initialiser's inline expansion with its bindings and IRO temporaries (`TMsRange<s32> range(0, graph->unk8)` in an `if (0)` loop yields inline objects and six EFORCELOAD temps).
+`if (0) { getObj(0)->m += 5; }` adds nothing; the same statement behind `int c = 0; if (c)` adds 6 words, more than the live statement (4).
