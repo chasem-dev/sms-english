@@ -348,12 +348,12 @@ void TMareEventDepressWall::emitEffect(int idx)
 	}
 }
 
-// TODO: frame 0xc0 vs retail 0xe8; the four TVec3(x, 0, 0) slots are out of
-// retail's order. Calling the UNUSED setJointPosX for both branches and the
-// UNUSED emitEffect (with its particle scale as a named `scale` local, which
-// keeps TVec3::set inlined) reproduces retail's slot order and 12-byte gaps
-// at frame 0xd8, every slot 0xc low; it scores 99.91 against 99.94 so is not
-// committed. A 12-byte low-region temporary is still missing there.
+// Both branches expand the UNUSED setJointPosX and emitEffect, which gives
+// retail's slot order; the second branch's accessor spellings land the frame.
+// TODO: frame-exact; the second branch's setJointPosX vector sits 8 low
+// (0x64 against 0x6c). Inert for it: spelling either helper out at either
+// site, the setUpTrans vectors as temporaries, the other sites' raw/binder
+// choices for sound, rumble and camera shake.
 void TMareEventDepressWall::depressing()
 {
 	int doneCount = 0;
@@ -367,20 +367,11 @@ void TMareEventDepressWall::depressing()
 					gpCameraShake->keepShake(CAM_SHAKE_MODE_BUILDING_APPEAR, 0.5f);
 					SMSGetMSound()->startSoundActor(MSD_SE_OBJ_QUAKE, &unk34[i],
 					                                0, nullptr, 0, 4);
-					JPABaseEmitter* em = gpMarioParticleManager->emit(
-					    MAP_MAP_MS_MARE_BLOCKUP, &unk34[i], 1, &unk34[i]);
-					if (em) {
-						em->setGlobalScale(unk38[i]);
-						em->setRate(unk3C[i]);
-						em->setGlobalParticleScale(JGeometry::TVec3<f32>(
-						    unk40[i], unk40[i], unk40[i]));
-					}
+					emitEffect(i);
 				} else {
 					SMSRumbleMgr->stop(0x13);
 				}
-				TMapObjBase::setJointTransX(unk30[i], x);
-				JGeometry::TVec3<f32> t(x, 0.0f, 0.0f);
-				unk28[i].moveTrans(t);
+				setJointPosX(x, i);
 				if (x >= unk20[i]) {
 					unk28[i].remove();
 					JGeometry::TVec3<f32> t2(x, 0.0f, 0.0f);
@@ -395,23 +386,15 @@ void TMareEventDepressWall::depressing()
 				if (!TMapObjBase::isDemo()) {
 					x -= mDepressSpeed;
 					SMSRumbleMgr->start(0x13, -1, (f32*)nullptr);
-					gpCameraShake->keepShake(CAM_SHAKE_MODE_BUILDING_APPEAR, 0.5f);
-					SMSGetMSound()->startSoundActor(MSD_SE_OBJ_QUAKE, &unk34[i],
-					                                0, nullptr, 0, 4);
-					JPABaseEmitter* em = gpMarioParticleManager->emit(
-					    MAP_MAP_MS_MARE_BLOCKUP, &unk34[i], 1, &unk34[i]);
-					if (em) {
-						em->setGlobalScale(unk38[i]);
-						em->setRate(unk3C[i]);
-						em->setGlobalParticleScale(JGeometry::TVec3<f32>(
-						    unk40[i], unk40[i], unk40[i]));
-					}
+					MareWallRockCameraShake()->keepShake(
+					    CAM_SHAKE_MODE_BUILDING_APPEAR, 0.5f);
+					gpMSound->startSoundActor(MSD_SE_OBJ_QUAKE, &unk34[i], 0,
+					                          nullptr, 0, 4);
+					emitEffect(i);
 				} else {
-					SMSRumbleMgr->stop(0x13);
+					MareWallRockRumbleMgr()->stop(0x13);
 				}
-				TMapObjBase::setJointTransX(unk30[i], x);
-				JGeometry::TVec3<f32> t(x, 0.0f, 0.0f);
-				unk28[i].moveTrans(t);
+				setJointPosX(x, i);
 				if (x <= -unk20[i]) {
 					unk28[i].remove();
 					JGeometry::TVec3<f32> t2(x, 0.0f, 0.0f);
