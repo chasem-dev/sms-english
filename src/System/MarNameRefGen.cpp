@@ -101,6 +101,21 @@ template class TViewObjPtrListT<THitActor, TViewObj>;
 template class TNameRefPtrAryT<TCubeGeneralInfo>;
 template class TNameRefAryT<TStagePositionInfo>;
 
+// Mario is built through an inline level of its own: its `mario` is then a
+// callee local, created with the other depth-1 inline objects between
+// TSplashManager's and TSmplFader's, rather than a named local of
+// getNameRef at the top of the frame. That single move is what puts the
+// TSMSSmplChara and TSplashManager `this` slots at retail's 0x158/0x148.
+// The name is ours (a fully inlined static leaves no map symbol). The same
+// level around the MLight block instead moves every later slot and the frame.
+static inline TMario* NameRefNewMario()
+{
+	TMario* mario   = new TMario;
+	gpMarioOriginal = mario;
+	gpMarioAddress  = mario;
+	return mario;
+}
+
 JDrama::TNameRef* TMarNameRefGen::getNameRef(const char* name) const
 {
 	if (strcmp(name, "BindShadow") == 0)
@@ -178,12 +193,8 @@ JDrama::TNameRef* TMarNameRefGen::getNameRef(const char* name) const
 	if (strcmp(name, "MirrorCamera") == 0)
 		return new TMirrorCamera;
 
-	if (strcmp(name, "Mario") == 0) {
-		TMario* mario   = new TMario;
-		gpMarioOriginal = mario;
-		gpMarioAddress  = mario;
-		return mario;
-	}
+	if (strcmp(name, "Mario") == 0)
+		return NameRefNewMario();
 
 	if (strcmp(name, "MLight") == 0) {
 		TLightMario* light          = new TLightMario;
@@ -368,11 +379,6 @@ JDrama::TNameRef* TMarNameRefGen::getNameRef(const char* name) const
 	if (strcmp(name, "TalkCursor") == 0)
 		return new TTalkCursor;
 
-	// TODO: two inline `this` slots remain 4 bytes low at an exact 0x178
-	// frame: TSMSSmplChara (0x154 vs 0x158) and TSplashManager (0x144 vs
-	// 0x148); retail has one more dead word between the Splash slot and
-	// TSmplFader's TColor temp. Named-local, ctor-param and ref variants
-	// did not move it.
 	if (strcmp(name, "TargetArrow") == 0)
 		return gpTargetArrow = new TTargetArrow;
 
