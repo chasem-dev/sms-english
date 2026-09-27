@@ -131,7 +131,7 @@ f32 RumbleChannelMgr::update()
 	} else if (mWorldPos != nullptr) {
 		JGeometry::TVec3<f32>& v
 		    = *static_cast<JGeometry::TVec3<f32>*>(mWorldPos);
-		f32 dist = SMS_DistanceFromMario(v);
+		f32 dist = SMS_DistanceFromMarioVec(v).length();
 		mult     = -((dist - 300.0f) * (1.0f / 3000.0f) - 1.0f);
 		if (mult < 0.0f) {
 			mult = 0.0f;

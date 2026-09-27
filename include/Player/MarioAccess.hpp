@@ -98,17 +98,15 @@ inline f32 SMS_GetMarioSpeedX() { return *gpMarioSpeedX; }
 inline f32 SMS_GetMarioSpeedY() { return *gpMarioSpeedY; }
 inline f32 SMS_GetMarioSpeedZ() { return *gpMarioSpeedZ; }
 
+// `-=` is load-bearing: TBombHei::genEventCoin calls TVec3::sub out of line
+// through it, and RumbleChannelMgr::update (one level shallower, calling
+// `.length()` on the result itself) still inlines sub.
 inline JGeometry::TVec3<f32>
 SMS_DistanceFromMarioVec(const JGeometry::TVec3<f32>& pos)
 {
 	JGeometry::TVec3<f32> marioPos = SMS_GetMarioPos();
-	marioPos.sub(pos);
+	marioPos -= pos;
 	return marioPos;
-}
-
-inline f32 SMS_DistanceFromMario(const JGeometry::TVec3<f32>& pos)
-{
-	return SMS_DistanceFromMarioVec(pos).length();
 }
 
 // fabricated
