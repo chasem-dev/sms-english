@@ -161,14 +161,14 @@ static inline void MarDirectorLoadEventWatchers(TMarDirector* director, const ch
 	}
 }
 
-// TODO: instruction-exact except one CSE: retail computes `root + 0x10` once
-// for the PERF Event Group push_back (`addi r20, r28, 0x10`). The frame is
-// 0x158 short (0x9d0 vs 0xb28): 0xfc of it is created below every object
-// we have (three or so words per list insert site), and retail has no dead
-// `cam` slot, one more word beside measurementGroup and the GXTexObj copy
-// below the PerformLists streams. The final heap virtual call is
-// getTotalFreeSize() (slot 0x28); the earlier call is freeTail() (slot
-// 0x18). "ゲームオブジェクト" is a TViewObjPtrListT (its list sits at +0x10);
+// TODO: instruction-exact; the frame is 0x158 short (0x9d0 vs 0xb28).
+// Retail has 0xf8 more created below every object we have (about three
+// words per list insert site), 9 words created between the stream-pointer
+// and the per-insert iterator groups that we create after the 1-byte
+// TAllocator group instead, no dead `cam` slot, one more word beside
+// measurementGroup, and the GXTexObj copy below the PerformLists streams.
+// The final heap virtual call is getTotalFreeSize() (slot 0x28); the
+// earlier call is freeTail() (slot 0x18). "ゲームオブジェクト" is a TViewObjPtrListT (its list sits at +0x10);
 // typing it as a TNameRefPtrListT wrote every insert 4 bytes low and
 // corrupted the group at boot. Spelling the inserts as push_back or
 // getChildren().push_back breaks >100 instructions.
@@ -408,7 +408,7 @@ bool TMarDirector::setupObjects()
 
 	JDrama::TViewObjPtrListT<JDrama::TViewObj>* perfEventGroup
 	    = new JDrama::TViewObjPtrListT<JDrama::TViewObj>("PERF Event Group");
-	root->push_back(perfEventGroup);
+	root->getChildren().push_back(perfEventGroup);
 	JDrama::TFrmGXSet* drawInit = new JDrama::TFrmGXSet(unkC0);
 
 	JDrama::TViewObjPtrListT<JDrama::TViewObj>* drawBufferGroup
