@@ -104,6 +104,9 @@ void TBGTentacleMtxCalc::calc(u16 param_1)
 	// local_68 (ours 0x26c for retail's 0x268) and TVec3::sub's temp at
 	// 0x1c4 for retail's 0x128 (the a=b-c allocation-order class).
 	// Moving iVar8 below the spline added a subi and dropped 99.5 -> 98.8.
+	// Also open: the param_1 - 1 matrix pointer takes r25 (asdf's) where
+	// retail reuses r24 (the spline's); a named spline pointer, the model
+	// binder at that site and asdf after t are all worse.
 	MtxPtr asdf = BGTentacleGetModel(mOwner)->getAnmMtx(param_1);
 
 	f32 t = param_1 / f32(iVar8);
@@ -177,12 +180,14 @@ void TBGTentacleMtxCalc::calc(u16 param_1)
 		if (fVar13 == 0.0f) {
 			fVar1 = 1.0f;
 		} else {
-			f32 tmp = fVar13 * 3.0f;
-			fVar1   = mOwner->getNodeLen() / tmp;
+			fVar13 *= 3.0f;
+			fVar1 = mOwner->getNodeLen() / fVar13;
 		}
 
-		JGeometry::TVec3<f32> tmp1(mtx1[0][0], mtx1[1][0], mtx1[2][0]);
-		JGeometry::TVec3<f32> tmp2(mtx1[0][1], mtx1[1][1], mtx1[2][1]);
+		JGeometry::TVec3<f32> tmp1;
+		tmp1.set(mtx1[0][0], mtx1[1][0], mtx1[2][0]);
+		JGeometry::TVec3<f32> tmp2;
+		tmp2.set(mtx1[0][1], mtx1[1][1], mtx1[2][1]);
 		if (param_1 < iVar8 && tmp1.dot(local_68) > 0.0f
 		    && tmp2.dot(local_74) < 0.0f) {
 			local_74.negate();
