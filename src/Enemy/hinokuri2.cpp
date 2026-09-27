@@ -1025,11 +1025,6 @@ static inline const JGeometry::TVec3<f32>& Hino2NodePoint(const TPathNode& node)
 	return node.unk4;
 }
 
-template <class T> static inline T symmetric_clamp(T v, T r)
-{
-	return v > 0 ? std::min(v, r) : std::max(v, -r);
-}
-
 // TODO: frame is 0xa8 short (0xd0 vs 0x178) with every instruction exact;
 // a deficit that size is a missing inline level or helper, not a lever.
 void THinokuri2::moveObject()
@@ -1107,7 +1102,6 @@ void THinokuri2::moveObject()
 	f32 prop = ((THino2Params*)getSaveParam())->mSLBankLimit.get();
 	unk198   = MsClamp(unk198, -prop, prop);
 
-	// looks like symmetric_clamp but it isn't???
 	if (unk198 < 0.0f) {
 		f32 fVar1 = 0.1f + unk198;
 		if (fVar1 > 0.0f)
@@ -1400,11 +1394,17 @@ DEFINE_NERVE(TNerveHino2Turn, TLiveActor)
 		self->changeBck(0x15);
 	}
 
+	// TODO: instruction-exact; frame 0x70 vs 0x78 (posDiff 0x48 vs 0x50),
+	// so retail has two more dead words created after posDiff. Here angleDiff
+	// is an IRO temp (its named slot dead); the old symmetric_clamp helper had
+	// the frame but merged the two arms' `fmr f4, f31`. Inert: a named angle,
+	// getRotation().y, getCurrentBck(), any helper around the clamp.
 	f32 turnSpeed = self->mTurnSpeed;
-	f32 fVar3     = symmetric_clamp(angleDiff, turnSpeed);
-	// TODO: retail clamps f31 in place and copies it into its own FPR in each
-	// arm (`fmr f4, f31` twice); ours merges the two arms. Inert: assigning
-	// back to angleDiff, a named result in symmetric_clamp, an if/return body.
+	f32 fVar3;
+	if (angleDiff > 0.0f)
+		fVar3 = std::min(angleDiff, turnSpeed);
+	else
+		fVar3 = std::max(angleDiff, -turnSpeed);
 
 	self->mRotation.y = MsWrap(self->mRotation.y + fVar3, 0.0f, 360.0f);
 
