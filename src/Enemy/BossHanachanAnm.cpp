@@ -5,56 +5,22 @@
 #include <NPC/NpcInbetween.hpp>
 #include <Strategic/Spine.hpp>
 
-// TODO: 91.9%. Frame, slots and instruction stream are all right; what is left
-// is a two-step rotation of the callee-saved set (retail const/offset/this/
-// kind/blend/body/i in r25-r31, ours this/kind/blend/body/i/const/offset) and
-// the resulting store schedule around the two int->float conversions.
-// Declaring `texFrame` before the BCK setFrame call is what puts the two
-// conversion temporaries in retail's order (0x28 then 0x30); dropping the
-// named `texFrame` entirely is 74.1%. getBody(i) for the array read is inert.
-// TODO: 98.6%, frame exact (0x68) and every instruction identical: the residue
-// is one callee-saved GPR rotation.  Retail ranks `body` *above* the two
-// parameters -- r31 `i`, r30 `body`, r29 blend, r28 anm, r27 `this`, r26 the
-// strength-reduced mBodies offset, r25 the 0x4330 pool base -- while we rank
-// it below everything, at r25, which is the "inner-block locals after `this`"
-// bucket.  Closure batch 205: hoisting `body` to function scope, and hoisting
-// both `i` and `body` out of the `for`, are both inert (still 98.6%, same
-// registers), which is the catalog's "block scope is inert everywhere" rule
-// again.  So retail's `body` is in the locals bucket for a reason that is not
-// its declaration position, and the remaining shape has to change what MWCC
-// counts as a function-scope local here.
-// Closure batch 211 applied research 210's rule and measured the whole bucket
-// ladder here.  Moving the loop body into an inlined member
-// `setBodyAnm_(body, i, anm, blend)` makes `body` an inlined callee's explicit
-// **parameter**, and that bucket outranks everything: `body` jumps from r25 to
-// **r31** and pushes `i` to r30, while the params/`this`/temps below
-// (r29 blend, r28 anm, r27 this, r26 offset, r25 pool) come out exactly like
-// retail's.  So the ranking here is
-//   inlined-callee parameter > caller locals > caller parameters > `this`
-//   > pool/base temps > caller inner-block locals,
-// and retail's `body` (r30, one rung below `i`) is in the *caller locals*
-// bucket, which our `body` never reaches: hoisting `int i;` and
-// `TBossHanachanPartsBody* body;` to function scope in that order, with the
-// `for (i = 0; ...)` init separated, is still r25 (18 markers), confirming
-// batch 205.  The parameter order of the helper is inert (body first or `i`
-// first give byte-identical output), and the helper costs **+8 of frame per
-// parameter** (0x68 -> 0x88 with four), which this function has no named
-// pointer local to pay for -- so the one shape that moves `body` cannot be
-// afforded.  25 markers with the helper against 13 without it.
-// cc28: also inert or worse for `body`: `TBossHanachanPartsBody* const`,
-// `&mBodies[i]` bound first, a direct-return fork (17 markers, one opcode
-// off), a reference out-parameter level (+0x18 frame), a `T*&` to the element
-// and no named body at all (+0x18 frame).
+// Declaring `texFrame` before the BCK setFrame call puts the two conversion
+// temporaries in retail's order (0x28 then 0x30).
+// `int frame;` is declared ahead of `body`, so `body` gets the lower virtual
+// register: it then meets the first simplify sweep at full degree (29), is
+// deferred with `i` and the parameters, and takes r30 as in retail.
 void TBossHanachan::setHeadAndBodyAnm(
     EnumBossHanachanAnmKind anm, EnumBossHanachanStopMotionBlendOnOff blend)
 {
 	mHead->setAnm_(anm, blend);
 	for (int i = 0; i < 8; ++i) {
+		int frame;
 		TBossHanachanPartsBody* body = mBodies[i];
 		if (body->setAnm_(anm, blend)) {
 			J3DFrameCtrl* bck = body->getMActor()->getFrameCtrl(ANM_TYPE_BCK);
-			int frame = (i * getChangeParams()->getSLNormalBckFrameDiff())
-			            % bck->getEnd();
+			frame = (i * getChangeParams()->getSLNormalBckFrameDiff())
+			        % bck->getEnd();
 			f32 texFrame = frame;
 			bck->setFrame(frame);
 			J3DFrameCtrl* btp = body->getMActor()->getFrameCtrl(ANM_TYPE_BTP);
