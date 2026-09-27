@@ -989,7 +989,9 @@ u32 TFluff::touchWater(THitActor* actor)
 
 // TODO: 99.9%, every instruction matches; retail's frame is 0x78 against
 // our 0x28. isZero is called on unkD0 itself (lfsu); the missing 0x50 is
-// an unidentified carrier, not another wind copy.
+// an unidentified carrier, not another wind copy. c-m20: 20 words are
+// created after `velocity` (the top slot); add()/scale()/+=/*= are inert,
+// a TVec3 holding the swing offset is +0x18 at equal code (not landed).
 void TFluff::move()
 {
 	mPosition.y -= mFallSpeed;
