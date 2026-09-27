@@ -143,3 +143,28 @@ A web whose degree is still at least K when its sweep reaches it is pushed in a 
   Inert on `TMapObjGeneral::thrown`, whose frame is already equal.
 - **Declaration order closes a loop counter swap** (`TBossHanachan::init`, registers only; its slots stay open): `--why` showed `group` pushed after `i`, its only lower neighbour, and `int i;` declared ahead of `group` for the last loop reverses the two.
 - Still open after this pass: `TBossManta::calcRootMatrix` needs cross2's y component generated first (its 1.0f literal must be numbered above the `0*v.z` product); `TRocket::calcRootMatrix` (lenZ's IRO temporary sits at exactly K) and `TCardSave::perform` need one more or one fewer neighbour, and no spelling found supplies it.
+
+## Operand order and generation order (research c-r11)
+
+Two source rules decide which operand of a binary node comes first, in the instruction and in the vreg numbering.
+Both were read from `dbg.sh` dumps (`frontend-00-ast-initial-code.txt`, `backend-00-initial-code.txt`) and a scratch TU compiled with GC/1.2.5 (`-O4,p`, the game flags).
+
+- **The frontend canonicalises `+` and `*` at parse time; nothing later re-sorts them.**
+  In `x + 200.0f`, `200.0f + x`, `x * k`, `(f32)i * k`, `call() * k` and `(a - b) * k` the literal is the left child already in `frontend-00` (touchWater's `EADD(EFLOATCONST 200, throwY)`), so the `fadds`/`fmuls` reads the constant first.
+  A leaf (variable, parameter, `p->m`) moves left of a binary subtree (`a - b`), an indexed load `q[i]` or a call, inline accessor calls included (they are still calls at parse time); two leaves, a leaf and a unary `-x` or conversion, or two subtrees keep source order.
+  The PCode keeps AST order (`fadds rD, left, right`; jpb-mwcc `docs/SCHEDULER.md`: "FADDS operand order = materialization order"), and mwcc-rs records the same leaf-first canonicalisation empirically (`expressions/arithmetic.rs`, a scaled subscript "canonicalizes it to the SECOND operand of a commutative op").
+- **So retail's value-first `x * K` or `x + K` means the constant was not a literal when the expression was built.**
+  Three spellings keep source order: a compound assignment (`t += K`, `t *= K`: the result lands in `t`'s own web), an inline parameter bound to the literal (`throwObjToFront(obj, 200.0f, ...)` makes touchWater's `mPosition.y + y_offset` read `y` first), or a non-`const` named local holding the literal (`f32 k = K; x * k`: IRO propagates it, but the dead local keeps a 4-byte home in a non-leaf function).
+  `const` locals, `static const`, `(f32)` casts and double literals are folded at parse and canonicalised like literals.
+  Measured on 13 retail operand orders in 8 functions, each flipped by the spelling the rule predicts: SelectShine2 `move` (4, a named `rate`), enemyMario `drawHPMeter` (2, `+=`), pakkun Stay (2, the getter named so both operands are leaves), hinokuri2 `moveObject` (`+=`), TabePuku Drag (`*=`), getPos (named step), touchWater (the inlined helper), J3DSkinDeform `initMtxIndexArray` (`base += n`, research 215).
+  Most of these functions still carry a frame gap, so the flip alone closes none of them; take it together with the frame work, and prefer the spelling with no dead home.
+- **Operands are generated left first, except that a subtree holding a real (not inlined) call is generated first.**
+  `K * (f32)s` generates the literal's `lfs` before the conversion, so it gets the lower vreg and is coloured after the conversion's temporaries; `f() * K` (an out-of-line `f`) generates the call and its conversion first and the literal last, so the literal is coloured first while the `fmuls` still reads it first.
+  An inlined callee's result is a temporary, a leaf, so `inl() * K` behaves like `K * s` and cannot give the late literal.
+  Closed `TBathtub::getNearGrip`: retail's late literal meant `matan(...) * (360.0f / 65536.0f)` sits inside the UNUSED `getDir`, whose map size (0x9c) that body now matches exactly; the call sites read `f32 angle = getDir(...)`.
+  Tell: a constant `lfs` that retail colours first (lowest volatile) right after a `bl` whose result is converted and scaled; look for an UNUSED helper 4-10 instructions short of its map size.
+- **An inline-budget side effect.** Shortening a body by moving work into its helper can make a caller inline it: getNearGrip dropped under allowsTumble's budget until a named `MtxPtr mtx = *getRootJointMtx();` restored one statement.
+  After shortening any body, check `changes_all` for a sibling that now inlines it (allowsTumble fell to 68%).
+- **Not source order, per the dumps.** `li r8,0; addi r7,r8,0` (TSelectGrad::perform) is two copies of `nextCycle`'s zero into `i` and the strength-reduced `i*4`; our three `li` are separate object webs that CSE and constant propagation never merge (`s32`/`BOOL`/`u8` flags and hoisted or outer-scope `i` are all inert).
+  The `new JUTTexture(res())` extra copy (Talk2D2, CardSave, SelectMenu, GCConsole2) is a second web for storeTIMG's `this` that the scheduler hoists above `getGlbResource`; after inlining, our AST substitutes `@new` directly (no `this` binding survives to `frontend-00`), and the class shapes tried in a scratch TU (base class, init list, virtual dtor, out-of-class inline ctor) never create one.
+  `addi rD, rS, 0` in the final code is only MWCC's spelling of a PCode `mr`, not an add of zero.
