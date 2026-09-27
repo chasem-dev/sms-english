@@ -939,10 +939,12 @@ static inline u8 CannonAimAtMario(const TCannon* p)
 void TCannon::setKillerGoalPoint()
 {
 	if (CannonAimAtMario(this)) {
-		s16 angle = TMsRange<f32>(0.0f, 360000.0f).rand();
+		TMsRange<f32> range(0.0f, 360000.0f);
+		s16 angle = range.rand();
 		JGeometry::TVec3<f32> pos(*gpMarioPos);
-		pos.x += 500.0f * JMASCos(angle);
-		pos.z += 500.0f * JMASSin(angle);
+		f32 radius = 500.0f;
+		pos.x += radius * JMASCos(angle);
+		pos.z += radius * JMASSin(angle);
 		setGoalPath(TPathNode(pos));
 	} else {
 		setGoalPath(TPathNode(mKillerGoal));
