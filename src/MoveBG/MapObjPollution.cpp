@@ -95,6 +95,10 @@ void TRevivalPolluter::pollute() { }
 //    element pointer and whose map signature takes no argument, and
 //    `getPolluter(i)` was already rejected. With 40 bytes of dead low region
 //    and no legal carrier (batch 208), this unit stays open.
+// 4. c-m6 dump: `this` and `i` both have degree 25 (< K=29), so they are
+//    pushed first and coloured last; retail's order (i, this, offset, element)
+//    needs both deferred, i.e. 4 more live webs. A TPollutionManager forwarder
+//    for registerRevivalTexStamp spills its bindings (+0x28) and is inert.
 void TRevivalPolluter::registerPolluteTex()
 {
 	// TODO: inlines make me cry

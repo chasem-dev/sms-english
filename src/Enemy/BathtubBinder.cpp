@@ -128,6 +128,8 @@ void TBathtubBinder::bind(TLiveActor* actor)
 // single and pair of member accessors (getFrontMargin/getBackMargin/
 // getHeightOffset/getBackRatio/getFrontDist/getBackDist/getWater, and
 // getPosition() at each actor read), and dir via set() or with a y store.
+// c-m6 dump: front/back are IRO scalar temps (@416/@419), dir a CSE temp
+// (@422/@424); a ctor-built `dir(rot[0][2], 0.0f, rot[2][2])` is inert (+0x10).
 void TBathtubBinder::float_(TLiveActor* actor)
 {
 	if (mWater == nullptr)
