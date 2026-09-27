@@ -1056,23 +1056,21 @@ bool TKoopaJrSubmarine::checkKillerLaunch()
 
 void TKoopaJrSubmarine::launchKiller()
 {
-	int launcher           = mKillerIndex % 4;
+	int launcher           = getKillerIndex() % 4;
 	TBathtubKiller* killer = (TBathtubKiller*)mKoopaJr->mKillerManager
 	                             ->getDeadEnemy();
 	if (killer == nullptr)
 		return;
 	killer->unk194 = mKillerTypes[mKillerIndex];
 	killer->reset();
-	// TODO: the ROM adds the 1 with its own addi after reset() instead of
-	// folding it into the table load's offset, and its frame is 0x18 longer.
-	MtxPtr mtx = getModel()->getAnmMtx(TKoopaJr_getJointIndex(launcher + 1));
+	// The named index is the ROM's own addi after reset(); unnamed, the 1
+	// folds into the table load's offset.
+	int index  = launcher + 1;
+	MtxPtr mtx = getModel()->getAnmMtx(TKoopaJr_getJointIndex(index));
 	killer->mPosition.set(mtx[0][3], mtx[1][3], mtx[2][3]);
-	JGeometry::TVec3<f32> dir;
-	dir.x = mtx[0][2];
-	dir.y = mtx[1][2];
-	dir.z = mtx[2][2];
+	JGeometry::TVec3<f32> dir(mtx[0][2], mtx[1][2], mtx[2][2]);
 	makeKillerVelocity(killer, dir);
-	if (gpMSound->gateCheck(0x285D))
+	if (KoopajrGetMSound()->gateCheck(0x285D))
 		MSoundSESystem::MSoundSE::startSoundActor(0x285D, &killer->mPosition,
 		                                          0, nullptr, 0, 4);
 }
