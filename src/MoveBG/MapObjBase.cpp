@@ -354,27 +354,19 @@ void TMapObjBase::makeObjDead()
 		SMS_HideAllShapePacket(getModel());
 }
 
-// Binder over the sound singleton (+8 of pool per site in makeObjAppeared and
-// perform).
+// Binder over the sound singleton (+8 of pool per site in perform).
 static inline MSound* MOBSound()
 {
 	MSound* sound = SMSGetMSound();
 	return sound;
 }
+// Binder over the move frame control (+8 of frame in makeObjAppeared).
 static inline J3DFrameCtrl* MOBMoveCtrl(TMapObjBase* p)
 {
 	J3DFrameCtrl* ctrl = p->mMapObjData->mMove->unk8;
 	return ctrl;
 }
 
-// TODO: frame exact (the two sound binders and the move-ctrl binder); the
-// else arm's col->setMtx(mtx) is a `bl` in retail and its Mtx sits 0x24 lower.
-// The collision block is setUpMapCollision(0) inlined: calling it is
-// instruction-exact once setUpUnk8TRS reaches setUpMtx through one more
-// TMapCollisionManager level (`setUpUnk8Mtx(mtx) { unk8->setUpMtx(mtx); }`,
-// which also lands the `bl setMtx` and keeps setUpMapCollision exact), but
-// the frame is then 0xd0 (Mtx at 0x4c, retail 0x44) and the header level
-// costs TNerveBWDie::execute 99.13 -> 99.01, so neither is committed.
 void TMapObjBase::makeObjAppeared()
 {
 	offLiveFlag(LIVE_FLAG_DEAD | LIVE_FLAG_UNK8);
@@ -383,20 +375,7 @@ void TMapObjBase::makeObjAppeared()
 	mStateTimer = 0;
 	offHitFlag(HIT_FLAG_NO_COLLISION);
 	setObjHitData(0);
-	if (unk100 != 0)
-		unk100 = 0;
-
-	if (!mMapObjData->mSound) {
-		u32 sound = TMapObjGeneral::mDefaultSound.unk0[unk100];
-		if (sound != 0xffffffff)
-			MOBSound()->startSoundActor(sound, &mPosition, 0, nullptr, 0,
-			                                4);
-	} else {
-		u32 sound = mMapObjData->mSound->unk4->unk0[unk100];
-		if (sound != 0xffffffff)
-			MOBSound()->startSoundActor(sound, &mPosition, 0, nullptr, 0,
-			                                4);
-	}
+	startSound(0);
 
 	mGroundHeight = gpMap->checkGround(getPosition(), &mGroundPlane);
 	if (checkLiveFlag(LIVE_FLAG_UNK10))
@@ -415,28 +394,7 @@ void TMapObjBase::makeObjAppeared()
 		SMS_ShowAllShapePacket(getModel());
 
 	mPosition.y -= mYOffset;
-	if (mMapObjData->mCollision && mMapObjData->mCollision->unk4[0].unk0 != 0) {
-		f32 x = getPosition().x;
-		f32 y = mPosition.y - mYOffset;
-		f32 z = mPosition.z;
-		mMapCollisionManager->changeCollision(0);
-		if (checkMapObjFlag(MAP_OBJ_FLAG_UNK8)) {
-			MtxPtr mtx = getModel()->getAnmMtx(0);
-
-			TMapCollisionBase* col = mMapCollisionManager->getUnk8();
-			col->setMtx(mtx);
-			col->setUp();
-		} else {
-			Mtx mtx;
-			TMapCollisionManager* manager = mMapCollisionManager;
-			MsMtxSetTRS(mtx, x, y, z, mRotation.x, mRotation.y, mRotation.z,
-			            mScaling.x, mScaling.y, mScaling.z);
-
-			TMapCollisionBase* col = manager->getUnk8();
-			col->setMtx(mtx);
-			col->setUp();
-		}
-	}
+	setUpMapCollision(0);
 	mPosition.y += mYOffset;
 	mState = STATE_NORMAL;
 }
