@@ -631,6 +631,10 @@ void TPauseMenu2::setDrawStart()
 	// Tried (cc50): setWhite()/TColor()/TColor(u32)/set(u32)/(u32) spellings at
 	// both sites and binder/raw/fork per item site (81 combos); none moves the
 	// two temps without changing the frame.
+	// c-h8: raw mMenuItems[i] with setWhite() and hide() gives retail's
+	// 8-byte TColor stride at frame 0xa0; a J2DPane::setRotation(f32) on the
+	// menu pane is +8 (one word above the TColors); still one word above and
+	// three below missing.
 }
 
 void TPauseMenu2::setDrawEnd()

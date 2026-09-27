@@ -1520,7 +1520,7 @@ void TGCConsole2::startAppearTelop(bool param_1)
 	if (unk50) {
 		return;
 	}
-	if (unk530->unk4 == nullptr) {
+	if (unk530->getMessageData() == nullptr) {
 		return;
 	}
 	if (unk570 == 0 || unk44C->getPane()->isVisible()) {
@@ -1535,14 +1535,14 @@ void TGCConsole2::startAppearTelop(bool param_1)
 	unk56D = 1;
 	unk520->getPane()->show();
 
-	unk520->setPaneOffset(80, 0, 0, 0, 465 - unk520->mInitialBounds.y1);
+	unk520->setPaneOffset(80, 0, 0, 0, 465 - unk520->getInitialBounds().y1);
 
 	if (param_1) {
-		// TODO: the index/base registers are swapped, and the frame is 0x30
-		// short (0xf0 retail; J2DPrint sits at 0x5c, ours 0x3c): a missing
-		// inline level, not a lever. Entry-pointer, named-index, named-loader
-		// and `data + offset` spellings were inert or worse, as were raw
-		// unk4, a (u16) index, and naming the text offset first.
+		// TODO: frame 0xd8 vs 0xf0 (getInitialBounds/getMessageData gave
+		// +0x18; J2DPrint at 0x50 vs 0x5c: 3 words above it, 3 below), and
+		// regalloc.py: the loader CSE temp takes r4 (retail r5) and the data
+		// forceload r5 (retail r0). A getMessageText(loader, id) helper and
+		// `data + offset` are +8/inert and keep the registers.
 		const u8* messageText
 		    = &unk530->getMessageData()[unk530->unk8[unk570[unk558] & 0xffff]
 		                                    .mTextOffset];
