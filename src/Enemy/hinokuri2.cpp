@@ -1615,7 +1615,8 @@ DEFINE_NERVE(TNerveHino2Burst, TLiveActor)
 
 DEFINE_NERVE(TNerveHino2Die, TLiveActor)
 {
-	THinokuri2* self = Hino2Self(spine);
+	TLiveActor* body = spine->getBody();
+	THinokuri2* self = (THinokuri2*)body;
 	if (spine->getTime() == 0) {
 		self->changeBck(0xD);
 		JGeometry::TVec3<f32> local_1C = self->mPosition;
