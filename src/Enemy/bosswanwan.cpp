@@ -644,10 +644,12 @@ TBWBinder::TBWBinder() { }
 
 void TBWBinder::bind(TLiveActor* actor)
 {
-	// TODO: 97.6%. Left: the frame is 0xb8 short (0x1c0 vs 0x278), the
-	// leash block keeps tail.y/z in f31/f30 and reloads tail.x (the open
-	// "reload x, keep y/z" pattern), and `checkGround() + 1.0f` adds with
-	// its operands swapped (`height += 1.0f` and `1.0f + ...` are inert).
+	// TODO: 99.5%. Left: the frame is 0xa8 short (0x1d0 vs 0x278),
+	// `checkGround() + 1.0f` adds with its operands swapped (`height += 1.0f`,
+	// `height = height + 1.0f` and `1.0f + ...` are inert), and the link
+	// block's lsq/along take f3/f4 the other way round (reversed compare,
+	// `link.dot(link)`, if/else, a projection helper and declaring `along`
+	// first are all inert).
 	TBossWanwan* boss = (TBossWanwan*)actor;
 
 	JGeometry::TVec3<f32> velocity = actor->mLinearVelocity;
@@ -670,8 +672,8 @@ void TBWBinder::bind(TLiveActor* actor)
 	}
 
 	if (actor->isAirborne()) {
-		f32 nextY = next.y;
 		f32 nextZ = next.z;
+		f32 nextY = next.y;
 
 		const TBGCheckData* ground;
 		f32 height = gpMap->checkGround(next.x, nextY + boss->getHeadHeight(),
@@ -714,12 +716,11 @@ void TBWBinder::bind(TLiveActor* actor)
 	// frame minimum so it never stalls.
 	if (!actor->isAirborne()) {
 		TGraphTracer* tracer   = ((TSpineEnemy*)actor)->getTracer();
-		const TGraphWeb* graph = tracer->getGraph();
-		if (graph) {
-			int curr = tracer->getCurGraphIndex();
-			int prev = tracer->getPrevIndex();
+		if (tracer->getGraph()) {
+			int curr = tracer->mCurrIdx;
+			int prev = tracer->mPrevIdx;
 			if (curr >= 0 && prev >= 0 && curr != prev) {
-				const TGraphNode* nodes = graph->unk0;
+				const TGraphNode* nodes = tracer->getGraph()->unk0;
 
 				JGeometry::TVec3<f32> link;
 				JGeometry::TVec3<f32> back;
@@ -800,10 +801,12 @@ void TBWBinder::bind(TLiveActor* actor)
 
 	// Pull the boss back onto the link it should be standing on.
 	if (!actor->isAirborne()) {
-		TGraphTracer* tracer      = ((TSpineEnemy*)actor)->getTracer();
-		const TGraphNode* nodes   = tracer->getGraph()->unk0;
-		const TGraphNode& aheadNode = nodes[tracer->getCurGraphIndex()];
-		const TGraphNode& behindNode = nodes[tracer->getPrevIndex()];
+		TGraphTracer* tracer   = ((TSpineEnemy*)actor)->getTracer();
+		const TGraphWeb* graph = tracer->getGraph();
+		const TGraphNode& aheadNode
+		    = graph->getGraphNode(tracer->getCurGraphIndex());
+		const TGraphNode& behindNode
+		    = graph->getGraphNode(tracer->getPrevIndex());
 
 		JGeometry::TVec3<f32> ahead;
 		JGeometry::TVec3<f32> behind;
