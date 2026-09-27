@@ -358,34 +358,44 @@ int TSpineEnemy::jumpToNextGraphNode()
 	return -1;
 }
 
-// TODO: setGoalPathFromGraph's block sits 0x14 low at an exact frame. All
-// 243 raw/tracer/getTracer() spellings of the five index/graph reads leave
-// it at 0x60 or lower: each inline call taking the tracer as an argument
-// (member accessor or free function alike) puts about 4 bytes above the
-// block, where retail has them below. goToExclusiveNextGraphNode shows the
-// same 0x14 between its two pasted blocks.
+// The node choice is one inline level below the caller: its tracer
+// bindings are then created after setGoalPathFromGraph's locals, which sit
+// at the top of the frame as in retail.
+static inline void moveToRandomNextNode(TSpineEnemy* enemy)
+{
+	if (enemy->getTracer()->getCurGraphIndex() < 0)
+		enemy->unk124->setTo(enemy->getTracer()->getGraph()->findNearestNodeIndex(
+		    enemy->mPosition, -1));
+	else
+		enemy->unk124->moveTo(enemy->getTracer()->getGraph()->getRandomNextIndex(
+		    enemy->getTracer()->getCurGraphIndex(),
+		    enemy->getTracer()->getPrevIndex(), -1));
+}
+
 void TSpineEnemy::goToRandomNextGraphNode()
 {
-	if (getTracer()->getCurGraphIndex() < 0)
-		unk124->setTo(
-		    getTracer()->getGraph()->findNearestNodeIndex(mPosition, -1));
-	else
-		unk124->moveTo(getTracer()->getGraph()->getRandomNextIndex(
-		    getTracer()->getCurGraphIndex(), getTracer()->getPrevIndex(), -1));
+	moveToRandomNextNode(this);
 
 	setGoalPathFromGraph();
 	unk128 = 0;
 	unk12C = 0.0f;
 }
 
+static inline void moveToEscapeNode(TSpineEnemy* enemy)
+{
+	if (enemy->getTracer()->getCurGraphIndex() < 0)
+		enemy->unk124->setTo(enemy->getTracer()->getGraph()->findNearestNodeIndex(
+		    enemy->mPosition, -1));
+	else
+		enemy->unk124->moveTo(
+		    enemy->getTracer()->getGraph()->getEscapeFromMarioIndex(
+		        enemy->getTracer()->getCurGraphIndex(), -1, enemy->mPosition,
+		        -1));
+}
+
 void TSpineEnemy::goToRandomEscapeGraphNode()
 {
-	if (getTracer()->getCurGraphIndex() < 0)
-		unk124->setTo(
-		    getTracer()->getGraph()->findNearestNodeIndex(mPosition, -1));
-	else
-		unk124->moveTo(getTracer()->getGraph()->getEscapeFromMarioIndex(
-		    getTracer()->getCurGraphIndex(), -1, mPosition, -1));
+	moveToEscapeNode(this);
 
 	setGoalPathFromGraph();
 	unk128 = 0;
