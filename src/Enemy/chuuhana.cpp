@@ -1171,7 +1171,8 @@ DEFINE_NERVE(TNerveChuuHanaForceJumped, TLiveActor)
 
 DEFINE_NERVE(TNerveChuuHanaKeepBalance, TLiveActor)
 {
-	TChuuHana* hana = (TChuuHana*)spine->getBody();
+	TSpineEnemy* body = spine->getBody();
+	TChuuHana* hana = (TChuuHana*)body;
 
 	if (spine->getTime() == 0) {
 		((TChuuHanaManager*)hana->mManager)->unk70++;
@@ -1200,7 +1201,7 @@ DEFINE_NERVE(TNerveChuuHanaKeepBalance, TLiveActor)
 	if (TChuuHana::mAttackVersion)
 		*hana->unk21C = 1;
 
-	if (!TChuuHana::mNewSw && hana->mGroundPlane->getActor() == nullptr) {
+	if (!TChuuHana::mNewSw && !hana->mGroundPlane->getActor()) {
 		spine->pushAfterCurrent(&TNerveChuuHanaFall::theNerve());
 		return TRUE;
 	}
