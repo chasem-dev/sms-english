@@ -1166,7 +1166,7 @@ s8 TCardLoad::waitForChoice(TEProgress param_1, TEProgress param_2, int param_3)
 			                               unk48C[unkB7].getHeight() * 1.5f,
 			                               unk48C[unkB7].getWidth(),
 			                               unk48C[unkB7].getHeight());
-			JUTRect bounds = unk484[unkB7]->getPane()->mGlobalBounds;
+			JUTRect bounds = unk484[unkB7]->getPane()->getGlobalBounds();
 			// TODO: instructions exact; the frame is the open residue (below every
 			// accessed slot). A named manager gives retail's early `li r5, 0x1FA`
 			// and x1/y1 registers with the named TVec3 pos (Vec pos: 0x10 more frame,
@@ -1252,14 +1252,14 @@ s8 TCardLoad::waitForChoiceBM(TEProgress param_1, TEProgress param_2,
 		unk4AC->getPane()->show();
 
 		if (param_3 == 1) {
-			((J2DPicture*)unk4D8[0]->getPane())->mWhite = 0xFFFFFFFF;
+			((J2DPicture*)unk4D8[0]->getPane())->setWhite(0xFFFFFFFF);
 			unk4D8[0]->getPane()->hide();
-			((J2DPicture*)unk4D8[1]->getPane())->mWhite = 0x00FF00FF;
+			((J2DPicture*)unk4D8[1]->getPane())->setWhite(0x00FF00FF);
 			unk4D8[1]->getPane()->hide();
 		} else {
-			((J2DPicture*)unk4D8[1]->getPane())->mWhite = 0xFFFFFFFF;
+			((J2DPicture*)unk4D8[1]->getPane())->setWhite(0xFFFFFFFF);
 			unk4D8[1]->getPane()->hide();
-			((J2DPicture*)unk4D8[0]->getPane())->mWhite = 0x00FF00FF;
+			((J2DPicture*)unk4D8[0]->getPane())->setWhite(0x00FF00FF);
 			unk4D8[0]->getPane()->hide();
 		}
 		unk500->hide();
@@ -1348,7 +1348,7 @@ s8 TCardLoad::waitForChoiceBM(TEProgress param_1, TEProgress param_2,
 			                               unk4E0[unkB7].getHeight() * 1.5f,
 			                               unk4E0[unkB7].getWidth(),
 			                               unk4E0[unkB7].getHeight());
-			JUTRect bounds = unk4D8[unkB7]->getPane()->mGlobalBounds;
+			JUTRect bounds = unk4D8[unkB7]->getPane()->getGlobalBounds();
 			// TODO: frame only; see the first 0x1FA site.
 			JGeometry::TVec3<f32> local_108(bounds.x1 + bounds.getWidth() * 0.5f,
 			                                bounds.y1 + bounds.getHeight() * 0.5f, 0.0f);
@@ -1366,8 +1366,7 @@ s8 TCardLoad::waitForChoiceBM(TEProgress param_1, TEProgress param_2,
 
 		int thing = unkC4 < 40 ? unkC4 : 80 - unkC4;
 		thing     = (thing * 255.0f) / 40.0f;
-		((J2DPicture*)unk4D8[unkB7]->getPane())->mWhite
-		    = (thing << 24) + 0xFF00FF;
+		((J2DPicture*)unk4D8[unkB7]->getPane())->setWhite((thing << 24) + 0xFF00FF);
 		unk4D8[unkB7]->update();
 		unkC4 += 1;
 		if (unkC4 > 80)
@@ -1381,8 +1380,8 @@ s8 TCardLoad::waitForChoiceBM(TEProgress param_1, TEProgress param_2,
 			unk4D8[old]->getPane()->mBounds = unk4E0[old];
 			SMSGetMSound()->startSoundSystemSE(MSD_SE_SY_E3_MENU_CURSOR, 0,
 			                                   nullptr, 0);
-			((J2DPicture*)unk4D8[old]->getPane())->mWhite   = 0xFFFFFFFF;
-			((J2DPicture*)unk4D8[unkB7]->getPane())->mWhite = 0x00FF00FF;
+			((J2DPicture*)unk4D8[old]->getPane())->setWhite(0xFFFFFFFF);
+			((J2DPicture*)unk4D8[unkB7]->getPane())->setWhite(0x00FF00FF);
 		}
 	} break;
 
@@ -2061,15 +2060,13 @@ s8 TCardLoad::selectFunction()
 				unk378[unkB0][i]->update();
 				if (unk40[unkB0].unk18 == 0) {
 					if (i > 0)
-						((J2DPicture*)unk378[unkB0][i]->getPane())->mWhite
-						    = 0xFFFFFF7F;
+						((J2DPicture*)unk378[unkB0][i]->getPane())->setWhite(0xFFFFFF7F);
 				} else {
-					((J2DPicture*)unk378[unkB0][i]->getPane())->mWhite
-					    = 0xFFFFFFFF;
+					((J2DPicture*)unk378[unkB0][i]->getPane())->setWhite(0xFFFFFFFF);
 				}
 			}
 
-			((J2DPicture*)unk378[unkB0][unkB6]->getPane())->mWhite = 0x00FF00FF;
+			((J2DPicture*)unk378[unkB0][unkB6]->getPane())->setWhite(0x00FF00FF);
 			for (int i = 0; i < 3; ++i) {
 				if (unk40[i].unk0 == 1) {
 					// The ROM writes the shared caption pair here, not the
@@ -2166,8 +2163,7 @@ s8 TCardLoad::selectFunction()
 			int r = unkC4;
 			r     = r < 40 ? r : 80 - r;
 			r     = (r * 255.0f) / 40.0f;
-			((J2DPicture*)unk378[unkB0][unkB6]->getPane())->mWhite
-			    = (r << 24) + 0xFF00FF;
+			((J2DPicture*)unk378[unkB0][unkB6]->getPane())->setWhite((r << 24) + 0xFF00FF);
 			unk378[unkB0][unkB6]->update();
 			unkC4 += 1;
 			if (unkC4 > 80)
@@ -2184,8 +2180,8 @@ s8 TCardLoad::selectFunction()
 
 			unk378[unkB0][bVar1]->getPane()->setBounds(unk3A8[unkB0][bVar1]);
 
-			((J2DPicture*)unk378[unkB0][bVar1]->getPane())->mWhite = 0xFFFFFFFF;
-			((J2DPicture*)unk378[unkB0][unkB6]->getPane())->mWhite = 0x00FF00FF;
+			((J2DPicture*)unk378[unkB0][bVar1]->getPane())->setWhite(0xFFFFFFFF);
+			((J2DPicture*)unk378[unkB0][unkB6]->getPane())->setWhite(0x00FF00FF);
 		}
 		break;
 
