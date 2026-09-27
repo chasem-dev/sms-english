@@ -63,6 +63,13 @@ void TMapWarp::warp(int) { }
 // (+0x10), the helper also issuing the request (same or +8), `.set(a + b)`
 // (float copies), top-declared `TCubeStreamInfo* info`/`int no` (no slot),
 // dead named `f32 angle` (no slot), every order of the five top declarations.
+// c-m29: the warp block is the UNUSED `warp(int no)` (map 0x138): written as
+// `int warp = unk4[no].unk0; if (unk8 != warp) {...}` with `TVec3 warpPos =
+// SMS_GetMarioPos() + unk4[no].getUnk8();` and called here, it is 0x138 exact
+// and watchToWarp keeps every instruction and frame 0x170 once fVar8 is
+// unnamed, but 23 slots differ (99.89 < 99.94): retail has a dead 12-byte
+// object at 0xf4 and the operator+ copy low at 0xa0, i.e. a by-value-returning
+// operator+ with a local (frame-model 8d), not the header's fabricated one.
 static inline s32 MapWarpGetStreamType(const TCubeStreamInfo* info)
 {
 	return info->unk38;

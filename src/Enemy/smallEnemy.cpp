@@ -386,34 +386,17 @@ void TSmallEnemy::genEventCoin()
 		}
 	}
 
-	// TODO: frame and Mtx exact (raw mPosition for the single coin,
-	// getRotation().y for the angle); local_d0 and the TMsRange temporary
-	// still sit 8 low. Inert: getPosition() at any makeObjAppear or
-	// coin->mPosition.y site, `coin != nullptr`; earlier (cc48): Mtx/Vec at
-	// function, block or loop scope in either order; one function-scope
-	// TCoin* for both blocks.
+	// TODO: 99.9x%, frame and every slot exact once the rotation goes through
+	// the header's MsMtxSetRotY (its sin/cos are inline objects, not named
+	// slots). Left: retail stores mtx[2][3] before local_d0.x (both f26),
+	// ours the reverse; store order of d0 (all six), TVec3 zero()/set()/ctor,
+	// braces on the z override and the Vec declaration hoisted are inert.
 	if (unk18C > 0) {
 		for (int i = 0; i < unk18C; ++i) {
 			Mtx local_c0;
 
 			f32 angle = 360.0f / unk18C * i + getRotation().y;
-			f32 s     = JMASin(angle);
-			f32 c     = JMACos(angle);
-
-			local_c0[0][0] = c;
-			local_c0[0][1] = 0.0f;
-			local_c0[0][2] = s;
-			local_c0[0][3] = 0.0f;
-
-			local_c0[1][0] = 0.0f;
-			local_c0[1][1] = 1.0f;
-			local_c0[1][2] = 0.0f;
-			local_c0[1][3] = 0.0f;
-
-			local_c0[2][0] = -s;
-			local_c0[2][1] = 0.0f;
-			local_c0[2][2] = c;
-			local_c0[2][3] = 0.0f;
+			MsMtxSetRotY(local_c0, angle);
 
 			Vec local_d0;
 			local_d0.x = 0.0f;
