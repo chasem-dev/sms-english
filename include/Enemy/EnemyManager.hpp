@@ -44,7 +44,7 @@ public:
 	virtual void createEnemies(int);
 	virtual void changeDrawBuffer(u32) { }
 
-	void createEnemy();
+	bool createEnemy();
 	void createSharedMActorSet(const char**);
 	TSharedMActorSet* getSharedMActorSet(int);
 	void setSharedFlags();
