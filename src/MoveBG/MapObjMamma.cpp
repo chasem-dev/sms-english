@@ -236,18 +236,21 @@ void TSandBomb::makeObjAppeared()
 	startControlAnim(2);
 }
 
-// TODO: 89.4%. Retail reads mMActor for each frame store before the frame
-// load (`lwz r0, 0x74(r31)` then `mr r3, r0`); a TU-local
-// SandBombSetFrame(MActor*, int, f32) setter reproduces it (97.1%) but no
-// such setter exists in the map, so it is not applied. Frame 0x38 vs 0x68.
+// Advances one of a sand bomb's frame controls by `speed`. Retail's f31/f30
+// order (the speed binding first, the inlined getFrame() second) needs the
+// speed to be this helper's argument rather than a named local of the caller.
+static inline void SandBombAddFrame(TLiveActor* actor, int ctrl, f32 speed)
+{
+	actor->getMActor()->getFrameCtrl(ctrl)->setFrame(
+	    speed + actor->getMActor()->getFrameCtrl(ctrl)->getFrame());
+}
+
+// TODO: instruction-exact; frame 0x38 vs retail 0x68. The 12 missing words sit
+// below the saves (uniform shift); iro.py shows only the two helper temps here.
 u32 TSandBomb::touchWater(THitActor* actor)
 {
-	f32 speed0 = TSandBombBase::mFiringFrameSpeed;
-	mMActor->getFrameCtrl(0)->setFrame(speed0
-	                                   + mMActor->getFrameCtrl(0)->getFrame());
-	f32 speed5 = TSandBombBase::mFiringFrameSpeed;
-	mMActor->getFrameCtrl(5)->setFrame(speed5
-	                                   + mMActor->getFrameCtrl(5)->getFrame());
+	SandBombAddFrame(this, 0, TSandBombBase::mFiringFrameSpeed);
+	SandBombAddFrame(this, 5, TSandBombBase::mFiringFrameSpeed);
 
 	mMActor->getFrameCtrl(0);
 	soundBas(MSD_SE_OBJ_SANDBOMB_WATER_1, 7.0f,
@@ -279,15 +282,6 @@ void TSandBombBase::withered()
 	mStateTimer = mReviveTime;
 	mState      = STATE_REVIVING;
 	mTrigger->sleep();
-}
-
-// Advances one of a sand bomb's frame controls by `speed`. Retail's f31/f30
-// order (the speed binding first, the inlined getFrame() second) needs the
-// speed to be this helper's argument rather than a named local of the caller.
-static inline void SandBombAddFrame(TLiveActor* actor, int ctrl, f32 speed)
-{
-	actor->getMActor()->getFrameCtrl(ctrl)->setFrame(
-	    speed + actor->getMActor()->getFrameCtrl(ctrl)->getFrame());
 }
 
 static inline bool SandBombIsSandBomb(const TSandBombBase* p)

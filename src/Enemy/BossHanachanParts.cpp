@@ -485,7 +485,9 @@ BossHanachanPartsGetActorModel(const TBossHanachanPartsBase* p)
 // changed (r31) > anm (r30) > this (r29) > blend (r28); ours ranks this first.
 // Inert or worse: a TU-local blend helper (by TNpcInbetween* or by this), a
 // direct or MActor* model binder in place of the two-local one, and naming the
-// table index in the condition.
+// table index in the condition. regalloc --why: retail defers anm (deg 28,
+// needs 29) and changed (25 left) with this; named ctrl/model locals, an index
+// helper and an if/else-if for the switch were inert or worse.
 bool TBossHanachanPartsBody::setAnm_(EnumBossHanachanAnmKind anm,
                                     EnumBossHanachanStopMotionBlendOnOff blend)
 {
