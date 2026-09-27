@@ -545,7 +545,7 @@ static inline u8 updateLifeMeterState(TGCConsole2* console)
 			console->startInsertLife(1);
 			console->unk18 = 8;
 		} else {
-			console->unk1CC[0] = 8;
+			console->unk1CC[0] = amount = 8;
 			console->unk18     = 0;
 		}
 		break;
@@ -753,10 +753,13 @@ static inline void setShineDigits(Pane** panes, JUTTexture** textures,
 static inline void emitCounterParticle(TBoundPane* pane)
 {
 	JUTRect bounds(pane->getPane()->mGlobalBounds);
+	// Retail reads the manager before the centre arithmetic (it keeps r3 out
+	// of the rect's registers); spelled as the call's receiver it is read last.
+	JPAEmitterManager* manager = gpEmitterManager4D2;
 	JGeometry::TVec3<f32> position;
 	position.set(bounds.x1 + bounds.getWidth() * 0.5f,
 	             bounds.y1 + bounds.getHeight() * 0.5f, 0.0f);
-	gpEmitterManager4D2->createEmitter(position, 0x1FC, nullptr, nullptr);
+	manager->createEmitter(position, 0x1FC, nullptr, nullptr);
 }
 
 // fabricated
@@ -798,10 +801,11 @@ static inline void changeCoinNum(TBoundPane*& pane, JUTTexture** textures,
 {
 	((J2DPicture*)pane->getPane())
 	    ->changeTexture(textures[digit]->getTexInfo(), 0);
+	JPAEmitterManager* manager = gpEmitterManager4D2;
 	bounds = pane->getPane()->mGlobalBounds;
 	position.set(bounds.x1 + bounds.getWidth() * 0.5f,
 	             bounds.y1 + bounds.getHeight() * 0.5f, 0.0f);
-	gpEmitterManager4D2->createEmitter(position, 0x1FC, nullptr, nullptr);
+	manager->createEmitter(position, 0x1FC, nullptr, nullptr);
 }
 
 // fabricated
@@ -825,8 +829,8 @@ static inline void updateCoinCounterAnimation(TGCConsole2* console)
 			console->unk20 = console->unk6C = 0;
 
 		if (incrementing) {
-			JUTRect bounds(0, 0, 0, 0);
 			JGeometry::TVec3<f32> position;
+			JUTRect bounds(0, 0, 0, 0);
 
 			if (console->unk6C >= 100) {
 				if (console->unk6C % 100 == 0)
@@ -4601,6 +4605,44 @@ void TGCConsole2::drawWater(J2DOrthoGraph& graph)
 	           false, false, false);
 }
 
+// fabricated. Retail converts x's operands before y's for the first two
+// emitters (their int-to-float temps are allocated x first) and y first for
+// the third, so only the first two name their coordinates.
+static inline void updateStarCounterDown(TGCConsole2* console)
+{
+	if (console->unk35) {
+		bool done = true;
+		done &= console->unk108->update();
+		done &= console->unk140->update();
+		done &= console->unk160->update();
+
+		JUTRect bounds(console->unkCC->getPane()->mGlobalBounds);
+		{
+			f32 x = bounds.x1 + bounds.getWidth() * 0.5f;
+			f32 y = bounds.y1 + bounds.getHeight() * 0.5f;
+			console->unk124->setGlobalTranslation(x, y, 0.0f);
+		}
+		bounds = console->unk14C->getPane()->mGlobalBounds;
+		{
+			f32 x = bounds.x1 + bounds.getWidth() * 0.5f;
+			f32 y = bounds.y1 + bounds.getHeight() * 0.5f;
+			console->unk164->setGlobalTranslation(x, y, 0.0f);
+		}
+		bounds = console->unk12C->getPane()->mGlobalBounds;
+		console->unk144->setGlobalTranslation(
+		    bounds.x1 + bounds.getWidth() * 0.5f,
+		    bounds.y1 + bounds.getHeight() * 0.5f, 0.0f);
+
+		if (done) {
+			console->unk140->getPane()->hide();
+			console->unk160->getPane()->hide();
+			console->unk144->setStatus(JPABaseEmitter::STATUS_STOP_EMIT);
+			console->unk164->setStatus(JPABaseEmitter::STATUS_STOP_EMIT);
+			console->unk35 = 0;
+		}
+	}
+}
+
 // TODO: frame 0x368 short (0xc48 vs 0xfb0). Instruction count (3729) and the
 // call set already equal retail's; the <40/>40 markers are scheduling around
 // stack slots, so the residue is the low region. Its referenced slots are
@@ -4689,33 +4731,7 @@ void TGCConsole2::perform(u32 flags, JDrama::TGraphics* graphics)
 			updateStarHudAutoHide(this);
 		}
 
-		if (unk35) {
-			bool done = true;
-			done &= unk108->update();
-			done &= unk140->update();
-			done &= unk160->update();
-
-			JUTRect bounds(unkCC->getPane()->mGlobalBounds);
-			unk124->mGlobalTranslation.set(
-			    bounds.x1 + bounds.getWidth() * 0.5f,
-			    bounds.y1 + bounds.getHeight() * 0.5f, 0.0f);
-			bounds = unk14C->getPane()->mGlobalBounds;
-			unk164->mGlobalTranslation.set(
-			    bounds.x1 + bounds.getWidth() * 0.5f,
-			    bounds.y1 + bounds.getHeight() * 0.5f, 0.0f);
-			bounds = unk12C->getPane()->mGlobalBounds;
-			unk144->mGlobalTranslation.set(
-			    bounds.x1 + bounds.getWidth() * 0.5f,
-			    bounds.y1 + bounds.getHeight() * 0.5f, 0.0f);
-
-			if (done) {
-				unk140->getPane()->hide();
-				unk160->getPane()->hide();
-				unk144->setStatus(JPABaseEmitter::STATUS_STOP_EMIT);
-				unk164->setStatus(JPABaseEmitter::STATUS_STOP_EMIT);
-				unk35 = 0;
-			}
-		}
+		updateStarCounterDown(this);
 
 		countBlueCoin();
 		countShine();
