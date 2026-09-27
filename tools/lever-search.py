@@ -15,6 +15,21 @@ using the unit's own compile command from build.ninja, so the object is
 byte-identical to what ninja would build.  Winning variants are written as
 patch files; nothing is applied.
 
+Levers (see --list-cands): accessor <-> raw member per site, including indexed
+accessors (getCollision(i) <-> mCollisions[i]) and every 2-3 site subset of a
+3-5 site group; null tests; integer types; unnaming, splitting, hoisting and
+reordering declarations; naming call results and receivers; TU-local forks
+and binders; compound assignments; setters.  From docs/catalog/frame-model.md:
+  rot-helper    hand-written rotation matrix -> MsMtxSetRotX/Y/Z(m, deg)
+  static-color  constant local GXColor -> file-scope static const GXColor
+  unused-stub   statements equal to an UNUSED stub's body -> a call to it
+  chain-binder  { T* r = a->getB()->getC(); return r; } over a chain's end
+  chain-fork    { return a->getB()->getC(); } (the head binder is `binder`)
+  name-conv     name an argument its parameter type converts (u32 id = s32v)
+  decl-hoist    move a declaration (split from its value) to an outer block top
+  vec-set       TVec3 v(a, b, c) <-> TVec3 v; v.set(a, b, c)
+  name-read     name a single-use member/param read (f32 d = p->m.get();)
+
 Usage:
   tools/lever-search.py -u Player/MarioPhysics -f barProcess__6TMarioFv
   tools/lever-search.py -u Enemy/rocket -f bind__7TRocketFv --source my.cpp
@@ -26,6 +41,7 @@ import argparse
 import concurrent.futures as cf
 import difflib
 import hashlib
+import itertools
 import json
 import os
 import queue
@@ -365,8 +381,17 @@ DECL_RE = re.compile(
     r"(?:^|[;{}:]|\n)\s*(?:(?:static|virtual|inline|extern|friend)\s+)*"
     r"((?:const\s+)?[A-Za-z_][\w:]*(?:\s*<[^;{}()<>]*(?:<[^;{}()<>]*>[^;{}()<>]*)?>)?"
     r"(?:\s*::\s*\w+)?(?:\s*const)?\s*[*&]+|(?:const\s+)?[A-Za-z_][\w:]*(?:\s*<[^;{}()<>]*>)?)"
-    r"\s+(\w+)\s*\([^;{}]*\)\s*(?:const\s*)?[{;]")
-PTR_MEMBER_RE = re.compile(r"^\s*(?:const\s+)?[A-Za-z_][\w:]*(?:<[^;()]*>)?\s*\*\s*(\w+)\s*;", re.M)
+    r"\s+(\w+)\s*\(([^;{}]*)\)\s*(?:const\s*)?[{;]")
+PTR_MEMBER_RE = re.compile(r"^\s*((?:const\s+)?[A-Za-z_][\w:]*(?:<[^;()]*>)?\s*\*)\s*(\w+)\s*;", re.M)
+# T f(int i) { return mArr[i]; }  (indexed accessor, default argument allowed)
+GETTER1_RE = re.compile(
+    r"\b(\w+)\s*\(\s*(?:const\s+)?(?:unsigned\s+)?\w+\s+(\w+)\s*(?:=\s*\w+\s*)?\)\s*(?:const\s*)?"
+    r"\{\s*return\s+(?:this\s*->\s*)?([A-Za-z_]\w*)\s*\[\s*\2\s*\]\s*;\s*\}")
+MEMBER_SCALAR_RE = re.compile(
+    r"^[ \t]*(f32|f64|float|double|s32|u32|int|s16|u16|u8|s8|bool|BOOL)\s+([A-Za-z_]\w*)\s*;", re.M)
+MEMBER_OBJ_RE = re.compile(r"^[ \t]*([A-Za-z_][\w:]*(?:\s*<[^;(){}]*>)?)\s+([A-Za-z_]\w*)\s*;", re.M)
+PARAM_MEMBER_RE = re.compile(r"\bTParam\w*\s*<\s*(\w+)\s*>\s+(\w+)\s*;")
+CLASS_RE = re.compile(r"\b(?:class|struct)\s+(\w+)\s*(?::([^;{()]*))?\{")
 EXTERN_RE = re.compile(r"\bextern\s+((?:const\s+)?[\w:]+(?:\s*<[^;]*?>)?\s*[*&]*)\s*(\w+)\s*;")
 
 
@@ -377,10 +402,22 @@ class Index:
         self.rettypes: Dict[str, set] = {}
         self.globals: Dict[str, str] = {}
         self.ptr_members: set = set()
+        self.getters1: Dict[str, set] = {}   # indexed accessor -> array members
+        self.member_types: Dict[str, set] = {}  # scalar data member -> types
+        self.param_members: Dict[str, set] = {}  # TParam member -> value types
+        self.class_rettypes: Dict[Tuple[str, str], set] = {}  # (class, method) -> return types
+        self.class_bases: Dict[str, set] = {}
+        self.class_getters: Dict[Tuple[str, str], set] = {}
+        self.sigs: Dict[str, set] = {}  # function -> {(param types...)}
+        self.pnames: Dict[str, set] = {}  # function -> {(param names...)}
         for t in texts:
             self.add(t)
 
     def add(self, t: str):
+        # offset comments (`/* 0x42A0 */ TEMario* mEMario;`) hide members from the
+        # line-anchored patterns; strings keep their text
+        t = re.sub(r"/\*.*?\*/", " ", t, flags=re.S)
+        t = re.sub(r"//[^\n]*", "", t)
         for m in GETTER_RE.finditer(t):
             name, expr = m.group(1), re.sub(r"\s+", "", m.group(2)).replace("this->", "")
             if name in KEYWORDS or name == expr or expr.lstrip("*") in KEYWORDS:
@@ -390,25 +427,154 @@ class Index:
             self.setters.setdefault(m.group(1), set()).add(m.group(3))
         for m in DECL_RE.finditer(t):
             ty, name = re.sub(r"\s+", " ", m.group(1)).strip(), m.group(2)
-            if name in KEYWORDS or ty.split()[0] in KEYWORDS - {"const"} or ty in ("void", "return", "else"):
+            if name in KEYWORDS or ty.split()[0] in KEYWORDS - {"const"} or ty in ("return", "else"):
                 continue
-            ty = re.sub(r"\s*([*&<>,])\s*", r"\1", ty).replace(">", "> ").strip()
-            ty = ty.replace("> *", ">*").replace("> &", ">&")
-            self.rettypes.setdefault(name, set()).add(ty)
+            ps = _parse_params(m.group(3))
+            if ps is not None:
+                self.sigs.setdefault(name, set()).add(tuple(x[0] for x in ps))
+                self.pnames.setdefault(name, set()).add(tuple(x[1] for x in ps))
+            if ty == "void":
+                continue
+            self.rettypes.setdefault(name, set()).add(_norm_type(ty))
+        # per-class return types (resolves getGamePad() on TMarDirector vs others)
+        for cm in CLASS_RE.finditer(t):
+            ob = cm.end() - 1
+            depth, j = 0, ob
+            while j < len(t):
+                if t[j] == "{":
+                    depth += 1
+                elif t[j] == "}":
+                    depth -= 1
+                    if depth == 0:
+                        break
+                j += 1
+            cls = cm.group(1)
+            bases = [b for b in re.findall(r"(\w+)\s*(?:<[^<>]*>)?\s*(?:,|$)", (cm.group(2) or "").strip())
+                     if b not in ("public", "private", "protected", "virtual")]
+            if bases:
+                self.class_bases.setdefault(cls, set()).update(bases)
+            for m in GETTER_RE.finditer(t[ob + 1:j]):
+                expr = re.sub(r"\s+", "", m.group(2)).replace("this->", "")
+                self.class_getters.setdefault((cls, m.group(1)), set()).add(expr)
+            for m in DECL_RE.finditer(t[ob + 1:j]):
+                ty, name = re.sub(r"\s+", " ", m.group(1)).strip(), m.group(2)
+                if name in KEYWORDS or ty.split()[0] in KEYWORDS - {"const"} or ty in ("void", "return", "else"):
+                    continue
+                self.class_rettypes.setdefault((cls, name), set()).add(_norm_type(ty))
+        for m in GETTER1_RE.finditer(t):
+            if m.group(1) not in KEYWORDS:
+                self.getters1.setdefault(m.group(1), set()).add(m.group(3))
+        for m in MEMBER_SCALAR_RE.finditer(t):
+            if m.group(2) in SCALAR_TYPES or m.group(2) in KEYWORDS:
+                continue
+            ty = {"float": "f32", "double": "f64"}.get(m.group(1), m.group(1))
+            self.member_types.setdefault(m.group(2), set()).add(ty)
+        for m in MEMBER_OBJ_RE.finditer(t):
+            if m.group(1).split("<")[0].strip() in KEYWORDS | SCALAR_TYPES or m.group(2) in KEYWORDS:
+                continue
+            self.member_types.setdefault(m.group(2), set()).add(_norm_type(m.group(1)))
+        for m in PARAM_MEMBER_RE.finditer(t):
+            ty = {"float": "f32", "double": "f64"}.get(m.group(1), m.group(1))
+            self.param_members.setdefault(m.group(2), set()).add(ty)
         for m in PTR_MEMBER_RE.finditer(t):
-            self.ptr_members.add(m.group(1))
+            self.ptr_members.add(m.group(2))
+            if not m.group(1).startswith(("return", "delete", "else")):
+                self.member_types.setdefault(m.group(2), set()).add(_norm_type(m.group(1)))
         for m in EXTERN_RE.finditer(t):
             self.globals[m.group(2)] = re.sub(r"\s+", " ", m.group(1)).strip()
+
+    def method_rettype(self, cls: Optional[str], name: str) -> Optional[str]:
+        """Return type of cls::name (searching bases), else the unique global one."""
+        seen, todo = set(), [cls] if cls else []
+        while todo:
+            c = todo.pop(0)
+            if c in seen:
+                continue
+            seen.add(c)
+            v = self.class_rettypes.get((c, name))
+            if v:
+                return _pick(v)
+            todo += sorted(self.class_bases.get(c, ()))
+        return self.rettype(name)
+
+    def class_lookup(self, table: str, cls: Optional[str], name: str) -> Optional[set]:
+        """The first class in cls's hierarchy that defines `name` in `table`."""
+        seen, todo = set(), [cls] if cls else []
+        while todo:
+            c = todo.pop(0)
+            if c in seen:
+                continue
+            seen.add(c)
+            v = getattr(self, table).get((c, name))
+            if v:
+                return v
+            todo += sorted(self.class_bases.get(c, ()))
+        return None
+
+    def unique(self, table: str, name: str) -> Optional[str]:
+        v = getattr(self, table).get(name)
+        return next(iter(v)) if v and len(v) == 1 else None
+
+    def sig(self, name: str, arity: int) -> Optional[Tuple[Tuple[str, ...], Tuple[str, ...]]]:
+        """The one known signature of `name` with `arity` parameters, with names."""
+        ss = [x for x in self.sigs.get(name, ()) if len(x) == arity]
+        if len(ss) != 1:
+            return None
+        ns = [x for x in self.pnames.get(name, ()) if len(x) == arity]
+        return ss[0], (ns[0] if len(ns) == 1 else tuple("" for _ in ss[0]))
 
     def all_pointer(self, name: str) -> bool:
         s = self.rettypes.get(name)
         return bool(s) and all(x.endswith("*") for x in s)
 
     def rettype(self, name: str) -> Optional[str]:
-        s = self.rettypes.get(name)
-        if s and len(s) == 1:
-            return next(iter(s))
+        return _pick(self.rettypes.get(name))
+
+
+def _pick(types) -> Optional[str]:
+    """The one type in the set; a const/non-const overload pair counts as one."""
+    if not types:
         return None
+    if len(types) == 1:
+        return next(iter(types))
+    plain = set(re.sub(r"^const\s+", "", x) for x in types)
+    return next(iter(plain)) if len(plain) == 1 else None
+
+
+def _norm_type(ty: str) -> str:
+    ty = re.sub(r"\s*([*&<>,])\s*", r"\1", ty).replace(">", "> ").strip()
+    return ty.replace("> *", ">*").replace("> &", ">&")
+
+
+def _type_class(ty: Optional[str]) -> Optional[str]:
+    """TMarDirector* -> TMarDirector (last component, no template args)."""
+    if not ty:
+        return None
+    ty = re.sub(r"<.*", "", re.sub(r"^const\s+", "", ty.strip())).rstrip("*& ")
+    return ty.split("::")[-1].strip() or None
+
+
+def _parse_params(ptext: str) -> Optional[List[Tuple[str, str]]]:
+    """(type, name) per parameter of a declaration, or None when unparsable."""
+    ptext = ptext.strip()
+    if not ptext or ptext == "void":
+        return []
+    out = []
+    for p in ptext.split(","):
+        p = p.split("=")[0].strip()
+        if "(" in p or "<" in p or ">" in p or "[" in p:
+            return None
+        toks = re.findall(r"[A-Za-z_]\w*|[*&]", p)
+        toks = [x for x in toks if x not in ("const", "volatile", "struct", "class")]
+        if not toks:
+            return None
+        if len(toks) > 1 and re.match(r"[A-Za-z_]", toks[-1]) and toks[-1] not in SCALAR_TYPES:
+            name, ty = toks[-1], toks[:-1]
+        else:
+            name, ty = "", toks
+        ty = " ".join(ty).replace(" *", "*").replace(" &", "&")
+        out.append(({"float": "f32", "double": "f64"}.get(ty, ty), name))
+    return out
 
 
 _INDEX_CACHE = {}
@@ -423,6 +589,20 @@ def header_index() -> Index:
                     texts.append(open(os.path.join(dp, f), encoding="utf-8", errors="replace").read())
         _INDEX_CACHE["idx"] = Index(texts)
     return _INDEX_CACHE["idx"]
+
+
+def merged_index(text: str) -> Index:
+    """The header index plus the unit's own declarations."""
+    idx, local, merged = header_index(), Index([text]), Index([])
+    for d, v0 in vars(merged).items():
+        if isinstance(v0, dict) and d != "globals":
+            for src in (idx, local):
+                for k, v in getattr(src, d).items():
+                    v0.setdefault(k, set()).update(v)
+    merged.ptr_members = idx.ptr_members | local.ptr_members
+    merged.globals = dict(idx.globals)
+    merged.globals.update(local.globals)
+    return merged
 
 
 # --------------------------------------------------------------------------
@@ -585,6 +765,9 @@ LEVER_PRIO = {
     "acc->raw": 1, "raw->acc": 1, "null-test": 1, "int-type": 2, "unname": 2,
     "name-call": 3, "decl-split": 3, "decl-order": 4, "fork": 4, "binder": 5,
     "compound": 5, "split-sum": 5, "set-assign": 5,
+    # frame-model.md levers (2026-09-27)
+    "rot-helper": 1, "static-color": 1, "unused-stub": 1, "name-conv": 3, "chain-binder": 4,
+    "chain-fork": 4, "decl-hoist": 4, "vec-set": 4, "name-read": 5,
 }
 
 
@@ -918,7 +1101,13 @@ class Gen:
             if prv == "::":
                 continue
             recv = prv in (".", "->")
-            for expr in sorted(idx.getters[g]):
+            exprs = idx.getters[g]
+            cls = _type_class(self.expr_type_any(self.postfix_start(k - 2), k - 2)) if recv else \
+                (self.loc.info.klass or None)
+            known = idx.class_lookup("class_getters", cls, g) if cls else None
+            if known:
+                exprs = known  # the receiver's own accessor, not a namesake's
+            for expr in sorted(exprs):
                 is_global = expr.startswith("*") or re.match(r"g[A-Z]", expr) is not None
                 if recv and is_global:
                     continue
@@ -960,11 +1149,50 @@ class Gen:
                 edit = (t[a].s, t[k].e, g + "()")
                 self.add("raw->acc", k, "%s -> %s()" % (key, g), [edit], prio=_acc_prio(g, key))
                 groups.setdefault(("raw->acc", "%s -> %s()" % (key, g)), []).append(edit)
+        # indexed accessors: getCollision(i) <-> mCollisions[i]
+        raw1: Dict[str, List[str]] = {}
+        for g, mems in idx.getters1.items():
+            for mem in mems:
+                raw1.setdefault(mem, []).append(g)
+        for k in range(self.bo + 1, self.bc):
+            if t[k].kind != "id" or t[k - 1].text == "::":
+                continue
+            recv = t[k - 1].text in (".", "->")
+            if not recv and not is_member:
+                continue
+            g = t[k].text
+            if g in idx.getters1 and t[k + 1].text == "(" and t[k + 2].text != ")":
+                cp = self.bm.get(k + 1)
+                if cp is None or any(t[q].text == "," and self.pdepth[q] == self.pdepth[k + 2]
+                                     for q in range(k + 2, cp)):
+                    continue
+                for mem in sorted(idx.getters1[g]):
+                    edit = (t[k].s, t[cp].e, "%s[%s]" % (mem, self.span(k + 2, cp - 1)))
+                    d = "%s(i) -> %s[i]" % (g, mem)
+                    self.add("acc->raw", k, d, [edit], prio=_acc_prio(g, mem))
+                    groups.setdefault(("acc->raw", d), []).append(edit)
+            elif g in raw1 and t[k + 1].text == "[":
+                cb = self.bm.get(k + 1)
+                if cb is None or t[cb + 1].text == "[" or not self.is_value_context(k, cb):
+                    continue
+                for acc in sorted(set(raw1[g])):
+                    edit = (t[k].s, t[cb].e, "%s(%s)" % (acc, self.span(k + 2, cb - 1)))
+                    d = "%s[i] -> %s(i)" % (g, acc)
+                    self.add("raw->acc", k, d, [edit], prio=_acc_prio(acc, g))
+                    groups.setdefault(("raw->acc", d), []).append(edit)
         for (lever, d), eds in groups.items():
             if len(eds) > 1:
-                g = re.search(r"(\w+)\(\)", d).group(1)
-                self.cands.append(Cand(lever, "%s all %d sites: %s" % (lever, len(eds), d), eds,
-                                       _acc_prio(g, d.split(" -> ")[0 if lever == "raw->acc" else 1])))
+                g = re.search(r"(\w+)\((?:i)?\)", d).group(1)
+                pr = _acc_prio(g, re.sub(r"\[i\]", "", d.split(" -> ")[0 if lever == "raw->acc" else 1]))
+                self.cands.append(Cand(lever, "%s all %d sites: %s" % (lever, len(eds), d), eds, pr))
+                # accessor prices are per site and saturate: offer the site subsets
+                # (several closes needed e.g. 2 of 4 sites raw)
+                n = len(eds)
+                if 3 <= n <= 5:
+                    for r in range(2, n if n <= 4 else 3):
+                        for sub in itertools.combinations(range(n), r):
+                            self.cands.append(Cand(lever, "%s sites %s of %d: %s" % (
+                                lever, "+".join(str(i + 1) for i in sub), n, d), [eds[i] for i in sub], pr + 1))
 
     def gen_setters(self):
         t = self.toks
@@ -1178,6 +1406,14 @@ class Gen:
         if t[p].kind != "id":
             return None
         rt = self.idx.rettype(t[p].text)
+        if rt is None:  # ambiguous by name: resolve through the receiver's class
+            if t[p - 1].text in ("->", ".") and p - 2 > a - 1:
+                cls = _type_class(self.expr_type_any(self.postfix_start(p - 2), p - 2))
+            elif t[p - 1].text not in ("::", ".", "->"):
+                cls = self.loc.info.klass or None
+            else:
+                cls = None
+            rt = self.idx.method_rettype(cls, t[p].text) if cls else None
         if rt is None:
             return None
         if targ and re.fullmatch(r"(const )?[A-Z]\*", rt.replace(" ", "")):
@@ -1187,6 +1423,27 @@ class Gen:
         if rt.startswith("virtual") or rt.startswith("static"):
             return None
         return {"float": "f32", "double": "f64"}.get(rt, rt)
+
+    def expr_type_any(self, a: int, e: int) -> Optional[str]:
+        """Best-effort type of the postfix expression a..e (pointer or scalar)."""
+        t = self.toks
+        if a > e:
+            return None
+        if t[e].text == ")":
+            return self.call_type(self.postfix_start(e), e)
+        if t[e].kind != "id":
+            return None
+        if a == e:
+            if t[e].text in self.var_types:
+                return self.var_types[t[e].text].strip()
+            if t[e].text in self.idx.globals:
+                return self.idx.globals[t[e].text]
+            if t[e].text == "this" and self.loc.info.klass:
+                return self.loc.info.klass + "*"
+            return self.idx.unique("member_types", t[e].text) if self.loc.info.klass else None
+        if t[e - 1].text in (".", "->"):
+            return self.idx.unique("member_types", t[e].text)
+        return None
 
     def gen_name_calls(self):
         t = self.toks
@@ -1214,8 +1471,8 @@ class Gen:
             if t[a - 1].text in ("=", "return") and t[k + 1].text == ";":
                 continue
             s = self.stmt_start(a)
-            if s is None or s == a:
-                continue
+            if s is None or (s == a and nxt not in (".", "->")):
+                continue  # (a receiver at the head of its statement is rule 16's lever)
             # hoisting a right operand of && / || / ?: out of its statement
             # would evaluate it unconditionally
             if any(t[q].text in ("&&", "||", "?") for q in range(s, a)):
@@ -1361,26 +1618,542 @@ class Gen:
                         self.add("split-sum", k, "split %s %s" % (lhs, x),
                                  [(t[q].s, t[e].e, ";\n%s%s %s= %s;" % (pre, lhs, op2, self.span(q + 1, e - 1)))])
 
+    # ---- levers recorded in docs/catalog/frame-model.md (2026-09-27 batches) ----
+    # Every generator below only emits a rewrite that is textually safe and that
+    # reads as ordinary source: no padding, casts, pragmas or unused locals.
+
+    def _stmt_extent(self, k: int) -> Optional[int]:
+        """Last token of the statement starting at k (None when unparsable)."""
+        t = self.toks
+        x = t[k].text
+        if x == "{":
+            return self.bm.get(k)
+        if x in ("if", "while", "for", "switch") and t[k + 1].text == "(":
+            cp = self.bm.get(k + 1)
+            if cp is None:
+                return None
+            e = self._stmt_extent(cp + 1)
+            if e is not None and x == "if" and t[e + 1].text == "else":
+                return self._stmt_extent(e + 2)
+            return e
+        if x == "do":
+            e = self._stmt_extent(k + 1)
+            if e is None or t[e + 1].text != "while" or t[e + 2].text != "(":
+                return None
+            return self.bm[e + 2] + 1
+        if x in ("case", "default"):
+            j = k
+            while j < self.bc and t[j].text != ":":
+                j += 1
+            return j
+        j = k
+        while j < self.bc:
+            y = t[j].text
+            if y in ("(", "[", "{"):
+                j = self.bm.get(j, j) + 1
+                continue
+            if y == "}":
+                return None
+            if y == ";":
+                return j
+            j += 1
+        return None
+
+    def block_stmts(self, blk: int) -> List[Tuple[int, int]]:
+        end = self.bm.get(blk)
+        out, k = [], blk + 1
+        while end is not None and k < end:
+            e = self._stmt_extent(k)
+            if e is None or e >= end:
+                return out
+            out.append((k, e))
+            k = e + 1
+        return out
+
+    def blocks(self) -> List[int]:
+        t = self.toks
+        return [k for k in range(self.bo, self.bc) if t[k].text == "{" and
+                (k == self.bo or t[k - 1].text in (")", "else", "do", "{", "}", ";", ":"))]
+
+    def _expr_type(self, a: int, e: int) -> Optional[str]:
+        """Scalar type of the postfix read a..e: a local, a data member, a param value."""
+        t, idx = self.toks, self.idx
+        if a == e and t[e].kind == "id":
+            vt = self.var_types.get(t[e].text)
+            if vt is not None:
+                vt = re.sub(r"^const\s+", "", vt.strip())
+                return {"float": "f32", "double": "f64"}.get(vt, vt)
+            if self.loc.info.klass:
+                return idx.unique("member_types", t[e].text)
+            return None
+        if t[e].text == ")" and t[e - 1].text == "(" and t[e - 2].text == "get" and t[e - 3].text == "." \
+                and t[e - 4].kind == "id":
+            return idx.unique("param_members", t[e - 4].text)
+        if t[e].kind == "id" and t[e - 1].text == "." and t[e].text == "value" and t[e - 2].kind == "id":
+            return idx.unique("param_members", t[e - 2].text)
+        if t[e].kind == "id" and t[e - 1].text in (".", "->"):
+            return idx.unique("member_types", t[e].text)
+        return None
+
+    def _hoistable(self, s: int, a: int) -> bool:
+        """Can the value at token a be computed before statement s?"""
+        t = self.toks
+        if any(t[q].text in ("&&", "||", "?") for q in range(s, a)):
+            return False
+        return not self.impure(s, a)
+
+    def gen_name_reads(self):
+        """Name a single-use member or parameter read (`f32 x = p->m.get(); if (d < x)`)."""
+        t = self.toks
+        for k in range(self.bo + 1, self.bc):
+            if t[k].kind != "id" or t[k].text in KEYWORDS or t[k - 1].text in (".", "->", "::"):
+                continue
+            e = self.postfix_end(k)
+            if t[e + 1].text in ("(", "[", ".", "->") or not self.is_value_context(k, e):
+                continue
+            if k == e and (t[k].text in self.var_types or t[k].text in SCALAR_TYPES):
+                continue  # a copy of a local, or a type name
+            if t[k - 1].text == "<" and t[e + 1].text == ">":
+                continue  # template argument
+            if self.impure(k, e + 1):
+                continue  # only accessor calls inside the read
+            ty = self._expr_type(k, e)
+            if ty is None or ty not in SCALAR_TYPES:
+                continue
+            if not (t[k - 1].text in PREC and t[k - 1].text != "?") and not (t[e + 1].text in PREC and t[e + 1].text != "?"):
+                continue  # only operands of arithmetic and comparisons
+            s = self.stmt_start(k)
+            if s is None or s == k or not self._hoistable(s, k):
+                continue
+            mem = t[e - 4].text if t[e].text == ")" else (t[e - 2].text if t[e].text == "value" else t[e].text)
+            base = re.sub(r"^(m|unk)(?:SL)?(?=[A-Z0-9])", "", mem)
+            base = base[:1].lower() + base[1:] if base[:1].isalpha() else "v" + base
+            v = self.fresh(base, self.block_of(s), s)
+            self.add("name-read", k, "name %s %s" % (ty, self.span(k, e)[:40]),
+                     [self.insert_before_stmt(s, "%s %s = %s;" % (ty, v, self.span(k, e))), (t[k].s, t[e].e, v)])
+
+    def gen_name_conv(self):
+        """Name a call argument that the callee's parameter type converts
+        (`u32 id = eventId; setEventId(id);`)."""
+        t = self.toks
+        for k in range(self.bo + 1, self.bc):
+            if t[k].kind != "id" or t[k + 1].text != "(" or t[k].text in KEYWORDS or t[k - 1].text == "::":
+                continue
+            cp = self.bm.get(k + 1)
+            if cp is None or cp == k + 2:
+                continue
+            args, cur = [], [k + 2]
+            for q in range(k + 2, cp):
+                if t[q].text == "," and self.pdepth[q] == self.pdepth[k + 2]:
+                    cur.append(q - 1)
+                    args.append(tuple(cur))
+                    cur = [q + 1]
+            cur.append(cp - 1)
+            args.append(tuple(cur))
+            sg = self.idx.sig(t[k].text, len(args))
+            if sg is None:
+                continue
+            s = self.stmt_start(k)
+            if s is None:
+                continue
+            for i, (a, b) in enumerate(args):
+                p = sg[0][i]
+                if p not in SCALAR_TYPES or self.postfix_end(a) != b:
+                    continue
+                if self.impure(a, b + 1):
+                    continue
+                v_ty = self._expr_type(a, b)
+                if v_ty is None or v_ty not in SCALAR_TYPES or v_ty == p:
+                    continue
+                if {v_ty, p} <= {"f32", "float"} or {v_ty, p} <= {"f64", "double"}:
+                    continue
+                if not self._hoistable(s, k) or self.impure(k + 2, a) or self.impure(b + 1, cp):
+                    continue
+                base = sg[1][i] or "arg"
+                v = self.fresh(base, self.block_of(s), s)
+                self.add("name-conv", a, "name %s arg of %s as %s" % (self.span(a, b)[:30], t[k].text, p),
+                         [self.insert_before_stmt(s, "%s %s = %s;" % (p, v, self.span(a, b))), (t[a].s, t[b].e, v)])
+
+    POD_RE = re.compile(r"(?:JGeometry::)?TVec3<\w+>|Mtx|Mtx44|MtxPtr|Vec|GXColor|S16Vec|Quaternion")
+
+    def gen_hoist(self):
+        """Move a declaration (split from its initialiser) to the top of an
+        enclosing block or of the function (rule 8a: named slots follow it)."""
+        t = self.toks
+        ds = self.decls()
+        names = [t[d[2]].text for d in ds]
+        for s, te, ni, init, e in ds:
+            name = t[ni].text
+            if names.count(name) != 1:
+                continue
+            tytoks = [t[q].text for q in range(s, te + 1)]
+            ty = self.span(s, te)
+            if tytoks[-1] == "&":
+                continue
+            scalar = tytoks[-1] == "*" or all(x in SCALAR_TYPES or x == "const" for x in tytoks)
+            if not scalar and not (init is None and self.POD_RE.fullmatch(re.sub(r"\s+", "", ty))):
+                continue
+            if "const" in tytoks and (init is not None or tytoks[-1] != "*"):
+                continue
+            bty = ty
+            own = self.block_of(s)
+            own_end = self.bm.get(own, self.bc)
+            if any(t[q].text == name and t[q - 1].text not in (".", "->", "::")
+                   for q in list(range(self.bo, s)) + list(range(own_end, self.bc))):
+                continue  # the name means something else elsewhere in the function
+            chain, b = [], own
+            while True:
+                chain.append(b)
+                if b <= self.bo:
+                    break
+                b = self.block_of(b)
+            for b in chain:
+                first = b + 1
+                if first >= s or (b == own and init is not None):
+                    continue  # already first, or decl-split's own-block hoist
+                if t[first].text in ("}", "case", "default"):
+                    continue
+                where = "function" if b == self.bo else "block L%d" % (self.text.count("\n", 0, t[b].s) + 1)
+                eds = [self.insert_before_stmt(first, "%s %s;" % (bty, name))]
+                if init is None:
+                    eds.append(self.delete_stmt_edit(s, e))
+                else:
+                    eds.append((t[s].s, t[e].e, "%s = %s;" % (name, self.span(init, e - 1))))
+                self.add("decl-hoist", s, "declare %s at top of %s" % (name, where), eds)
+
+    VEC_DECL_RE = re.compile(r"((?:const\s+)?(?:JGeometry\s*::\s*)?TVec3\s*<\s*\w+\s*>)\s+(\w+)\s*(\((.*)\))?\s*;", re.S)
+
+    def gen_vec_ctor(self):
+        """`TVec3 v(a, b, c);` <-> `TVec3 v; v.set(a, b, c);`."""
+        t = self.toks
+        for blk in self.blocks():
+            st = self.block_stmts(blk)
+            for n, (s, e) in enumerate(st):
+                m = self.VEC_DECL_RE.fullmatch(self.span(s, e))
+                if not m or m.group(1).startswith("const"):
+                    continue
+                ty, name = m.group(1), m.group(2)
+                ls, pre, alone = self.line_start(s)
+                if m.group(3):
+                    if not m.group(4).strip() or not alone:
+                        continue
+                    self.add("vec-set", s, "%s(...) -> .set(...)" % name,
+                             [(t[s].s, t[e].e, "%s %s;\n%s%s.set(%s);" % (ty, name, pre, name, m.group(4).strip()))])
+                    continue
+                # declared bare: its first reference must be a set() statement of this block
+                for s2, e2 in st[n + 1:]:
+                    refs = [q for q in range(s2, e2 + 1) if t[q].text == name and t[q - 1].text not in (".", "->", "::")]
+                    if not refs:
+                        continue
+                    if refs != [s2] or t[s2 + 1].text != "." or t[s2 + 2].text != "set" or t[s2 + 3].text != "(" \
+                            or self.bm.get(s2 + 3) != e2 - 1:
+                        break
+                    args = self.span(s2 + 4, e2 - 2) if e2 - 2 >= s2 + 4 else ""
+                    if not args:
+                        break
+                    self.add("vec-set", s2, "%s.set(...) -> %s(...)" % (name, name),
+                             [self.delete_stmt_edit(s, e), (t[s2].s, t[e2].e, "%s %s(%s);" % (ty, name, args))])
+                    break
+
+    ROT = {
+        "X": {(0, 0): "1", (0, 1): "0", (0, 2): "0", (0, 3): "0", (1, 0): "0", (1, 1): "c", (1, 2): "-s",
+              (1, 3): "0", (2, 0): "0", (2, 1): "s", (2, 2): "c", (2, 3): "0"},
+        "Y": {(0, 0): "c", (0, 1): "0", (0, 2): "s", (0, 3): "0", (1, 0): "0", (1, 1): "1", (1, 2): "0",
+              (1, 3): "0", (2, 0): "-s", (2, 1): "0", (2, 2): "c", (2, 3): "0"},
+        "Z": {(0, 0): "c", (0, 1): "-s", (0, 2): "0", (0, 3): "0", (1, 0): "s", (1, 1): "c", (1, 2): "0",
+              (1, 3): "0", (2, 0): "0", (2, 1): "0", (2, 2): "1", (2, 3): "0"},
+    }
+
+    def _mtx_store(self, s: int, e: int):
+        """`M[i][j] = v;` -> (M text, (i, j), normalised v) or None."""
+        t = self.toks
+        m = re.fullmatch(r"(.+?)\s*\[\s*([0-3])\s*\]\s*\[\s*([0-3])\s*\]\s*=\s*(-?)\s*([\w.]+)\s*;", self.span(s, e), re.S)
+        if not m:
+            return None
+        v = m.group(5)
+        if re.fullmatch(r"[\d.]+[fF]?", v):
+            try:
+                f = float(v.rstrip("fF"))
+            except ValueError:
+                return None
+            if f not in (0.0, 1.0) or m.group(4):
+                return None
+            v = "%d" % f
+        elif re.fullmatch(r"[A-Za-z_]\w*", v):
+            v = m.group(4) + v
+        else:
+            return None
+        return re.sub(r"\s+", "", m.group(1)), (int(m.group(2)), int(m.group(3))), v
+
+    _TRIG = re.compile(r"(JMA(S?)(Sin|Cos))\s*\((.*)\)", re.S)
+    _SHORT = [re.compile(r"DEG2SHORTANGLE\s*\((.*)\)", re.S),
+              re.compile(r"\(\s*s16\s*\)\s*\(\s*182\.0444\d*f?\s*\*\s*(.*)\)", re.S),
+              re.compile(r"\(\s*s16\s*\)\s*\(\s*(.*?)\s*\*\s*182\.0444\d*f?\s*\)", re.S),
+              re.compile(r"(.*?)\s*\*\s*\(\s*65536\.0f\s*/\s*360\.0f\s*\)", re.S)]
+
+    def _deg(self, text: str) -> Optional[str]:
+        text = text.strip()
+        for r in self._SHORT:
+            m = r.fullmatch(text)
+            if m:
+                return m.group(1).strip()  # a whole call argument: no parentheses needed
+        return None
+
+    def gen_rot_helper(self):
+        """A hand-written rotation matrix -> MsMtxSetRotX/Y/Z (sin/cos/angle become callee objects)."""
+        t = self.toks
+        ds = {t[ni].text: (s, te, ni, init, e) for s, te, ni, init, e in self.decls()}
+        for blk in self.blocks():
+            st = self.block_stmts(blk)
+            for n in range(len(st) - 11):
+                run = [self._mtx_store(*x) for x in st[n:n + 12]]
+                if any(r is None for r in run) or len(set(r[0] for r in run)) != 1:
+                    continue
+                vals = {r[1]: r[2] for r in run}
+                if len(vals) != 12:
+                    continue
+                for axis, tpl in self.ROT.items():
+                    cpos = next(p for p, v in tpl.items() if v == "c")
+                    spos = next(p for p, v in tpl.items() if v == "s")
+                    cn, sn = vals[cpos], vals[spos]
+                    if not re.fullmatch(r"[A-Za-z_]\w*", cn) or not re.fullmatch(r"[A-Za-z_]\w*", sn) or cn == sn:
+                        continue
+                    sub = {"c": cn, "s": sn, "-s": "-" + sn}
+                    want = {p: sub.get(v, v) for p, v in tpl.items()}
+                    if want != vals:
+                        continue
+                    self._emit_rot(axis, run[0][0], cn, sn, st, n, ds, blk)
+
+    def _emit_rot(self, axis, mtx, cn, sn, st, n, ds, blk):
+        t = self.toks
+        run_s, run_e = st[n][0], st[n + 11][1]
+        dels, angles = [], {}
+        for nm, fn in ((sn, "Sin"), (cn, "Cos")):
+            d = ds.get(nm)
+            if d is None or d[3] is None or self.block_of(d[0]) != blk or d[0] > run_s:
+                return
+            uses = [q for q in range(self.bo, self.bc) if t[q].text == nm and t[q - 1].text not in (".", "->")]
+            if len([q for q in uses if not (run_s <= q <= run_e)]) != 1:
+                return  # used outside its declaration and the run
+            m = self._TRIG.fullmatch(self.span(d[3], d[4] - 1))
+            if not m or m.group(3) != fn:
+                return
+            arg = m.group(4).strip()
+            if not m.group(2):  # JMASin(deg)
+                angles[nm] = arg
+            else:
+                deg = self._deg(arg)
+                if deg is None and re.fullmatch(r"[A-Za-z_]\w*", arg) and arg in ds and ds[arg][3] is not None:
+                    a = ds[arg]
+                    auses = [q for q in range(self.bo, self.bc) if t[q].text == arg and t[q - 1].text not in (".", "->")]
+                    if len(auses) != 3:
+                        return
+                    deg = self._deg(self.span(a[3], a[4] - 1))
+                    if deg is None or self.block_of(a[0]) != blk:
+                        return
+                    dels.append(a)
+                if deg is None:
+                    return
+                angles[nm] = deg
+            dels.append(d)
+        if angles[sn] != angles[cn]:
+            return
+        dels = sorted(set(dels))
+        # everything between the first removed declaration and the run must be
+        # another removed declaration or a bare declaration (nothing reordered)
+        first = dels[0][0]
+        for s, e in st:
+            if first <= s < run_s and not any(s == d[0] for d in dels):
+                if self._stmt_extent(s) != e or t[e - 1].kind != "id" or t[e].text != ";" or \
+                        any(t[q].text in ASSIGN_OPS or t[q].text == "(" for q in range(s, e)):
+                    return
+        eds = [self.delete_stmt_edit(d[0], d[4]) for d in dels]
+        eds.append((t[run_s].s, t[run_e].e, "MsMtxSetRot%s(%s, %s);" % (axis, mtx, angles[sn])))
+        self.add("rot-helper", run_s, "MsMtxSetRot%s(%s, %s)" % (axis, mtx, angles[sn][:30]), eds)
+
+    GXCOLOR_RE = re.compile(r"(?:const\s+)?GXColor\s+(\w+)\s*=\s*(\{[\s\w,()]*\})\s*;")
+
+    def gen_static_color(self):
+        """A constant local GXColor -> a file-scope `static const GXColor`."""
+        t = self.toks
+        for blk in self.blocks():
+            for s, e in self.block_stmts(blk):
+                m = self.GXCOLOR_RE.fullmatch(self.span(s, e))
+                if not m:
+                    continue
+                name = m.group(1)
+                uses = [q for q in range(e + 1, self.bc) if t[q].text == name and t[q - 1].text not in (".", "->", "::")]
+                if not uses or any(t[q - 1].text == "&" or t[q + 1].text in ASSIGN_OPS
+                                   or (t[q + 1].text == "." and t[q + 3].text in ASSIGN_OPS) for q in uses):
+                    continue
+                st = self.stem[:1].upper() + self.stem[1:]
+                gname = self.fresh("s" + st + name[:1].upper() + name[1:])
+                helper = "static const GXColor %s = %s;\n" % (gname, re.sub(r"\s+", " ", m.group(2)))
+                eds = [self.helper_edit(helper), self.delete_stmt_edit(s, e)]
+                eds += [(t[q].s, t[q].e, gname) for q in uses]
+                self.add("static-color", s, "%s -> file-scope %s" % (name, gname), eds)
+
+    def _unused_stubs(self):
+        t = self.toks
+        out = []
+        for i in range(1, len(t) - 5):
+            if not (t[i].kind == "id" and t[i + 1].text == "::" and t[i + 2].kind == "id"
+                    and t[i + 3].text == "(" and t[i + 4].text == ")"):
+                continue
+            k = i + 5
+            while t[k].text == "const":
+                k += 1
+            if t[k].text != "{" or k not in self.bm or t[i - 1].text != "void":
+                continue
+            if self.loc.bo == k:
+                continue
+            h = i - 1
+            gap = self.text[t[h - 1].e if h > 0 else 0:t[h].s]
+            if "UNUSED" not in gap:
+                continue
+            body = [x.text for x in t[k + 1:self.bm[k]]]
+            body = _strip_recv(body, "this")
+            if body:
+                out.append((t[i].text, t[i + 2].text, body))
+        return out
+
+    def gen_unused_stub(self):
+        """Statements equal to an UNUSED stub's body -> a call to the stub
+        (its locals and temporaries become callee objects, one depth down)."""
+        stubs = self._unused_stubs()
+        if not stubs:
+            return
+        t = self.toks
+        klass = self.loc.info.klass
+        for blk in self.blocks():
+            st = self.block_stmts(blk)
+            for i in range(len(st)):
+                first = st[i][0]
+                recv = t[first].text if t[first].kind == "id" and t[first + 1].text == "->" else None
+                for j in range(i, min(len(st), i + 8)):
+                    toks = [x.text for x in t[first:st[j][1] + 1]]
+                    # a local of this function would bind to a member in the stub
+                    free = [q for q in range(first, st[j][1] + 1) if t[q].kind == "id"
+                            and t[q - 1].text not in (".", "->", "::") and t[q].text != recv]
+                    if any(t[q].text in self.var_types for q in free):
+                        continue
+                    for cls, name, body in stubs:
+                        if len(toks) > len(body) + 64:
+                            continue
+                        hit = None
+                        if cls == klass and _strip_recv(toks, "this") == body:
+                            hit = "%s();" % name
+                        elif recv and recv != "this" and _strip_recv(toks, recv) == body:
+                            vt = self.var_types.get(recv, "")
+                            if vt and cls not in vt:
+                                continue
+                            hit = "%s->%s();" % (recv, name)
+                        if hit:
+                            self.add("unused-stub", first, "%s for %d statement(s)" % (hit, j - i + 1),
+                                     [(t[first].s, t[st[j][1]].e, hit)])
+
+    def gen_chain_binders(self):
+        """Bind the END of an accessor chain in a TU-local inline
+        (`{ T* p = a->getB()->getC(); return p; }`), or fork it."""
+        t, idx, info = self.toks, self.idx, self.loc.info
+        tu_static = set(re.findall(r"\bstatic\s+inline\s+[\w:<>\s*&]*?\b(\w+)\s*\(\s*\)", self.text))
+        unwrap = {}
+        for nm in tu_static:
+            m = re.search(r"\b%s\s*\(\s*\)\s*\{\s*(?:[\w:<>]+\s*\*\s*(\w+)\s*=\s*([\w>\-.()]+?)\s*;\s*return\s+\1\s*;"
+                          r"|return\s+([\w>\-.()]+?)\s*;)\s*\}" % re.escape(nm), self.text)
+            if m:
+                unwrap[nm] = m.group(2) or m.group(3)
+        cq = "const " if info.const else ""
+        groups: Dict[str, List] = {}
+        for k in range(self.bo + 1, self.bc):
+            if t[k].kind != "id" or t[k - 1].text in (".", "->", "::") or t[k].text in KEYWORDS:
+                continue
+            name = t[k].text
+            heads = []  # (head_end, [head exprs], params, callargs, counts_as_link)
+            if name in idx.globals and idx.globals[name].endswith("*") and t[k + 1].text == "->":
+                heads = [(k, [name], "", "", False)]
+            elif t[k + 1].text == "(" and t[k + 2].text == ")" and t[k + 3].text in ("->", "."):
+                if name in tu_static or (name[:1].isupper() and idx.rettype(name)):
+                    hx = ["%s()" % name] + ([unwrap[name]] if name in unwrap else [])
+                    heads = [(k + 2, hx, "", "", True)]
+                elif info.klass and name[:1].islower() and idx.rettype(name) and name not in tu_static:
+                    heads = [(k + 2, ["self->%s()" % name], "%s%s* self" % (cq, info.klass), "this", True)]
+            elif name in self.var_types and t[k + 1].text == "->" and self.var_types[name].rstrip().endswith("*"):
+                heads = [(k, [name], "%s %s" % (self.var_types[name].strip(), name), name, False)]
+            elif info.klass and t[k + 1].text == "->" and (idx.unique("member_types", name) or "").endswith("*"):
+                heads = [(k, ["self->%s" % name], "%s%s* self" % (cq, info.klass), "this", False)]
+            for head_end, hexprs, params, callargs, head_link in heads:
+                links, j = [], head_end
+                if name in idx.globals:
+                    cur = idx.globals[name]
+                elif t[k + 1].text == "->" and name not in self.var_types:
+                    cur = idx.unique("member_types", name)
+                elif t[k + 1].text == "(":
+                    cur = idx.method_rettype(info.klass if callargs == "this" else None, name)
+                else:
+                    cur = self.var_types.get(name)
+                while t[j + 1].text in ("->", ".") and t[j + 2].kind == "id" and t[j + 3].text == "(" \
+                        and t[j + 4].text == ")" and (t[j + 2].text in idx.getters
+                                                     or re.match(r"(get|Get|is)[A-Z_]", t[j + 2].text)):
+                    rt = idx.method_rettype(_type_class(cur), t[j + 2].text)
+                    cur = rt
+                    if rt is None or rt == "void" or re.search(r"\b[A-Z]\b", rt) or \
+                            rt.split()[0] in ("virtual", "static", "inline"):
+                        break
+                    links.append((j + 4, t[j + 2].text, rt))
+                    if not rt.endswith("*"):
+                        break
+                    j += 4
+                for li, (end, g, rt) in enumerate(links):
+                    if params and callargs != "this" and li < 1:
+                        continue  # one accessor over a local receiver: rule 4, inert
+                    if not (rt.endswith("*") or rt in SCALAR_TYPES):
+                        continue
+                    if t[end + 1].text in ASSIGN_OPS or t[end + 1].text in ("++", "--"):
+                        continue
+                    tail = self.span(head_end + 1, end)
+                    gname = re.sub(r"^(get|Get)(?=[A-Z])", "", g)
+                    for hi, hx in enumerate(hexprs):
+                        expr = hx + tail
+                        for form in ("binder", "fork"):
+                            body = ("\t%s r = %s;\n\treturn r;" % (rt, expr)) if form == "binder" else \
+                                "\treturn %s;" % expr
+                            base = self.stem + "Get" + gname[:1].upper() + gname[1:] + \
+                                ("Bound" if form == "binder" else "")
+                            fn = self.fresh(base, None, body)
+                            helper = "static inline %s %s(%s)\n{\n%s\n}\n\n" % (rt, fn, params, body)
+                            site = (t[k].s, t[end].e, "%s(%s)" % (fn, callargs))
+                            self.add("chain-" + form, k, "%s(%s) = %s" % (fn, callargs, expr[:50]),
+                                     [self.helper_edit(helper), site])
+                            groups.setdefault((form, fn), [self.helper_edit(helper)]).append(site)
+        for (form, fn), eds in groups.items():
+            if len(eds) > 2:
+                self.add("chain-" + form, self.bo, "%s at all %d sites" % (fn, len(eds) - 1), eds)
+
     def lint(self) -> List[str]:
         """Implausible spellings in the current body (reject exact variants with these)."""
         t = self.toks
         pnames = set(t[p[-1]].text for p in self.params if p and t[p[-1]].kind == "id")
-        local = set()
+        local: Dict[str, str] = {}
         bad = []
         for s_, te, ni, init, e in self.decls():
+            ty = re.sub(r"\s+", " ", self.span(s_, te))
             if init is not None and e == init + 1 and t[init].kind == "id" \
-                    and t[init].text in local and t[init].text not in pnames:
+                    and t[init].text in local and t[init].text not in pnames \
+                    and local[t[init].text] == ty:  # a converting copy is real code
                 bad.append("copy of local %s into %s" % (t[init].text, t[ni].text))
-            local.add(t[ni].text)
+            local[t[ni].text] = ty
         return bad
 
     def generate(self, levers=None) -> List[Cand]:
         gens = [self.gen_accessors, self.gen_null_tests, self.gen_int_types, self.gen_decls,
-                self.gen_name_calls, self.gen_wrappers, self.gen_compound, self.gen_setters]
+                self.gen_name_calls, self.gen_wrappers, self.gen_compound, self.gen_setters,
+                self.gen_rot_helper, self.gen_static_color, self.gen_unused_stub, self.gen_chain_binders,
+                self.gen_name_conv, self.gen_hoist, self.gen_vec_ctor, self.gen_name_reads]
         for g in gens:
             try:
                 g()
-            except (IndexError, KeyError) as ex:  # heuristic parser hit something odd
+            except (IndexError, KeyError, TypeError, ValueError, AttributeError) as ex:  # heuristic parser hit something odd
                 print("  (generator %s skipped: %r)" % (g.__name__, ex), file=sys.stderr)
         out, seen = [], set()
         for c in self.cands:
@@ -1395,6 +2168,19 @@ class Gen:
         for i, c in enumerate(out):
             c.cid = i
         return out
+
+
+def _strip_recv(toks: List[str], recv: str) -> List[str]:
+    """Drop every `recv ->` that heads a postfix expression."""
+    out, i = [], 0
+    while i < len(toks):
+        if toks[i] == recv and i + 1 < len(toks) and toks[i + 1] == "->" and \
+                (i == 0 or toks[i - 1] not in (".", "->", "::")):
+            i += 2
+            continue
+        out.append(toks[i])
+        i += 1
+    return out
 
 
 def _acc_prio(getter: str, expr: str) -> int:
@@ -1529,7 +2315,15 @@ class Searcher:
         _, vd = self.compile(text, keep_json=True)
         if bd is None or vd is None:
             return ["compile failed"]
-        return regressions(unit_profile(bd), unit_profile(vd), self.fn)
+        # a file-scope constant the variant introduced (static-color) takes the
+        # place of the compiler's @NNNN literal: its bytes are scored by the section
+        decl = r"\bstatic\s+const\s+[\w:]+\s+(\w+)\s*="
+        new_statics = set(re.findall(decl, text)) - set(re.findall(decl, self.base_text))
+        bad = regressions(unit_profile(bd), unit_profile(vd), self.fn)
+        if new_statics:
+            bad = [b for b in bad if not re.match(r"@\d+ [\d.]+->gone$|@\d+ 100\.00->0\.00$", b)
+                   and b[len("extra symbol "):] not in new_statics]
+        return bad
 
     def run(self, budget: float, max_builds: int, beam: int = 6, topk: int = 16, depth: int = 4,
             levers=None, list_only: bool = False, rounds: int = 3):
@@ -1537,17 +2331,7 @@ class Searcher:
         text = self.base_text
         toks = lex(text)
         bm = bracket_map(toks)
-        idx = header_index()
-        local = Index([text])
-        merged = Index([])
-        for d in ("getters", "setters", "rettypes"):
-            m = getattr(merged, d)
-            for src in (idx, local):
-                for k, v in getattr(src, d).items():
-                    m.setdefault(k, set()).update(v)
-        merged.ptr_members = idx.ptr_members | local.ptr_members
-        merged.globals = dict(idx.globals)
-        merged.globals.update(local.globals)
+        merged = merged_index(text)
 
         base_score, base_json = self.compile(text, keep_json=True)
         result = {"unit": self.unit, "fn": self.fn, "base": base_score, "best": base_score, "best_desc": "",
@@ -1685,6 +2469,9 @@ class Searcher:
                 sigs.add(singles[c].sig)
                 uniq.append(c)
         pool = uniq[:topk]
+        inert = [cid for cid, x in sorted(singles.items()) if x.ok and x.sig == base_score.sig
+                 and cands[cid].lever in ("acc->raw", "raw->acc") and len(cands[cid].edits) == 1]
+        pool += inert[:max(0, min(4, topk - len(pool)))]
         for c in pool[:8]:
             self.log("    %-52s %s" % (cands[c].desc[:52], singles[c].short()))
         states = [((c,), singles[c]) for c in pool[:beam]]
