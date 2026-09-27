@@ -721,7 +721,10 @@ inline bool TBaseNPC::calcAnmOff_()
 		if (!isAirborne() && !belongToGround()
 		    && (isNerveMaybeDontCalcAnim0()
 		        || isNerveMaybeDontCalcAnim1())) {
-			if (NpcSquaredDist(mPosition, gpCamera->unk124) > getAnmOffDistSquared_() && !bVar6
+			// Named first: retail calls getAnmOffDist_ before the squared
+			// camera distance and CLBSquared after it.
+			f32 dist = getAnmOffDist_();
+			if (NpcSquaredDist(mPosition, gpCamera->unk124) > CLBSquared(dist) && !bVar6
 			    && mSpine->getTime() > 2) {
 				r31 = true;
 				execMotionBlend_();
