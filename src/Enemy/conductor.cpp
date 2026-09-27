@@ -183,6 +183,8 @@ BOOL TConductor::isBossDefeated()
 	// 2026-09-27: a third, folded label (`case 1: break;` after case 3)
 	// gives retail's pivot tree exactly (99.7, only default's target and
 	// the 4-low iterator slots left), so retail's case set had three values.
+	// c-m28: every spelling giving case 2 and default one label folds the tree;
+	// `case 1: break;` + `case 2: default:` gives the tree plus `cmpwi 1` (98.1).
 	switch (gpMarDirector->mMap) {
 	case 2: {
 		TLiveManager* mgr = getManagerByName("ヒノクリ２マネージャー");
@@ -312,6 +314,10 @@ void TConductor::killEnemiesWithin(const JGeometry::TVec3<f32>& param_1,
 // enemy, naming the manager name or the TLiveManager result,
 // SMSGetMarDirector()/SMSGetMap()/SMSGetPollution() forks (+4 on every slot),
 // raw `.value`, raw *gpMarioPos, raw unkF8, data declared at the top.
+// c-m28: regalloc.py pins the other residue: MsRandF's result (@1454, an
+// IRO temp) is coloured after the l/r bindings; retail colours it first
+// (moving it to the front of the order gives f31). TMsRange, named results,
+// `minR += (maxR - minR) * MsRandF()` spellings keep f30.
 void TConductor::genEnemyFromPollution()
 {
 	if (unkFC == 0)

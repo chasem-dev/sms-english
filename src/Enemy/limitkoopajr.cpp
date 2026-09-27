@@ -333,6 +333,9 @@ void TLimitKoopaJr::moveWait()
 // but Wait drops 99.85 -> 99.81 (frame 0xa0); the getPosition() accessor on
 // top lands Wait's frame and costs Run. Named canRun results, a Run body
 // binder, `calc` declared late and a `set()` form were inert or worse.
+// c-m28: f32 return + SMS_GetMarioPos() reads + `f32 limit = 0.62831855f;`
+// named in canRun makes the Run nerve byte-exact, but Wait then needs one more
+// depth-2 word between canRun's calc and TurnBody's copy (frame 0xa8/0xb0).
 TDirectionCalc TLimitKoopaJr::calcTargetDirection()
 {
 	TDirectionCalc calc;

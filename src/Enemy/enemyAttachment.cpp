@@ -100,6 +100,10 @@ void TEnemyAttachment::bind()
 	// TODO: the operator- temporary lands at 0x24 where retail puts it at 0x10
 	// (frame and every instruction otherwise exact); ours allocates ~20 bytes
 	// of low region ahead of it.
+	// c-m28 (iro.py): our copy is a parse-time temp created before the wall
+	// record's three ctor bindings and line 103's three P temps; retail creates
+	// it after them. One extra inline level over the statement moves it 0x24 ->
+	// 0x1c only; set()/functional-cast/named spellings are worse or inert.
 	mLinearVelocity = local_1C - mPosition;
 
 	setBehavior();
