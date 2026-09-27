@@ -710,7 +710,8 @@ void TTelesaSlot::moveStart()
 		if (i == 1)
 			direction = -0.8f;
 
-		unk138[i] = direction * unk158;
+		f32 speed = direction * unk158;
+		unk138[i] = speed;
 	}
 }
 
