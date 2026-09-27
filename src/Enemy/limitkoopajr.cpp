@@ -230,6 +230,20 @@ static inline void LimitKoopaJrNormalize(JGeometry::TVec3<f32>* v)
 	v->normalize();
 }
 
+// Retail builds the body's target direction one inline level below moveWait:
+// the Wait nerve keeps `target` and its by-value TVec3 copy below canRun's
+// temporaries.
+static inline void LimitKoopaJrTurnBody(TLimitKoopaJr* koopaJr,
+                                        const JGeometry::TVec3<f32>& dir)
+{
+	TDirectionCalc target(dir);
+	koopaJr->mBodyDirection.mDirection
+	    = koopaJr->mBodyDirection.calcTurnDirection(
+	        target.mDirection,
+	        koopaJr->mBodyDirection.d2r(
+	            koopaJr->getSaveParams()->mSLRotationSpeed.get()));
+}
+
 void TLimitKoopaJr::moveRun()
 {
 	f32 angleVelocity
@@ -274,10 +288,7 @@ void TLimitKoopaJr::moveRun()
 	JGeometry::TVec3<f32> dir(forward);
 	LimitKoopaJrNormalize(&dir);
 
-	TDirectionCalc bodyTarget(dir);
-	mBodyDirection.mDirection = mBodyDirection.calcTurnDirection(
-	    bodyTarget.mDirection,
-	    mBodyDirection.d2r(getSaveParams()->mSLRotationSpeed.get()));
+	LimitKoopaJrTurnBody(this, dir);
 }
 
 bool TLimitKoopaJr::canRun()
@@ -309,10 +320,7 @@ void TLimitKoopaJr::moveWait()
 	JGeometry::TVec3<f32> dir = toMario;
 	LimitKoopaJrNormalize(&dir);
 
-	TDirectionCalc target(dir);
-	mBodyDirection.mDirection = mBodyDirection.calcTurnDirection(
-	    target.mDirection,
-	    mBodyDirection.d2r(getSaveParams()->mSLRotationSpeed.get()));
+	LimitKoopaJrTurnBody(this, dir);
 }
 
 // TODO: UNUSED, 0x9c in the map and 0xac here. Returning `f32` (the
@@ -382,9 +390,6 @@ DEFINE_NERVE(TNerveLimitKoopaJrRun, TLiveActor)
 	return FALSE;
 }
 
-// TODO: only slots differ: retail keeps moveWait's `target` and its by-value
-// TVec3 argument copy low (0x44/0x48, below canRun's temporaries); ours
-// places them above the named vectors.
 DEFINE_NERVE(TNerveLimitKoopaJrWait, TLiveActor)
 {
 	TLimitKoopaJr* koopaJr = (TLimitKoopaJr*)spine->getBody();
