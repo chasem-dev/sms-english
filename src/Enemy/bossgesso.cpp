@@ -788,20 +788,32 @@ f32 TBossGesso::lenFromToeToMario()
 
 void TBossGesso::showMessage(u32 param_1)
 {
-	u32 idx  = param_1 == 0x25 ? 3 : param_1 - 3;
-	u32 flag = param_1 == 3 ? 0 : 1 << idx;
+	u32 idx;
+	if (param_1 == 0x25)
+		idx = 3;
+	else
+		idx = param_1 - 3;
 
-	if ((unk198 & flag) == 0)
-		gpMarDirector->getConsole()->startAppearBalloon(param_1, true);
+	u32 flag;
+	if (param_1 == 3)
+		flag = 0;
+	else
+		flag = 1 << idx;
+
+	if (!(unk198 & flag)) {
+		TGCConsole2* console = gpMarDirector->getConsole();
+		console->startAppearBalloon(param_1, true);
+	}
 
 	unk198 |= flag;
 }
 
-// Compiles to the map's 0x11c. TODO: perform inlines this body but retail
-// `bl`s its showMessage(4) there, while inlining showMessage(3) at perform's
-// own site; wrapping this call in one more TU-local level makes the whole
-// body a call instead (perform 98.3 -> 91.5), and naming the rumble block
-// continuousRumble() is -8 of frame.
+// Compiles to the map's 0x11c. perform inlines this body and `bl`s its
+// showMessage(4), while inlining showMessage(3) at its own site: showMessage's
+// if/else spelling costs too much for depth 2 but not for depth 1 (the
+// ternaries inlined at both). Wrapping this call in one more TU-local level
+// makes the whole body a call instead (perform 98.3 -> 91.5), and naming the
+// rumble block continuousRumble() is -8 of frame.
 void TBossGesso::checkTakeMsg()
 {
 	if (unk1A0)
@@ -1636,6 +1648,11 @@ void TBossGesso::performInContainer(u32 cue, JDrama::TGraphics* graphics)
 	mTentacles[0]->testPerform(cue, graphics);
 }
 
+// TODO: 99.7%, frame 0x228 vs 0x2c8. Left: performInContainer's first
+// setPosition keeps the checked mTentacles[0] where ours reloads it (a named
+// tentacle keeps it for both; direct member stores, set() and a named inner
+// pointer are inert), and MTXCopy loads mMActor before unk178 (a named source
+// matrix, getModel() and a named target model are inert).
 void TBossGesso::perform(u32 cue, JDrama::TGraphics* graphics)
 {
 	if (cue & CUE_CALC_ANIM) {
