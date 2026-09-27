@@ -686,8 +686,10 @@ void TEnemyMario::changeEMJumping()
 
 void TEnemyMario::changeEMWalkGraph()
 {
+	// The raw tracer member, not getTracer(): the accessor's `this` binding
+	// is one dead word too many in emWaiting.
 	TEMario* emario = mEMario;
-	emario->getTracer()->reset();
+	emario->unk124->reset();
 	emario->goToShortestNextGraphNode();
 	changeEMDoing(EM_DOING_WALK_GRAPH);
 }
@@ -713,8 +715,6 @@ bool TEnemyMario::tryTake()
 	return FALSE;
 }
 
-// TODO: frame 0x40 vs 0x38 (one extra 8-byte low temp). Inert (fo1): no named
-// difference, an int difference, a named angle argument, swapped tests.
 void TEnemyMario::emWaiting()
 {
 	s16 angleDifference = mAngleToMario - mFaceAngle.y;
@@ -799,7 +799,8 @@ void TEnemyMario::emWalkAround()
 		return;
 	}
 	if (rand() < 50) {
-		gpPollution->pollute(mPosition.x, mPosition.y, mPosition.z, 384.0f);
+		gpPollution->pollute(getPosition().x, getPosition().y,
+		                      getPosition().z, 384.0f);
 		changeEMDoing(EM_DOING_HIDE);
 	}
 	if (mWallPlane != nullptr) {
