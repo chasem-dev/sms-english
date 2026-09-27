@@ -289,6 +289,7 @@ bool TAmiNoko::isHitValid(u32 message)
 // distances keep the dot product in f1 where retail uses f2, plus one FPR
 // swap in the side cross product. Inert on the FPRs: a shared distance helper,
 // `dist += mPlaneDistance` as its own statement, fabsf on a named dist.
+// c-m18: distance-first sums inert; mPosition.dot(normal) is worse (99.3).
 void TAmiNoko::calcDirection()
 {
 	JGeometry::TVec3<f32> toGoal = getUnkF4().getPoint();

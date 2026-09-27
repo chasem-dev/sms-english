@@ -819,7 +819,8 @@ void TSwingBoard::swing()
 
 // TODO: 99.9%, every instruction exact; retail's frame is 0x118 against our
 // 0x70, i.e. 0xa8 more dead low region; swing() (see above) is the likely
-// carrier.
+// carrier. c-m18: `if (marioIsOn()) swing();` swaps f31/f30 whatever swing's
+// declaration order (dirZ first, a TVec3 dir, a named dot: all 99.7).
 void TSwingBoard::control()
 {
 	TMapObjBase::control();
@@ -1206,6 +1207,8 @@ void TFluffManager::findNextFluff()
 // read at the compare). STATE_BLOW still colours the first four loads
 // differently and swaps the z pair; the frame is 0x48 short. A
 // reference-bind on BLOW's unkD0 is wrong (`lfsu` first, 99.3%).
+// c-m18: `unkD0.add(mWind)`/`+=` 96.7-96.9; wind.add(unkD0, mWind) and
+// a raw set() of the three sums are inert (99.6, frame 0x50-0x60).
 void TFluffManager::control()
 {
 	switch (mState) {

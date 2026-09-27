@@ -235,6 +235,8 @@ void TNameIndParCallback::execute(JPABaseEmitter* param_1,
 		// (retail 0x120): the whole named block sits 0x24 lower, with the
 		// `local_7c * 0.5f` temporaries 0x34 closer together than retail's
 		// 0x58/0x98, and one pool load schedules early.
+		// c-m18: MsMtxSetRotX(local_4c, unk1AC) for the rotation is
+		// instruction-identical but moves the frame the wrong way (0xf8).
 		JGeometry::TVec3<f32> cols[3];
 		JGeometry::TVec3<f32> local_7c;
 
