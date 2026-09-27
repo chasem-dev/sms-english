@@ -19,8 +19,8 @@
 // CLBCalcNearNinePos fovy/aspect wrapper sits at inline depth 3: the wrapper
 // then expands fakeTan at depth 4 but leaves the two table lookups at depth 5,
 // and the TVec3 temporaries its arguments need put set() at depth 4 as well.
-// Two levels between perform() and the wrapper reproduce that; their names and
-// split are guesses, since retail inlined both away completely.
+// calcAnim() and this helper are the two levels between perform() and the
+// wrapper; their names and split are guesses, since retail inlined both away.
 static inline void CalcLensNearNinePosFromCamera(JGeometry::TVec3<f32>* out_grid,
                                                 S16Vec* out_euler)
 {
@@ -36,11 +36,6 @@ static inline void CalcLensNearNinePosFromCamera(JGeometry::TVec3<f32>* out_grid
 	                   gpCamera->getFovy(), gpCamera->getAspect());
 }
 
-static inline void CalcLensNearNinePos(JGeometry::TVec3<f32>* out_grid,
-                                       S16Vec* out_euler)
-{
-	CalcLensNearNinePosFromCamera(out_grid, out_euler);
-}
 
 TLensFlare::TLensFlare(const char* name)
     : JDrama::TViewObj(name)
@@ -80,20 +75,16 @@ TLensFlare::TLensFlare(const char* name)
 	unk14 = new J3DModel(unk10, 0, 1);
 }
 
-static inline void LensDirTo(JGeometry::TVec3<f32>& dir, const Vec& from,
-                             const JGeometry::TVec3<f32>& to)
-{
-	JGeometry::TVec3<f32> f(from);
-	dir.x = to.x - f.x;
-	dir.y = to.y - f.y;
-	dir.z = to.z - f.z;
-}
-
+// The direction's `Vec` to `TVec3` conversion sits at depth 3 from
+// calcAnim(), so its set() is called out of line as in retail.
 static inline JGeometry::TVec3<f32> LensRotTo(const Vec& from,
                                              const JGeometry::TVec3<f32>& to)
 {
 	JGeometry::TVec3<f32> dir;
-	LensDirTo(dir, from, to);
+	JGeometry::TVec3<f32> f(from);
+	dir.x = to.x - f.x;
+	dir.y = to.y - f.y;
+	dir.z = to.z - f.z;
 	return MsGetRotFromZaxis(dir);
 }
 
@@ -103,7 +94,96 @@ static inline void LensSetTRS(Mtx mtx, const Vec& t,
 {
 	s16 rx = CLBDegToShortAngle(r.x);
 	s16 ry = CLBDegToShortAngle(r.y);
-	MsMtxSetTRS(mtx, t.x, t.y, t.z, rx, ry, 0, s.x, s.y, s.z);
+	MsMtxSetTRS(mtx, t.x, t.y, t.z, rx * (360.0f / 65536.0f),
+	            ry * (360.0f / 65536.0f), 0.0f, s.x, s.y, s.z);
+}
+
+// perform's cue blocks are inline members (fabricated names): retail lays
+// out the calc-anim objects in reverse source order below the ones perform
+// itself creates, as an inlined callee's.
+inline void TLensFlare::move()
+{
+	if (!gpSunModel->isInBounds(unk44)) {
+		unk28 = 0.0f;
+	} else {
+		int hiddenCount = 0;
+		const JGeometry::TVec2<s16>* zBuffer = gpSunModel->unkB4;
+		const bool* visible               = gpSunModel->unk180;
+		for (int i = 0; i < 17; ++i, ++zBuffer, ++visible) {
+			if (zBuffer->x != -1 && zBuffer->y != -1 && !*visible)
+				++hiddenCount;
+		}
+		f32 hiddenRatio = hiddenCount * (1.0f / 17.0f);
+		f32 start       = unk48 * (1.0f - hiddenRatio);
+
+		unk28 = CLBEaseOutInbetween<f32>(start, 255.0f,
+		                                 gpSunModel->getUnk194());
+	}
+
+	f32 chase;
+	if (unk24 < unk28) {
+		if (gpSunModel->unk194 == 0.0f)
+			chase = unk30;
+		else
+			chase = unk2C;
+	} else {
+		if (gpSunModel->unk194 == 0.0f)
+			chase = unk38;
+		else
+			chase = unk34;
+	}
+	CLBChaseDecrease(&unk24, unk28, chase, 0.0f);
+}
+
+inline void TLensFlare::calcAnim()
+{
+	Mtx mtx;
+	Vec sunWorldPos = gpSunModel->unk198;
+
+	JGeometry::TVec3<f32> near9grid[9];
+	S16Vec camEuler;
+	CalcLensNearNinePosFromCamera(near9grid, &camEuler);
+
+	const JGeometry::TVec2<f32>& sp = gpSunModel->unkF8[0];
+	f32 tx = unk3C * -sp.x;
+	f32 ty = unk3C * -sp.y;
+	JGeometry::TVec3<f32> d5;
+	d5.sub(near9grid[5], near9grid[4]);
+	d5.scale(tx);
+	JGeometry::TVec3<f32> d1;
+	d1.sub(near9grid[1], near9grid[4]);
+	d1.scale(ty);
+	JGeometry::TVec3<f32> l;
+	l.add(near9grid[4], d5);
+	l.add(d1);
+	// TODO: the lerp is two scaled difference vectors added to grid[4]
+	// (products and sums as separate fmuls/fadds, no fmadds); the sun
+	// position is a plain `Vec` copy (lwz/stw). Left: (a) the isInBounds
+	// f0/f1 swap shared with TLensGlow::perform; (b) r3/r4/r5 rotation in
+	// the hidden-count loop; (c) in the MsMtxSetTRS tail retail loads the
+	// 0.0f and conversion constants before `unk18`'s z; (d) the frame is
+	// 0xa0 short (0x218 vs 0x2b8): retail's near-nine-pos argument
+	// temporaries and the direction/rotation vectors sit above camEuler,
+	// ours below the J3DGXColorS10, yet spelling those calls in calcAnim()
+	// inlines JMASSin/JMASCos and set().
+	JGeometry::TVec3<f32> rot = LensRotTo(sunWorldPos, l);
+	LensSetTRS(mtx, sunWorldPos, rot, unk18);
+	unk14->setBaseTRMtx(mtx);
+	unk14->calc();
+}
+
+inline void TLensFlare::entry()
+{
+	u16 i;
+	int matCount = unk10->getMaterialNum();
+	for (i = 0; i < matCount; ++i) {
+		unk10->getMaterialNodePointer(i)->change();
+		J3DGXColorS10 c;
+		c         = *unk10->getMaterialNodePointer(i)->getTevColor(0);
+		c.color.a = unk24;
+		unk10->getMaterialNodePointer(i)->setTevColor(0, &c);
+	}
+	unk14->entry();
 }
 
 void TLensFlare::perform(u32 cue, JDrama::TGraphics*)
@@ -118,88 +198,17 @@ void TLensFlare::perform(u32 cue, JDrama::TGraphics*)
 		sunInBounds = gpSunModel->isInBounds(unk40);
 	}
 
-	if (cue & CUE_MOVE) {
-		if (!gpSunModel->isInBounds(unk44)) {
-			unk28 = 0.0f;
-		} else {
-			int hiddenCount = 0;
-			const JGeometry::TVec2<s16>* zBuffer = gpSunModel->unkB4;
-			const bool* visible               = gpSunModel->unk180;
-			for (int i = 0; i < 17; ++i, ++zBuffer, ++visible) {
-				if (zBuffer->x != -1 && zBuffer->y != -1 && !*visible)
-					++hiddenCount;
-			}
-			f32 hiddenRatio = hiddenCount * (1.0f / 17.0f);
-
-			unk28 = CLBEaseOutInbetween<f32>(unk48 * (1.0f - hiddenRatio),
-			                                 255.0f, gpSunModel->getUnk194());
-		}
-
-		f32 chase;
-		if (unk24 < unk28) {
-			if (gpSunModel->unk194 == 0.0f)
-				chase = unk30;
-			else
-				chase = unk2C;
-		} else {
-			if (gpSunModel->unk194 == 0.0f)
-				chase = unk38;
-			else
-				chase = unk34;
-		}
-		CLBChaseDecrease(&unk24, unk28, chase, 0.0f);
-	}
+	if (cue & CUE_MOVE)
+		move();
 
 	if (!sunInBounds)
 		return;
 
-	if (cue & CUE_CALC_ANIM) {
-		Vec sunWorldPos = gpSunModel->unk198;
+	if (cue & CUE_CALC_ANIM)
+		calcAnim();
 
-		S16Vec camEuler;
-		JGeometry::TVec3<f32> near9grid[9];
-		CalcLensNearNinePos(near9grid, &camEuler);
-
-		const JGeometry::TVec2<f32>& sp = gpSunModel->unkF8[0];
-		f32 tx = unk3C * -sp.x;
-		f32 ty = unk3C * -sp.y;
-		JGeometry::TVec3<f32> d5;
-		d5.sub(near9grid[5], near9grid[4]);
-		d5.scale(tx);
-		JGeometry::TVec3<f32> d1;
-		d1.sub(near9grid[1], near9grid[4]);
-		d1.scale(ty);
-		JGeometry::TVec3<f32> l;
-		l.add(near9grid[4], d5);
-		l.add(d1);
-		// TODO: 94.8%. The lerp is two scaled difference vectors added to
-		// grid[4] (products and sums as separate fmuls/fadds, no fmadds);
-		// the sun position is a plain `Vec` copy (lwz/stw), and the direction
-		// helpers put its conversion to `TVec3` at depth 4 so `set(const
-		// Vec&)` is the third retail `bl`. Left: (a) the isInBounds f0/f1
-		// swap shared with TLensGlow::perform; (b) r3/r4/r5 rotation in the
-		// hidden-count loop and the float regs of hiddenRatio; (c) in the
-		// MsMtxSetTRS tail retail loads its constants first and `unk18`/the
-		// sun position last; (d) the frame is 0xb0 short (0x208 vs 0x2b8)
-		// and `this` is r28 instead of r29.
-		JGeometry::TVec3<f32> rot = LensRotTo(sunWorldPos, l);
-		Mtx mtx;
-		LensSetTRS(mtx, sunWorldPos, rot, unk18);
-		unk14->setBaseTRMtx(mtx);
-		unk14->calc();
-	}
-
-	if (cue & CUE_ENTRY) {
-		int matCount = unk10->getMaterialNum();
-		for (u16 i = 0; i < matCount; ++i) {
-			unk10->getMaterialNodePointer(i)->change();
-			J3DGXColorS10 c;
-			c         = *unk10->getMaterialNodePointer(i)->getTevColor(0);
-			c.color.a = unk24;
-			unk10->getMaterialNodePointer(i)->setTevColor(0, &c);
-		}
-		unk14->entry();
-	}
+	if (cue & CUE_ENTRY)
+		entry();
 
 	if (cue & CUE_CALC_VIEW)
 		unk14->viewCalc();
