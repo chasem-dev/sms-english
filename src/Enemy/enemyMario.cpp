@@ -1071,9 +1071,9 @@ void TEnemyMario::emReplayWaiting()
 
 void TEnemyMario::emReplayJumpToNearestNode()
 {
-	// TODO: the frame is 0x18 short and retail keeps replayLinks and the
-	// nearest-link row in separate saved GPRs (r20-r31, ours r21-r31);
-	// hoisting `links` or the random-flag test spelling were inert.
+	// TODO: every instruction matches; the frame is 0x18 short. Retail's
+	// extra saved GPR is the uninitialised `selected`, and indexing
+	// replayLinks directly (no `links` row local) keeps it in its own register.
 	if (canJumpToNode()) {
 		unk108->mFrameInput |= TMarioControllerWork::A;
 		unk108->mInput |= TMarioControllerWork::A;
@@ -1107,9 +1107,8 @@ void TEnemyMario::emReplayJumpToNearestNode()
 	f32 smallestDot      = 1.0f;
 
 	if (mSettingParams->mRandomFlag.get() == 0) {
-		TReplayLink* links = replayLinks[nodeIndex];
 		for (int i = 0; i < 3; ++i) {
-			TReplayLink& link = links[i];
+			TReplayLink& link = replayLinks[nodeIndex][i];
 			if (link.mNodeIndex == 0xFF) {
 				continue;
 			}
@@ -1130,20 +1129,19 @@ void TEnemyMario::emReplayJumpToNearestNode()
 			}
 		}
 	} else {
-		TReplayLink* links = replayLinks[nodeIndex];
 		f32 dots[3];
 		int validLinks[3];
 		int validCount = 0;
 		for (int i = 0; i < 3; ++i) {
 			dots[i] = 0.0f;
-			if (links[i].mNodeIndex == 0xFF) {
+			if (replayLinks[nodeIndex][i].mNodeIndex == 0xFF) {
 				continue;
 			}
 
 			JGeometry::TVec3<f32> candidatePoint;
 			mEMario->getTracer()
 			    ->getGraph()
-			    ->getGraphNode(links[i].mNodeIndex)
+			    ->getGraphNode(replayLinks[nodeIndex][i].mNodeIndex)
 			    .getPoint(&candidatePoint);
 			JGeometry::TVec3<f32> candidateDirection(candidatePoint
 			                                         - currentPoint);
@@ -1165,7 +1163,7 @@ void TEnemyMario::emReplayJumpToNearestNode()
 		}
 
 		f32 choice   = MsRandF();
-		int selected = 0;
+		int selected;
 		for (int i = 0; i < validCount; ++i) {
 			choice -= weights[i];
 			if (choice <= 0.0f) {
@@ -1176,7 +1174,7 @@ void TEnemyMario::emReplayJumpToNearestNode()
 
 		mReplayIndex = replayLinks[nodeIndex][validLinks[selected]].mReplayIndex;
 		nextNode     = &mEMario->getTracer()->getGraph()->getGraphNode(
-		    links[validLinks[selected]].mNodeIndex);
+		    replayLinks[nodeIndex][validLinks[selected]].mNodeIndex);
 	}
 
 	JGeometry::TVec3<f32> nextPoint;
@@ -1184,8 +1182,9 @@ void TEnemyMario::emReplayJumpToNearestNode()
 		nextNode->getPoint(&nextPoint);
 	}
 	mPosition = currentPoint;
-	mFaceAngle.y
-	    = matan(nextPoint.z - currentPoint.z, nextPoint.x - currentPoint.x);
+	f32 dx = nextPoint.x - currentPoint.x;
+	f32 dz = nextPoint.z - currentPoint.z;
+	mFaceAngle.y = matan(dz, dx);
 	resetReplayStatus();
 	mInputReplays[mReplayIndex]->reset();
 	mInputReplays[mReplayIndex]->start();
