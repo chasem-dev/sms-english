@@ -47,6 +47,8 @@ for root,_,fs in os.walk(B+'/GMSE01/obj'):
 rows=[]
 with cf.ThreadPoolExecutor(2) as ex:
     for r in ex.map(unit,sorted(rels)): rows+=r
+if len(sys.argv)>1 and sys.argv[1].startswith('-'):
+    sys.exit('usage: census.py [out.tsv]  (classifies every source-built function; no options)')
 out=sys.argv[1] if len(sys.argv)>1 else '/dev/stdout'
 with open(out,'w') as f:
     for r in rows: f.write('\t'.join(map(str,r))+'\n')
