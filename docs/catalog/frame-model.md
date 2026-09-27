@@ -30,6 +30,9 @@ Diagnose a frame-only or slots-only function with `tools/mwcc-stack/dbg.sh` befo
    A parse-time temporary (`TMsRange<f32>(a, b).rand()`, an implicit `TPathNode(pos)`, a by-value parameter copy) therefore sits below the whole named block, and an inline object below every parse-time one.
    A retail temporary at the top of the frame means retail named it and declared it first (c-d2: `TCannon::setKillerGoalPoint`, `bombSet`).
 8b. **Inlined callee locals are created last-declared first.** In willFall's `setSafeGoal` expansion the TPathNode `goal` (declared last) sits highest, then `point`, `index`, `range`: the reverse of the caller's own named block.
+8c. **Within one expansion, callee locals come before argument bindings.** In a `TVec3 r; r = *fst;` `operator-` the local `r` is created first and the non-simple `fst` binding right after it, so the binding sits directly *below* `r`.
+8d. **By-value-returning calls are expanded late, and a by-value parameter copy is created after the return temporary.** With `operator-` returning `TVec3`, its return temporary is a parse-time object (top of the pool), but its body's local sits below every ordinary depth-1 object (`moveRequest`: below `checkRideReCalc`'s Mtx).
+   `friend TVec3 operator-(TVec3 a, const TVec3& b)` puts the parameter copy directly under the return temporary, the same slot map as the local-`r` form.
 9. **All-or-nothing.** A function with no locals area (no frame beyond the link area) shows none of this; add one saved register or one slot and all dead objects materialise (cc12).
 
 10. **Offsets count what was created later.** Allocation starts at the bottom, so an object's offset is the size of everything created after it (plus the floor).
@@ -72,6 +75,17 @@ Marker method: `int mk; extp(&mk);` declared first sits right above the dead reg
 - chuuhana `setSafeGoal` family: retail's `reset()` ends in `setSafeGoal()` (its tail is that body verbatim), and with `ChuuHanaGraphNode(ChuuHanaGraphOf(this), index)` / `ChuuHanaGraphNodeNum(ChuuHanaGraphOf(this))` in setSafeGoal instead of the SafeNode/SafeNodeNum binders, `reset` is byte-exact and isCollidMove's frame lands (0x118).
   That spelling has six fewer inner dead words, which ForceJumped (exact today) needs from its own later code: it drops to 0x10 short, so it is not committed.
   Per rule 8b the block stacks goal, point, index, range from the top in every caller; willFall/KeepBalance then need six more depth-1 words before the expansion.
+- **The `a = b - c` class (research c-s1, 2026-09-27): retail's `operator-` returns by value; one dead word per site is still unexplained.**
+  Retail `moveRequest` has a 12-byte object right under `offset` (a parse-time temporary) and the live copy low (0x14), which only a by-value return produces (rule 8d).
+  Tongue's `(tpos - mTipPos) * k` is `bl __ct__(r <- tpos); bl __ami__(r); bl __ct__(ret <- r)` with the last source `addi r4, r1, r`, not `__ami__`'s r3: the body is `TVec3 r(a); r -= b; return r;` or `(TVec3 a, ...) { a -= b; return a; }` (identical slot maps and code), not `return r -= b;`.
+  Both need the uncast `operator=` (`*(Vec*)this = other`) so the return copy disappears at `m = a - b` and `set(a - b)` sites (cc23).
+  Under that shape every measured site is exactly one 4-byte object short at the very bottom (created after the live copy): `TCoasterEnemy::bind` 0x10/0x28 retail against 0xc/0x24, `moveRequest` all slots 4 low with the frame exact, the whole `bind` family.
+  Refuted as the source of that word (all slot-identical to the plain shape): copy constructor base-init, implicit, statement-bodied, out-of-class `inline`; `const` return; `return (r)`; `TVec3 r; r = a;`, `r = (const Vec&)a`, raw `Vec` copies; an extra helper level before `operator-=`; a member `operator-`; a `const Vec&` left operand (a reference-to-base conversion is simple).
+  Shapes that add exactly one word at bind sites, both contradicting Tongue: cc23's `operator-(const Vec* fst, ...)` (the conversion makes `fst` a binding; +1 in bind, +2 with an IRO temp in `moveRequest`) and `TVec3 r; (r = a) -= b; return r;` (the `operator=` result becomes `-=`'s `this` binding; +1 in both, but the site's first copy is scheduled differently).
+  `TVec3 r(a); return r -= b;` adds two (result binding plus an IRO temp) and closes `attackToMario`, `wireMove`, `TLeanMirror::loadAfter`, `TBeeHive::bind`, whose extra word is likely their own.
+  An accessor on the right operand (`nextPos - getPosition()`) supplies the word in `TLiveActor::bind` and `moveRequest` but swaps two instructions in `bind`.
+  Tree-wide against 11880 exact (census; uncast `operator=` in every row): plain by-value (either spelling) 11875, 13 up/48 down; `return r -= b` 11882, 19/35; `const Vec*` 11888, 25/33 (`__ami__` MISSING, wire* +6); `(r = a) -= b` 11885, 18/40. `ninja changes_all`: plain 32 up/80 down functions, `const Vec*` 42/58. None committed.
+  The losses that need site work whatever the header: `TVec3<f32>(a - b).length()` sites (retail has the return copy: unwrapped under the stock header they are 55 against 61 instructions, and under a by-value header they match but their binders were tuned to the old pool), and the cast-`operator=` group (`TBWLeashNode::calcMatrix` 99.15 -> 87.03, `forceRequest`, `calcNrm`).
 - Tool note: GC/1.1 rejects some TUs that 1.2.5 accepts (chuuhana: incomplete `J3DJoint`); prepend the missing `#include` to a scratch copy of the .cpp and pass that to `dbg.sh`.
 
 - c-d7 closes (all instruction-exact before):
