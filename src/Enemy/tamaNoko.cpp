@@ -698,6 +698,12 @@ DEFINE_NERVE(TNerveTamaNokoSleep, TLiveActor)
 // 3 in 1: chase mario & try to initiate & land a jump attack
 // TODO: retail places the two velocity copies (local_48, local_54) below the
 // inline temporaries, as if they were by-value temporaries themselves.
+// Retail order, top down: setVelocity's TVec3 temporary, setGoalPathMario's
+// TPathNode, the two velocity copies, calcVelocityToJumpToY's result. Both
+// copies as locals of a `bool f(self, y)` inline test, the jump block as an
+// inline helper and a raw mMActor at the blur emitter land the first three
+// exactly (8 slot mismatches left); the second copy is still 0xc and the
+// jump result 0x20 low under the air block's depth-1 bindings.
 DEFINE_NERVE(TNerveTamaNokoAttack, TLiveActor)
 {
 	TTamaNoko* self = (TTamaNoko*)spine->getBody();

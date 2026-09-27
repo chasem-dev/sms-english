@@ -1129,8 +1129,11 @@ DEFINE_NERVE(TNerveGessoFreeze, TLiveActor)
 		if (self->isBckAnm(10)) {
 			self->setBckAnm(9);
 		} else if (self->isBckAnm(9)) {
-			// getSaveParams() is +8 (0x98 -> 0xa0); target 0xa8. A named
-			// params local dropped it back; a second body binder scrambled
+			// Retail's operator- copy of the position sits at 0x44, below
+			// checkDropInWater's locals: expanding the subtraction from a
+			// TU-local helper lands the 0xa8 frame but calls operator-=
+			// out of line (depth 3). getSaveParams() is +8 (0x98 -> 0xa0);
+			// target 0xa8. A named params local dropped it back; a second body binder scrambled
 			// GPRs. Remaining: TVec3::sub slots (frame only).
 			if (spine->getTime() > self->getSaveParams()->mSLFreezeWait.get()
 			    && !self->unsetUnk165())

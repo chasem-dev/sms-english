@@ -1237,6 +1237,10 @@ DEFINE_NERVE(TNerveHino2Appear, TLiveActor)
 // keeps TStack_3C (0xd4) above local_60 (0xb0) and the rand() conversion
 // block 0x20 higher; moving either declaration to the top, or wrapping
 // either block in a TU-local inline, leaves the layout unchanged.
+// Moving local_60's declaration *with* its block into a TU-local inline
+// (so local_60 is a callee local created after TStack_3C) gives retail's
+// relative order and spacing (TStack_3C 0x24 above local_60) at 0xf0; the
+// remaining 0x20 is low region under local_60.
 DEFINE_NERVE(TNerveHino2GraphWander, TLiveActor)
 {
 	TLiveActor* body = spine->getBody();

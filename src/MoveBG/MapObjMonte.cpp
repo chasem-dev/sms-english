@@ -1320,8 +1320,11 @@ f32 TFluffManager::getRandomZ() const
 // mInitialPosition (`stfs` then `lwz`/`stw`); retail's frame is 0x78
 // against our 0x88. The extra 0x10 is not absorbed by a ctor temporary
 // (two slots, 0x98) or an inlined assign helper (97.8%, extra fluff
-// pointer load). Ruled out: 4-arg TColor() on SwingBoard::initDraw
-// (byte stores, 92.9%).
+// pointer load). Now 0x80 against 0x78: retail's initPos is at 0x30 with
+// one 4-byte object above it, ours at 0x3c on top; the dead set is initPos,
+// the loop's fluff, the newFluff locals and set()/operator= bindings.
+// Inert: initPos, fluff or i declared at the top, an unnamed loop fluff, a
+// TVec3 temporary or a constructor spelling for either seed.
 void TFluffManager::loadAfter()
 {
 	mFluffNum = 0;
