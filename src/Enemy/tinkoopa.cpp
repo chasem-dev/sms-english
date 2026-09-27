@@ -1466,6 +1466,8 @@ void TTinKoopaManager::load(JSUMemoryInputStream& stream)
 // passes that to JPAResourceManager::load, we pass the unmasked sum in r5 and
 // index with the masked copy. Inert: `(u16)` or `i + base` at the call, TU-local
 // SMS_LoadParticle forks with int/u16-copy parameters or `== false`.
+// An `int id` fork called with `(u16)(base + i)` passes and indexes the masked r5 as retail (~6 -> ~5); left: the sum is
+// coloured r5 where retail uses r0. bossManta's loadAfter has the same residue, so the fix belongs in System/Particles.hpp.
 void TTinKoopaManager::loadAfter()
 {
 	static const char* onetimeFilenames[7] = {

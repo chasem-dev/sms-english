@@ -336,6 +336,8 @@ void TKazekun::getAroundQuat(JGeometry::TQuat4<f32>& quat,
 // the mul reproduces it (83.7) but is an invented binder, so it is not used.
 // Inert: spin declared first, forward declared before the copy, vel.set with
 // a raw param read, one-argument in-place rotates (worse).
+// dbg.sh 2026-09-27 (85.65, 0x1f8 vs 0x218): retail's named order is spin (top), toMario, quat, vel, spinAxis
+// built as (-1,0,0) and rotated in place, no `params` slot; that layout is 0x30 short in the low region (one 16-byte object per rotate).
 bool TKazekun::doAttackPose(bool start)
 {
 	JGeometry::TVec3<f32> toMario(*gpMarioPos);

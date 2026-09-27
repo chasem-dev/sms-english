@@ -366,6 +366,8 @@ static inline void BKPushExplosion(TBathtubKiller* k)
 // TODO: the final `nextPos - mPosition` temporary sits at 0x60, retail 0x4c.
 // Inert or worse: copy-init nextPos, mVelocity = / .set(x, y, z), zero(),
 // add(), sub(a, b), -= in place, a named copy of mPosition, velocity order.
+// iro.py: retail creates the difference temporary after the five nerve/operator= pointer temps (@3084-@3099), i.e. at
+// inline-expansion time, where ours is the parse-time return temporary @1136 of TVec3::operator-.
 void TBathtubKiller::bind()
 {
 	JGeometry::TVec3<f32> nextPos = mPosition;
@@ -552,6 +554,8 @@ void TBathtubKiller::makeAccelerationQuat()
 // JGQuat4.hpp item already recorded in that header: an inlined
 // TQuat4::setRotate keeps its two TQuat4 temporaries' stack homes at every
 // expansion site, and this function has three of them.
+// 2026-09-27 (95.05): every r1 slot is uniformly 0x10 low, so the missing object is one 16-byte inline temporary
+// below all live ones (the tiltQuat.rotate expansion, as in Kazekun doAttackPose); the rest is f24/f25 param colouring.
 void TBathtubKiller::makeQuat(JGeometry::TVec3<f32> axis, f32 moveAmountY,
                               f32 moveAmountX)
 {
