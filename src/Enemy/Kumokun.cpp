@@ -677,17 +677,20 @@ bool TKumokun::checkSerialAnmEnd() const
 	return unk1D8.empty() && checkCurAnmEnd(0);
 }
 
-// Binding level worth +8 of low region, landing TKumokun::calcRootMatrix's
-// frame at 0x178 (batch 121).
-static inline BOOL KumokunIsTaken(const TKumokun* p)
+// The taken check sits two inline levels down: the binder's dead result is
+// then created with the depth-2 expansions, just below the outer isOnRoof()'s
+// plane-normal temporary, which lands TKumokun::calcRootMatrix's slots.
+static inline BOOL TakeActorIsTaken(const TTakeActor* p)
 {
 	BOOL taken = p->isTaken();
 	return taken;
 }
 
-// TODO: 99.98%. The plane-normal temp of the outer isOnRoof() sits at 0xd0,
-// retail 0xd4: a 4-byte allocation-order hole. Inert: offset spelled
-// (0,0,0)/set(), a named isOnWall() result, a named normal.
+static inline BOOL KumokunIsTaken(const TKumokun* p)
+{
+	return TakeActorIsTaken(p);
+}
+
 void TKumokun::calcRootMatrix()
 {
 	if (KumokunIsTaken(this)) {
