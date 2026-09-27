@@ -399,3 +399,11 @@ Marker method: `int mk; extp(&mk);` declared first sits right above the dead reg
   At the site, `THitActor* actor;` declared first in `clearGroup` with `actor = *it; actor->mColCount = 0;` in the loop puts every depth-1 slot on retail's (uniform offset, frame 0x210); declared at the use or after `end` it lands between the iterator locals.
   The six depth-2 words (one body-level depth-2 object per expansion) were not found: `it++`, `end != it`, `!(it == end)`, begin/end spellings, a group accessor at the call are inert or change code. Not committed (partial, unit not claimed).
 - `entryGroup` pairs the same way: its iterator locals and the parse-time `!=` copies are exact, and one word belongs between them and the `operator==` copies (the loop body's depth-1 objects: getTableIndex/entryActor), with one fewer below.
+
+## Refinements (unit agent c-g7, 2026-09-27)
+
+- **A per-read dead word is an argument binding of the accessor.** `TCardSave::execMovement_` was 0xa8 short with retail two to three words more before every bookmark block's stream and nothing above the case-0x16 stream.
+  `getBookmarkInfo()` (index read inside the body) and a named `bm` both leave nothing at the read; `getBookmarkInfo(unk2EA)` makes the `s8` load a non-simple index binding that dies as an index, one word per read, created at the read: every stream block then pairs at one uniform offset (frame 0x10 short, instructions unchanged).
+  The exact `*BM` functions keep the index-free accessor, so the two spellings are per function.
+- **Unnamed repeated reads decide operand order a named local hid.** With `bm` gone, `getLastSaveTime() == info.unk8` (flag time on the left) gives retail's load order and xor operands at all four sites (320 -> 272 non-stack diff lines); with the named `bm` the order had been inert.
+- **Pair anchors, then attribute each gap to a region.** Deltas between consecutive paired slots (`retail - ours`) located every missing word to one inline site before any edit; a candidate that changes only the bottom delta (SMSGetMSound, a named `flags` in the inlined free function) is an IRO or depth-2 lever, not a site lever.

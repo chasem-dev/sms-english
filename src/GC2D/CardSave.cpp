@@ -1669,21 +1669,26 @@ void TCardSave::selectBookmarks(TEProgress, TEProgress, TEProgress, TEProgress)
 
 void TCardSave::changePattern(J2DPicture*, s16, u32) { }
 
-// TODO: 99.2%, instruction-exact (only `~` rows). Frame 0x5d8 vs 0x5e8.
+// TODO: 99.3%, instruction-exact (only `~` rows). Frame 0x5d8 vs 0x5e8.
 // Slot pairing: every bookmark read is `getBookmarkInfo(unk2EA)` (one dead
 // index binding each, created at the read) and no `bm` local is named, which
 // puts every stream block at a uniform 0x14 below retail. What is left is
 // two words created after case 0x33's stream and before the first
 // saveBookmark's inner ctor binding (the tail, or depth 2 ahead of case
-// 0x13), and three low IRO words. Registers: the endWaitForChoice
-// expansions' setCenteredSizeWr bindings (retail r26/r24, ours r25/r26) and
-// the named status/score/r (retail r25, ours r24) are coloured differently.
+// 0x13), and three low IRO words.
 // The save-time compares read the flag time first (`getLastSaveTime() ==
-// ...unk8`, the xor operand order). Inert: TU-local helpers around whole
-// case bodies or the score display, smInstance/getInstance at every flag
-// call, both
-// score-conversion spellings; a named `TFlagManager* flags` in saveBookmark
-// adds a word per expansion; SMSGetMSound() at a sound site adds low words.
+// ...unk8`, the xor operand order).
+// Registers (regalloc.py replays ours exactly, 89 webs differ): in the
+// endWaitForChoice expansions of the case 8/0x14/0x33 else branches the
+// setCenteredSizeWr initial_w/initial_h bindings (@2119/@2120, degree 29,
+// neighbours of the live `status`) are coloured before status/score/r;
+// retail colours the second after them (a replay with that move misses 11
+// fewer webs). The rest are r5/r6 swaps in the same expansions and the
+// saveBookmark stream temps one register lower than retail.
+// Inert: TU-local helpers around whole case bodies or the score display,
+// smInstance/getInstance at every flag call, both score-conversion
+// spellings; a named `TFlagManager* flags` in saveBookmark adds a word per
+// expansion; SMSGetMSound() at a sound site adds low words.
 void TCardSave::execMovement_()
 {
 
