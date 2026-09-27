@@ -52,6 +52,9 @@ public:
 	// fabricated
 	u16 getCurMessageID() { return cMessageID[unk310]; }
 	TCardBookmarkInfo& getBookmarkInfo() { return unk278[unk2EA]; }
+	// execMovement_ indexes with an argument: each use there keeps one dead
+	// word (the index binding) that retail has at every read of a slot.
+	TCardBookmarkInfo& getBookmarkInfo(int idx) { return unk278[idx]; }
 
 public:
 	// fabricated: header round 20 accessor candidates

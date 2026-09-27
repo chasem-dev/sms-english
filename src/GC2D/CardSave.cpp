@@ -1669,17 +1669,19 @@ void TCardSave::selectBookmarks(TEProgress, TEProgress, TEProgress, TEProgress)
 
 void TCardSave::changePattern(J2DPicture*, s16, u32) { }
 
-// TODO: 99.2%, instruction-exact (only `~` rows). Frame 0x540 vs 0x5e8:
-// the low pool is 0x74 short and every inlined stream block but case 0x16's
-// sits 0xc (case 0x13: 8) lower than retail's. Registers rotate throughout
-// (e.g. the stream index is r24 in retail, r27 here; the bookmark pointer r6
-// vs r5 at every `getLastSaveTime()` compare). Wrapping whole case bodies
-// (0x13, the repeated save block of 0x2A/0x2B/0x33) or the score display of
-// case 2 in TU-local inline helpers moves neither the frame nor the colours,
-// and the compare's operand order is canonicalised away. In saveBookmark, a
-// named `TFlagManager* flags = TFlagManager::getInstance();` adds 0x10 of
-// frame at no instruction change (stream blocks then +8 off, not +0xc);
-// naming gpCardManager instead costs instructions.
+// TODO: 99.2%, instruction-exact (only `~` rows). Frame 0x5d8 vs 0x5e8.
+// Slot pairing: every bookmark read is `getBookmarkInfo(unk2EA)` (one dead
+// index binding each, created at the read) and no `bm` local is named, which
+// puts every stream block at a uniform 0x14 below retail. What is left is
+// two words created after case 0x33's stream and before the first
+// saveBookmark's inner ctor binding (the tail, or depth 2 ahead of case
+// 0x13), and three low IRO words. Registers: the endWaitForChoice
+// expansions' setCenteredSizeWr bindings (retail r26/r24, ours r25/r26) and
+// the named status/score/r (retail r25, ours r24) are coloured differently.
+// Inert: TU-local helpers around whole case bodies or the score display, the
+// compare's operand order, smInstance/getInstance at every flag call, both
+// score-conversion spellings; a named `TFlagManager* flags` in saveBookmark
+// adds a word per expansion; SMSGetMSound() at a sound site adds low words.
 void TCardSave::execMovement_()
 {
 
@@ -1722,7 +1724,7 @@ void TCardSave::execMovement_()
 			break;
 
 		if (status == CARD_RESULT_READY) {
-			u16 score = getBookmarkInfo().unk1C;
+			u16 score = getBookmarkInfo(unk2EA).unk1C;
 			if (score > 0x3E7)
 				score = 0x3E7;
 
@@ -1946,16 +1948,14 @@ void TCardSave::execMovement_()
 
 	case PROGRESS_UNK13: {
 		unk2E8 = unk2EA;
-
-		TCardBookmarkInfo& bm = getBookmarkInfo();
-		if (bm.unk0 == 1) {
+		if (getBookmarkInfo(unk2EA).unk0 == 1) {
 			unk310 = PROGRESS_UNK14;
-		} else if (bm.unk18 == 0) {
+		} else if (getBookmarkInfo(unk2EA).unk18 == 0) {
 			unk310 = PROGRESS_UNK16;
 			saveBookmark(unk2EA);
-		} else if (bm.unk18 == 0
+		} else if (getBookmarkInfo(unk2EA).unk18 == 0
 		           || TFlagManager::getInstance()->getLastSaveTime()
-		                  == bm.unk8) {
+		                  == getBookmarkInfo(unk2EA).unk8) {
 			unk310 = PROGRESS_UNK16;
 		} else {
 			unk310 = PROGRESS_UNK2C;
@@ -1991,12 +1991,11 @@ void TCardSave::execMovement_()
 #endif
 			gpCardManager->probe();
 			if (r == 0) {
-				TCardBookmarkInfo& bm = getBookmarkInfo();
-				if (bm.unk0 == 1) {
+				if (getBookmarkInfo(unk2EA).unk0 == 1) {
 					unk310 = PROGRESS_UNK1E;
 				} else {
-					if (bm.unk18 == 0
-					    || bm.unk8
+					if (getBookmarkInfo(unk2EA).unk18 == 0
+					    || getBookmarkInfo(unk2EA).unk8
 					           == TFlagManager::getInstance()
 					                  ->getLastSaveTime()) {
 
@@ -2114,12 +2113,11 @@ void TCardSave::execMovement_()
 			s32 r = waitForSelect2(PROGRESS_UNK16, PROGRESS_UNK1);
 			gpCardManager->probe();
 			if (r == 0) {
-				TCardBookmarkInfo& bm = getBookmarkInfo();
-				if (bm.unk0 == 1) {
+				if (getBookmarkInfo(unk2EA).unk0 == 1) {
 					unk310 = PROGRESS_UNK1E;
 				} else {
-					if (bm.unk18 == 0
-					    || bm.unk8
+					if (getBookmarkInfo(unk2EA).unk18 == 0
+					    || getBookmarkInfo(unk2EA).unk8
 					           == TFlagManager::getInstance()
 					                  ->getLastSaveTime()) {
 						saveBookmark(unk2EA);
@@ -2144,12 +2142,11 @@ void TCardSave::execMovement_()
 
 			if (r != -1) {
 				if (r == 0 || r == 1) {
-					TCardBookmarkInfo& bm = getBookmarkInfo();
-					if (bm.unk0 == 1) {
+					if (getBookmarkInfo(unk2EA).unk0 == 1) {
 						unk310 = PROGRESS_UNK1E;
 					} else {
-						if (bm.unk18 == 0
-						    || bm.unk8
+						if (getBookmarkInfo(unk2EA).unk18 == 0
+						    || getBookmarkInfo(unk2EA).unk8
 						           == TFlagManager::getInstance()
 						                  ->getLastSaveTime()) {
 							saveBookmark(unk2EA);
@@ -2205,12 +2202,11 @@ void TCardSave::execMovement_()
 #endif
 			gpCardManager->probe();
 			if (r == 0) {
-				TCardBookmarkInfo& bm = getBookmarkInfo();
-				if (bm.unk0 == 1) {
+				if (getBookmarkInfo(unk2EA).unk0 == 1) {
 					unk310 = PROGRESS_UNK1E;
 				} else {
-					if (bm.unk18 == 0
-					    || bm.unk8
+					if (getBookmarkInfo(unk2EA).unk18 == 0
+					    || getBookmarkInfo(unk2EA).unk8
 					           == TFlagManager::getInstance()
 					                  ->getLastSaveTime()) {
 						saveBookmark(unk2EA);
