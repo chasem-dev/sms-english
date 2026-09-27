@@ -800,41 +800,35 @@ void TSwingBoard::draw() const
 }
 
 // UNUSED (0xa8): the water-jet push at the head of control, which retail
-// reaches behind its own marioIsOn() guard (control tests it twice).
-// TODO: calling it as `if (marioIsOn()) swing();` keeps every instruction
-// but swaps dirX/dirZ between f31/f30 (99.9 -> 99.7); a TVec3 dir grows the
-// frame (0x88, with a TVec3 axis and dot() 0xb0) toward retail's 0x118.
+// reaches behind its own marioIsOn() guard (control tests it twice). The
+// component stores into `dir` make its scalar temporaries in x, y, z order,
+// so x is coloured first and takes f31 as in retail; the constructor (args
+// right to left) or three named floats (dirZ created first) swap f31/f30.
 void TSwingBoard::swing()
 {
 	if (marioIsOn() && SMS_GetMarioWaterGun()->isEmitWater()) {
 		MtxPtr emit = SMS_GetMarioWaterGun()->getEmitMtx(0);
-		f32 dirX    = -emit[0][0];
-		f32 dirY    = 0.0f;
-		f32 dirZ    = -emit[2][0];
-		MtxPtr mtx  = getModel()->getAnmMtx(0);
-		mAngleSpeed += mAccelRate
-		    * (mtx[0][2] * dirX + mtx[1][2] * dirY + mtx[2][2] * dirZ);
+		JGeometry::TVec3<f32> dir;
+		dir.x = -emit[0][0];
+		dir.y = 0.0f;
+		dir.z = -emit[2][0];
+		MtxPtr mtx = getModel()->getAnmMtx(0);
+		JGeometry::TVec3<f32> axis(mtx[0][2], mtx[1][2], mtx[2][2]);
+		mAngleSpeed += mAccelRate * axis.dot(dir);
 	}
 }
 
-// TODO: 99.9%, every instruction exact; retail's frame is 0x118 against our
-// 0x70, i.e. 0xa8 more dead low region; swing() (see above) is the likely
-// carrier. c-m18: `if (marioIsOn()) swing();` swaps f31/f30 whatever swing's
-// declaration order (dirZ first, a TVec3 dir, a named dot: all 99.7).
+// TODO: 99.9%, every instruction exact; frame 0x118 against our 0xa8. With
+// swing() inlined, rot sits at the top as in retail (0xd0) but 29 words of
+// dead objects created after it are missing; the discarded cosf/sinf of
+// mAngle are their likely source. Inert or wrong: named unused cos/sin
+// (+8), a TVec3 of them (+0x20/+0x28), a TVec3 `top` for the position (code).
 void TSwingBoard::control()
 {
 	TMapObjBase::control();
 
-	if (marioIsOn() && marioIsOn()
-	    && SMS_GetMarioWaterGun()->isEmitWater()) {
-		MtxPtr emit = SMS_GetMarioWaterGun()->getEmitMtx(0);
-		f32 dirX    = -emit[0][0];
-		f32 dirY    = 0.0f;
-		f32 dirZ    = -emit[2][0];
-		MtxPtr mtx  = getModel()->getAnmMtx(0);
-		mAngleSpeed += mAccelRate
-		    * (mtx[0][2] * dirX + mtx[1][2] * dirY + mtx[2][2] * dirZ);
-	}
+	if (marioIsOn())
+		swing();
 
 	mAngle += mAngleSpeed;
 	f32 previousSpeed = mAngleSpeed;
@@ -1202,13 +1196,11 @@ void TFluffManager::findNextFluff()
 	}
 }
 
-// TODO: 99.6%. STATE_CALM is instruction-exact (reference-bind `lfsu` on
-// unkD0, scale-in-place, raw stores after one global reload, `mWindMin`
-// read at the compare). STATE_BLOW still colours the first four loads
-// differently and swaps the z pair; the frame is 0x48 short. A
-// reference-bind on BLOW's unkD0 is wrong (`lfsu` first, 99.3%).
-// c-m18: `unkD0.add(mWind)`/`+=` 96.7-96.9; wind.add(unkD0, mWind) and
-// a raw set() of the three sums are inert (99.6, frame 0x50-0x60).
+// TODO: 99.9%, every instruction exact; frame 0xa0 against our 0x70, i.e.
+// 12 words of dead objects missing (iro.py: ours has 4 P, 4 inline and 3
+// named dead words). findNextFluff's own body is 0xf4 against the map's
+// 0x118, so the WAIT branch's expansion may be the carrier; the calcDist /
+// `a - b` / length() spellings of its distance all change control's code.
 void TFluffManager::control()
 {
 	switch (mState) {
@@ -1226,13 +1218,11 @@ void TFluffManager::control()
 		}
 		break;
 
-	// `add(mWind, unkD0)` loads mWind.x/unkD0.x/mWind.y/unkD0.y in retail
-	// order. The z pair is still swapped and the first `fadds` lives in
-	// unkD0's register in retail (`fadds f2, f2, f0`).
 	case STATE_BLOW: {
-		TMapObjManager* man = gpMapObjManager;
 		JGeometry::TVec3<f32> wind;
-		wind.add(mWind, man->unkD0);
+		wind.set(gpMapObjManager->unkD0);
+		wind.add(mWind);
+		TMapObjManager* man = gpMapObjManager;
 		man->unkD0.set(wind);
 		if (!isStateTimerEngaged())
 			mState = STATE_CALM;
@@ -1240,21 +1230,14 @@ void TFluffManager::control()
 	}
 
 	case STATE_CALM: {
-		JGeometry::TVec3<f32>& d0 = gpMapObjManager->unkD0;
-		f32 windX                 = d0.x;
-		f32 rate                  = mWindDownRate;
-		f32 windY                 = d0.y;
-		f32 windZ                 = d0.z;
-		windX *= rate;
-		windY *= rate;
-		windZ *= rate;
+		JGeometry::TVec3<f32> wind;
+		wind.set(gpMapObjManager->unkD0);
+		wind.scale(mWindDownRate);
 
-		if (fabsf(windX) < mWindMin && fabsf(windY) < mWindMin
-		    && fabsf(windZ) < mWindMin) {
-			windX      = 0.0f;
-			windY      = 0.0f;
+		if (fabsf(wind.x) < mWindMin && fabsf(wind.y) < mWindMin
+		    && fabsf(wind.z) < mWindMin) {
+			wind.set(0.0f, 0.0f, 0.0f);
 			mRideFluff = mNextFluff;
-			windZ      = 0.0f;
 
 			mRideFluff->mRotation.set(mRotation);
 			mRideFluff->mInitialRotation = mRotation;
@@ -1271,9 +1254,7 @@ void TFluffManager::control()
 		}
 
 		TMapObjManager* man = gpMapObjManager;
-		man->unkD0.x        = windX;
-		man->unkD0.y        = windY;
-		man->unkD0.z        = windZ;
+		man->unkD0.set(wind);
 		break;
 	}
 	}
