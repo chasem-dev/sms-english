@@ -505,9 +505,12 @@ int TBathtub::getNumGripsDead() const
 // TODO: inlined into receiveMessage, retail keeps &trampleRelease.value in r5
 // and rereads the threshold through it for the store; a named const s32&
 // (via get() or .value) and the guard-return shape do not reproduce it.
+// `get() >= unk250` (get() on the left) makes the address temp (map size
+// 0x54) but loads the compare through it and the store direct, retail the
+// reverse (receiveMessage 99.3; 64 compare/accessor combos tried).
 void TBathtub::trample(const JGeometry::TVec3<f32>&)
 {
-	if (!unk29A && unk250 <= unk16C->trampleRelease.value) {
+	if (!unk29A && unk16C->trampleRelease.get() >= unk250) {
 		unk250 = unk16C->trampleRelease.value;
 		unk258 = unk16C->trampleRecover.value;
 		unk25C = unk16C->trampleRecover.value;
@@ -822,22 +825,28 @@ void TBathtub::calcBathtubData()
 	unk1F4 = mBathtubData.getThing();
 }
 
-// TODO: 95.0%. The second loop continues the first loop's counter (retail
-// enters it through the condition and keeps it in the same register). Left:
-// the frame is 0x1d0 against 0x188 -- the concat result sits at 0xa8 against
-// retail's 0x74, so 0x34 of our low region and 0x14 above it have no retail
-// counterpart -- and the scheduling of the two opening dot products. Inert:
-// the order of d/xDir/zDir, d.dot(dir), the local/mtx declaration site, the
-// constant-first spellings of the slot and angle products.
+// Mario's position in the tub's frame, as getLocalPos spells it but with
+// the vector built in place (so its y row is dead and dropped). The second
+// loop continues the first loop's counter (retail enters it through the
+// condition and keeps it in the same register).
+// TODO: 99.4%, frame exact, but the concat result sits at 0x6c against 0x74
+// and the opening difference/dot products take f6/f5/f4 where retail has
+// f7/f6/f5: retail colours d before its named locals, as if the difference
+// were an inline object (getLocalPos itself lands the slots but calls set<f>).
 void TBathtub::setupCollisions_()
 {
-	JGeometry::TVec3<f32> xDir, zDir, d;
-	mBathtubData.unk18.getXDir(xDir);
-	mBathtubData.unk18.getZDir(zDir);
+	JGeometry::TVec3<f32> d;
 	d.sub(*gpMarioPos, mBathtubData.mPos);
-	f32 lz = zDir.dot(d);
-	f32 lx = xDir.dot(d);
-	if (gpMarioPos->y < 300.0f || lx * lx + lz * lz < 0.01f) {
+	JGeometry::TVec3<f32> pos(
+	    mBathtubData.unk18.mMtx[0][0] * d.x + mBathtubData.unk18.mMtx[0][1] * d.y
+	        + mBathtubData.unk18.mMtx[0][2] * d.z,
+	    mBathtubData.unk18.mMtx[1][0] * d.x + mBathtubData.unk18.mMtx[1][1] * d.y
+	        + mBathtubData.unk18.mMtx[1][2] * d.z,
+	    mBathtubData.unk18.mMtx[2][0] * d.x + mBathtubData.unk18.mMtx[2][1] * d.y
+	        + mBathtubData.unk18.mMtx[2][2] * d.z);
+	f32 lz = pos.z;
+	f32 dist2 = pos.x * pos.x + lz * lz;
+	if (gpMarioPos->y < 300.0f || dist2 < 0.01f) {
 		for (int i = 0; i < 30; ++i)
 			unk164[i]->remove();
 		for (int i = 0; i < 5; ++i)
@@ -845,10 +854,11 @@ void TBathtub::setupCollisions_()
 		return;
 	}
 
-	f32 angle = atan2f(lx, lz);
+	f32 angle = atan2f(pos.x, lz);
 	if (angle < 0.0f)
 		angle += 6.2831855f;
-	f32 slot = angle * 4.774648f;
+	f32 slot = angle;
+	slot *= 4.774648f;
 	if (slot < 0.0f)
 		slot += 30.0f;
 	int base = ((int)(0.5f + slot - 1.0f) + 30) % 30;
@@ -856,15 +866,19 @@ void TBathtub::setupCollisions_()
 	for (i = 0; i < 2; ++i) {
 		int index = (i + base) % 30;
 		JGeometry::TPosition3<TMtx34f> local;
-		local.setEularY((f32)(index + 1) * 6.2831855f / 30.0f - 3.1415927f);
+		f32 rot = index + 1;
+		rot *= 6.2831855f;
+		local.setEularY(rot / 30.0f - 3.1415927f);
 		local.setTrans(0.0f, 0.0f, 0.0f);
 		TSMtx34f mtx;
 		ConcatMtx34(mtx, *(TSMtx34f*)getModel()->getBaseTRMtx(), local);
 		unk164[index]->moveMtx(mtx);
 		unk164[index]->setUp();
 	}
-	for (; i < 30; ++i)
-		unk164[(i + base) % 30]->remove();
+	for (; i < 30; ++i) {
+		int index = (i + base) % 30;
+		unk164[index]->remove();
+	}
 	for (int i = 0; i < 5; ++i)
 		unk168[i]->unk24B = 0;
 	unk168[((int)(5.0f * angle / 6.2831855f) + 10) % 5]->unk24B = 1;
@@ -968,6 +982,11 @@ bool TBathtub::allowsTumble() const
 // 93.2% (frame still 0x68); with no locals the frame lands but the stores
 // block CSE (7%). setQuat's own weak copy (fireWanwan, 98.5%) points at the
 // header, which this unit may not edit.
+// c-m11: the dead-home cost is exact: a named local left with no surviving
+// reference is homed, and `1 - xx` is CSE'd, so a named xx is (+4). Nine
+// products in the order yy zz xy xx wz xz wy yz wx reach 93.5 here and 99.4
+// in Kazekun but cost the weak copy 98.5 -> 97.5; naming `1 - xx` lands the
+// frame but reschedules the weak copy (~120 orders, scratch dc/c-m11/q).
 void TBathtub::calcRootMatrix()
 {
 	if (unk29A) {
