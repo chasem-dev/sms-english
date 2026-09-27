@@ -445,7 +445,7 @@ void TGuide::startMoveCursor2()
 	changeBotStatus(-1);
 }
 
-// TODO: frame 0xd8 against 0x140; retail loads the stick x before 3.2f
+// TODO: frame 0xf0 against 0x140 (getAlpha/setAlpha gave +0x18); retail loads the stick x before 3.2f
 // (the operand order, a named stick value and `* 3.2f` are inert, as are
 // named f32 stick pairs, s16 deltas, a stick pointer, `x = d + x` and
 // folding the delta into the declaration).
@@ -478,7 +478,7 @@ void TGuide::linkSelect()
 		appearGuidePane(point);
 
 	if (point != -1 && point < 10) {
-		u8 cur = mPointPanes[point]->mAlpha;
+		u8 cur = mPointPanes[point]->getAlpha();
 		int alpha;
 		if (mCursorBlinkUp)
 			alpha = cur + 4;
@@ -491,7 +491,7 @@ void TGuide::linkSelect()
 			mCursorBlinkUp = 0;
 			alpha          = 255;
 		}
-		mPointPanes[point]->mAlpha = alpha;
+		mPointPanes[point]->setAlpha(alpha);
 		changePattern((J2DPicture*)mCursors[0]->getPane(), mTimer, 45);
 		changePattern((J2DPicture*)mCursors[1]->getPane(), mTimer, 45);
 	}
@@ -499,7 +499,7 @@ void TGuide::linkSelect()
 	if (mSelectedPoint != point) {
 		changeBotStatus(point);
 		if (mSelectedPoint != -1 && mSelectedPoint < 10)
-			mPointPanes[mSelectedPoint]->mAlpha = 255;
+			mPointPanes[mSelectedPoint]->setAlpha(255);
 		if (point == -1) {
 			J2DPicture* pic = (J2DPicture*)mCursors[0]->getPane();
 			pic->setBlendKonstColor(1.0f, 0.0f, 0.0f, 0.0f);
@@ -544,7 +544,7 @@ void TGuide::linkSelect()
 	else
 		alpha = mMapAlpha;
 	for (int i = 0; i < 10; ++i)
-		mStagePanes[i]->mAlpha = alpha;
+		mStagePanes[i]->setAlpha(alpha);
 
 	mTimer++;
 	if (mTimer > 540)
@@ -920,11 +920,11 @@ void TGuide::disappearGuidePane(int stage)
 	mOpenPanelB->setPaneAlpha(20, 0, 255);
 
 	JUTRect rect   = mPanelRects[stage];
-	JUTRect bounds = mStagePanes[stage]->mBounds;
+	JUTRect bounds = mStagePanes[stage]->getBounds();
 
 	gpMSound->startSoundSystemSE(MSD_SE_SY_TALK_MODE_OUT, 0, nullptr, 0);
 
-	mOpenPanelA->setCenteredSize(20, 0, 0, rect.x2 - rect.x1, rect.y2 - rect.y1);
+	mOpenPanelA->setCenteredSize(20, 0, 0, rect.getWidth(), rect.getHeight());
 	mOpenPanelA->setPaneOffset(20, bounds.x1 - rect.x1,
 	                           bounds.y1 - rect.x1 - 40, 0, 0);
 	mCursors[0]->setPaneAlpha(20, 255, 0);
@@ -946,7 +946,9 @@ static inline void GuideShowing(TGuide* guide)
 	}
 }
 
-// TODO: frame 0x228 against retail's 0x2b8, and the disappearGuidePane
+// TODO: frame 0x260 against retail's 0x2b8 (show/hide/isVisible/getBounds and
+// getWidth/getHeight gave +0x38), the loop's i copies retail's zero register
+// (r28) where ours loads `li 0`, and the disappearGuidePane
 // expansion's callee-saved registers rotate (retail: stage r27, height r31,
 // width r28). setPaneAlpha's out-of-line copy is 8 bytes short of frame in
 // GC2D/ExPane.hpp (shared header, not changed here). Clamping through a
@@ -966,9 +968,9 @@ void TGuide::perform(u32 cue, JDrama::TGraphics* graphics)
 			changeBotStatus(stage);
 			for (int i = 0; i < 10; ++i) {
 				if (i == stage)
-					mMarkerPanes[i]->mVisible = true;
+					mMarkerPanes[i]->show();
 				else
-					mMarkerPanes[i]->mVisible = false;
+					mMarkerPanes[i]->hide();
 			}
 			mCursorBlinkUp = 0;
 		} else {
@@ -998,7 +1000,7 @@ void TGuide::perform(u32 cue, JDrama::TGraphics* graphics)
 		{
 			JUTRect bounds
 			    = mStagePanes[SMS_getShineStage(gpMarDirector->mMap)]
-			          ->mBounds;
+			          ->getBounds();
 			mCursors[0]->getPane()->move(bounds.x1 + 6, bounds.y1 - 1);
 			mCursors[1]->getPane()->move(bounds.x1 + 6, bounds.y1 - 1);
 		}
@@ -1036,8 +1038,8 @@ void TGuide::perform(u32 cue, JDrama::TGraphics* graphics)
 			for (i = 0; i < 2; ++i)
 				done &= mCursors[i]->update();
 			if (done) {
-				mOpenPanelA->getPane()->mVisible = false;
-				mOpenPanelB->getPane()->mVisible = false;
+				mOpenPanelA->getPane()->hide();
+				mOpenPanelB->getPane()->hide();
 				mState                           = STATE_SELECT;
 				mTimer                           = 0;
 			}
@@ -1055,11 +1057,11 @@ void TGuide::perform(u32 cue, JDrama::TGraphics* graphics)
 		if (gpApplication.mFader->isFullyFadedOut()) {
 			gpApplication.mFader->startWipe(5, 1.0f, 0.0f);
 			if (mOpenPanelA != nullptr
-			    && mOpenPanelA->getPane()->mVisible)
-				mOpenPanelA->getPane()->mVisible = false;
+			    && mOpenPanelA->getPane()->isVisible())
+				mOpenPanelA->getPane()->hide();
 			if (mOpenPanelB != nullptr
-			    && mOpenPanelB->getPane()->mVisible)
-				mOpenPanelB->getPane()->mVisible = false;
+			    && mOpenPanelB->getPane()->isVisible())
+				mOpenPanelB->getPane()->hide();
 			unkC4  = 1;
 			mState = STATE_CLOSED;
 		}
