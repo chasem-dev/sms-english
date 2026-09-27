@@ -747,10 +747,8 @@ BOOL TTinKoopaPartsBase::receiveMessage(THitActor* sender, u32 message)
 	return FALSE;
 }
 
-// TODO: the TMapCollisionMove::moveMtx this reaches is 32.8%: the retail body
-// is MTXCopy(mtx, unk20) followed by move(), and the inline in
-// include/Map/MapCollisionEntry.hpp only does the copy. That header is outside
-// this batch's scope; adding the move() call there is the fix.
+// The no-argument curAnmEndsNext() overload is what colours the joint index
+// after the arguments (its constant argument copies raise `this`'s degree).
 void TTinKoopaPartsBase::perform(u32 cue, JDrama::TGraphics* graphics)
 {
 	TLiveActor::perform(cue, graphics);
@@ -760,7 +758,7 @@ void TTinKoopaPartsBase::perform(u32 cue, JDrama::TGraphics* graphics)
 		    TTinKoopa_getJointIndex(mPartsIndex)));
 
 	if ((cue & 2) && mBreaking) {
-		if (mPartsMActor && mPartsMActor->curAnmEndsNext(ANM_TYPE_BCK, nullptr))
+		if (mPartsMActor && mPartsMActor->curAnmEndsNext())
 			mBreaking = false;
 	}
 
