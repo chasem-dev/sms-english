@@ -123,3 +123,13 @@ A web whose degree is still at least K when its sweep reaches it is pushed in a 
   Tell: `--search` fixes everything by moving one named web to position 0, and that web's degree is at or just above K.
 - **A named call result can restore retail's call order** (`TBaseNPC::perform`, +0.4): `f32 dist = getAnmOffDist_();` before `NpcSquaredDist(...) > CLBSquared(dist)` puts the out-of-line `getAnmOffDist_` call first and the square sum (into f31) between the two calls, where the nested `CLBSquared(getAnmOffDist_())` ran both calls before the sum.
 - Declaring three named squares last-to-first (`sqZ`, `sqY`, `sqX`) gives retail's f2/f0/f1 in `ModelGateLength`, but not its x-first load order.
+
+## Additions (c-g9, regsweep)
+
+- **Sweep.** `tools/mwcc-stack/regsweep.py` over the 222 register-only functions: 17 dumps or replays fail, 16 show no differing mapped web (commutative swaps or unmapped rows), and 65 are fixed by one web move (31 of them with the frame equal).
+  Most of the 31 are slot-offset or already-recorded residues; the actionable tell is the `[left/degree]` from `regalloc.py --why`.
+- **Deferral by numbering** (closed `TBossHanachan::setHeadAndBodyAnm`, `M3UMtxCalcBlendAux`).
+  When `--search` moves a long-lived web to position 0-1 and `--why` shows it one short of K at its first-sweep turn, remove one *lower-numbered* neighbour that is pushed before it in that sweep; it is then deferred and coloured before everything pushed there.
+  Named locals are always numbered below `@` objects, so: for a named web, declare the blocking named local ahead of it (`int frame;` before `body`); for an IRO temporary (`&j3dSys.mModel`), turn the blocking named locals into an inline level's parameters (the `p`/`q` scaled copy as `M3UScaleMtxCopy`), which numbers them above it.
+- **An inline predicate's parameter is coloured before an IRO temporary** (`TDirectionCalc::sub` 98.4 to 99.8, `calcTurnDirection` 98.2 to 99.3): `IsLongWayRound(dir - mDirection)` in place of a named `diff`.
+  The rest of `sub` is a pre-regalloc schedule difference (the wrap's load placed before the `fmr` that saves the incoming f1), not colouring.
