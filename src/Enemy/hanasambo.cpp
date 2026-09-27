@@ -389,19 +389,18 @@ SamboDropParams(const TSamboFlowerManager* p)
 }
 
 // Throws up to three free leaves, 120 degrees apart.
-// TODO: angles sits at 0x94, retail 0x90 (retail's 4-byte hole is above it,
-// ours below). Inert (c-c4): const angles, dropped declared first; per-element
-// stores and dropping the angle local are worse.
+// `params` is declared first: its dead slot sits above `angles`.
 void TSamboFlowerManager::dropLeaf(JGeometry::TVec3<f32>& position,
                                    JGeometry::TVec3<f32>& scale)
 {
+	TSamboFlowerSaveLoadParams* params;
 	f32 angles[3] = { 0.0f, 120.0f, 240.0f };
 	int dropped   = 0;
 	for (int i = 0; i < 18; ++i) {
 		TSamboLeaf* leaf = mLeaves[i];
 		if (!leaf->mIsActive) {
 			leaf->generate(position);
-			TSamboFlowerSaveLoadParams* params = SamboDropParams(this);
+			params = SamboDropParams(this);
 			f32 velXZ                          = params->mSLLeafVelocityXZ.get();
 			f32 velY                           = params->mSLLeafVelocityY.get();
 			TMsRange<f32> rangeXZ(velXZ, 1.2f * velXZ);
