@@ -22,8 +22,11 @@
 #include <MSound/MSSetSound.hpp>
 #include <MSound/MSoundBGM.hpp>
 
-// TODO: 97.0%, frame 0x18 short of retail's 0xd8 (register allocation in
-// the second product follows from the slots). The named angles keep this out
+// TODO: 97.5%, frame 8 short of retail's 0xd8 (retail has three more words
+// of low region; the in-place `qx.mul(qz)` gave +0x10 over two-argument
+// muls). One degree-to-radian inline at any one of the three angles lands
+// the frame and every slot (97.8%, FPR numbering in the products left), but
+// at all three it overshoots (0xf0), so the real carrier is still unknown. The named angles keep this out
 // of line in execWalk as retail has it: without them the body is auto-inlined
 // there (execWalk 89.9 -> 50.1), while two angle locals already suffice to
 // keep it called.
@@ -38,7 +41,7 @@ JGeometry::TQuat4<f32> SMS_Eular2Quat(const JGeometry::TVec3<f32>& rot)
 	f32 x = 0.017453294f * rot.x;
 	JGeometry::TQuat4<f32> qx;
 	qx.setEulerX(x);
-	qx.mul(qx, qz);
+	qx.mul(qz);
 	qy.mul(qy, qx);
 	return qy;
 }

@@ -359,14 +359,14 @@ bool TYumbo::isChangedBlock() const
 	return mSpine->getLatestNerve() == &TNerveSmallEnemyChange::theNerve();
 }
 
-// TODO: 0x48 bytes of frame too big. Every instruction but the register
-// numbering around the first rotate matches; the retail build keeps dir.z in
-// f31 across matan/sinf/cosf and reuses it as the rotate's vz, ours reloads it.
-// The excess frame is the two JGeometry::TQuat4<f32>::rotate expansions, whose
-// two TQuat4 temporaries are worth exactly 0x40 of it; dropping them makes this
-// frame exact but renumbers registers at six other inline sites, so the header
-// was left alone. The measurements are tabulated next to rotate() in
-// JGQuat4.hpp.
+// TODO: 96.4%, frame 0x10 short (0x148 vs 0x158). Retail's only stack
+// vector is dir at 0x110: both rotates write it and startToMove (inlined)
+// reads it, and dir.z stays in f31 from MsGetRotFromZaxisY into the first
+// rotate where ours reloads it. A third quaternion (`TQuat4 rot;
+// rot.mul(roll, pitch); rot.rotate(dir, dir);`) lands every slot and the
+// frame but not the f31 reuse (94.7%); a separate output vector for the
+// second rotate gets the f31 reuse and the frame (98.4%) but not retail's
+// slots (it writes 0xd0, retail 0x110), so neither was committed.
 void TYumbo::shotSeeds()
 {
 	TYumboSeed* seed = getUnusedSeed();
