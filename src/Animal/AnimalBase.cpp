@@ -259,6 +259,12 @@ void TAnimalBase::resetRandomCurPathNode()
 	setGoalPath(curNode);
 }
 
+static inline void chaseRoll(f32* roll, f32 delta, f32 speed)
+{
+	f32 targetRoll = MsClamp<f32>(30.0f * -delta, -45.0f, 45.0f);
+	CLBChaseGeneralConstantSpecifySpeed<f32>(roll, targetRoll, 0.1f * speed);
+}
+
 void TAnimalBase::getRotationFlyToDir(JGeometry::TVec3<f32>* current_rot,
                                       const JGeometry::TVec3<f32>& target_diff,
                                       f32 speedX, f32 speedY)
@@ -272,9 +278,7 @@ void TAnimalBase::getRotationFlyToDir(JGeometry::TVec3<f32>* current_rot,
 	current_rot->y += clampedDelta;
 	current_rot->y = MsWrap<f32>(current_rot->y, 0.0f, 360.0f);
 
-	f32 targetRoll = MsClamp<f32>(30.0f * -clampedDelta, -45.0f, 45.0f);
-	CLBChaseGeneralConstantSpecifySpeed<f32>(&current_rot->z, targetRoll,
-	                                         0.1f * speedX);
+	chaseRoll(&current_rot->z, clampedDelta, speedX);
 
 	rot.x          = MsWrap<f32>(rot.x, -180.0f, 180.0f);
 	current_rot->x = MsWrap<f32>(current_rot->x, -180.0f, 180.0f);
@@ -292,21 +296,22 @@ void TAnimalBase::flyToCurPathNode(f32 a1, f32 a2) { }
 // header's in-place TQuat4::rotate (two inline levels, see JGQuat4.hpp); MWCC
 // emits a local template instantiation right after the first function in
 // emission order that needs its body, and all three present ones land in the
-// map's slot. MsClamp is still expanded here: that is the caller-size family
-// (docs/catalog/codegen-tells.md), and MathUtil.hpp's MsClamp comment
-// already records that no declaration form there moves it. The other,
+// map's slot. MsClamp is called because getRotationFlyToDir's roll chase is
+// its own inline level (chaseRoll): at depth 3 here it no longer fits, while
+// the out-of-line getRotationFlyToDir still expands it. The other,
 // set<f>__Q29JGeometry8TVec4<f>Fffff, is UNUSED and sits right after
 // flyToCurPathNode, i.e. it belongs to that 0x4a0 dead body, which is a stub
 // here.
 void TAnimalBase::execWalk(bool moving)
 {
 	TAnimalSaveIndividual* save = ((TAnimalManagerBase*)mManager)->mAnimalSave;
+	f32 marchSpeed;
+	f32 turnSpeed;
 
 	if (moving) {
 		f32 accel = save->mSLMarchAccel.get();
 		f32 rate  = SMSGetAnmFrameRate();
-		accel *= SMSGetAnmFrameRate();
-		accel *= rate;
+		accel = accel * SMSGetAnmFrameRate() * rate;
 		f32 speed = save->mSLMaxMarchSpeed.get();
 		speed *= SMSGetAnmFrameRate();
 		CLBChaseGeneralConstantSpecifySpeed<f32>(&mMarchSpeed, speed,
@@ -314,9 +319,8 @@ void TAnimalBase::execWalk(bool moving)
 	} else {
 		f32 decel = save->mSLMarchDecrease.get();
 		f32 rate  = SMSGetAnmFrameRate();
-		decel *= SMSGetAnmFrameRate();
-		CLBChaseGeneralConstantSpecifySpeed<f32>(&mMarchSpeed, 0.0f,
-		                                         decel * rate);
+		CLBChaseGeneralConstantSpecifySpeed<f32>(
+		    &mMarchSpeed, 0.0f, decel * SMSGetAnmFrameRate() * rate);
 	}
 
 	if (mMarchSpeed < 0.001f) {
@@ -327,8 +331,8 @@ void TAnimalBase::execWalk(bool moving)
 		mTurnSpeed    = walkSpeed * SMSGetAnmFrameRate();
 	}
 
-	f32 turnSpeed  = mTurnSpeed;
-	f32 marchSpeed = mMarchSpeed;
+	turnSpeed  = mTurnSpeed;
+	marchSpeed = mMarchSpeed;
 
 	JGeometry::TVec3<f32> diff = getUnkF4().getPoint();
 	diff -= mPosition;
@@ -345,11 +349,10 @@ void TAnimalBase::execWalk(bool moving)
 
 	JGeometry::TQuat4<f32> quat = SMS_Eular2Quat(mRotation);
 	JGeometry::TVec3<f32> velocity(0.0f, 0.0f, marchSpeed);
-	// TODO: 83.5%. Retail calls TVec4(), the set<f> above and getRotationFlyToDir's
-	// MsClamp<f> out of line here; we expand all three (the caller-site family
-	// in MathUtil.hpp's MsClamp note). The frame is also 0x10 short: retail
-	// copies the quaternion once more (0xb8 -> 0x9c) before the rotate, but
-	// spelling that copy (a by-value or copied q) scores 81.6.
+	// TODO: 93.2%. The frame is 0x28 short: retail copies the quaternion once
+	// more (0xb8 -> 0x9c) before the rotate, but spelling that copy (a
+	// by-value or copied q) scored lower; the rotate's products are also
+	// scheduled differently and accel/rate sit in f29 where retail has f31.
 	quat.rotate(velocity);
 	mLinearVelocity = velocity;
 }
