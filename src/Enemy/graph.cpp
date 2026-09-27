@@ -21,12 +21,6 @@ static inline s16 GraphConnectionNum(const TRailNode* p)
 	return connectionNum;
 }
 
-static inline TGraphWeb* GraphGroupAt(TGraphGroup* g, int i)
-{
-	TGraphWeb* w = g->unk8[i];
-	return w;
-}
-
 TGraphNode::TGraphNode()
     : unk0(nullptr)
     , unk4(0)
@@ -886,20 +880,16 @@ TGraphGroup::~TGraphGroup() { }
 
 void TGraphGroup::initGraphGroup()
 {
-	// TODO: GraphGroupAt at this site (or the unk10 check) lands frame 0xc0
-	// and 99.9%; the TVec3(0,0,0) temporary sits 4 high. attachToGround or
-	// all three sites swap r28/r29; a nested fork is +8 more. The 4-byte
-	// residue is the open "4 off the 8-byte binder grid" class.
-	// c-d13: attachToGround's `pos` declared before `checkData` gives
-	// retail's order; every slot is then 4 high (the binder's `w` is created
-	// after them in ours, retail has that word between the zero temp and
-	// initGoalIndex's copy).
+	// TODO: the zero vector sits 4 high (0x58, retail 0x54) and attachToGround's
+	// pos/checkData pair is swapped (0x4c/0x48, retail 0x44/0x50). The named
+	// `zero` equals the old pass-through binder's score; inert (c-m19): pos
+	// declared first, `zero` hoisted out of the loop, `if (< 0) {}` form.
 	for (int i = 0; i < unk4; ++i) {
 		if (unk8[i]->unk10 >= 0)
 			continue;
 
-		GraphGroupAt(this, i)->initGoalIndex(
-		    JGeometry::TVec3<f32>(0.0f, 0.0f, 0.0f));
+		JGeometry::TVec3<f32> zero(0.0f, 0.0f, 0.0f);
+		unk8[i]->initGoalIndex(zero);
 		unk8[i]->attachToGround();
 	}
 }
