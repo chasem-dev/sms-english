@@ -389,6 +389,9 @@ SamboDropParams(const TSamboFlowerManager* p)
 }
 
 // Throws up to three free leaves, 120 degrees apart.
+// TODO: angles sits at 0x94, retail 0x90 (retail's 4-byte hole is above it,
+// ours below). Inert (c-c4): const angles, dropped declared first; per-element
+// stores and dropping the angle local are worse.
 void TSamboFlowerManager::dropLeaf(JGeometry::TVec3<f32>& position,
                                    JGeometry::TVec3<f32>& scale)
 {
@@ -1273,6 +1276,8 @@ static inline TSpineBase<TLiveActor>* SamboHeadAtkSpine(const TSamboHead* p)
 // missing block is an inlined callee's own class object, not caller pool.
 // A named `const TVec3& marioPos = *gpMarioPos` is +8 above away (not +0x10);
 // two named refs are also +8; getPosition() at both sites +0x10 of low region.
+// Also (c-c4): setVelocity(away) and a C-style away + set() inert; the away
+// build as a by-value TU-local helper is 82.9%.
 void TSamboHead::attackToMario()
 {
 	sendAttackMsgToMario();

@@ -476,6 +476,8 @@ int TGraphWeb::getRandomButDirLimited(int param_1, int param_2,
 		// 4-byte hole under local_e4. A TU-local angle helper with an f32&
 		// out-param lands it at 0x44 but grows the named block by 8; a
 		// nested scope, top-level cross/angle/maxCos and value helpers are inert.
+		// Also (c-c4): `f32 angle;` above local_f4 inert; a named dot is +8;
+		// MsAtan2 stays out of line (94.0).
 		JGeometry::TVec3<f32> local_f4;
 		local_f4.cross(local_cc, local_d8);
 		f32 angle = abs(matan(local_cc.dot(local_d8), MsVECMag2(&local_f4))

@@ -1252,6 +1252,9 @@ DEFINE_NERVE(TNerveTobiPukuLand, TLiveActor)
 // getVelocity() lands the frame with both vector blocks 4 low (99.8); every
 // +4 level tried on top of it (by-value f32/int levels on each member read,
 // a setter level on unk1AE) is +8. Calling the UNUSED bound() is 94.5%.
+// c-c4: with `v` at the top and a raw `v = puku->mVelocity` both blocks sit
+// 0xc low at frame 0x60, i.e. retail has one more TVec3 of low region;
+// setVelocity() in the branch is inert.
 DEFINE_NERVE(TNerveTobiPukuBound, TLiveActor)
 {
 	TTobiPuku* puku = (TTobiPuku*)spine->getBody();

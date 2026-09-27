@@ -631,6 +631,8 @@ void rotTypeYJiggle(f32 sin, f32 cos, Mtx& out)
 // `pt` wants the same mirrored coloring (x f31 .. z f29); JPABaseParticle::
 // getGlobalPosition stores x, y, z, so the copy is spelled z, y, x here.
 // TODO: retail still loads x first; this loads z first (two instructions).
+// c-c4: all six store orders here, getGlobalPosition(pt), pt.set(v) and
+// member-wise x,y,z are inert or worse (x first always takes f29).
 static inline void JPAGetPos(const JGeometry::TVec3<f32>& v,
                              JGeometry::TVec3<f32>& out)
 {
