@@ -888,6 +888,10 @@ DEFINE_NERVE(TNerveTamaNokoPickUp, TLiveActor)
 	return false;
 }
 
+// Fabricated name, after the other SMS_GetMario* accessors in
+// MarioAccess.hpp; kept TU-local until that shared header grows it.
+static inline f32 SMS_GetMarioThrowPower() { return *gpMarioThrowPower; }
+
 // Real bug fixed here: the horizontal components were swapped, so a thrown
 // koopa flew off at ninety degrees to the direction Mario was facing. The ROM
 // multiplies the *sine* of gpMarioAngleY into x and the cosine into z
@@ -895,10 +899,9 @@ DEFINE_NERVE(TNerveTamaNokoPickUp, TLiveActor)
 // associates the product as rate * (power * trig), not (rate * power) * trig.
 // 75.9 -> 89.6%. Spelling it as TNerveMameGessoThrown does (power, rate,
 // z before x, a component-assigned `vel`) gives 99.6%.
-// TODO: the same residue as MameGesso: frame 0x58 against 0x60 (8 bytes
-// above `vel`) and power/cosine swapped between f2 and f3. Inert: rate
-// first, `vel` first, the ctor/temporary forms, `mVelocity = vel`, the
-// raw getSaveParam cast; `.value` is -8 frame.
+// The throw power is read through an inline accessor: its result makes
+// `power` an IR-optimiser temporary (a dead stack word, the ROM's 8 bytes
+// above `vel` with `rate`), created ahead of the cosine's, so it takes f2.
 DEFINE_NERVE(TNerveTamaNokoThrown, TLiveActor)
 {
 	TTamaNoko* self = (TTamaNoko*)spine->getBody();
@@ -906,7 +909,7 @@ DEFINE_NERVE(TNerveTamaNokoThrown, TLiveActor)
 	if (spine->getTime() == 0) {
 		TTamaNokoSaveLoadParams* params = self->getSaveParams2();
 
-		f32 power = *gpMarioThrowPower;
+		f32 power = SMS_GetMarioThrowPower();
 		f32 rate  = params->mSLThrownRateXZ.get();
 		JGeometry::TVec3<f32> vel;
 		f32 z = rate * (power * JMASCos(SMS_GetMarioAngleY()));
