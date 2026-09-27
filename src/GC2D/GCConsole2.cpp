@@ -1307,14 +1307,12 @@ void TGCConsole2::startDisappearCoin()
 	unk4D = true;
 	unk5A = true;
 
-	// TODO: 98.2%. Retail adds the trailing +1 to the finished sum
-	// (`add y2,h; addi 1`) while MWCC folds it into the height subtraction
-	// here whatever the operand order or a named `height` local; the
-	// remaining 0x18 of frame is a separate low-region residue.
+	// TODO: instructions exact; frame 0xc0 vs 0xd0 (four dead words, every
+	// slot shifts). getInitialBounds() at the offset line changes its code.
 	if (unk140->isInterpolatorAtZero())
 		unk140->updatePaneOffset(
 		    40, 0,
-		    -(unk140->mInitialBounds.y2 + unk128->getPane()->getHeight() + 1));
+		    -(1 + unk140->getInitialBounds().y2 + unk128->getPane()->getHeight()));
 
 	int offset = -(unk108->mInitialBounds.y2 + 1);
 	unk108->updatePaneOffset(40, 0, offset - unkC8->getPane()->getHeight());
