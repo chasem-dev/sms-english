@@ -308,11 +308,24 @@ static inline MSound* MapObjBallBoundSound()
 	return sound;
 }
 
-// TODO: 99.9%, every instruction matches. The unnamed TVec3 copies sit 4
-// low (retail's first at 0xfc, ours 0xf8) under an equal frame. Inert:
-// minSpeed as raw value, const ref or per-site fork; reach initialised;
-// `into` declared at the top; away.dot(vel). Every velocity read is a fresh
-// unnamed `TVec3(mVelocity)` copy; a named `vel` adds copies.
+// Mario walking into the ball nudges it harder than standing on it. Holding
+// minSpeed in a callee (not in boundByActor) puts its dead word below the
+// unnamed TVec3 copies, as in retail.
+static inline void MapObjBallKickUp(TMapObjBall* p)
+{
+	f32 minSpeed = MapObjBallMinBoundSpeed(p);
+	if (abs(SMS_GetMarioSpeedX()) > minSpeed
+	    || abs(SMS_GetMarioSpeedZ()) > minSpeed) {
+		p->mVelocity.y += p->unk150;
+		if (!p->isActorType(0x400000D0)) {
+			MapObjBallBoundSound()->startSoundActor(MSD_SE_MA_KICK_DRIAN,
+			                                &p->mPosition, 0, nullptr, 0, 4);
+		}
+	} else {
+		p->mVelocity.y += p->unk154;
+	}
+}
+
 void TMapObjBall::boundByActor(THitActor* param_1)
 {
 	JGeometry::TVec3<f32> away;
@@ -333,19 +346,7 @@ void TMapObjBall::boundByActor(THitActor* param_1)
 
 	if (param_1->isActorType(0x80000001)) {
 		if (!checkMapObjFlag(MAP_OBJ_FLAG_UNK2000000)) {
-			// Mario walking into it nudges it harder than standing on it.
-			f32 minSpeed = MapObjBallMinBoundSpeed(this);
-			if (abs(SMS_GetMarioSpeedX()) > minSpeed
-			    || abs(SMS_GetMarioSpeedZ()) > minSpeed) {
-				mVelocity.y += unk150;
-				if (!isActorType(0x400000D0)) {
-					MapObjBallBoundSound()->startSoundActor(MSD_SE_MA_KICK_DRIAN,
-					                                &mPosition, 0, nullptr, 0,
-					                                4);
-				}
-			} else {
-				mVelocity.y += unk154;
-			}
+			MapObjBallKickUp(this);
 
 			mVelocity.x += unk148 * SMS_GetMarioSpeedX() - away.x * unk14C;
 			mVelocity.z += unk148 * SMS_GetMarioSpeedZ() - away.z * unk14C;
