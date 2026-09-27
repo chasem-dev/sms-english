@@ -4374,6 +4374,19 @@ bool TGCConsole2::processDisappearBalloon()
 	return isFinished;
 }
 
+// fabricated: J2DPicture's texture-load guard. Retail tests `idx < count`
+// (cmplwi; ble) and loads without a null check, which is neither the plain
+// `count > 0` test (beq) nor getTexture(idx) followed by a null test.
+// TODO: likely a J2DPicture header inline; parked here.
+static inline void loadPictureTexture(J2DPicture* picture, u8 idx,
+                                      GXTexMapID id)
+{
+	if (idx < picture->mTextureNum)
+		picture->mTextures[idx]->load(id);
+}
+
+// TODO: frame 0x108 against retail 0x128 with every instruction right: the
+// low region (colour temporaries and below) is 0x24 short, the rest 0x20.
 void TGCConsole2::drawJuice(J2DOrthoGraph& graph, u32 color)
 {
 	if (unk50)
@@ -4406,10 +4419,8 @@ void TGCConsole2::drawJuice(J2DOrthoGraph& graph, u32 color)
 	GXSetTevAlphaOp(GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1,
 	                GX_TRUE, GX_TEVPREV);
 
-	if (unk32C->mTextureNum > 0)
-		unk32C->mTextures[0]->load(GX_TEXMAP0);
-	if (unk328->mTextureNum > 0)
-		unk328->mTextures[0]->load(GX_TEXMAP1);
+	loadPictureTexture(unk32C, 0, GX_TEXMAP0);
+	loadPictureTexture(unk328, 0, GX_TEXMAP1);
 
 	u8 selected = 0x17;
 	for (u8 i = 0x16; (u8)i != 0; --i) {
@@ -4470,17 +4481,6 @@ void TGCConsole2::drawJuice(J2DOrthoGraph& graph, u32 color)
 		unk334[selected - 1]->show();
 		unk330 = selected - 1;
 	}
-}
-
-// fabricated: J2DPicture's texture-load guard. Retail tests `idx < count`
-// (cmplwi; ble) and loads without a null check, which is neither the plain
-// `count > 0` test (beq) nor getTexture(idx) followed by a null test.
-// TODO: likely a J2DPicture header inline; parked here.
-static inline void loadPictureTexture(J2DPicture* picture, u8 idx,
-                                      GXTexMapID id)
-{
-	if (idx < picture->mTextureNum)
-		picture->mTextures[idx]->load(id);
 }
 
 void TGCConsole2::drawWater(J2DOrthoGraph& graph)
