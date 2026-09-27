@@ -2817,8 +2817,11 @@ bool TGCConsole2::processAppearStar(int param_1)
 	unk144->mGlobalTranslation.set(bounds.x1 + bounds.getWidth() * 0.5f,
 	                               bounds.y1 + bounds.getHeight() * 0.5f, 0.0f);
 
+	// TODO: the first emitter's x/y are scheduled store-by-store here;
+	// retail computes both before storing (setGlobalTranslation(f32...),
+	// a named or temporary TVec3 there are worse). The second site matches.
 	bounds = unk14C->getPane()->getGlobalBounds();
-	unk164->mGlobalTranslation.set(bounds.x1 + bounds.getWidth() * 0.5f,
+	unk164->setGlobalTranslation(bounds.x1 + bounds.getWidth() * 0.5f,
 	                               bounds.y1 + bounds.getHeight() * 0.5f, 0.0f);
 
 	return isFinished;
