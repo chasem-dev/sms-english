@@ -143,8 +143,10 @@ bool MSSetSoundGrp::startSoundSetGrp(u32 param1, const Vec* param2, u32 param3,
 // (retail's null-sound arm jumps straight to the end). Still open: the
 // linearTransform argument loads (retail loads unk28 before unk30/unk34);
 // raw `unk0` for unk28 at any call, and dropping the named unk2C read, are
-// inert or worse. So are `unk1E.get() * getRandom_0_1()` and swapping the
-// f30/f29 or f28/f27 declarations.
+// inert or worse. So is swapping the f30/f29 or f28/f27 declarations.
+// The raw unk1E read is what puts it first in the fmuls: a simple right
+// operand moves left of the getRandom_0_1() call at parse, the accessor
+// (a call there too) does not.
 template <typename T>
 bool MSSetSoundTL<T>::startSoundSetDyna(u32 param_1, const Vec* param_2,
                                         u32 param_3, f32 param_4, u32 param_5,
@@ -199,7 +201,7 @@ bool MSSetSoundTL<T>::startSoundSetDyna(u32 param_1, const Vec* param_2,
 		MSSetSoundMember* candidate;
 
 		u32 bVar1 = unk1D.get();
-		u32 uVar5 = JALCalc::getRandom_0_1() * unk1E.get();
+		u32 uVar5 = JALCalc::getRandom_0_1() * unk1E.unk0;
 		bVar1 += uVar5;
 		u32 uVar7 = unk5C[unk5A]->getPlayGameFrameCounter();
 		if (uVar7 < bVar1) {
