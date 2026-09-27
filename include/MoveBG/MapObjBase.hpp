@@ -235,7 +235,7 @@ public:
 	bool marioHeadAttack() const;
 	bool marioIsOn() const;
 	static bool marioIsOn(const TLiveActor*);
-	void actorIsOn(TLiveActor*) const;
+	bool actorIsOn(TLiveActor*) const;
 	void sendMsgToAll(u32);
 	void sendMsg(u32, u32);
 	static bool waterHitPlane(THitActor*);

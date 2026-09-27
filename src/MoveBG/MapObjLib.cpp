@@ -105,9 +105,13 @@ void TMapObjBase::checkOnManhole()
 	}
 }
 
-void TMapObjBase::throwObjToOverhead(TMapObjBase* param_1, f32 param_2,
-                                     f32 param_3) const
+void TMapObjBase::throwObjToOverhead(TMapObjBase* object, f32 y_offset,
+                                     f32 vertical_speed) const
 {
+	object->appear();
+	object->mPosition.set(mPosition.x, mPosition.y + y_offset, mPosition.z);
+	object->mVelocity.set(0.0f, vertical_speed, 0.0f);
+	object->offLiveFlag(LIVE_FLAG_UNK10);
 }
 
 void TMapObjBase::throwObjToFront(TMapObjBase* object, f32 y_offset, f32 speed,
@@ -255,9 +259,14 @@ TMapObjBase::newAndInitBuildingCollisionMove(int param_1, TLiveActor* param_2)
 	return move;
 }
 
-TMapCollisionStatic* TMapObjBase::newAndInitBuildingCollisionStatic(int,
-                                                                    TLiveActor*)
+TMapCollisionStatic*
+TMapObjBase::newAndInitBuildingCollisionStatic(int param_1, TLiveActor* param_2)
 {
+	TMapCollisionStatic* coll = new TMapCollisionStatic;
+	char buffer[64];
+	snprintf(buffer, 64, "/scene/map/map/building%02d.col", param_1);
+	coll->init(buffer, 0, param_2);
+	return coll;
 }
 
 J3DJoint* TMapObjBase::getBuildingJoint(int i)
@@ -886,7 +895,14 @@ void TMapObjBase::sendMsgToAll(u32 param_1)
 	}
 }
 
-void TMapObjBase::actorIsOn(TLiveActor*) const { }
+bool TMapObjBase::actorIsOn(TLiveActor* param_1) const
+{
+	if (param_1->getGroundPlane()->getActor() == this
+	    && !param_1->isAirborne())
+		return true;
+
+	return false;
+}
 
 bool TMapObjBase::marioIsOn(const TLiveActor* param_1)
 {
@@ -1021,9 +1037,22 @@ TMapObjBase::emitAndScale(s32 param_1, u8 param_2,
 	return emitter;
 }
 
-JPABaseEmitter* TMapObjBase::emitAndRotate(s32, u8,
-                                           const JGeometry::TVec3<f32>*) const
+// TODO: 0xc4 against the map's 0xb8; the body is emitAndRotateScale's
+// without the scale. `* 182.04445f` gives 0xb4, an early null return +8.
+JPABaseEmitter*
+TMapObjBase::emitAndRotate(s32 param_1, u8 param_2,
+                           const JGeometry::TVec3<f32>* param_3) const
 {
+	JPABaseEmitter* emitter
+	    = gpMarioParticleManager->emit(param_1, param_3, param_2, this);
+
+	if (emitter) {
+		emitter->setRotation(getRotation().x / 180.0f * 32768.0f,
+		                     getRotation().y / 180.0f * 32768.0f,
+		                     getRotation().z / 180.0f * 32768.0f);
+	}
+
+	return emitter;
 }
 
 void TMapObjVibration::startSlowly(f32) { }

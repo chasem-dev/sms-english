@@ -64,7 +64,18 @@ void JPABaseEmitter::deleteBaseParticle(JPABaseParticle* particle,
 	mManager->unk0.prepend(particle->getLinkBufferPtr());
 }
 
-void JPABaseEmitter::deleteParticle(JPABaseParticle* particle) { }
+// TODO: 0x94 against the map's 0x9c. Child particles carry FLAG_UNK4
+// (createChildParticle); two direct deleteBaseParticle calls give 0xb0, a
+// ternary 0x94, a default-then-override list 0x90.
+void JPABaseEmitter::deleteParticle(JPABaseParticle* particle)
+{
+	JSUList<JPABaseParticle>* list;
+	if (particle->checkStatus(JPABaseParticle::FLAG_UNK4))
+		list = &mChildParticleList;
+	else
+		list = &mParticleList;
+	deleteBaseParticle(particle, list);
+}
 
 // TODO: instructions exact, frame 0x48 vs retail 0x40 (8 more low region).
 // Either loop shape for both lists, a named object or next in either loop,
@@ -980,7 +991,10 @@ void JPABaseEmitter::calc()
 	}
 }
 
-void JPABaseEmitter::setGlobalRMatrix(MtxPtr) { }
+void JPABaseEmitter::setGlobalRMatrix(MtxPtr param_1)
+{
+	JPAGetRMtxElement(param_1, mGlobalRotation);
+}
 
 void JPABaseEmitter::setGlobalRTMatrix(MtxPtr param_1)
 {
