@@ -108,13 +108,13 @@ static inline void setEmitterToPaneCenter(JPABaseEmitter* emitter,
 // fabricated
 static inline void syncPaneBounds(TBoundPane* pane)
 {
-	pane->unk4 = pane->getPane()->mBounds;
+	pane->unk4 = pane->getPane()->getBounds();
 }
 
 // fabricated
 static inline void detachPaneFromParent(J2DPane* pane)
 {
-	pane->mPaneTree.getParent()->removeChild(&pane->mPaneTree);
+	pane->getPaneTree()->getParent()->removeChild(&pane->mPaneTree);
 }
 
 
@@ -183,7 +183,7 @@ static inline void detachBoundPaneFromParent(TBoundPane* pane)
 // fabricated
 static inline void initHiddenPaneAbove(TExPane* pane)
 {
-	pane->updatePaneOffset(1, 0, -(pane->mInitialBounds.y2 + 1));
+	pane->updatePaneOffset(1, 0, -(pane->getInitialBounds().y2 + 1));
 	pane->update();
 }
 
@@ -897,31 +897,37 @@ void TGCConsole2::load(JSUMemoryInputStream& stream)
 	SMSMakeTextBuffer(unk52C, 0x401);
 }
 
+// TODO: frame 0x5d0 vs 0x610, instructions exact. The named block now has
+// retail's layout (one rect reused for the water and te_0 bounds; retail has
+// one more dead word between emitterPos and the TColor temps). The rest is
+// low region: the three JSUMemory*Stream ctor bindings sit 0xa8 lower in
+// retail (created after every other expansion); stream-creating helpers
+// change the instructions.
 void TGCConsole2::loadAfter()
 {
 	JDrama::TNameRef::loadAfter();
 
 	unk94 = JDrama::TNameRefGen::search<TConsoleStr>("コンソール文字");
 
-	JUTRect waterBounds(unk2F8->getPane()->mBounds);
+	JUTRect rect(unk2F8->getPane()->getBounds());
 
-	unk2A0[0]->add(waterBounds.x1, waterBounds.y1);
-	unk270->getPane()->add(waterBounds.x1, waterBounds.y1);
+	unk2A0[0]->add(rect.x1, rect.y1);
+	unk270->getPane()->add(rect.x1, rect.y1);
 	syncPaneBounds(unk270);
-	unk26C->getPane()->add(waterBounds.x1, waterBounds.y1);
+	unk26C->getPane()->add(rect.x1, rect.y1);
 	syncPaneBounds(unk26C);
-	unk328->add(waterBounds.x1, waterBounds.y1);
+	unk328->add(rect.x1, rect.y1);
 
 	for (int i = 0; i < 3; ++i) {
-		unk2BC[i] = unk2A0[i]->mBounds;
-		unk2BC[i].add(waterBounds.x1, waterBounds.y1);
+		unk2BC[i] = unk2A0[i]->getBounds();
+		unk2BC[i].add(rect.x1, rect.y1);
 	}
 
 	unk2A0[0]->show();
 	detachPaneFromParent(unk2A0[0]);
 	detachBoundPaneFromParent(unk270);
 	for (int i = 0; i < 4; ++i) {
-		unk278[i]->getPane()->add(waterBounds.x1, waterBounds.y1);
+		unk278[i]->getPane()->add(rect.x1, rect.y1);
 		syncPaneBounds(unk278[i]);
 		detachBoundPaneFromParent(unk278[i]);
 	}
@@ -932,7 +938,7 @@ void TGCConsole2::loadAfter()
 	unk2EC[1] = JUtility::TColor(0x64DCFF00);
 	unk2EC[2] = JUtility::TColor(0x00B4F000);
 
-	s16 health = gpMarioOriginal->mHealth;
+	s16 health = gpMarioOriginal->getHealth();
 	if (health < 0)
 		health = 0;
 
@@ -946,7 +952,8 @@ void TGCConsole2::loadAfter()
 	unk1CC[0] = health;
 	unk1C     = health;
 
-	unk26A = unk140->getPane()->mBounds.y1 - unk108->getPane()->mBounds.y1;
+	unk26A = unk140->getPane()->getBounds().y1
+	         - unk108->getPane()->getBounds().y1;
 
 	initHiddenPaneAbove(unk140);
 	unk140->getPane()->hide();
@@ -1011,15 +1018,15 @@ void TGCConsole2::loadAfter()
 
 	// The ROM calls the virtual resize() (slot 0x14) with the scaled glyph
 	// width, not the inline font-size setter.
-	JUTRect textBounds(unk528->mBounds);
+	JUTRect textBounds(unk528->getBounds());
 	unk528->resize(gpSystemFont->getWidth() << 10, textBounds.getHeight());
 	unk52C->hide();
 	unk52C->setFont(gpSystemFont);
 	unk52C->resize(gpSystemFont->getWidth() << 10, textBounds.getHeight());
 
-	JUTRect telopBounds(unk524->getPane()->mBounds);
-	textBounds = unk520->getPane()->mBounds;
-	telopBounds.add(textBounds.x1, textBounds.y1 - 3);
+	JUTRect telopBounds(unk524->getPane()->getBounds());
+	rect = unk520->getPane()->getBounds();
+	telopBounds.add(rect.x1, rect.y1 - 3);
 	unk544.set(telopBounds.x1 + 8, telopBounds.y1 + 8, telopBounds.x2 - 8,
 	           telopBounds.y2 - 8);
 
@@ -1029,24 +1036,24 @@ void TGCConsole2::loadAfter()
 	unk544.add(0, -16);
 	unk568 = unk544.x2;
 
-	unk3BC = unk3B0->mBounds;
+	unk3BC = unk3B0->getBounds();
 	unk3CC = 30;
 
 	unk3D8 = new JSUMemoryOutputStream(unk3B4->getStringPtr(), 0x400);
 	unk3DC = new JSUMemoryOutputStream(unk3B8->getStringPtr(), 0x400);
 	unk3D4 = new JSUMemoryInputStream(nullptr, 0x400);
 
-	unk48C = unk450->getPane()->mBounds;
-	unk49C = unk458[0]->getPane()->mBounds;
-	unk4AC = unk480[0]->getPane()->mBounds;
+	unk48C = unk450->getPane()->getBounds();
+	unk49C = unk458[0]->getPane()->getBounds();
+	unk4AC = unk480[0]->getPane()->getBounds();
 
 	for (int i = 0; i < 6; ++i) {
-		JUTRect bounds(unk458[i]->getPane()->mBounds);
+		JUTRect bounds(unk458[i]->getPane()->getBounds());
 		unk4BC[i].set(bounds.x1, bounds.y1);
 	}
 
 	for (int i = 0; i < 2; ++i) {
-		JUTRect bounds(unk480[i]->getPane()->mBounds);
+		JUTRect bounds(unk480[i]->getPane()->getBounds());
 		unk4EC[i].set(bounds.x1, bounds.y1);
 	}
 
@@ -1056,18 +1063,18 @@ void TGCConsole2::loadAfter()
 
 	gpEmitterManager4D2->createEmitter(emitterPos, 0x1FB, nullptr, nullptr);
 	unk124                  = gpEmitterManager4D2->unkC8[0][0];
-	unk124->mChildSpawnRate = 0.01f;
+	unk124->setRate(0.01f);
 
 	gpEmitterManager4D2->createEmitter(emitterPos, 0x1FB, nullptr, nullptr);
 	unk164 = gpEmitterManager4D2->unkC8[0][0];
 	unk164->setStatus(JPABaseEmitter::STATUS_STOP_EMIT);
-	unk164->mChildSpawnRate = 0.012f;
+	unk164->setRate(0.012f);
 
 	gpEmitterManager4D2->createEmitter(emitterPos, 0x1FB, nullptr, nullptr);
 	unk144 = gpEmitterManager4D2->unkC8[0][0];
 	unk144->setStatus(JPABaseEmitter::STATUS_STOP_EMIT);
 
-	unk28 = gpMarioOriginal->mWaterGun->getMaxWater();
+	unk28 = gpMarioOriginal->getFludd()->getMaxWater();
 
 	unkBC = JDrama::TNameRefGen::search<TBathtub>("バスタブ");
 	if (unkBC) {
