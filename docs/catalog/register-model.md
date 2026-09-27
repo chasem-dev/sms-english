@@ -106,3 +106,11 @@ A web whose degree is still at least K when its sweep reaches it is pushed in a 
 - **`mr rX, rY` between two registers both holding `1`** is a nested `||` result copied from the outer one: `return a || b || c;` (closed `TOptionControl::isChangedSetting`), not a `bool r = result` local.
 - **A constant multiplicand coloured first** (open: `TPaneScalingControl::update` in the three Option `update()`s, `TBathtub::getNearGrip`): our pcode generates the constant's `lfs` before the value's loads, retail after them; `f32 a = v; a *= K;` flips the `fmuls` operand order but recolours the block.
 - **A named local cannot be coloured before an `@` object** (`TTinKoopaLaunchOrder::checkOrder`, partial): with the receiver named, mDirection's CSE temp (or makeKillerQueue's s8 binding) takes r4 first; retail's receiver must be an `@` object created earlier.
+
+## Additions (c-e6)
+
+- **A shared helper for two actors colours the second actor first** (partial, `TBEelTears::init`): `--search` wants `waterHitActor` coloured at position 2, i.e. an `@` binding, not a named local.
+  Passing `getMActor("tears_waterhit.bmd")` straight into a TU-local `SetScreenTex(MActor*, const ResTIMG&)` (ChangeTextureAll + setLightType), used for both actors, fixes every register and two of the push_back iterator slots; three words of the iterator block stay 0xc low, so it is not landed.
+- **Reuse picks the lowest in-use callee-saved FPR** (`JPADrawExecRotDirectional[Cross]::exec`): pt's components are IRO temps created in store order, and the first coloured takes f29 (lowest in use), not f31.
+  Retail's x-first loads with x in f31 therefore need x's temp created last but loaded first; `set()`, scalars, and `getGlobalPosition` all create it first.
+- **A two-definition named local below K is coloured last** (`TFireWanwan::updatePollute`): `radius` (degree 30) needs two more neighbours or an `@` home; an uninitialised top declaration is inert and a TU-local radius helper changes instructions.
