@@ -273,19 +273,13 @@ void TApplication::initialize()
 	OSResumeThread(&gSetupThread);
 }
 
-// Binding level over a raw member read, worth +8 of low region in
-// TApplication::setupThreadFuncLogo (batch 127).
+// Heap accessor; inside JKRDvdToMainRam it is the depth-2 level that puts
+// one word of setupThreadFuncLogo's frame below the ARAM path buffers.
 static inline JKRHeap* ApplicationHeap(const TApplication* p)
 {
-	JKRHeap* heap = p->mHeap;
-	return heap;
+	return p->mHeap;
 }
 
-// TODO: 100.0%, 8 instructions. The two SMSLoadArchiveARAM path buffers land
-// at 0x60/0x20 instead of retail's 0x64/0x24 while the two SMSLoadArchive
-// buffers (0xe8/0xa4) and the 0x140 total are exact, so the low region is 4
-// bytes short *below* the last two expansions and 4 long above them. The
-// `arc` local below is worth 0 bytes either way (closure 241).
 void* TApplication::setupThreadFuncLogo()
 {
 	void* arc = nullptr;
@@ -301,9 +295,9 @@ void* TApplication::setupThreadFuncLogo()
 	arc = SMSLoadArchive("/data/common.arc", nullptr, 0, JKRGetRootHeap());
 	arcBufCmn = arc;
 
-	arc = JKRDvdRipper::loadToMainRAM(
-	    "/data/stageArc.bin", nullptr, EXPAND_SWITCH_DEFAULT, 0, ApplicationHeap(this),
-	    JKRDvdRipper::ALLOC_DIRECTION_FORWARD, 0, nullptr);
+	arc = JKRDvdToMainRam("/data/stageArc.bin", nullptr, EXPAND_SWITCH_DEFAULT,
+	                      0, ApplicationHeap(this),
+	                      JKRDvdRipper::ALLOC_DIRECTION_FORWARD, 0, nullptr);
 	bufStageArcBin = arc;
 
 	SMSLoadArchiveARAM(&gArBkConsole, "/data/game_6.arc");
