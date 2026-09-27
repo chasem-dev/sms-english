@@ -210,6 +210,9 @@ TSamboLeaf::TSamboLeaf(TSamboFlowerManager* manager, SDLModelData* data,
 // Inert or worse: dropping either MtxPtr alias, declaring roll before the
 // sine lookups, cos before sin, a named groundY, `.get()` for the gravity,
 // a named MsGetRotFromZaxis result, ground hoisted to function scope.
+// MathUtil.hpp's two-level pointer (a MsMtxSetRotZ copy with `MtxPtr m =
+// mtx;` called as `(MtxPtr)roll` on the -rotZ angle) gives every instruction
+// (99.9, frame right, every slot 4 low); a named groundY does not move it.
 void TSamboLeaf::perform(u32 cue, JDrama::TGraphics* graphics)
 {
 	if (!mIsActive)

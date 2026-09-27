@@ -163,7 +163,10 @@ f32 TDirectionCalc::sub(f32 dir)
 // Returns the stored direction turned towards dir by at most step.
 f32 TDirectionCalc::calcTurnDirection(f32 dir, f32 step)
 {
-	// TODO: 99.3%; the frame is 8 short.
+	// TODO: 99.3%; the frame is 8 short and the wrapped sum takes f1 where
+	// retail colours it f0 (0.0f in f3). `f32 m = std::fmodf(...); return
+	// l + m;` in WrapDirectionF closes this function exactly, but costs
+	// moveSwing +0x18 of frame (+8 if moveSwing calls WrapDirectionF direct).
 	mDirection = WrapRadianF(mDirection);
 	normalize();
 	if (dir >= mDirection) {

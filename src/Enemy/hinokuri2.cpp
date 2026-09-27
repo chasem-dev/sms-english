@@ -404,6 +404,10 @@ void THino2Mask::perform(u32 cue, JDrama::TGraphics* graphics)
 // MsMtxSetRotY (either or both branches), MsSin/MsCos (inert), a named angle,
 // JMASSin(DEG2SHORTANGLE(...)). Naming the joint number or the joint is
 // inert; naming the model is worse (bb19).
+// Every instruction closes (92.4 -> 99.4, frame 0xd8) with MathUtil.hpp's
+// "two-level pointer" (a MsMtxSetRotY copy whose body says `MtxPtr m = mtx;`,
+// called as `(MtxPtr)rot` on an `Mtx rot` in both branches); neither half is
+// landable. Retail then still has 10 more low-region words (0x28).
 static int Hino2HeadCallback(J3DNode* param_1, int param_2)
 {
 	if (param_2 == 0) {
