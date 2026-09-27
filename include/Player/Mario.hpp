@@ -844,7 +844,7 @@ public:
 	void warpRequest(const JGeometry::TVec3<f32>&, f32);
 	void flowMove(const JGeometry::TVec3<f32>&);
 	void windMove(const JGeometry::TVec3<f32>&);
-	void getGroundJumpPower() const;
+	f32 getGroundJumpPower() const;
 	BOOL onYoshi() const;
 	void addVelocity(f32);
 	BOOL considerRotateJumpStart();

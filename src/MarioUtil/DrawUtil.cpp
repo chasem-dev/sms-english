@@ -882,7 +882,18 @@ void SMS_CalcMatAnmAndMakeDL(J3DModel* param_1, u16 param_2)
 	mat->makeDisplayList();
 }
 
-void SMS_CopyMaterialToSort(J3DMaterial*, J3DModel*, u16) { }
+// The body is SMS_UnifyMaterial's loop body and compiles to the map's 0x88.
+// TODO: calling it from SMS_UnifyMaterial (unifier read through modelData)
+// is code-identical but 8 bytes long in frame (0x60 vs 0x58) with the same
+// r27/r28 swap, a fuzzy regression, so the loop is still spelled out there.
+void SMS_CopyMaterialToSort(J3DMaterial* src, J3DModel* model, u16 index)
+{
+	J3DMaterial* mat = model->getModelData()->getMaterialNodePointer(index);
+	u32 materialID   = src->getMaterialID();
+	mat->setMaterialID(materialID);
+	model->getMatPacket(index)->setMaterialID(materialID);
+	mat->setTexNo(0, src->getTevBlock()->getTexNo(0));
+}
 
 // TODO: 99.3%, frame exact. Retail keeps `unifier` in r27 and the loop's
 // `mat` in r28; ours swaps them. Tried: `mat` declared at function scope

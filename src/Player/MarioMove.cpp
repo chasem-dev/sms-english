@@ -202,7 +202,10 @@ void TMario::windMove(const JGeometry::TVec3<f32>& wind)
 	mPosition.z += wind.z;
 }
 
-void TMario::getGroundJumpPower() const { }
+f32 TMario::getGroundJumpPower() const
+{
+	return mGroundPlane ? 0.01f * mGroundPlane->getActiveJumpPower() : 0.0f;
+}
 
 BOOL TMario::onYoshi() const { return mYoshi != nullptr && mYoshi->onYoshi(); }
 
@@ -480,10 +483,7 @@ u32 TMario::setStatusToJumping(u32 status, u32 arg)
 				nextStatus = MARIO_STATUS_FORCE_JUMP;
 				break;
 			} else if (mGroundPlane->isThing3()) {
-				mVel.y += -unkBC
-				          + ((mGroundPlane
-				                  ? 0.01f * mGroundPlane->getActiveJumpPower()
-				                  : 0.0f));
+				mVel.y += -unkBC + getGroundJumpPower();
 
 				if (mGroundPlane->mActor != nullptr)
 					((THitActor*)mGroundPlane->mActor)->receiveMessage(this, 0);
@@ -515,9 +515,7 @@ u32 TMario::setStatusToJumping(u32 status, u32 arg)
 		break;
 
 	case MARIO_STATUS_FORCE_JUMP:
-		mVel.y = mGroundPlane != nullptr
-		             ? 0.01f * mGroundPlane->getActiveJumpPower()
-		             : 0.0f;
+		mVel.y = getGroundJumpPower();
 		startVoice(MSD_SE_MV22_JUMP_MID_01);
 		break;
 
