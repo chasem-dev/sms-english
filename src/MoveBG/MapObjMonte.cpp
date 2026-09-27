@@ -726,6 +726,8 @@ void TSwingBoard::drawOneRope(const JGeometry::TVec3<f32>& bottom,
 	GXEnd();
 }
 
+static const GXColor sSwingBoardColor = { 0, 0, 100, 255 };
+
 void TSwingBoard::initDraw() const
 {
 	GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_F32, 0);
@@ -740,15 +742,10 @@ void TSwingBoard::initDraw() const
 	              GX_DF_NONE, GX_AF_NONE);
 	GXSetChanCtrl(GX_COLOR1A1, GX_DISABLE, GX_SRC_REG, GX_SRC_REG, GX_LIGHT_NULL,
 	              GX_DF_NONE, GX_AF_NONE);
-	// TODO: 100% instructions, frame 0x88 vs retail 0x80. Same +8 TColor
-	// residue as TCogwheel/TWireBell::initDraw; a named TColor lands the
-	// frame but parks the color copy in the named block. The 4-arg
-	// TColor(0,0,100,255) ctor is byte stores and drops to 92.9%.
-	// MonteRopeColor() (which closed THangingBridge::initDraw) removes the
-	// named slot here but adds 8 of low region (0x88, copies at 0x24/0x28);
-	// void helpers taking/declaring the GXColor swap the copy order.
-	GXColor color = { 0, 0, 100, 255 };
-	GXSetChanMatColor(GX_COLOR0A0, JUtility::TColor(color));
+	// The colour is a file-scope constant: a local GXColor is a dead named
+	// slot above the texture (frame 0x88), and the constant folds to the
+	// same immediate.
+	GXSetChanMatColor(GX_COLOR0A0, JUtility::TColor(sSwingBoardColor));
 	GXSetNumTexGens(1);
 	GXSetTexCoordGen2(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, GX_IDENTITY,
 	                  GX_FALSE, GX_PTIDENTITY);
