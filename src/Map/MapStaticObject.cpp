@@ -339,7 +339,7 @@ void TMapStaticObj::initMapCollision(const char* name)
 	else
 		mCollisionManager = new TMapCollisionManager(1, "/map/map", nullptr);
 	mCollisionManager->init(name, 0, nullptr);
-	mCollisionManager->setUpUnk8TRS(mPosition, mRotation, mScaling);
+	mCollisionManager->setUpUnk8TRS(getPosition(), mRotation, mScaling);
 }
 
 // Retail calls this from init: the named `actor` is the fifteenth statement
@@ -373,10 +373,13 @@ void TMapStaticObj::initModel(const char* name)
 	TMapObjBase::startAllAnim(actor, name);
 }
 
-// TODO: 99.9%. The setUpUnk8TRS scratch Mtx sits at 0x94 and the insert
-// iterator pool at 0xd8 (retail 0xb0 and 0xa4), and the SMS_LoadParticle
-// flag pointer takes r31 (retail r29). Inert: naming the searched group or
-// the collision manager, forwarding `this` instead of the manager.
+// TODO: 99.9%. The named group (dead slot at the top) plus the getPosition()
+// reference in initMapCollision put the setUpUnk8TRS Mtx and the insert pair on
+// retail's slots; push_back's depth-1 pair is still 4 low (0xfc/0xf8 for
+// 0x100/0xfc: one word too many above it, one too few below), and both
+// SMS_LoadParticle flag pointers take r31 (retail r29; regalloc --search finds
+// no single move). Inert or worse: getInstance()->search, unnamed ref/img,
+// getRotation()/getScaling() references (+8 each).
 void TMapStaticObj::init(const char* name)
 {
 	mActorName = name;
@@ -417,10 +420,9 @@ void TMapStaticObj::init(const char* name)
 	}
 
 	if (mActorData->mIdxGroupName != nullptr) {
-		JDrama::TNameRefGen::getInstance()
-		    ->search<TIdxGroupObj>(mActorData->mIdxGroupName)
-		    ->getChildren()
-		    .push_back(this);
+		TIdxGroupObj* group = JDrama::TNameRefGen::search<TIdxGroupObj>(
+		    mActorData->mIdxGroupName);
+		group->getChildren().push_back(this);
 	}
 
 	if (mActorData->mFlags & TActorData::FLAG_IS_INDIRECT) {
