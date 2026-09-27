@@ -717,6 +717,9 @@ void TBossManta::initNthGeneration(int gen)
 		BossMantaGetManager(this)->adaptAdditionalCollision(this);
 }
 
+// TODO: instruction-exact at retail's frame; the inlined updateAnimBlend's
+// local_134 sits 8 low (0x12c vs 0x134), blend table 8 low. Inert: cross1/b/turn
+// order, MActor binder vs getMActor(), raw mVelocity, local_134(unk164).
 void TBossManta::control()
 {
 	if (unk1A0 > 0)
@@ -1264,6 +1267,8 @@ const JUtility::TColor& TBossMantaManager::getMantaColor()
 	return unk80;
 }
 
+// TODO: retail's frame is 0x78 larger (0x278 vs 0x200) with the named block
+// 0x78 higher, and one r3/r0 swap in the unk84 clamp; a missing inline level.
 void TBossMantaManager::drawMantaShadow(JDrama::TGraphics* graphics)
 {
 	setupEfbAlpha(graphics);

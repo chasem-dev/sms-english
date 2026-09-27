@@ -650,6 +650,9 @@ void TFireWanwanTailHit::perform(u32 cue, JDrama::TGraphics* graphics)
 	}
 }
 
+// TODO: instruction-exact; retail's dead low region is 0x10 larger (uniform
+// shift). Naming `rate`'s index or the returned ref in getBodyNthPos gives +8
+// each but +0x18 together; named refs or copy-ctor spellings here are inert.
 void TFireWanwanTailHit::performNodes(u32 param_1, JDrama::TGraphics* param_2)
 {
 	for (int i = 0; i < 5; ++i) {
@@ -1152,6 +1155,8 @@ BOOL TFireWanwan::receiveMessage(THitActor* sender, u32 message)
 	}
 }
 
+// TODO: instruction-exact; retail's frame is 0x50 larger, all in the dead low
+// region below offFireEffect's scale (0xa0 vs 0x50): a missing inline level.
 void TFireWanwan::behaveToWater(THitActor* param_1)
 {
 	if (!unk194->mIsOnFire) {
@@ -1827,6 +1832,8 @@ void TFireWanwan::bind()
 	}
 }
 
+// TODO: frame exact; the named block sits 4 high (currPos 0x15c vs 0x158),
+// the total/correction temporaries high, and one f3/f4 swap in the quat rotate.
 int TFireWanwan::bindBody(JGeometry::TVec3<f32>* bound_step,
                           JGeometry::TVec3<f32>* normal_sum,
                           const JGeometry::TVec3<f32>& step)

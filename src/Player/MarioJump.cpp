@@ -166,6 +166,8 @@ bool TMario::askStrongGroundTouch()
 	return isStrong;
 }
 
+// TODO: instruction-exact; retail's frame is 0xa0 against our 0x58 and
+// the body touches no stack slot, so 0x48 of dead inline temporaries is missing.
 BOOL TMario::jumpingBasic(int statusOnGround, int animation, int processArg)
 {
 	doJumping();
