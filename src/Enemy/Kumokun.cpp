@@ -845,6 +845,9 @@ void TKumokun::decideTargetAtRandom()
 
 void TKumokun::decideTargetOnGraph() { }
 
+// TODO: frame 0x80 vs 0x60, the header rotate's q/q2 locals. inv.rotateQ
+// (or rotateInPlace) is 100% here but the Wait/Search nerves then `bl`
+// rotateQ and the weak rotate retail keeps vanishes; needs the header fix.
 JGeometry::TVec3<f32>
 TKumokun::rotateGoalDirToLocal(const JGeometry::TVec3<f32>& param_1) const
 {

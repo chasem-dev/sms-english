@@ -769,10 +769,11 @@ void TBathtub::control()
 	}
 }
 
-// TODO: the frame is 0x150 in retail against 0x190 here (the quaternion sits
-// at 0xf0, not 0x130), and retail keeps the normalised axis in a fifth saved
-// FPR (f27). Angle spellings, `.value` and setLength(1.0f) are all inert; the
-// excess is the inlined TQuat4 setRotate/rotate locals (see JGQuat4.hpp).
+// TODO: frame 0x170 against retail's 0x150. rotateQ stands in for the
+// one-level member-read rotate body JGQuat4.hpp's TODO describes (the header
+// rotate's q/q2 locals cost 0x20 more here); retail keeps the
+// normalised axis in a fifth saved FPR (f27). Inert: angle spellings (named
+// too), `.value`, setLength(1.0f), cross2 for the axis (worse).
 void TBathtub::calcBathtubData()
 {
 	const TPosition3f& mtx = *(TPosition3f*)getRootJointMtx();
@@ -806,7 +807,7 @@ void TBathtub::calcBathtubData()
 			JGeometry::TQuat4<f32> shake;
 			shake.setRotate(
 			    axis, unk16C->maxAngle.get() * 6.2831855f / 360.0f);
-			shake.rotate(mBathtubData.unk0C, mBathtubData.unk0C);
+			shake.rotateQ(mBathtubData.unk0C, mBathtubData.unk0C);
 			mBathtubData.unk58.set(0.0f, unk16C->shake.get(), 0.0f);
 		}
 	} else {
