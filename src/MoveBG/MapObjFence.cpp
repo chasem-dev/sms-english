@@ -528,9 +528,13 @@ void TRailFence::falling()
 	}
 }
 
-// TODO: 98.8, frame 0x68 against 0x88. Retail keeps the current index in r4
-// for moveToShortestNext and reloads the graph; ours reloads the index.
-// Naming the tracer (either node spelling) keeps both in registers.
+// TODO: instruction-exact, frame 0x68 against 0x88. The node read spelled
+// against the raw index lets moveToShortestNext reuse the loaded index as
+// retail does (getCurrent() or getCurGraphIndex() reload it), and the named
+// `dist` gives retail's 8 bytes between `toNode` and the first indexToPoint
+// temporary. Retail then has 7 more words below the second temporary;
+// SMSGetMSound() at the sound sites (+8), squared(), sub() and spelling
+// moveToShortestNext out were inert or broke the code.
 void TRailFence::goOnRail()
 {
 	if (mTracer->getGraph()) {
@@ -539,9 +543,11 @@ void TRailFence::goOnRail()
 		toNode.y -= mPosition.y;
 		toNode.z -= mPosition.z;
 
-		if (toNode.x * toNode.x + toNode.y * toNode.y + toNode.z * toNode.z
-		    < 50.0f) {
-			TRailNode* node = mTracer->getCurrent().getRailNode();
+		f32 dist
+		    = toNode.x * toNode.x + toNode.y * toNode.y + toNode.z * toNode.z;
+		if (dist < 50.0f) {
+			TRailNode* node
+			    = mTracer->getGraph()->getGraphNode(mTracer->mCurrIdx).getRailNode();
 			if (node->mConnectionNum == 0 && (node->mFlags & 8)) {
 				gpMSound->startSoundActor(MSD_SE_OBJ_MVING_FENCT_SET,
 				                          &mPosition, 0, nullptr, 0, 4);
