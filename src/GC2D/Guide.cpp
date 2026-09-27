@@ -44,6 +44,8 @@ TGuide::TGuide(const char* name)
 {
 }
 
+// The archive mount is setup(), inlined (retail loads unkD8 straight into the
+// argument's saved register).
 // TODO: frame 0x30 short (0x160 vs 0x190); each of the five decoration
 // JUTTexture constructions keeps `this` in a second register (r25) in retail;
 // naming the texture or the ResTIMG was inert or worse.
@@ -51,12 +53,7 @@ void TGuide::load(JSUMemoryInputStream& stream)
 {
 	unkC5 = 0;
 	JDrama::TNameRef::load(stream);
-	JKRMemArchive* archive = gpMarDirector->unkD8;
-	if (archive != nullptr)
-		SMSMountAramArchive(archive, gArBkGuide);
-	else
-		setup_wait = 16;
-	unkC4 = 0;
+	JKRMemArchive* archive = setup(gpMarDirector->unkD8);
 
 	mScreen = new J2DSetScreen("guide_1.blo", archive);
 
