@@ -9,6 +9,7 @@ General MWCC guidance stays in [`../AGENT_MATCHING_TIPS.md`](../AGENT_MATCHING_T
 | [LEVERS.md](LEVERS.md) | Always: the thirty-lever card, read first |
 | [RULES.md](RULES.md) | Lookup only (grep, never read whole): all 518 one-line rules; open a topic file only at the section a rule points to |
 | [frame-gaps.md](frame-gaps.md) | Instructions match but the `stwu` frame size differs |
+| [frame-model.md](frame-model.md) | Why MWCC reserves dead stack: which objects get slots, in what order; read before frame-gaps.md |
 | [codegen-tells.md](codegen-tells.md) | A diff shows a bool, branch, inline, float or load-order difference and you need the source shape behind it |
 | [tu-reconstruction.md](tu-reconstruction.md) | Starting a TU: vtable order, param names, string prefixes, `__sinit`, reordering, layout evidence, UNUSED bodies |
 | [linking.md](linking.md) | An object matches but breaks the DOL when source-linked |

@@ -2,6 +2,7 @@
 
 A function whose instructions all match but whose `stwu r1` frame size differs.
 This is the single largest class of near-exact game code.
+The compiler-level model (which objects get dead slots and in what order) is in [frame-model.md](frame-model.md); where it disagrees with the notes below, it wins.
 
 ## What causes a gap (current understanding)
 
