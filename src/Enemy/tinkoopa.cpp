@@ -583,10 +583,8 @@ TTinKoopaPartsBase::TTinKoopaPartsBase(const char* name, int index,
 {
 }
 
-// TODO: instruction-exact, and the frame total matches, but every stack slot sits
-// 4 bytes low: the ROM has one more 4-byte item below the JGadget iterator
-// pool.  A by-value `int` fork over mPartsIndex (raw, through getPartsIndex(),
-// and at each of the three call sites) is +0 here.
+// The named actor keeper is the 4-byte object below the JGadget iterator
+// pool that every slot was missing.
 void TTinKoopaPartsBase::initTinKoopaPartsBase()
 {
 	initHitActor(TTinKoopa_getActorType(mPartsIndex), 0, 0, 0.0f, 0.0f, 0.0f,
@@ -605,8 +603,8 @@ void TTinKoopaPartsBase::initTinKoopaPartsBase()
 
 	const char* modelName = TTinKoopa_getPartsFileName(mPartsIndex);
 	if (modelName) {
-		mPartsMActor
-		    = mTinKoopa->getActorKeeper()->createMActor(modelName, 0);
+		TMActorKeeper* keeper = mTinKoopa->getActorKeeper();
+		mPartsMActor          = keeper->createMActor(modelName, 0);
 		mPartsMActor->setLightType(1);
 	}
 
