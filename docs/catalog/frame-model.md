@@ -74,6 +74,13 @@ Marker method: `int mk; extp(&mk);` declared first sits right above the dead reg
   Per rule 8b the block stacks goal, point, index, range from the top in every caller; willFall/KeepBalance then need six more depth-1 words before the expansion.
 - Tool note: GC/1.1 rejects some TUs that 1.2.5 accepts (chuuhana: incomplete `J3DJoint`); prepend the missing `#include` to a scratch copy of the .cpp and pass that to `dbg.sh`.
 
+- c-d7 closes (all instruction-exact before):
+  `TCogwheel`/`TWireBell::initDraw`: the file-scope `static const GXColor` lever, as predicted.
+  `TAnimalBird::load`: retail one word more below `eventID` with frame slack; naming `J3DModelData* modelData` in the inlined `initTevColor` chain (`getModel()->getModelData()->getMaterialName()`) adds exactly one dead callee word. Splitting a chained accessor inside an inlined callee is a cheap +4 below everything named.
+  `TSamboHead::genEventCoin`: a hand-written rotation matrix (`s16 angle; f32 s, c; mtx[..] = ...`) put 12 bytes of dead named scalars above `range`; retail's `MsMtxSetRotY(mtx, deg)` makes them callee objects (angle binding, sin, cos) below it. Grep for open-coded `JMASSin`/`JMASCos` matrix fills before laddering.
+  `TSamboFlowerManager::dropLeaf`: retail's dead `params` sat above `angles`; declaring it uninitialised first and assigning it in the loop moves its slot to the top (rule 8a).
+- An uninitialised named local declared at the top and assigned from an inline's result (`MtxPtr mtx; ... mtx = f();`) is dead (+4 top), while the same for a plain member read (`f32 speed; speed = mSpeed; if (speed ...)`) gets a register; declared-and-initialised at the use it was dead.
+
 ## Refinements (unit agent c-d3, 2026-09-27)
 
 - **Upper/lower trades.** A named single-use value (`f32 searchDist = p->m.get(); if (d < searchDist)`) is one more dead object in the named block, and can remove one IRO temp from the low region (rule 8), so the frame stays put while every object declared after it moves down 4.
