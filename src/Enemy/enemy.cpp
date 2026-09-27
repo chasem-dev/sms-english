@@ -335,7 +335,9 @@ int TSpineEnemy::goToShortestNextGraphNode()
 #pragma dont_inline off
 
 // TODO: instruction-exact and the frame agrees; setGoalPathFromGraph's
-// block still sits 0xc low (0x88 vs 0x94), the family's shared residue.
+// block still sits 0xc low (0x88 vs 0x94): retail has 2 depth-1 tracer
+// bindings above it where ours has 5. The checkFlag test as a this-taking
+// inline (as goToRandomNextGraphNode's node choice) gets it to 0x8c.
 int TSpineEnemy::jumpToNextGraphNode()
 {
 	if (getTracer()->getCurGraphIndex() < 0
@@ -402,6 +404,10 @@ void TSpineEnemy::goToRandomEscapeGraphNode()
 	unk12C = 0.0f;
 }
 
+// TODO: frame 0x160 vs 0x170. Retail has 3-4 words above the else-branch
+// block (ours 10 tracer/manager bindings) and 2 fewer below; the whole else
+// branch as a this-taking inline lands the blocks at 0x168 but copies the
+// loop counter (`addi r30, r29, 0`), so the loop is caller-level code.
 void TSpineEnemy::goToExclusiveNextGraphNode()
 {
 	if (mManager == nullptr) {
@@ -430,6 +436,9 @@ void TSpineEnemy::goToExclusiveNextGraphNode()
 	}
 }
 
+// TODO: frame 0x90 vs 0x98; retail has none of our 4 tracer bindings above
+// setGoalPathFromGraph's block. The node choice as a this-taking inline
+// lands the block 8 low and drops the two `mr` copies of currIdx and idx.
 void TSpineEnemy::goToDirectedNextGraphNode(
     const JGeometry::TVec3<f32>& param_1)
 {
@@ -457,8 +466,9 @@ static inline JGeometry::TVec3<f32> polarXZ(f32 theta, f32 radius)
 	return JGeometry::TVec3<f32>(s, 0.0f, c);
 }
 
-// TODO: only setGoalPathFromGraph's inline temporaries remain, 0x10 low; the
-// same frame gap as the other goTo*GraphNode siblings.
+// TODO: setGoalPathFromGraph's block is 0x10 low: retail creates our four
+// tracer bindings (prevIdx, currIdx, both getGraph) after it. Moving the
+// node choice into an inline also moves polarXZ a level down (-0x10 frame).
 void TSpineEnemy::goToDirLimitedNextGraphNode(f32 param_1)
 {
 	int prevIdx = getTracer()->getPrevIndex();
