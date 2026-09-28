@@ -427,7 +427,12 @@ static inline f32 MapObjBallXZSpeed(const JGeometry::TVec3<f32>& v)
 	    JGeometry::TVec3<f32>(v).x, JGeometry::TVec3<f32>(v).z));
 }
 
-// TODO: every instruction matches; the frame is 0x48 short. Retail leaves
+// TODO: retail rounds z*z of the rolling speed and fuses x*x into the sum
+// (fma(x, x, z*z)); ours rounds x*x and fuses z*z (tools/expr-diff.py), at
+// most 1 ulp in the roll angle. Retail's first velocity temporary supplies z,
+// ours x; swapping the arguments, the addends or naming a square does not move
+// it (naming z*z stops the fusion altogether, 97.1).
+// Otherwise every instruction matches; the frame is 0x48 short. Retail leaves
 // 0x10 between `axis` and `cur` and its low-region temporaries (the setRotate
 // axis copy) sit 0x24 higher; f5-f7 in the setRotate expansion are permuted.
 void TMapObjBall::calcCurrentMtx()
