@@ -361,6 +361,14 @@ static inline bool BossHanachanIsBlending(const TNpcInbetween* p)
 
 // TODO: every instruction matches; the frame is 0x110 in retail against our
 // 0xe8, so 0x28 of inline temporaries is still missing (structural).
+// c-k6 (debugger): only the conversion temporary above the named block is
+// visible in retail (0xf8, ours 0xd0), so the 40 bytes cannot be placed.
+// Measured: `getRotation().z` in the nerve-2 default case is +8 (0xf0);
+// `getMActor()` in isCurBckAlreadyEnd_ is +0 (call receiver); dropping its
+// end binder is -8 per expansion (0xc8); early-return and named-end bodies
+// change the out-of-line isCurBckAlreadyEnd_. Four expansions at +8 plus the
+// getRotation +8 would be exactly 0x28, so the lead is a body shape that is
+// +8 per inlined copy but +0 in the emitted copy (frame 0x30).
 void TBossHanachanPartsBase::considerSetAnm_(EnumBossHanachanNerveAnm nerve)
 {
 	if (nerve == BOSS_HANACHAN_NERVE_ANM_UNK0) {
