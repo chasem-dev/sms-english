@@ -1026,7 +1026,7 @@ void TGorogoroManager::initSetEnemies()
 			continue;
 
 		TGorogoro* goro = IgaigaGoroAt(this, i);
-		web->unk0[0].getPoint((Vec*)&point);
+		web->unk0[0].getPoint(&point);
 		IgaigaInitTracer(goro)->setGraph(web);
 		goro->mPosition         = point;
 		goro->mGenerateGraphIdx = web->unk8 - 1;
