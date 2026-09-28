@@ -543,12 +543,15 @@ BOOL TYoshi::thinkJumpEnd(u16 curIdx, u16* newIdx)
 	return false;
 }
 
-// TODO: frame 0x68 against retail's 0x140: the named block is (0x118 dummy,
-// 0x11c type, 0x120 nextFrame) with no hole, ours has a 4-byte hole below
-// nextFrame and a 0xd8 shorter low region. The YoshiGetBckCtrl() binder on the
-// final setRate fixes its load order. getStatus/getVel/getGamePad/
-// getForwardVel at all eight sites reach only 0xb8 (0xc8 with the binder on
-// the oldAnm site too), so the rest is likely a missing inline level.
+// TODO: frame 0x60 against retail's 0x140. With the slide test inline (no
+// named `sliding`, a byte retail lacks) the named block is retail's (nextFrame,
+// type, dummy contiguous) and every slot sits exactly 0xdc low, so retail
+// creates 55 more words after `dummy`; ours has 12 there (oldAnm, 4 inline,
+// 7 F/P). The YoshiGetBckCtrl() binder on the final setRate fixes its load
+// order. getStatus/getVel/getGamePad/getForwardVel at all eight sites reach
+// only 0x28 more, so the rest is a missing inline level or dead code (an
+// argument-only call such as MActor's empty copyBckFrmCtrl(J3DFrameCtrl) would
+// home a by-value copy without code; unmeasured).
 void TYoshi::thinkAnimation()
 {
 	f32 nextFrame = mMario->getMotionFrameCtrl().getRate();
@@ -593,8 +596,7 @@ void TYoshi::thinkAnimation()
 	               || status == 0x0C00023E)) {
 		newIdx = 18;
 	} else {
-		bool sliding = (status & MARIO_STATUS_FLAG_UNK8000) ? true : false;
-		if (sliding) {
+		if ((status & MARIO_STATUS_FLAG_UNK8000) ? true : false) {
 			if (mMario->mGamePad->checkMeaning(0x2000)) {
 				E_SIDEWALK_TYPE type;
 				f32 dummy;
