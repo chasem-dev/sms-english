@@ -31,6 +31,9 @@ public:
 
 	void boundByActor(THitActor*);
 
+	// fabricated name: the per-kind drag the water current is scaled by.
+	f32 getUnk17C() const { return unk17C; }
+
 	// Per-ball-kind physics tunables, all written by initMapObj from a
 	// switch on mActorType. Names follow usage where it is unambiguous.
 	/* 0x148 */ f32 unk148;
