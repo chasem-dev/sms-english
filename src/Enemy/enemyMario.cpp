@@ -535,7 +535,7 @@ void TEnemyMario::initEnemyValues()
 	    ->getGraphNode(mReplayIndex)
 	    .getPoint(&mPosition);
 	mEMario->mPosition = mPosition;
-	if (replayCount > 0) {
+	if (inputCount > 0) {
 		mInputReplays[mReplayIndex]->reset();
 		mInputReplays[mReplayIndex]->start();
 	} else {
