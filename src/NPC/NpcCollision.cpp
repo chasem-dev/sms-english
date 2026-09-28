@@ -175,6 +175,14 @@ void TBaseNPC::bind()
 			nextPos.y = mGroundHeight;
 		}
 
+		// TODO: fakematch. Retail tests mGroundPlane here with an empty body
+		// (lwz; cmplwi; beq; b past the else). c-k1: `if (mGroundPlane) {}`,
+		// `if (mGroundPlane) ;` and `if (getGroundPlane()) {}` are folded
+		// away (97.6%, three instructions missing); a discarded
+		// `mGroundPlane->getNormal()` keeps the test but adds its 8-byte
+		// reference temporary (frame 0x50, 99.7%); a discarded
+		// `isWaterSurface()` keeps its code (88.6%). The body retail compiled
+		// out is still unknown.
 		if (mGroundPlane) {
 			(void)mGroundPlane;
 		}
