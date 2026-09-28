@@ -22,6 +22,15 @@
 // then needs `cam` coloured before `pi`. Inert here: `u8 cam` declared at the
 // top ahead of `pi` (69 markers), `it` declared at the top first (90) or
 // after `pi` (68), and both together (85, 73).
+// The replay closes with two changes together: C-style top declarations
+// `..., bVar18; JAISound* it; u8 cam; ...* pi; u8 num;` (numbering pi < cam <
+// it so `it` is pushed in the second sweep; alone 85 markers, because the
+// four hoisted pool temps -- &candidates, 0x4330, &dummyZeroVec, 0x7fffffff --
+// then drop below K in that sweep too) plus one more coalesced "ghost" web
+// neighbouring those four pool temps but not `it`: `regalloc.py`-style replay
+// with that ghost misses 0 webs. So retail has one extra coalesced copy (an
+// IRO split temp like `snd`'s @242, or an argument copy) live across the i
+// loop outside the `while (it)` loop; which statement carries it is unknown.
 // Older readings: batch 145 (25 declaration orders, eight relocations into
 // the `for (i...)` body) and c-jai (ternary `fVar3`/`fVar1`, a named `s16
 // adjust`) were all measured against the split `maxPlaying` and are void now.
