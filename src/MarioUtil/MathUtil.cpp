@@ -170,6 +170,13 @@ s16 matan(f32 param_1, f32 param_2)
 	// or taking it pre-negated (99.1-99.2), a by-value `-x` level (99.4).
 	// c-m25: GetAtanTable with a named `u16 ret` if/else (99.5-99.7, frame
 	// +0x10), `-GetAtanTable(...)` for `0x0000 -` (inert).
+	// c-k7 (debugger): `a` is the IRO temp @425, neighbours f0/f1/f2 only, so
+	// it takes f3; retail's f4 needs a neighbour in f3, and the only f3 web in
+	// the arm is the 1024.0f load in the `0x8000 -` block. The pre-regalloc
+	// scheduler always issues `fres` first (backend-08, both with the named
+	// `inv` and with `__fres` inline in the index), so that load never
+	// overlaps `a` and c-k1's lead does not hold. `__fres` inline moves the
+	// first quadrant (13 markers); `-param_1` at either call only is inert.
 	if (param_2 >= 0.0f) {
 		if (param_1 >= 0.0f) {
 			if (param_1 >= param_2)
