@@ -2012,3 +2012,49 @@ Per-function `stwu r1` frames compared over 719 units (retail `build/GMSE01/obj`
 - Koopa, Map, MarDirectorDirect, GCConsole2 and Guide recompiled one flag at a time: `-O`/`,s`/`,p`/`-opt level`/`-inline smart|all`/`nodeadcode`/`nocolor`/exceptions are byte-identical; `-fp_contract off`, `nolifetimes`, `noloop`, text PCH, compilers 1.1/1.2.5n only lose instructions; dropping `-inline deferred`, `-inline noauto`, `-sym on`, the other `-opt no*` and compilers 1.0/1.1p1/1.3/1.3.2 are worse; `-proc 750` does not compile.
 - `-inline level=N` is the only lever that grows frames, and it does so by auto-inlining extra calls (Koopa exact 62 -> 55-59). So retail's frames come from deeper source-written inline chains and codeless locals, fixed per function.
 - Largest codeless gaps left (aggregate-local leads): Koopa TurnL/TurnR 0x108 and Flame 0x148 with no stack slots used, GCConsole2 `perform` 0x368, `TMapObjBase::initUnique` 0x1d8, `drawShadowGD` 0x270.
+
+## Research batch c-r20 (2026-09-28): the copy-out word is the return copy's source expression, and no header shape gives exactly one
+
+Measured with the MWCC debugger (`tools/mwcc-stack/udbg.py`, `iro.py`) on real units and on a synthetic TU holding a setter copy-out, a named copy-out, an `operator=` copy-out, a plain assignment and a `(a - b).length()`, then tree-wide with `census.py`/`cmpcensus.py` and `ninja changes_all`.
+Every by-value shape below was measured with the twelve `TVec3<f32>(a - b).length()` wrappers unwrapped and the uncast `operator=` (`*(Vec*)this = other`).
+Nothing landed; the worktree is back on the stock header.
+
+### Retail's object sequence (first created highest)
+
+- `TCoasterEnemy::bind`: `nextPos` 0x28, a dead 12-byte object 0x1c (the return temporary), the live `bl sub` object 0x10, one 4-byte word 0xc created last.
+- `TLiveActor::bind`: `nextPos` 0x2c, return temporary 0x20, one 4-byte inliner word 0x1c, live object 0x10, one word 0xc.
+- `TMario::moveRequest`: `offset` 0x5c, return temporary 0x50, `checkRideReCalc`'s inlined `ridingMtx` 0x20, live object 0x14, one word 0x10.
+  The live object is created after a depth-1 callee local, so it is a local of the inlined `operator-` body (`TVec3 r(a)`), not a by-value parameter: `operator-(TVec3 a, ...)` puts `a` directly under the return temporary, above the Mtx (dumped).
+- `TMario::soundTorocco` (the stock header plus the `TVec3<f32>(...)` wrapper is byte-exact, so its dump is retail's layout): copy 0x3c, live 0x30, three inliner words (the `getPosition()` binding, `length()`'s receiver binding, the MSound binder), then one F and three pointer P temporaries for the difference, one float P and the MSound F.
+  So retail expands `(a - b).length()` in value context with exactly three pointer `ECOMMA` temporaries.
+- `TLeanMirror::loadAfter`: retail is the local-`r` shape plus two words, one directly under `r` and one at the very bottom, so the per-site count is not uniform (1 at coaster, `TLiveActor`, `moveRequest`; 2 here and at `TBeeHive::bind`, `TKumokun::bindOnFlying`, `TChuuHana::attackToMario`, `TDangoHamuKuri::behaveToWater`, `TPoiHana::genEventCoin`).
+- Tongue: after the out-of-line `__ami__` the return copy's source is `addi r4, r1, <r>`, not `__ami__`'s r3, so if that site is `operator-` its body is `x -= b; return x;`.
+  That call sequence alone does not prove a by-value return: the stock header plus an explicit `TVec3<f32>(a - b)` wrapper produces the same `ctor ; __ami__ ; ctor`.
+
+### Where the copy-out word comes from
+
+- At a statement-level copy-out (`m = a - b`, `setX(a - b)`, `T v = a - b`) `operator-` is hoisted into statements, and the only objects its body adds below the live object come from the return copy's source expression.
+- `return x;` (x a local or by-value parameter) is simple and adds nothing: 0 words.
+- `return x -= b;` adds two: the copy constructor's `other` binding (dead: its one use is the RHS of the struct copy) and the IRO pointer P for the `-=` comma assigned to it.
+- The only one-word result found is `return (const Vec&)(a -= b);`: the `TVec3(const Vec&)` constructor reads the binding three times through `set`, so it keeps a register and only the P dies; but the copy then goes through `lfs`/`stfs` (+3 instructions at every site) and Tongue would call a constructor the map lacks.
+- Retail sits exactly between the two families at coaster, `TLiveActor::bind` and `moveRequest`, and matches the two-word family at the six sites above, so whichever family is the header, a subset of sites needs a per-site word the other way.
+  Caller-side objects are created before the live object, so under a two-word header the one-word sites cannot drop a word; under a zero-word header an accessor on the right operand adds one (c-r2) but reorders two instructions.
+
+### Header shapes measured (exact functions against 11998, census)
+
+| `operator-` body | copy-out words | `.length()` pointer P | tree-wide |
+| --- | --- | --- | --- |
+| stock (`TVec3 fst` by value, returns `const TVec3&`) | live object at parse time | 3 (with wrapper) | 11998 |
+| `TVec3 r(a); r -= b; return r;` (c-m1) | 0 | 6 | 11992 (+2 / -8, `__ami__` MISSING), 14 up / 52 down |
+| `(TVec3 a, ...) { a -= b; return a; }` | 0 | 5 | 11992, 13 up / 52 down |
+| `(TVec3 a, ...) { return a -= b; }` | 2 | 3 (retail) | 11998 (+3 / -3), 14 up / 30 down |
+| `TVec3 r(a); return r -= b;` | 2 | 4 | 12000 (+9 / -7), 22 up / 35 down |
+| c-r2's `operator=` returning its assignment expression, local `r` | 1 via `operator=` | 6 | 11712 (every plain assignment gains a P) |
+
+- `(TVec3 a, ...) { return a -= b; }` makes `soundTorocco`, `toroccoEffect`, `isTakeSituation` and `moveRoof` byte-exact by unwrapping alone, with their existing binders, and keeps `__ami__`; it loses only the three sites tuned to the old header (`TBWPicket::moveRequest`, `TNerveMameGessoJitabata::execute`, `execUTurn`) and leaves the bind family uniformly one word over.
+  It is refuted by `moveRequest`'s order (live object above the Mtx) and by Tongue's return-copy source.
+- `TVec3 r(a); return r -= b;` is the best net shape measured (exact: `TBeeHive::bind`, `TKumokun::bindOnFlying`, `TChuuHana::attackToMario`, `TDangoHamuKuri::behaveToWater`, `TPoiHana::genEventCoin`, `TLeanMirror::loadAfter`, `TMario::wireMove`, `TEffectColumWater::generate`, `TMapCollisionBase::setCheckData`; lost: the three tuned sites and the four torocco `.length()` sites, one word over).
+  `ninja changes_all` for it: 32 up / 74 down, matched_code 73.07 -> 73.13, and MarioSound and mameGesso unlink; Tongue's return-copy source argues against it too.
+- Inert or worse, all measured in the synthetic TU: an implicit copy constructor (identical to `: Vec(other) {}`), a copy constructor forwarding to `*this = other`, a `const TVec3&` `operator-=`, a member `operator-`, `TVec3 r; r = a;` (7 P), the comma returns `return (a -= b, a)` and `return (r -= b, r)` (0 words, 4-5 P), `return *&(a -= b)` and `static_cast` forms (2 words), `operator-=` spelled `return sub(o), *this;` (adds an F), and a static by-value helper under a const-reference `operator-` (3 P at `.length()`, but `-=` goes out of line at the bind sites).
+- Tool trap: `ninja build/GMSE01/mario.dol` does not rebuild the objects of unlinked units, so a census after it is stale; build the default target with `-k 0` (the SHA check fails last) before `census.py`.
+- Next: a construct that makes the return copy's source add exactly one dead word at no instruction cost, or proof that the six two-word sites carry their own per-site word (an accessor or a named operand in retail's source), which would make the zero-word local-`r` shape plus per-site words the migration.
