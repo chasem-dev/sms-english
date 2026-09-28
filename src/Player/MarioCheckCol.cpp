@@ -45,37 +45,11 @@ void TMario::hitNormal(THitActor* actor)
 
 	TWaterGun* wg = mWaterGun;
 	if (wg->getCurrentNozzleIndex() == 0 && wg->mIsEmitWater != 0) {
-		// TODO: 99.7%: the only difference left is the volatile register
-		// holding &mStaticHitActor (retail r3, coalesced with the argument
-		// copy in r4; ours r7). The instruction stream is identical. Ruled
-		// out: no local, a reference local, a TU-static accessor for the
-		// static, a cast at the call, `mPosition.set()`, `getPosition()`,
-		// and moving the mParticleIndex store earlier (all 93.8-99.6%).
-		// Closure batch 129, also rejected (all 8 or 11 differences, frame
-		// 0x30 throughout): the stores through the static with the argument
-		// through the named local (identical to this spelling), the argument
-		// through the static with the stores through the local or a
-		// reference, declaring `water` after the first store, and a TU-local
-		// `static inline` level taking the pointer by parameter (with or
-		// without the receiveMessage inside it).
-		// Positively: retail *splits* the address's live range -- `addi r3`
-		// then `mr r4, r3`, the first store through r3 and the rest through
-		// r4 once `addi r3, r31, 0` claims r3 for the receiver -- while we
-		// keep the whole range in r7 and leave r4 a redundant copy. It is a
-		// coalescing decision on one volatile register; nothing measured
-		// reaches it.
-		// Batch 151: no new rule reaches it either -- the frame is exact
-		// (0x30) and the residue involves no callee-saved register, so the
-		// inline-temp price, u16 accessor and dead-carrier rules are all the
-		// wrong family, and batch 144's ranking rule only governs
-		// callee-saved allocation. This is the same volatile-coalescing class
-		// as TNpcInbetween::execPosInbetween's single `fmuls` destination.
-		// Batch cc22, all 98.3 or identical: the stores in a static inline
-		// returning the pointer as the message argument, taking the pointer
-		// and position (with or without the receiveMessage inside, any
-		// parameter order), and a separate receiveMessage wrapper.
-		TWaterHitActor* water = &TModelWaterManager::mStaticHitActor;
-		water->mPosition = mPosition;
+		// The assignment is the copy's base: retail stores the first word
+		// through the address itself and the rest through `water`, which is
+		// already the message argument's register.
+		TWaterHitActor* water;
+		(water = &TModelWaterManager::mStaticHitActor)->mPosition = mPosition;
 		water->mPosition.y += 80.0f;
 		water->mParticleIndex = 0;
 		actor->receiveMessage(water, HIT_MESSAGE_SPRAYED_BY_WATER);
