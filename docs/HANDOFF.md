@@ -4,14 +4,32 @@ Written 2026-09-18 by the session that ran batches 92 to 181.
 Read this before `docs/ORCHESTRATION.md`; it is the judgement that document does not carry.
 Keep it current: every orchestrator appends a dated "State" entry below and rewrites the advice when it stops being true.
 
-## Known fakematch debt (flagged 2026-09-27, not yet removed)
+## Known fakematch debt (flagged 2026-09-27; cleanup pass c-f1 2026-09-28)
 
-Agents this session found pre-existing constructs that break the no-fakematch rules; removing them may drop currently-exact functions, so they are listed for a deliberate cleanup pass rather than removed piecemeal:
-- pass-through binders that only return a global/member: `EventWatcherRawMSound`, `EventWatcherDirectorForTalkNPC` (EventWatcher), `TabePukuGetSaveParams`, `IgaigaGoroAt`/`IgaigaInitTracer`, `MapObjBallWaterDrag`, `CannonBody`, `NameKuriMSound`, the `ApplicationCrTimeAry1-3` chain, `lgSunN()` (lensglow), `CNParams` (CameraNormal), `KoopaGetParam` (Koopa);
-- empty/no-op statements: `if (mGroundPlane) { (void)mGroundPlane; }` in `TBaseNPC::bind`, `(void)&mtx;` in both JPADrawVisitor stripe draws (load-bearing: removing it costs 22 instructions), the empty `if (cue & CUE_MOVE) { }` in coasterkiller.cpp:89;
-- a no-op cast `(Vec*)&point` in `TGorogoroManager::initSetEnemies`;
-- `#pragma dont_inline` on `appearItem` in Map/PollutionLayer.cpp (found by c-k7; blocks linking that unit);
-- four `(void)0` filler statements in MapEventMare `appear` standing in for unknown real statements (c-k9: without them `movement` inlines `appear`).
+Agents this session found pre-existing constructs that break the no-fakematch rules; removing them may drop currently-exact functions, so they are listed for a deliberate cleanup pass rather than removed piecemeal.
+Struck items were removed by c-f1 (branch `wt/c-f1`); each removal's TODO names what retail still has that the honest source lacks.
+- pass-through binders that only return a global/member:
+  ~~`EventWatcherRawMSound`~~ (now `SMSGetMSound()`; loses evAppearMushroom1up, evStartEventSE 99.93 -> 99.80),
+  ~~`EventWatcherDirectorForTalkNPC`~~ (now `SMSGetMarDirector()`; loses evGetTalkNPC),
+  ~~`TabePukuGetSaveParams`~~ (TNerveTabePukuFound 99.76 -> 99.52),
+  ~~`IgaigaGoroAt`/`IgaigaInitTracer`~~ (header accessors getObjNum/getObj/getTracer/getNodeNum; frame and every slot now exact, 99.30 -> 99.33),
+  ~~`MapObjBallWaterDrag`~~ (now a member getter `getUnk17C()` in MapObjBall.hpp, codegen-identical),
+  ~~`NameKuriMSound`~~ (now `SMSGetMSound()`; the setVelocity temporary lands, frame 8 short),
+  ~~`lgSunN()`~~ (raw `gpSunModel`; TLensGlow::perform 99.85 -> 99.73, frame 0x58 short),
+  ~~`CNParams`~~ (raw `mCurrentParams`; ctrlNormalOrTowerCamera_ 98.83 -> 98.77, frame 0x38 short),
+  ~~`EnemymanagerGetMActor`~~ (named actor local; loses copyAnmMtx, frame 8 short),
+  ~~`MDEApp()`~~ (with MenuDir's `MNApp()` and MarDirectorDirect's `MDDApp()`: one header `SMSGetApplication()` in Application.hpp, codegen-identical),
+  ~~the enemyAttachment `generatePolluteModel` flag binder~~ (`isIllegalData()`; 99.92 -> 99.74);
+  left in place:
+  `CannonBody` (the plain `(TCannon*)spine->getBody()` is 8 short in all five nerves and loses Shoot, Close and DamageDemo; the binder supplies one register-held depth-1 local plus one ECOMMA IRO word; the other three cannon nerves are exact with the plain read),
+  `KoopaGetParam` (plain, named, `.value` and value-accessor spellings all lose TKoopa::reset and TKoopaFlame::attack_; a changeAnm helper level makes reset `bl` changeAnm),
+  the `ApplicationCrTimeAry1-3` chain (the honest `crTimeAry()` expands both calls, deletes the map's weak `crTimeAry__8TTimeRecFv` from Application.o, fails symbol order and drops gameLoop 98.96 -> 97.17: retail really calls it at inline depth 5, through four levels whose content is unknown),
+  the three `MsGetVecFromRotY_L1-3` wrappers in killer's ChaseFly (same depth-5 evidence; calling the UNUSED `flyMove()` from the nerve is a `bl`, 51.8%);
+- empty/no-op statements: `if (mGroundPlane) { (void)mGroundPlane; }` in `TBaseNPC::bind`, the empty `if (cue & CUE_MOVE) { }` in coasterkiller.cpp:89 (both wait on the policy decision below);
+  `(void)&mtx;` in both JPADrawVisitor stripe draws, left: removing it costs 22 and 44 instructions (98.0 -> 87.8/86.2) because retail keeps the rotation matrix in memory; the cause is likely in `JGRotation3.hpp` (`setXYZDir`/`mult`), which c-r13 holds;
+- ~~a no-op cast `(Vec*)&point` in `TGorogoroManager::initSetEnemies`~~ (inert);
+- ~~`#pragma dont_inline` on `appearItem` in Map/PollutionLayer.cpp~~ (loses TPollutionLayer::cleaned, 100 -> 97.96: retail `bl`s the empty body; nothing honest found);
+- ~~four `(void)0` filler statements in MapEventMare `appear`~~ (statement-level emitter locals and `trans.set()`; appear and movement unchanged).
 The rule for new work is in docs/agent-brief.md (no pass-through helpers).
 
 ## Policy decision needed (2026-09-28, c-k8)
