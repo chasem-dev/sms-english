@@ -199,6 +199,10 @@ void TRoulette::switchStop()
 // index, `jntNo--`, `-= 1`, `= jntNo - 1`, `jntNo - 1` at each call, a
 // separate `int idx`, a named J3DJoint*, a named gpCurObject receiver, a
 // second getJntNo() read; all equal or worse.
+// c-k8: the `addi` is the post-RA peephole's respelling of a `mr` followed
+// (pre-RA schedule) by an integer add, here the jntMtx `add r30,r5,r0`; the
+// two later `mr r4, r31` follow an `fmr` and stay `mr`. Moving `--jntNo`
+// after setTrans, after setScale or before the TPosition3f is inert.
 static int partsRollCallback(J3DNode* node, int flag)
 {
 	if (flag == 0) {
