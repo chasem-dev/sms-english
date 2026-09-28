@@ -214,3 +214,10 @@ Both were read from `dbg.sh` dumps (`frontend-00-ast-initial-code.txt`, `backend
 - An unnamed chained receiver (`search<T>(...)->getTexture()->getTexInfo()`) creates a depth-1 `this` binding after earlier depth-1 sites; that moves one word from the named block into the middle of the slot list. Pair it with a lever that removes the extra IRO temporary it brings (a raw member instead of `getPosition()`). This closed `TMapStaticObj::init`, a residue that looked like the JGadget iterator-stride class but was not.
 - Retail's `lwz; cmplwi; beq; b` around an empty body is not reproduced by an empty `if` body (MWCC folds it early); only an expression statement that survives to the backend keeps the test (NpcCollision `TBaseNPC::bind`, still open).
 - `regalloc.py --search` localised `TRideCloud::control`'s two-load FPR swap to vreg generation order (the right operand's load generated first, scheduled second): a pre-allocation schedule shape, not colouring.
+
+## Additions (c-k6)
+
+- Passing a matrix member through its conversion operator (`TMatrix34` to `MtxPtr`) creates a binding web, one extra pre-RA instruction that can reorder the scheduler's unrelated conversion chains; try the raw array (`m.mMtx`) when the schedule differs only in the order of independent chains (closed `TMapObjFlagManager::perform`).
+- Ghost degree in reverse: adding `getMActor()->f()` result webs can push arguments and named locals into a later simplify sweep and fix a callee-saved rotation (closed `TBossHanachanPartsBody::setAnm_`).
+- A local pointer that is simple in an emitted function becomes an inliner object in inlined copies, so every accessor called on it adds a dead receiver binding: per-expansion frame gaps can come from accessor calls on callee locals.
+- A loop test that references `this` (even through a dead load) keeps a `this` reload inside the loop; iterate with the pane's own `getFirstChild()/getEndChild()` to avoid it.
