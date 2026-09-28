@@ -283,15 +283,29 @@ void TBaseNPC::randomizeBckAndBtpFrame_()
 	}
 }
 
-// TODO: MsSqrtf volatile at 0xb8 vs retail 0x7c (frame already -0xe0).
-// Blend flag lives in r5 so isMotionBlending does `li r0, 1` where retail
-// has the flag in r3 and `mr r0, r3`. Raw timer/ratio tests drop the
-// accessor's li/clrlwi expansion (94%). Reusing the chase BOOL, a stopped
-// intermediate, or scoping bVar7 adds instructions or `cmpwi`.
+// Two inline levels the frame and registers ask for (c-k9, MWCC debugger):
+// retail's MsSqrtf volatile sits at 0x7c, below the depth-1 parameter
+// bindings, so the square root is expanded one level down; and retail's
+// blend flag shares the `1` of isMotionBlending's result (`mr r0, r3`), which
+// only an inliner-object flag gives. `getColNum()` as a bare test drops the
+// u16 forced load that `!= 0` leaves (the last word below the volatile).
+static inline bool NpcAnmIsBlending(const TBaseNPC* npc)
+{
+	bool result = true;
+	if (!npc->mInbetweenCtrl->isMotionBlending()
+	    && !npc->mInbetweenCtrl->isForcedBlendRatio())
+		result = false;
+	return result;
+}
+
+static inline f32 NpcAnmSpeedXZ(const JGeometry::TVec3<f32>& v)
+{
+	return MsSqrtf(v.x * v.x + v.z * v.z);
+}
+
 void TBaseNPC::walkAnmRateChange_()
 {
-	f32 dVar13 = MsSqrtf(mLinearVelocity.x * mLinearVelocity.x
-	                     + mLinearVelocity.z * mLinearVelocity.z);
+	f32 dVar13 = NpcAnmSpeedXZ(mLinearVelocity);
 	if (dVar13 < 0.001f) {
 		switch (unkD0->getCurrentAnmKind()) {
 		case NPC_ANM_KIND_WALK:
@@ -309,12 +323,7 @@ void TBaseNPC::walkAnmRateChange_()
 				unk1CC = 0;
 				unk1D0 = 0.0f;
 
-				bool bVar3 = true;
-				if (!mInbetweenCtrl->isMotionBlending()
-				    && !mInbetweenCtrl->isForcedBlendRatio())
-					bVar3 = false;
-
-				if (!bVar3)
+				if (!NpcAnmIsBlending(this))
 					npcWaitIn();
 				else if (!mInbetweenCtrl->isMotionBlending())
 					mMActor->setFrameRate(unk1D0, ANM_TYPE_BCK);
@@ -362,7 +371,7 @@ void TBaseNPC::walkAnmRateChange_()
 
 			f32 dVar132 = CLBLinearInbetween(fVar1, dVar12, dVar131);
 
-			if (getColNum() != 0)
+			if (getColNum())
 				dVar132 = dVar12;
 
 			CLBChaseDecrease(&unk1D0, dVar132,
