@@ -116,11 +116,11 @@ inline void CPolarSubCamera::calcTowerCenterPos_(Vec* result)
 // The 4-byte `Vec v` slot (0x74 vs retail's 0x70) is CLOSED by reading the
 // camera Mario through SMSGetCameraMario() and the held object raw; items 2
 // and 3 above are what is left.
-static inline TCameraKindParam* CNParams(const CPolarSubCamera* p)
-{
-	TCameraKindParam* v = p->mCurrentParams;
-	return v;
-}
+// Frame 0x78 vs retail 0xb0: retail has 0x38 more bytes of pool over the
+// five `CLBLinearInbetween(params->Xmin, params->Xmax, t)` sites. A TU-local
+// binder returning mCurrentParams through a local at each of the ten reads
+// supplied them and was removed as a fakematch; a direct-return fork is
+// inert (0x78).
 
 // Case helper for the back-angle ratio; see item 3 above.
 static inline f32 CNBackRatio(const CPolarSubCamera* cam, int angle)
@@ -152,21 +152,21 @@ static inline void CNChaseBack(CPolarSubCamera* cam, s16 angle)
 	f29 = 1.0f;
 	if (cam->unk2CA != -1) {
 		f29 = CLBLinearInbetween(
-		    CNParams(cam)->mInHouseMaginfXmin,
-		    CNParams(cam)->mInHouseMaginfXmax,
+		    cam->mCurrentParams->mInHouseMaginfXmin,
+		    cam->mCurrentParams->mInHouseMaginfXmax,
 		    cam->mCurrentTarget.unk28);
 	} else if (SMS_CheckMarioFlag(MARIO_FLAG_OCCLUDED)) {
 		f29 = CLBLinearInbetween(
-		    CNParams(cam)->mObstructMaginfXmin,
-		    CNParams(cam)->mObstructMaginfXmax,
+		    cam->mCurrentParams->mObstructMaginfXmin,
+		    cam->mCurrentParams->mObstructMaginfXmax,
 		    cam->mCurrentTarget.unk28);
 	}
 
 	int uVar1 = cam->unk120->mCompSPos[2];
 	if (uVar1 & 0xff) {
 		f29 *= CLBLinearInbetween(
-		    CNParams(cam)->mLFollowMaginfXmin,
-		    CNParams(cam)->mLFollowMaginfXmax,
+		    cam->mCurrentParams->mLFollowMaginfXmin,
+		    cam->mCurrentParams->mLFollowMaginfXmax,
 		    cam->mCurrentTarget.unk28);
 	}
 	f32 fVar4;
@@ -221,11 +221,11 @@ void CPolarSubCamera::ctrlNormalOrTowerCamera_()
 		} else {
 			if (!SMS_IsMarioTouchGround4cm()) {
 				unk250 = CLBLinearInbetween(
-				    CNParams(this)->mJumpFollowSpeedXmin,
-				    CNParams(this)->mJumpFollowSpeedXmax, mCurrentTarget.unk28);
+				    mCurrentParams->mJumpFollowSpeedXmin,
+				    mCurrentParams->mJumpFollowSpeedXmax, mCurrentTarget.unk28);
 			} else {
-				unk250 = CLBLinearInbetween(CNParams(this)->mFollowSpeedXmin,
-				                            CNParams(this)->mFollowSpeedXmax,
+				unk250 = CLBLinearInbetween(mCurrentParams->mFollowSpeedXmin,
+				                            mCurrentParams->mFollowSpeedXmax,
 				                            mCurrentTarget.unk28);
 			}
 
