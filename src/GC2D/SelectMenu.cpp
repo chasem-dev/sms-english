@@ -82,135 +82,137 @@ void TSelectGrad::setStageColor(u8 stage)
 	}
 }
 
-// TODO: 98.4%. Residues are the known-open loop zero-reuse
-// (`li r8,0; addi r7/r3,r8,0` vs two fresh `li`, same class as
-// TEnemyManager::performShared) and the AmbColor temporary at 0x1c/0x20
-// below the Mtx instead of retail's 0x50/0x54 above it. Named GXColor,
-// midA reorder, and ambScratch declarations move nothing useful on the
-// colour slot. midB/midG/midR declaration order (assign R/G/B) fixed the
-// r28/r30 mid-channel swap. Moving the Mtx into a TU-local static inline
-// puts the colour temporary above it (0x4c/0x50 vs retail 0x54/0x50, Mtx
-// 0x1c vs 0x20) at no score change, so it is not kept.
+// TSelectGrad::perform's two cue blocks are inline levels (the map has no
+// symbol for either, so the names are ours). As inliner objects the colour
+// loop's `nextCycle`, `i` and the loop's byte offset share one zero (retail's
+// `li r8,0; addi r7,r8,0; addi r3,r8,0`, the c-k5 countLivingEnemy shape),
+// and the draw block's Mtx and AmbColor temporary take retail's slots, which
+// removed the dead `midA` alpha midpoint that used to fill the frame.
+// TODO: 99.5%, frame and instructions exact. Left: `nextCycle` and the
+// channel pointer `value` are coloured the other way round (retail r8/r6,
+// ours r6/r8), and retail loads the top-left cycle into r5 where we reuse r0.
+// Inert: nextCycle as u8, BOOL (worse), `value` declared at the top, `i`
+// after nextCycle (worse), a second pointer for the top-left channel.
+static inline void SelectGradAnimate(TSelectGrad* grad)
+{
+	s32 i;
+	bool nextCycle = false;
+	for (i = 0; i < 3; i++) {
+		u8* value = (i == 0) ? &grad->mBottomRightCol.r
+		                     : ((i == 1) ? &grad->mBottomRightCol.g
+		                                 : &grad->mBottomRightCol.b);
+
+		switch (grad->mRgbAnimCycle[i]) {
+		case 0: {
+			s16 newValue = *value + 2;
+			if (newValue > 255) {
+				newValue  = 255;
+				nextCycle = true;
+			}
+			*value = newValue;
+		} break;
+		case 3: {
+			s16 newValue = *value - 2;
+			if (newValue < 0) {
+				newValue  = 0;
+				nextCycle = true;
+			}
+			*value = newValue;
+		} break;
+		}
+
+		s32 topLeftAnimCycle = grad->mRgbAnimCycle[i] - 1;
+		if (topLeftAnimCycle < 0) {
+			topLeftAnimCycle = 5;
+		}
+
+		value = (i == 0)
+		            ? &grad->mTopLeftCol.r
+		            : ((i == 1) ? &grad->mTopLeftCol.g : &grad->mTopLeftCol.b);
+
+		switch (topLeftAnimCycle) {
+		case 0: {
+			s16 newValue = *value + 2;
+			if (newValue > 255) {
+				newValue = 255;
+			}
+			*value = newValue;
+		} break;
+		case 3: {
+			s16 newValue = *value - 2;
+			if (newValue < 0) {
+				newValue = 0;
+			}
+			*value = newValue;
+		} break;
+		}
+	}
+
+	if (nextCycle) {
+		// A bound reference, unrolled: retail materialises
+		// `addi r5, r31, 0x10/0x14/0x18` for the zeroing store and
+		// keeps the increment in displacement form.
+		for (s32 i = 0; i < 3; i++) {
+			s32& cycle = grad->mRgbAnimCycle[i];
+			cycle++;
+			if (cycle >= 6)
+				cycle = 0;
+		}
+	}
+}
+
+static inline void SelectGradDraw(TSelectGrad* grad)
+{
+	GXSetDither(GX_TRUE);
+
+	Mtx mtx;
+	PSMTXIdentity(mtx);
+	GXLoadPosMtxImm(mtx, GX_PNMTX0);
+
+	GXSetCullMode(GX_CULL_BACK);
+	GXSetNumTexGens(0);
+	GXSetNumTevStages(1);
+	GXSetTevOp(GX_TEVSTAGE0, GX_PASSCLR);
+	GXSetNumChans(1);
+	GXSetChanCtrl(GX_COLOR0A0, GX_FALSE, GX_SRC_REG, GX_SRC_VTX, 0, GX_DF_NONE,
+	              GX_AF_NONE);
+
+	GXSetChanCtrl(GX_COLOR1A1, GX_FALSE, GX_SRC_REG, GX_SRC_REG, 0, GX_DF_NONE,
+	              GX_AF_NONE);
+
+	GXSetChanAmbColor(GX_COLOR0A0, (GXColor) { 0xff, 0xff, 0xff, 0xff });
+
+	GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_F32, 0);
+	GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_CLR0, GX_NRM_XYZ, GX_S8, 0);
+
+	GXClearVtxDesc();
+	GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
+	GXSetVtxDesc(GX_VA_CLR0, GX_DIRECT);
+
+	u8 midR = (grad->mBottomRightCol.r + grad->mTopLeftCol.r) >> 1;
+	u8 midG = (grad->mBottomRightCol.g + grad->mTopLeftCol.g) >> 1;
+	u8 midB = (grad->mBottomRightCol.b + grad->mTopLeftCol.b) >> 1;
+
+	GXBegin(GX_QUADS, GX_VTXFMT0, 4);
+	GXPosition3f32(0.0f, 16.0f, -100.0f);
+	GXColor3u8(grad->mTopLeftCol.r, grad->mTopLeftCol.g, grad->mTopLeftCol.b);
+	GXPosition3f32(600.0f, 16.0f, -100.0f);
+	GXColor3u8(midR, midG, midB);
+	GXPosition3f32(600.0f, 464.0f, -100.0f);
+	GXColor3u8(grad->mBottomRightCol.r, grad->mBottomRightCol.g,
+	           grad->mBottomRightCol.b);
+	GXPosition3f32(0.0f, 464.0f, -100.0f);
+	GXColor3u8(midR, midG, midB);
+	GXEnd();
+}
+
 void TSelectGrad::perform(u32 flags, JDrama::TGraphics* gfx)
 {
-	if (flags & 0x2) {
-		bool nextCycle = false;
-		for (s32 i = 0; i < 3; i++) {
-			u8* value = (i == 0) ? &mBottomRightCol.r
-			                     : ((i == 1) ? &mBottomRightCol.g
-			                                 : &mBottomRightCol.b);
+	if (flags & 0x2)
+		SelectGradAnimate(this);
 
-			switch (mRgbAnimCycle[i]) {
-			case 0: {
-				s16 newValue = *value + 2;
-				if (newValue > 255) {
-					newValue  = 255;
-					nextCycle = true;
-				}
-				*value = newValue;
-			} break;
-			case 3: {
-				s16 newValue = *value - 2;
-				if (newValue < 0) {
-					newValue  = 0;
-					nextCycle = true;
-				}
-				*value = newValue;
-			} break;
-			}
-
-			s32 topLeftAnimCycle = mRgbAnimCycle[i] - 1;
-			if (topLeftAnimCycle < 0) {
-				topLeftAnimCycle = 5;
-			}
-
-			value = (i == 0) ? &mTopLeftCol.r
-			                 : ((i == 1) ? &mTopLeftCol.g : &mTopLeftCol.b);
-
-			switch (topLeftAnimCycle) {
-			case 0: {
-				s16 newValue = *value + 2;
-				if (newValue > 255) {
-					newValue = 255;
-				}
-				*value = newValue;
-			} break;
-			case 3: {
-				s16 newValue = *value - 2;
-				if (newValue < 0) {
-					newValue = 0;
-				}
-				*value = newValue;
-			} break;
-			}
-		}
-
-		if (nextCycle) {
-			// A bound reference, unrolled: retail materialises
-			// `addi r5, r31, 0x10/0x14/0x18` for the zeroing store and
-			// keeps the increment in displacement form.
-			for (s32 i = 0; i < 3; i++) {
-				s32& cycle = mRgbAnimCycle[i];
-				cycle++;
-				if (cycle >= 6)
-					cycle = 0;
-			}
-		}
-	}
-
-	if (flags & 0x8) {
-		GXSetDither(GX_TRUE);
-
-		Mtx mtx;
-		PSMTXIdentity(mtx);
-		GXLoadPosMtxImm(mtx, GX_PNMTX0);
-
-		GXSetCullMode(GX_CULL_BACK);
-		GXSetNumTexGens(0);
-		GXSetNumTevStages(1);
-		GXSetTevOp(GX_TEVSTAGE0, GX_PASSCLR);
-		GXSetNumChans(1);
-		GXSetChanCtrl(GX_COLOR0A0, GX_FALSE, GX_SRC_REG, GX_SRC_VTX, 0,
-		              GX_DF_NONE, GX_AF_NONE);
-
-		GXSetChanCtrl(GX_COLOR1A1, GX_FALSE, GX_SRC_REG, GX_SRC_REG, 0,
-		              GX_DF_NONE, GX_AF_NONE);
-
-		GXSetChanAmbColor(GX_COLOR0A0, (GXColor) { 0xff, 0xff, 0xff, 0xff });
-
-		GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_F32, 0);
-		GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_CLR0, GX_NRM_XYZ, GX_S8, 0);
-
-		GXClearVtxDesc();
-		GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
-		GXSetVtxDesc(GX_VA_CLR0, GX_DIRECT);
-
-		// The alpha midpoint is computed and never used (GXColor3u8 takes
-		// only rgb); it is worth the last 8 bytes of frame with no
-		// instruction change, and a fourth channel next to the other
-		// three is the only local this function plausibly wanted.
-		// Declare midB before midR so callee-saved colouring is r28=R,
-		// r30=B; assign in retail's R/G/B schedule.
-		u8 midA;
-		u8 midB;
-		u8 midG;
-		u8 midR;
-		midA = (mBottomRightCol.a + mTopLeftCol.a) >> 1;
-		midR = (mBottomRightCol.r + mTopLeftCol.r) >> 1;
-		midG = (mBottomRightCol.g + mTopLeftCol.g) >> 1;
-		midB = (mBottomRightCol.b + mTopLeftCol.b) >> 1;
-
-		GXBegin(GX_QUADS, GX_VTXFMT0, 4);
-		GXPosition3f32(0.0f, 16.0f, -100.0f);
-		GXColor3u8(mTopLeftCol.r, mTopLeftCol.g, mTopLeftCol.b);
-		GXPosition3f32(600.0f, 16.0f, -100.0f);
-		GXColor3u8(midR, midG, midB);
-		GXPosition3f32(600.0f, 464.0f, -100.0f);
-		GXColor3u8(mBottomRightCol.r, mBottomRightCol.g, mBottomRightCol.b);
-		GXPosition3f32(0.0f, 464.0f, -100.0f);
-		GXColor3u8(midR, midG, midB);
-		GXEnd();
-	}
+	if (flags & 0x8)
+		SelectGradDraw(this);
 }
 
 TSelectMenu::TSelectMenu(const char* pName)
