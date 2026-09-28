@@ -242,23 +242,15 @@ void TEnemyPolluteModelManager::perform(u32 cue, JDrama::TGraphics* graphics)
 		unk18[i]->perform(cue, graphics);
 }
 
-// Binding level worth +8 of low region, landing
-// TEnemyPolluteModelManager::generatePolluteModel's frame at 0x98 (batch
-// 124).
-static inline bool EnemyAttachmentCheckFlag(const TBGCheckData* p, u32 i)
-{
-	bool flag = p->checkFlag(i);
-	return flag;
-}
-
 // The ground check lives in `generate` (c-k5): an inlined callee's locals are
 // created last-declared first, which is the only way retail's `check` (0x3c)
 // sits directly below `generate`'s matrix (0x40), and with the check there
 // the out-of-line `generate` is exactly the map's UNUSED 0x178.
-// TODO: every instruction and the frame match; `check` and the matrix sit 4
-// low (0x38/0x3c), so retail creates one more dead word after `check`.
-// Without the flag binder (`check->isIllegalData()`, `checkFlag()`, either
-// with `isWaterSurface()`) the frame is 0x90 and generate stays 0x178;
+// TODO: 99.7%, every instruction matching; frame 0x90 vs retail 0x98.
+// An identity binder over checkFlag() (`bool flag = ...; return flag;`)
+// gave the 0x98 frame (with `check` and the matrix still 4 low, retail
+// creating one more dead word after `check`) and was removed as a
+// fakematch. `checkFlag()` is the same as isIllegalData() here;
 // `SMS_IsWaterSurface()` drops generate to 0x140, `!isLegal()` adds six
 // instructions, and a named `model` receiver in the caller is inert.
 void TEnemyPolluteModelManager::generatePolluteModel(
@@ -327,7 +319,7 @@ void TEnemyPolluteModel::generate(JGeometry::TVec3<f32>& param_1,
 {
 	const TBGCheckData* check;
 	gpMap->checkGround(param_1, &check);
-	if (EnemyAttachmentCheckFlag(check, BG_CHECK_FLAG_ILLEGAL)
+	if (check->isIllegalData()
 	    || check->isWaterSurface())
 		return;
 
