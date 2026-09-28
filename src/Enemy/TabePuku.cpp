@@ -650,14 +650,6 @@ DEFINE_NERVE(TNerveTabePukuGraphWander, TLiveActor)
 	return FALSE;
 }
 
-// Binding level worth +8 of low region, landing
-// TNerveTabePukuFound::execute's frame at 0x90 (batch 121).
-static inline TTabePukuParams* TabePukuGetSaveParams(const TTabePuku* p)
-{
-	TTabePukuParams* saveParams = p->getSaveParams();
-	return saveParams;
-}
-
 DEFINE_NERVE(TNerveTabePukuFound, TLiveActor)
 {
 	TTabePuku* puku = (TTabePuku*)spine->getBody();
@@ -670,12 +662,16 @@ DEFINE_NERVE(TNerveTabePukuFound, TLiveActor)
 	// setMomentumFromQuat() spelled out, as in swimTo().
 	// TODO: forward.x/y swap f30/f31 (retail coalesces getZDir's _x into forward.x).
 	// getZDir as one `set(...)` gives retail's FPRs at -8 frame; in the header it costs 6 units.
+	// Frame 0x88 vs retail 0x90: a TU-local binder returning getSaveParams()
+	// through a local supplied the last 8 bytes and was removed as a fakematch
+	// (99.8 -> 99.5). A named `fric` is inert; the raw param and a cast
+	// getSaveParam() are 0x80; calling the UNUSED setMomentumFromQuat() is a `bl`.
 	JGeometry::TVec3<f32> forward;
 	puku->mQuat.getZDir(forward);
 	forward.scale(puku->mMarchSpeed);
 
 	JGeometry::TVec3<f32> velocity = puku->mVelocity;
-	velocity.scale(TabePukuGetSaveParams(puku)->getWaterFric());
+	velocity.scale(puku->getSaveParams()->getWaterFric());
 	velocity.add(forward);
 	puku->mVelocity = velocity;
 
