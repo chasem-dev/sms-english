@@ -888,6 +888,8 @@ inline void TSelectMenu::update()
 				}
 
 				mMenuState = MENU_ANIM_LOOP;
+			} else {
+				break;
 			}
 		} else if (mGamePad->checkFrameMeaning(0x10)) {
 			if (getNextIndex() != -1) {
@@ -956,6 +958,8 @@ inline void TSelectMenu::update()
 				}
 
 				mMenuState = MENU_ANIM_LOOP;
+			} else {
+				break;
 			}
 		}
 	}
