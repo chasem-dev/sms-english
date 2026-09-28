@@ -85,6 +85,10 @@ Longer evidence for batches 25-39 is in `docs/progress/GMSE01-closure-audit-batc
 ## JSystem
 
 - **JDREfbSetting::IssueGXCopyDisp** (c-k2, open, debugger-read): the six webs are pcode temps coloured latest-first; the `flags & 0x20` test is generated after the inlined antialias conversion, so it takes r0 where retail has r4. Named copies of the test are forwarded back (+8 frame, registers unchanged).
+- **JAIGFrameSe::checkNextFrameSe** (c-k4, 98.3 to 99.3, debugger-read): the candidate counter and the category's `mMaxPlaying` are one `u8` local (`num`).
+  A separate `maxPlaying` initialised from one load is split by the IR optimiser (`maxPlaying = @250 = load`, the hoisted `+ 1` reads `@250`), which costs a copy and rotates every callee-saved register; with two definitions the local is never split and the load lands in its register.
+  Tell: retail's load writes straight into a callee-saved register that an earlier, unrelated counter also used.
+  Open: `it`/`pi`/`(u8)camEnd` (r18/r20/r27 in retail); `it` is deferred to the third sweep with one degree too many.
 
 ## MoveBG and Animal
 

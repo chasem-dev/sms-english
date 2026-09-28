@@ -5,30 +5,26 @@
 #include <JSystem/JAudio/JAInterface/JAIConst.hpp>
 #include <math.h>
 
-// TODO: 98.3%, frame 0x190 exact, and the only structural difference is one
-// extra `addi r29, r3, 0` at 0x534: retail's `lbzx` writes `maxPlaying`
-// straight into its callee-saved register (r26) and derives `maxPlaying + 1`
-// and `(u8)maxPlaying` from it, while our allocator lands the load in r3 and
-// has to copy it out. That copy is a symptom of a whole-function callee-saved
-// rotation (target -> ours: this r24->r28, &candidates r31->r23,
-// dummyZeroVec r29->r21, 0x7fffffff r28->r20, the 0x4330 magic r30->r22,
-// maxPlaying r26->r29, r18->r31, r21/r22/r23/r25 -> r25/r26/r27/r30), i.e. a
-// different spill-priority order over the twelve locals declared up front.
-// Batch 145 read the rotation properly and it is not a permutation of the
-// locals: retail puts all four base/constant temps on top (r31 &candidates,
-// r30 the 0x4330 magic, r29 &JAIConst::dummyZeroVec, r28 0x7fffffff) with
-// `this` at r24 below both parameters -- batch 144's ranking verbatim -- while
-// we put the same four at the bottom (r23-r20). The pool block and the local
-// block trade places wholesale, so the only known mover is the named-scalar
-// count, and all twelve locals are load-bearing (`k` is read after its loop,
-// `j`/`l` are assigned their bounds as early exits). Measured inert: 25
-// declaration orders (reverse, all eleven rotations, twelve random) and eight
-// relocations of subsets into the `for (i...)` body, all 129 markers.
-// See docs/catalog/frame-gaps.md, "batch 145".
-// Pass c-jai (2026-09-23), ternary and named-sub-value levers: a ternary
-// `fVar3` (136 markers), a ternary `fVar1` over a named `scale` (151), both
-// (170, frame +8), and a named `s16 adjust` for getAdjustPriority (128): the
-// rotation does not move.
+// TODO: 99.3%, frame 0x190 and every instruction exact; three GPR webs differ.
+// Closure c-k4 (debugger): retail loads the category's mMaxPlaying straight
+// into the register of the candidate counter (r26), so the two are one u8
+// local (`num`, counted up while candidates are ranked, then reloaded with
+// the category maximum). A separate `maxPlaying` is initialised once from a
+// load, so the IR optimiser splits it (`maxPlaying = @250 = load`) and the
+// hoisted `maxPlaying + 1` reads @250: that cost the extra `addi r29, r3, 0`
+// and a whole-function callee-saved rotation (the four pool/base temps were
+// pushed in the second simplify sweep, before the locals). With one `num`
+// (two definitions, never split) the rotation and the copy are gone.
+// Left: `it` r27 (retail r18), `pi` r18 (r20), the hoisted `(u8)camEnd` r20
+// (r27). In the replay `it` reaches the second sweep with remaining degree 30
+// (one over K after `cam` is pushed), so it is deferred and coloured at
+// position 8; retail colours it between @245 and `pi` (positions 19-24), and
+// then needs `cam` coloured before `pi`. Inert here: `u8 cam` declared at the
+// top ahead of `pi` (69 markers), `it` declared at the top first (90) or
+// after `pi` (68), and both together (85, 73).
+// Older readings: batch 145 (25 declaration orders, eight relocations into
+// the `for (i...)` body) and c-jai (ternary `fVar3`/`fVar1`, a named `s16
+// adjust`) were all measured against the split `maxPlaying` and are void now.
 void JAIBasic::checkNextFrameSe()
 {
 	JAISound sound;
@@ -50,7 +46,6 @@ void JAIBasic::checkNextFrameSe()
 	u8 j;
 	u8 bVar7;
 	u8 bVar18;
-	u8 maxPlaying;
 	JAISound::FabricatedPositionInfo* pi;
 
 	f32 fVar6
@@ -67,7 +62,7 @@ void JAIBasic::checkNextFrameSe()
 			candidates[j].state = 0xff;
 		}
 
-		u8 bVar19 = 0;
+		u8 num = 0;
 
 		JAISound* it = unk0->mSeRegist[i].mUsedHead;
 		while (it) {
@@ -161,8 +156,8 @@ void JAIBasic::checkNextFrameSe()
 						if (it->mPriority < candidates[j].score
 						    || (it->mPriority == candidates[j].score
 						        && candidates[j].state >= it->mState)) {
-							if (bVar19 < bVar18)
-								++bVar19;
+							if (num < bVar18)
+								++num;
 							for (k = bVar18 - 1; k > j; --k) {
 								candidates[k].score = candidates[k - 1].score;
 								candidates[k].sound = candidates[k - 1].sound;
@@ -181,7 +176,7 @@ void JAIBasic::checkNextFrameSe()
 				it = it->mNextSound;
 		}
 
-		for (k = 0; k < bVar19; ++k) {
+		for (k = 0; k < num; ++k) {
 			snd = candidates[k].sound;
 			if (snd->mState == SOUNDSTATE_Stored) {
 				snd->mState = SOUNDSTATE_Prepared;
@@ -190,8 +185,8 @@ void JAIBasic::checkNextFrameSe()
 			}
 		}
 
-		maxPlaying = unk0->mCategoryInfoTable[mSoundScene][i].mMaxPlaying;
-		for (j = 0; j < maxPlaying; ++j) {
+		num = unk0->mCategoryInfoTable[mSoundScene][i].mMaxPlaying;
+		for (j = 0; j < num; ++j) {
 			snd   = unk0->mSeTrack[i][j].mSound;
 			bVar7 = 0;
 			if (snd == nullptr) {
@@ -208,34 +203,34 @@ void JAIBasic::checkNextFrameSe()
 				unk0->mSeTrack[i][j].mSound = nullptr;
 				bVar7                       = 1;
 			} else {
-				for (k = 0; k < maxPlaying; ++k) {
+				for (k = 0; k < num; ++k) {
 					if (unk0->mSeTrack[i][j].mSound == candidates[k].sound) {
 						candidates[k].sound = nullptr;
-						k                   = maxPlaying;
+						k                   = num;
 					}
 				}
 			}
 
 			if (bVar7 == 1) {
-				for (k = 0; k < maxPlaying; ++k) {
+				for (k = 0; k < num; ++k) {
 					snd = candidates[k].sound;
 					if (snd != nullptr && snd->mState != SOUNDSTATE_Started) {
-						for (l = 0; l < maxPlaying; ++l) {
+						for (l = 0; l < num; ++l) {
 							if (unk0->mSeTrack[i][l].mSound
 							    && snd == unk0->mSeTrack[i][l].mSound) {
 								bVar7 = 0;
-								l     = maxPlaying;
+								l     = num;
 							}
 						}
 
 						if (bVar7 == 1) {
 							unk0->mSeTrack[i][j].mSound = snd;
 							candidates[k].sound         = nullptr;
-							k                           = maxPlaying + 1;
+							k                           = num + 1;
 						}
 					}
 				}
-				if (k == maxPlaying) {
+				if (k == num) {
 					unk0->mSeTrack[i][j].mSound = nullptr;
 				}
 			}
