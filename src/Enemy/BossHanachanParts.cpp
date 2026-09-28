@@ -472,22 +472,16 @@ void TBossHanachanPartsBase::considerSetAnm_(EnumBossHanachanNerveAnm nerve)
 	}
 }
 
-// Two-local binder over mMActor + getModel, +0x10 for body setAnm_.
-static inline J3DModel*
-BossHanachanPartsGetActorModel(const TBossHanachanPartsBase* p)
+// TODO(shared header): TBossHanachan::getWeakBodyIndex() belongs in
+// Enemy/BossHanachan.hpp as `s32 getWeakBodyIndex() const`; parked here.
+// Reading the weak index through it (not the raw member) closes body setAnm_
+// (c-k6): its dead unkFC binding and the getMActor() receivers give retail's
+// frame and its changed/anm/this/blend colouring.
+static inline s32 BossHanachanGetWeakBodyIndex(const TBossHanachan* p)
 {
-	MActor* actor = p->mMActor;
-	J3DModel* model = actor->getModel();
-	return model;
+	return p->mWeakBodyIndex;
 }
 
-// TODO: 93.1%, frame exact; callee-saved rotation only. Retail ranks
-// changed (r31) > anm (r30) > this (r29) > blend (r28); ours ranks this first.
-// Inert or worse: a TU-local blend helper (by TNpcInbetween* or by this), a
-// direct or MActor* model binder in place of the two-local one, and naming the
-// table index in the condition. regalloc --why: retail defers anm (deg 28,
-// needs 29) and changed (25 left) with this; named ctrl/model locals, an index
-// helper and an if/else-if for the switch were inert or worse.
 bool TBossHanachanPartsBody::setAnm_(EnumBossHanachanAnmKind anm,
                                     EnumBossHanachanStopMotionBlendOnOff blend)
 {
@@ -498,15 +492,15 @@ bool TBossHanachanPartsBody::setAnm_(EnumBossHanachanAnmKind anm,
 	if (mCurrentAnm != anm) {
 		mPreviousAnm = mCurrentAnm;
 		mCurrentAnm = anm;
-		if (sBodyBckIndex[anm] != mMActor->getCurAnmIdx(ANM_TYPE_BCK)) {
+		if (sBodyBckIndex[anm] != getMActor()->getCurAnmIdx(ANM_TYPE_BCK)) {
 			int index = sBodyBckIndex[anm];
-			if (unk114 == unkFC->mWeakBodyIndex) {
+			if (unk114 == BossHanachanGetWeakBodyIndex(unkFC)) {
 				switch (anm) {
 				case BOSS_HANACHAN_ANM_UNK2: index = 11; break;
 				case BOSS_HANACHAN_ANM_UNK3: index = 14; break;
 				}
 			}
-			mMActor->setBckFromIndex(index);
+			getMActor()->setBckFromIndex(index);
 			changed = true;
 			if (blend == BOSS_HANACHAN_STOP_MOTION_BLEND_ON)
 				mInbetween->startMotionBlend();
@@ -515,9 +509,9 @@ bool TBossHanachanPartsBody::setAnm_(EnumBossHanachanAnmKind anm,
 			setCurAnmSound();
 		}
 		if (anm == BOSS_HANACHAN_ANM_UNK15) {
-			mMActor->setBrkFromIndex(0);
-			mMActor->getFrameCtrl(ANM_TYPE_BRK)->setAttribute(J3DFrameCtrl::ATTR_ONCE);
-			BossHanachanPartsGetActorModel(this)->unlock();
+			getMActor()->setBrkFromIndex(0);
+			getMActor()->getFrameCtrl(ANM_TYPE_BRK)->setAttribute(J3DFrameCtrl::ATTR_ONCE);
+			getMActor()->getModel()->unlock();
 		}
 	}
 	return changed;
