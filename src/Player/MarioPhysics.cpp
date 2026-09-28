@@ -360,6 +360,11 @@ static inline bool MarioCanHang(TMario* mario)
 // retail's `pos` sits at 0x58 (ours 0x54) with a word above it, i.e. one
 // 4-byte named local declared before `pos` and 4 more low bytes. A member
 // inline in Mario.hpp is the same as the TU-local helper.
+// c-k5 (debugger): retail's pos is 4 high with one word above it, so one
+// named 4-byte local precedes it and one more dead word follows it. Inert: an
+// uninitialised `f32 roofHeight` before pos carrying checkRoofPlane's result
+// (it takes a register), wall1/wall2 declared first; the three codes
+// declared first are worse (97.9).
 int TMario::checkGroundAtJumping(const Vec& target, int param_2)
 {
 	Vec pos             = target;
