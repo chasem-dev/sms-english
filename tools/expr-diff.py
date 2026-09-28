@@ -26,7 +26,10 @@ Machine model (PowerPC, objdump -M raw,gekko):
            is A(name); a compiler-named object (@1234, ...data.0, section+
            offset, and file-static read-only data or pointer tables) is named
            by the content at the address (a string, 'zero', 'jtab', its first
-           word), because pooling differs between builds; a load from read-
+           word), because pooling differs between builds; a constant added to
+           such an anchor names the object it reaches (retail's '@1431' +
+           0x7c is our named table), while an offset past a global table is
+           kept as an address expression (a biased array base); a load from read-
            only or pooled data is the value read (float constants by numeric
            value, F:x, so 0.001f and the same number as a double are equal).
            Commutative operators sort their operands; integer sums are
@@ -85,7 +88,12 @@ Machine model (PowerPC, objdump -M raw,gekko):
            bool tested again) is followed, and an equality the edge implies
            is substituted.  Compare kinds: s/u (signed/unsigned ordering),
            i (integer equality), f (float; fcmpo and fcmpu are the same
-           test).  A branch on constants is not an effect.
+           test).  A branch on constants is not an effect, nor is one whose
+           two ways reach the same block with the same live values (`bge L;
+           b L`), nor one every way into its block decides: an integer test
+           records x == k or x != k on its edges (x + k == v also gives x),
+           so a repeated test (`a && b` re-testing a status) or a bool
+           materialised on the ways in (phi{0,1}) is decided there.
 
 Return kind: a function returns in r3 (or f1) when a caller anywhere in the
 retail binary reads r3 (f1) after calling it, or, for functions nobody calls
@@ -94,7 +102,9 @@ every return.
 
 An identical function always compares equal (--exact checks it).  A mismatch
 is a lead for a human: some remain harmless (two equivalent spellings the
-model does not normalise), listed with a verdict in docs/audit/expr-diff.md.
+model does not normalise: a function one build inlines and the other calls,
+an equality chain against a range test, std::min operand order), listed with
+a verdict in docs/audit/README.md.
 """
 import argparse, collections, hashlib, importlib.util, os, re, struct, subprocess, sys
 
@@ -267,6 +277,7 @@ def isc(e):
     return e.op == 'c'
 
 JUNK = atom('junk')
+NE = atom('ne')
 UNK = atom('?')
 SP = atom('SP')
 ZERO = C(0)
@@ -308,9 +319,10 @@ def iadd(*terms):
     if k:
         ads = [t for t in out if t.op == 'AD']
         if len(ads) == 1:
-            obj, sec, off = ads[0].v
+            obj, sec, off, anchor = ads[0].v
             new = off + (k - (1 << 32) if k & 0x80000000 else k)
-            if obj.same_object(sec, off, new):       # an offset within the object names a place
+            if anchor and obj.inside(sec, new) or obj.same_object(sec, off, new):
+                # an offset from an anchor, or within the object, names a place
                 out[out.index(ads[0])] = obj.at(sec, new)
                 k = 0
     if k:
@@ -462,7 +474,7 @@ def vslot(tgt):
     return None
 
 
-def refine(st, p, swap, taken):
+def refine(st, p, swap, taken, facts=False):
     """The state on one edge of a branch: where the edge implies an integer operand equals
     a constant, registers holding that operand hold the constant (so a materialised
     bool tested again folds)."""
@@ -470,15 +482,28 @@ def refine(st, p, swap, taken):
     if kind not in ('i', 's', 'u') or len(p) != 4:
         return st
     edge = set(rep) if taken != swap else set('<=>') - set(rep)
-    if edge != {'='}:
-        return st
     if isc(b) and not isc(a):
         var, val = a, b
     elif isc(a) and not isc(b):
         var, val = b, a
     else:
         return st
+    if edge == {'<', '>'} and kind == 'i':
+        # a known inequality: the same test repeated later is decided (see decide())
+        st = st.copy()
+        st.mem[('!=', var.s, val.s)] = NE
+        return st
+    if edge != {'='}:
+        return st
     st = st.copy()
+    if facts:
+        # only note it: substituting would make joins phi{k, x} where the other build,
+        # which reloads x, has x
+        st.mem[('==', var.s)] = val
+        if var.op == 'add' and len(var.a) == 2 and isc(var.a[0]) != isc(var.a[1]):
+            k, x = (var.a[0], var.a[1]) if isc(var.a[0]) else (var.a[1], var.a[0])
+            st.mem[('==', x.s)] = C((val.v - k.v) & 0xffffffff)
+        return st
     for r, v in list(st.R.items()):
         if v.s == var.s:
             st.R[r] = val
@@ -490,10 +515,41 @@ def refine(st, p, swap, taken):
             st.stk[k] = val
     if var.op in ('ld1', 'ld2', 'ld4') and var.a:
         st.mem[(var.a[0].s, int(var.op[2:]))] = val   # a reload of the tested word sees it too
+    elif var.op == 'add' and len(var.a) == 2 and isc(var.a[0]) != isc(var.a[1]):
+        # x + k == v (MWCC's addis/cmplwi test of a 32-bit constant): x is v - k too
+        k, x = (var.a[0], var.a[1]) if isc(var.a[0]) else (var.a[1], var.a[0])
+        xv = C((val.v - k.v) & 0xffffffff)
+        for r, v in list(st.R.items()):
+            if v.s == x.s:
+                st.R[r] = xv
+        if x.op in ('ld1', 'ld2', 'ld4') and x.a:
+            st.mem[(x.a[0].s, int(x.op[2:]))] = xv
     for k, c in list(st.cr.items()):
         if c.a.s == var.s or c.b.s == var.s:
             st.cr[k] = CR(c.k, val if c.a.s == var.s else c.a, val if c.b.s == var.s else c.b, c.bits)
     return st
+
+
+def decide(p, swap, st):
+    """constpred, also using the inequalities refine() recorded on the way."""
+    c = constpred(p, swap)
+    if c is not None or p[0] != 'i' or len(p) != 4:
+        return c
+    kind, a, b, rep = p
+    if ('<' in rep) == ('>' in rep) and (('!=', a.s, b.s) in st.mem or ('!=', b.s, a.s) in st.mem):
+        return ('<' in rep) != swap
+
+    def known(e):
+        v = st.mem.get(('==', e.s))
+        if v is not None or e.op != 'add' or len(e.a) != 2 or isc(e.a[0]) == isc(e.a[1]):
+            return v
+        k, x = (e.a[0], e.a[1]) if isc(e.a[0]) else (e.a[1], e.a[0])
+        v = st.mem.get(('==', x.s))
+        return C(v.v + k.v) if v is not None else None
+    ka, kb = (a if isc(a) else known(a)), (b if isc(b) else known(b))
+    if ka is not None and kb is not None and (ka is not a or kb is not b):
+        return constpred((kind, ka, kb, rep), swap)
+    return None
 
 
 def constpred(p, swap):
@@ -663,7 +719,9 @@ def normname(n):
             out.append(re.sub(r'\$\d+', '$', tok))
             i = m.end() + k
     out.append(n[i:])
-    return re.sub(r'\$\d+', '$', ''.join(out))
+    n = re.sub(r'\$\d+', '$', ''.join(out))
+    # long and int are the same type here: CLBPalFrame<l>__Fl is CLBPalFrame<i>__Fi
+    return re.sub(r'__Fl$', '__Fi', n.replace('<l>', '<i>'))
 
 
 def anon_name(n):
@@ -762,13 +820,21 @@ class Obj:
             anon = all(anon_name(x) for x in (name, sname))
             # a file-static table in one build is often an anonymous pool object in the
             # other: initialised local data is named by its content too
-            if not anon and (sname in self.local and sec in READONLY
-                             or sec in ('.data', '.sdata') and off in self.rel.get(sec, {})
-                             and self.syms[sname][2] >= 8):
-                anon = self.content_key(sec, off) != 'zero'     # read-only data or a pointer table
+            if not anon and sname in self.local and sec in READONLY:
+                anon = True                                      # file-static read-only data
+            elif not anon and sec in ('.data', '.sdata') and off in self.rel.get(sec, {}) \
+                    and self.syms[sname][2] >= 8:
+                anon = self.content_key(sec, off) != 'zero'     # a pointer table
             if anon and sec in DATA_SECS and sec not in ('.bss', '.sbss'):
-                return self.at(sec, off)
+                # file-static read-only data is an anchor like an anonymous pool symbol:
+                # one build's '@123' is the other's named table
+                return self.at(sec, off, anon_name(name) or name in DATA_SECS
+                               or name in self.local and sec in READONLY)
         return A('A', atom(self.key(target)))
+
+    def inside(self, sec, b):
+        s = self.sec(sec)
+        return s is not None and 0 <= b < len(s['data'])
 
     def same_object(self, sec, a, b):
         """Whether offsets a and b of a data section lie in the same object (a biased
@@ -777,17 +843,22 @@ class Obj:
         if s is None or not (0 <= b < len(s['data'])):
             return False
         for val, size, n in self.bysec.get(sec, ()):
-            if size and val <= a < val + size and not n.startswith('...'):
+            # an anonymous base (a pooled constant, '...rodata.0') is only the section's
+            # anchor: the offset reaches whatever object lies there
+            if size and val <= a < val + size and not anon_name(n):
                 return val <= b < val + size
         return True
 
-    def at(self, sec, off):
-        k = (sec, off)
+    def at(self, sec, off, anchor=False):
+        """The location sec+off named by its content.  An anchor is a reference through
+        an anonymous symbol (a section symbol, '...rodata.0', a pooled '@123'): MWCC
+        reaches neighbouring objects from it, so a constant added later always folds."""
+        k = (sec, off, anchor)
         e = self._at.get(k)
         if e is None:
             key = self.content_key(sec, off)
             self.keyloc.setdefault(key, (sec, off, True))
-            e = E('AD', (), 'A(%s)' % key, (self, sec, off))
+            e = E('AD', (), 'A(%s)' % key, (self, sec, off, anchor))
             self._at[k] = e
         return e
 
@@ -803,6 +874,9 @@ class Obj:
                        self.secs[self.syms[t[1][0]][0]]['name'] == '.text') for t in win):
             return 'jtab'
         z = data.find(b'\0', off)
+        if z < 0:
+            z = len(data)
+        z = min(z, off + 48)            # a text table may run into data that differs
         if not win and z > off and all(32 <= c < 127 or c in (9, 10) or c >= 0x80 for c in data[off:z]):
             return 'str:' + repr(data[off:z].decode('latin1'))[:80]
         if not win and not any(data[off:off + 4]):
@@ -1516,14 +1590,19 @@ class Func:
     def pass_(self, tagged):
         ent, out = {}, {}
         self.pending = []
+        brof = {}
         for l in self.rpo:
             fps = [p for p in self.preds.get(l, []) if (p, l) not in self.back and p in out]
+            # what each edge's test implies (x == k, x != k) holds on that edge
+            ins = [out[p] if p not in brof or brof[p][3] == brof[p][4] else
+                   refine(out[p], brof[p][2], brof[p][5], brof[p][3] == l, facts=True)
+                   for p in fps]
             if l == self.leaders[0]:
                 st = entry_state()
                 if fps:
-                    st = merge([st] + [out[p] for p in fps])
+                    st = merge([st] + ins)
             elif fps:
-                st = merge([out[p] for p in fps])
+                st = merge(ins)
             else:
                 st = State()
                 st.R['r1'] = SP
@@ -1545,7 +1624,10 @@ class Func:
                 st.mem = {}
                 st.cr = {}
             ent[l] = st
+            n0 = len(self.pending)
             out[l] = self.block(l, st.copy(), self.effects, self.pending)
+            if len(self.pending) > n0 and self.pending[-1][1] == l and self.pending[-1][2][0] != 'sw':
+                brof[l] = self.pending[-1]
         self.ent, self.out = ent, out
         return ent, out
 
@@ -1564,9 +1646,62 @@ class Func:
             f = self.first(nxt, refine(st, pred, swap, False)) if nxt is not None else 'end'
             if swap:
                 t, f = f, t
-            if pred[0] == 'sw' or constpred(pred, swap) is not None:
+            if pred[0] == 'sw' or decide(pred, swap, st) is not None:
                 continue                            # a test of constants decides nothing
+            if self.same_way(tgt, nxt, st, st):
+                continue                            # both ways reach the same block alike
+            if self.threaded(blk):
+                continue                            # a materialised bool, decided on every way in
             self.effects.append(A('br', atom(pred[0]), pred[1], pred[2], atom(pred[3]), atom(t), atom(f)))
+
+    def walk(self, l, st):
+        """Follow l through blocks that do nothing (no effect, no test, one successor):
+        (the block reached, the state there)."""
+        seen = set()
+        while l not in (None, 'ret', 'ctr') and l not in seen and len(seen) < 8:
+            seen.add(l)
+            eff, pend = [], []
+            st2 = self.block(l, st.copy(), eff, pend, look=True)
+            ss = self.succ.get(l, [])
+            if eff or pend or len(ss) != 1:
+                break
+            l, st = ss[0], st2
+        return l, st
+
+    def same_way(self, a, b, sa, sb):
+        """Whether two branch targets reach the same block with the same live values."""
+        if a in (None, 'ctr') or b in (None, 'ctr'):
+            return False
+        (la, xa), (lb, xb) = self.walk(a, sa), self.walk(b, sb)
+        if la != lb or la in (None, 'ret', 'ctr'):
+            return False
+        lv = self.live.get(la)
+        keys = (set(xa.R) | set(xb.R)) if lv is None else set(lv)
+        if any(xa.R.get(k, UNK).s != xb.R.get(k, UNK).s for k in keys if k != 'r1'):
+            return False
+        if set(xa.stk) != set(xb.stk) or any(xa.stk[k].s != xb.stk[k].s for k in xa.stk):
+            return False
+        return True
+
+    def threaded(self, l):
+        """Whether the branch ending block l tests a value (a bool materialised on the
+        ways in, phi{0,1}) that every forward predecessor decides: the predecessors'
+        own successor signatures already follow it, so it is not a test of its own."""
+        ps = self.preds.get(l, [])
+        if not ps or any((p, l) in self.back or p not in self.out for p in ps):
+            return False
+        for p in ps:
+            st = self.out[p].copy()
+            # an edge's own test refines what it carries (the value tested on the way in)
+            for q in self.pending:
+                if q[1] == p:
+                    st = refine(st, q[2], q[5], q[3] == l)
+                    break
+            eff, pend = [], []
+            st2 = self.block(l, st, eff, pend, look=True)
+            if not pend or pend[0][2][0] == 'sw' or decide(pend[0][2], pend[0][5], st2) is None:
+                return False
+        return True
 
     def first(self, l, st, depth=0):
         """Signature of the first effect reached from block l with state st (lookahead)."""
@@ -1594,7 +1729,7 @@ class Func:
                 p = pend[0][2]
                 if p[0] == 'sw':
                     return 'switch'
-                c = constpred(p, pend[0][5])
+                c = decide(p, pend[0][5], st2)
                 if c is not None:
                     # a known outcome (a materialised bool tested again): follow it
                     l = pend[0][3] if c else pend[0][4]
@@ -1602,6 +1737,12 @@ class Func:
                         return self.retsig(st2)
                     if l in (None, 'ctr'):
                         return 'end'
+                    st = st2
+                    depth += 1
+                    continue
+                if self.same_way(pend[0][3], pend[0][4], st2, st2):
+                    # both ways reach the same block in the same state (`bge L; b L`)
+                    l = self.walk(pend[0][3], st2)[0]
                     st = st2
                     depth += 1
                     continue
@@ -1697,7 +1838,7 @@ class Func:
     def constload(self, a, kind, n):
         base, extra = None, 0
         if a.op == 'AD':
-            obj, sec, off = a.v
+            obj, sec, off, _ = a.v
             r = obj.readat(sec, off, n)
             return self.constval(r, n)
         if a.op == 'A':
@@ -2385,7 +2526,9 @@ def compare(oa, ob, name, idx, rk=None):
                 continue
             db = {x.a[0].s: x.a[1].s for x in f.a[1:]}
             common = set(da) & set(db)
-            if 'r3' in common and all(da[k] == db[k] for k in common if 'junk' not in (da[k], db[k])):
+            # a register left over on some way in (phi{..., junk}) is no argument either
+            if 'r3' in common and all(da[k] == db[k] for k in common
+                                      if not re.search(r'\bjunk\b', da[k] + ' ' + db[k])):
                 ra[e.s] -= 1
                 rb[f.s] -= 1
                 break
