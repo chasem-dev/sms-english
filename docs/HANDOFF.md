@@ -13,6 +13,12 @@ Agents this session found pre-existing constructs that break the no-fakematch ru
 - `#pragma dont_inline` on `appearItem` in Map/PollutionLayer.cpp (found by c-k7; blocks linking that unit).
 The rule for new work is in docs/agent-brief.md (no pass-through helpers).
 
+## Policy decision needed (2026-09-28, c-k8)
+
+c-k8 showed that an empty `if (x != nullptr) {}` after a call survives to register allocation exactly as retail's dead tests do, while `(void)0` and bare-pointer tests are folded early; retail's shape is a body emptied by release-build logging macros.
+Writing those tests as empty bodies is currently on the rejected (fakematch) list.
+If the owner accepts them as the faithful rendering of compiled-out logging (perhaps via a named no-op macro), MapObjInit (`initMActor` 87.1 -> 98.6, `makeMActors` 98.65 -> 99.8) and the existing effectObj/coasterkiller/NpcCollision empty-if debts become legitimate; until then they stay parked.
+
 ## State 2026-09-27 night (session 5237deed, map + compiler-research round)
 
 All 72.72 -> 72.82% matched, 531/732 linked (MarNameRefGen linked), DOL identical, zero regressions.

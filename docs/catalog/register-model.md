@@ -227,3 +227,12 @@ Both were read from `dbg.sh` dumps (`frontend-00-ast-initial-code.txt`, `backend
 - A callee containing a loop is not expanded inside a conditionally evaluated sub-expression (a ternary arm, or a `&&`/`||` operand whose result is used as a value); the same call is expanded as a statement, in a ternary condition, or in `if (a && (n = f()))`. Caller size does not matter (a 400-statement caller still expanded it). A weak loop helper that retail calls from a large function points to a value context at that site (MSoundStruct `startSoundSetDyna`, scratch-TU proof).
 - A by-value class argument's copy is created when the body holding the call is expanded, not when the callee is; moving the call into a helper moves the copy to that helper's expansion position in the depth-1 pass.
 - A logical expression materialised as a value is kept in a saved register (`li r24,0/1`); nested ternaries keep retail's branch form.
+
+## Additions (c-k8)
+
+- `mr` vs `addi rD,rS,0`: the post-allocation pass rewrites a copy as `addi` when the next instruction in the pre-allocation schedule is an integer add (`add`, `addi`, `lis`, `mr`), and keeps `mr` before a load, compare, call or `fmr` (held in every case over five dumps). The fix is a scheduling change next to the copy, not a different spelling of it.
+- Writing a `perform`'s cue blocks as inline levels with real content changes which zeros are shared and where the draw objects sit (closed most of `TSelectGrad::perform`; second confirmation of the c-k5 shared-zero rule).
+- Empty test bodies (scratch-TU measurement with the game flags): after a call, `{}`, `;`, `do {} while (0)` and `if (0) f();` keep the tested value in a callee-saved register and are deleted only after register allocation, which is retail's shape; `(void)0;` (the release `JUT_ASSERT`), an empty inline call, a dead local and a bare expression are removed earlier.
+  `if (p) {}` on a bare pointer is also removed early, but `if (p != nullptr) {}` survives.
+  So retail had bodies the preprocessor emptied (release `JUT_WARNING`/`JUT_LOG_F`-style macros).
+  Whether to write such compiled-out bodies as empty `if`s is an open policy decision (see HANDOFF); MapObjInit `initMActor` 87.1 -> 98.6 and `makeMActors` 98.65 -> 99.8 wait on it.
