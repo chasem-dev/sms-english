@@ -609,26 +609,19 @@ void TNameKuri::setGenerateAnm()
 
 void TNameKuri::setWalkAnm() { setBckAnm(7); }
 
-// TODO: setDeadAnm and setMeltAnm now carry retail's 0x68 frame, but the
-// unnamed `setVelocity(TVec3(0,0,0))` temporary still sits at 0x54 where
-// retail puts it at 0x48 with 12 bytes *above* it -- the low region is 12
-// too tall and the named block 12 too short. Ladder measured here (base
-// 0x40): NameKuriAnmMtx as a three-local binder +0x18, nesting
-// NamekuriGetMActor inside it another +8, the two-local form plus that
-// nesting plus the NameKuriMSound binder +0x28 (the rungs saturate: the
-// three-local plus MSound is only +0x20 and all three +0x30). Priced at 0
-// here: a direct-return `gpMSound` fork, and `TVec3 zero; zero.set(0,0,0);
-// setVelocity(zero);` (ladder 266's +0x10 named-block hole does not appear
-// in this pool). TNameKuri::init is short by the same 40 bytes.
+// TODO: setDeadAnm and setMeltAnm are instruction-exact with every slot in
+// place, including the unnamed `setVelocity(TVec3(0,0,0))` temporary at
+// retail's 0x48; the frame is 0x60 against retail's 0x68, i.e. retail has
+// 8 more bytes above the low region. A TU-local binder returning
+// SMSGetMSound() through a local gave 0x68 but put the temporary at 0x54
+// (low region 12 too tall); it was removed as a fakematch. The raw gpMSound
+// is 0x58. Earlier ladder (base 0x40): NameKuriAnmMtx as a three-local
+// binder +0x18, nesting NamekuriGetMActor inside it another +8. Priced at 0:
+// `TVec3 zero; zero.set(0,0,0); setVelocity(zero);`. TNameKuri::init is
+// short by the same 40 bytes.
 // c-h12: iro.py puts retail's temp right after the three depth-1 words (@2302,
 // @2297, @2296); a TU-local stop-moving inline gets 0x4c but `bl`s set<f> (96.7%).
 static inline MActor* NamekuriGetMActor(const TNameKuri* p);
-
-static inline MSound* NameKuriMSound()
-{
-	MSound* sound = SMSGetMSound();
-	return sound;
-}
 
 static inline MtxPtr NameKuriAnmMtx(const TNameKuri* p, int i)
 {
@@ -641,8 +634,8 @@ void TNameKuri::setDeadAnm()
 {
 	setBckAnm(0);
 
-	NameKuriMSound()->startSoundActor(MSD_SE_EN_NAMEKURI_DOWN, &mPosition, 0,
-	                                nullptr, 0, 4);
+	SMSGetMSound()->startSoundActor(MSD_SE_EN_NAMEKURI_DOWN, &mPosition, 0,
+	                              nullptr, 0, 4);
 
 	MtxPtr mtx = NameKuriAnmMtx(this, 2);
 
@@ -695,8 +688,8 @@ void TNameKuri::setMeltAnm()
 	setVelocity(JGeometry::TVec3<f32>(0.0f, 0.0f, 0.0f));
 	onLiveFlag(LIVE_FLAG_UNK10);
 
-	NameKuriMSound()->startSoundActor(MSD_SE_EN_NAMEKURI_DOWN_WT, &mPosition, 0,
-	                                nullptr, 0, 4);
+	SMSGetMSound()->startSoundActor(MSD_SE_EN_NAMEKURI_DOWN_WT, &mPosition, 0,
+	                              nullptr, 0, 4);
 }
 
 void TNameKuri::setMActorAndKeeper()
