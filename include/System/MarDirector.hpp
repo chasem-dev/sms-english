@@ -148,6 +148,19 @@ public:
 	bool checkUnk50Flag(int flag) const { return unk50 & flag; }
 	void onUnk4EFlag(int flag) { unk4E |= flag; }
 	void offUnk4EFlag(int flag) { unk4E &= ~flag; }
+	// Upstream's accessors over the same three words (unk4C = director
+	// flags, unk4E = demo flags, unk50 = transition flags). The BOOL returns
+	// and the extra level differ in codegen from the bool ones above, so a
+	// site picks whichever the ROM shows.
+	BOOL checkFlag(u16 flag) const { return unk4C & flag; }
+	void onFlag(u16 flag) { unk4C |= flag; }
+	void offFlag(u16 flag) { unk4C &= ~flag; }
+	bool checkDemoFlag(int flag) const { return unk4E & flag; }
+	void onDemoFlag(int flag) { unk4E |= flag; }
+	void offDemoFlag(int flag) { unk4E &= ~flag; }
+	BOOL checkTransitionFlag(int flag) const { return unk50 & flag; }
+	void onTransitionFlag(int flag) { unk50 |= flag; }
+	void offTransitionFlag(int flag) { unk50 &= ~flag; }
 	TGCConsole2* getConsole() { return mConsole; }
 
 	bool isTalkModeNow() const { return unk124 == 1 || unk124 == 2; }
@@ -192,6 +205,11 @@ public:
 		STATE_UNK10 = 10,
 		STATE_UNK11 = 11,
 		STATE_UNK12 = 12,
+
+		// upstream names
+		STATE_PAUSE_MENU = STATE_UNK5,
+		STATE_GUIDE      = STATE_UNK10,
+		STATE_CARD_SAVE  = STATE_UNK11,
 	};
 
 	enum {

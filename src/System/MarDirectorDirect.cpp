@@ -1092,31 +1092,35 @@ u8 TMarDirector::updateGameMode()
 // TODO: 98.6%, frame 0x48 vs retail 0x70: the three TColor temporaries sit
 // 0x24 higher (a dead low region) and `this` is r31 vs r29. Inert (c-sys1):
 // no nextArea binding, a pointer binding, declaring it first, SMSGetApplication()->
+// TODO: instructions exact; frame 0x50 vs retail 0x70 (the TColor
+// temporaries sit 0x1c lower). Body from upstream, whose accessor levels
+// (SMSGetApplication()->getFader(), getScenario()) fixed the register
+// assignment (98.6 -> 99.9); the nozzle store keeps the ROM's `mr r5, r0`.
 void TMarDirector::moveStage()
 {
 	unkB4 = TApplication::APP_STATE_GAMEPLAY;
 	unkE4 = 15;
-	gpApplication.mFader->setColor(JUtility::TColor(0, 0, 0, 0xff));
+	SMSGetApplication()->getFader()->setColor(JUtility::TColor(0, 0, 0, 0xff));
 
-	u8 sVar4 = SMS_getShineStage(gpApplication.mNextArea.getStage());
-	u8 sVar5 = SMS_getShineStage(gpApplication.mCurrArea.getStage());
+	u8 sVar4 = SMS_getShineStage(SMSGetApplication()->mNextArea.getStage());
+	u8 sVar5 = SMS_getShineStage(SMSGetApplication()->mCurrArea.getStage());
 	if (sVar4 != sVar5)
-		TFlagManager::smInstance->setFlag(0x40002, 0);
+		TFlagManager::getInstance()->setFlag(0x40002, 0);
 
-	TGameSequence& nextArea = gpApplication.mNextArea;
+	TGameSequence& nextArea = SMSGetApplication()->mNextArea;
 
-	if (nextArea.unk1 == 0xff)
-		switch (nextArea.unk0) {
+	if (nextArea.getScenario() == 0xff)
+		switch (nextArea.getStage()) {
 		case 1:
 			unkE4         = 2;
 			nextArea.unk1 = decideNextScenario(nextArea.getStage());
-			TFlagManager::smInstance->setFlag(0x40003, 0);
+			TFlagManager::getInstance()->setFlag(0x40003, 0);
 			break;
 
 		case 13: {
 			unkE4     = 2;
 			u32 thing = 0;
-			switch (TFlagManager::smInstance->getFlag(0x40003)) {
+			switch (TFlagManager::getInstance()->getFlag(0x40003)) {
 			case 0:
 				thing = 0;
 				break;
@@ -1143,7 +1147,7 @@ void TMarDirector::moveStage()
 		case 0x3A: {
 			unkE4     = 2;
 			u32 thing = 0;
-			switch (TFlagManager::smInstance->getFlag(0x40003)) {
+			switch (TFlagManager::getInstance()->getFlag(0x40003)) {
 			case 0:
 				thing = 1;
 				break;
@@ -1158,7 +1162,7 @@ void TMarDirector::moveStage()
 		case 7: {
 			unkE4     = 2;
 			u32 thing = 0;
-			switch (TFlagManager::smInstance->getFlag(0x40003)) {
+			switch (TFlagManager::getInstance()->getFlag(0x40003)) {
 			case 1:
 				thing = 0;
 				break;
@@ -1183,7 +1187,7 @@ void TMarDirector::moveStage()
 		case 14: {
 			unkE4     = 2;
 			u32 thing = 0;
-			switch (TFlagManager::smInstance->getFlag(0x40003)) {
+			switch (TFlagManager::getInstance()->getFlag(0x40003)) {
 			case 3:
 				thing = 0;
 				break;
@@ -1211,7 +1215,7 @@ void TMarDirector::moveStage()
 			break;
 
 		case 9:
-			gpApplication.mFader->setColor(
+			SMSGetApplication()->getFader()->setColor(
 			    JUtility::TColor(0xD2, 0xD2, 0xD2, 0xFF));
 			unkB4 = TApplication::APP_STATE_TITLE;
 			break;
@@ -1219,12 +1223,12 @@ void TMarDirector::moveStage()
 		case 0x34:
 			unkE4         = 8;
 			nextArea.unk1 = 0;
-			TFlagManager::smInstance->setFlag(0x40003, 0);
+			TFlagManager::getInstance()->setFlag(0x40003, 0);
 			break;
 
 		case 0:
 			nextArea.unk1 = 0;
-			TFlagManager::smInstance->setFlag(0x40003, 0);
+			TFlagManager::getInstance()->setFlag(0x40003, 0);
 			break;
 
 		default:
@@ -1233,10 +1237,11 @@ void TMarDirector::moveStage()
 			break;
 		}
 
-	if (nextArea.unk1 != 0xff) {
-		if (checkUnk4CFlag(0x100)) {
+	if (nextArea.getScenario() != 0xff) {
+		if (unk4C & DIRECTOR_FLAG_MOVIE_PENDING) {
 			unkE4 = 15;
-			gpApplication.mFader->setColor(JUtility::TColor(0, 0, 0, 0xff));
+			SMSGetApplication()->getFader()->setColor(
+			    JUtility::TColor(0, 0, 0, 0xff));
 			unkB4 = TApplication::APP_STATE_MOVIE;
 		} else {
 			unkB4 = TApplication::APP_STATE_GAMEPLAY;
@@ -1248,7 +1253,7 @@ void TMarDirector::moveStage()
 		s32 savedNozzle = nozzle;
 		if (nozzle == 3)
 			savedNozzle = 4;
-		TFlagManager::smInstance->setFlag(0x40004, savedNozzle);
+		TFlagManager::getInstance()->setFlag(0x40004, savedNozzle);
 	}
 }
 
