@@ -339,7 +339,7 @@ void TMapStaticObj::initMapCollision(const char* name)
 	else
 		mCollisionManager = new TMapCollisionManager(1, "/map/map", nullptr);
 	mCollisionManager->init(name, 0, nullptr);
-	mCollisionManager->setUpUnk8TRS(getPosition(), mRotation, mScaling);
+	mCollisionManager->setUpUnk8TRS(mPosition, mRotation, mScaling);
 }
 
 // Retail calls this from init: the named `actor` is the fifteenth statement
@@ -386,15 +386,10 @@ static inline void MapStaticObjLoadParticle(const char* path, u16 id)
 	}
 }
 
-// TODO: 99.9%. The named group (dead slot at the top) plus the getPosition()
-// reference in initMapCollision put the setUpUnk8TRS Mtx and the insert pair on
-// retail's slots; push_back's depth-1 pair is still 4 low (0xfc/0xf8 for
-// 0x100/0xfc: one word too many above it, one too few below). The named flag
-// pointer (MapStaticObjLoadParticle) closed the r29/r31 swap (10 -> 4
-// markers). Inert or worse: getInstance()->search, unnamed ref/img,
-// getRotation()/getScaling() references (+8 each); c-k1: unnamed `ref` or
-// unnamed `group` (each frame +8, pair +8), `group` declared then assigned
-// (inert), a named `JUTTexture*` (13 markers).
+// The named group keeps its dead slot at the top; the texture search stays
+// unnamed (its getTexture() binding is the word retail has between the
+// push_back pair and insert's iterators), and initMapCollision reads the raw
+// mPosition. The named flag pointer (MapStaticObjLoadParticle) keeps r29.
 void TMapStaticObj::init(const char* name)
 {
 	mActorName = name;
@@ -441,9 +436,8 @@ void TMapStaticObj::init(const char* name)
 	}
 
 	if (mActorData->mFlags & TActorData::FLAG_IS_INDIRECT) {
-		TScreenTexture* ref = JDrama::TNameRefGen::search<TScreenTexture>(
-		    "スクリーンテクスチャ");
-		const ResTIMG* img = ref->getTexture()->getTexInfo();
+		const ResTIMG* img = JDrama::TNameRefGen::search<TScreenTexture>(
+		    "スクリーンテクスチャ")->getTexture()->getTexInfo();
 		mMActor->getModel()->getModelData()->getTexture()->setResTIMG(1, *img);
 
 		SMS_ChangeTextureAll(mMActor->getModel()->getModelData(),

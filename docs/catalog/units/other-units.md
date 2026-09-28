@@ -44,6 +44,10 @@ Longer evidence for batches 25-39 is in `docs/progress/GMSE01-closure-audit-batc
 - **PollutionObj** (linked): ground-query pointer at slot 0x54 declared first; named `is_near` and centre-height results.
 - **Water-filter / Shimmer**: reuse `isDemoCamera()`/`getUnk124()`; declare inverse-view, translation and scale matrices before transform info. Shimmer needs model `calc`, `viewCalc`, `entry` (vtable 0x10, 0x14, 0x0C).
 - **SplashManager** (linked): colour at 0x54, by-value copy at 0x58 via a compound literal at `requestCol`; alpha named before vertex writes.
+- **MapStaticObject** (closed, c-k1): `init`'s push_back iterator pair was 4 low with the frame equal.
+  The debugger's slot list showed one named word (`ref`) too many above the pair and one object too few between the pair and insert's iterators.
+  `search<TScreenTexture>(...)->getTexture()->getTexInfo()` unnamed moves the word (getTexture's `this` binding is created after the pair), but adds one IRO temporary low; `setUpUnk8TRS(mPosition, ...)` in initMapCollision (raw member, not `getPosition()`) removes one.
+  Neither alone helps; together exact.
 - **MapModel, MapXlu, PollutionPos, PollutionManager, MapObjWater, MapObjFloat, MapEventSirena**: trials in batch 30/31/33/37 audits. Sirena: named flag-manager result only partially shifts the slot.
 
 ## MSound
