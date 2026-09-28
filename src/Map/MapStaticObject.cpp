@@ -373,13 +373,28 @@ void TMapStaticObj::initModel(const char* name)
 	TMapObjBase::startAllAnim(actor, name);
 }
 
+// Parked copy of SMS_LoadParticle (System/Particles.hpp) with the flag
+// pointer named: retail keeps it in r29 across the load, which the header's
+// indexed spelling does not (TODO: header item; the same change in the header
+// grows loadParticleMario's frame, see the note there).
+static inline void MapStaticObjLoadParticle(const char* path, u16 id)
+{
+	bool* flag = &gParticleFlagLoaded[id];
+	if (!*flag) {
+		gpResourceManager->load(path, id);
+		*flag = true;
+	}
+}
+
 // TODO: 99.9%. The named group (dead slot at the top) plus the getPosition()
 // reference in initMapCollision put the setUpUnk8TRS Mtx and the insert pair on
 // retail's slots; push_back's depth-1 pair is still 4 low (0xfc/0xf8 for
-// 0x100/0xfc: one word too many above it, one too few below), and both
-// SMS_LoadParticle flag pointers take r31 (retail r29; regalloc --search finds
-// no single move). Inert or worse: getInstance()->search, unnamed ref/img,
-// getRotation()/getScaling() references (+8 each).
+// 0x100/0xfc: one word too many above it, one too few below). The named flag
+// pointer (MapStaticObjLoadParticle) closed the r29/r31 swap (10 -> 4
+// markers). Inert or worse: getInstance()->search, unnamed ref/img,
+// getRotation()/getScaling() references (+8 each); c-k1: unnamed `ref` or
+// unnamed `group` (each frame +8, pair +8), `group` declared then assigned
+// (inert), a named `JUTTexture*` (13 markers).
 void TMapStaticObj::init(const char* name)
 {
 	mActorName = name;
@@ -407,14 +422,14 @@ void TMapStaticObj::init(const char* name)
 		case 0:
 			break;
 		case 1:
-			SMS_LoadParticle(mActorData->mParticlePath,
-			                 mActorData->mParticleId);
+			MapStaticObjLoadParticle(mActorData->mParticlePath,
+			                         mActorData->mParticleId);
 			break;
 		case 2:
 			break;
 		case 3:
-			SMS_LoadParticle(mActorData->mParticlePath,
-			                 mActorData->mParticleId);
+			MapStaticObjLoadParticle(mActorData->mParticlePath,
+			                         mActorData->mParticleId);
 			break;
 		}
 	}
