@@ -398,13 +398,10 @@ void TPoiHana::walkBehavior(int param_1, float param_2)
 	if (mSleepVersion && param_1 == 0) {
 		mGoToSleepTimer += 1;
 		if (checkCurAnmEnd(0)) {
-			// TODO: loads now exact with the sum on the left; retail still
-			// compares `cmpw timer, sum; ble` with the sum in r4, we emit
-			// `cmpw sum, timer; bge` into r3. Any spelling with the timer on
-			// the left (`>`, `!(<=)`, a named sum) brings back the r0/r3/r4
-			// load rotation. Also tried: named int timer or wake, TU-local
-			// forks over the timer/wake/sum, casts, `.value` (-0x10 frame).
-			if (getInstanceIndex() * 100 + unk19C->mSLWakeFrame.get() < mGoToSleepTimer) {
+			// One web for the wake frame and the sum (`add r4, r4, r3`).
+			int wakeFrame = unk19C->mSLWakeFrame.get();
+			wakeFrame += getInstanceIndex() * 100;
+			if (mGoToSleepTimer > wakeFrame) {
 				mGoToSleepTimer = 0;
 
 				mGoToSleepTimer = TMsRange<s32>(-500, 500).rand();
