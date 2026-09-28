@@ -199,6 +199,9 @@ void loadWarpPointPos(JSUMemoryInputStream& stream, int num, Vec* positions)
 // r9). All-raw negations fix the r8 but lose 0x10 of frame, which the two
 // getUnk8() sites were filling; retail's 0x10 has another source (not the
 // other accessor placements, nor named u32 copies of the two values).
+// c-k5: regalloc.py names the swapped webs as the local_180[i]/local_1d0[i]
+// CSE temporaries (@913/@914); named `warp`/`kind` copies in either order and
+// reading the second pair back from unk4[2 * i] are all worse (97.8/94.4).
 void TMapWarp::init(JSUMemoryInputStream& stream)
 {
 	u32 data;
