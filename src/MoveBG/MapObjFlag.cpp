@@ -148,8 +148,8 @@ void TMapObjFlag::updateVertex()
 // CUE_CALC_ANIM loop, inlined there.
 void TMapObjFlag::update()
 {
-	MsMtxSetXYZRPH(mMtx, mPosition.x, mPosition.y, mPosition.z, mRotation.x,
-	               mRotation.y, mRotation.z);
+	MsMtxSetXYZRPH(mMtx, getPosition().x, getPosition().y, getPosition().z,
+	               mRotation.x, mRotation.y, mRotation.z);
 	updateVertex();
 
 	mWaveAngle += mFlutterSpeed;
@@ -158,7 +158,8 @@ void TMapObjFlag::update()
 
 	// Only the big flags are loud enough to be heard, and Delfino Plaza has
 	// its own ambience.
-	if (mScaling.y > 3.0f && mScaling.z > 3.0f && gpMarDirector->mMap != 3
+	if (mScaling.y > 3.0f && mScaling.z > 3.0f
+	    && gpMarDirector->getCurrentMap() != 3
 	    && gpMSound->gateCheck(MSD_SE_OBJ_FLAG))
 		MSoundSESystem::MSoundSE::startSoundActor(MSD_SE_OBJ_FLAG, &mPosition,
 		                                          0, nullptr, 0, 4);
@@ -270,29 +271,19 @@ void TMapObjFlagManager::initDraw()
 	GXSetCullMode(GX_CULL_NONE);
 }
 
-// TODO: 94.7%, structural residue confined to the UNUSED TMapObjFlag::update
-// body's inlined MsMtxSetXYZRPH call (closure batch 123). Retail's
-// instruction schedule interleaves the rotation-to-BAM conversions
-// (`fmuls`/`fctiwz`) with an unrelated address computation (`addi r3, r28,
-// 0x8c`, precomputing `&mWaveAngle` early) in a way our build does not
-// reproduce. Routing the position/rotation reads through `getPosition()`/
-// `getRotation()` matched the same 37 `~` markers in isolation, but
-// `ninja changes_all` showed a -0.02% fuzzy_match wobble on this function
-// that could not be pinned to a real instruction change, so the raw
-// `mPosition`/`mRotation` form is kept. The call site already matches
-// MsMtxSetXYZRPH's f32-degree overload in MathUtil.hpp exactly, so the
-// remaining gap is scheduling inside that shared inline, not something this
-// call site controls. Batch 128 re-measured with marker counts (not the fuzzy
-// percentage) and confirms it: `getPosition()`/`getRotation()` singly are +8
-// of frame each and +24 together, `SMSGetMarDirector()->getCurrentMap()` +8,
-// and *none* of them moves the 37 markers. Retail loads the rotation
-// components z, y, x (right-to-left argument order) and gives their three
-// `fctiwz` conversion doubles *ascending* slots 0x80/0x88/0x90; ours loads y,
-// z, x and allocates 0x80/0x78/0x70 descending. Not reachable from the call
-// site: the s16 overload with explicit `(s16)(rot * 65536.0f / 360.0f)` casts,
-// `DEG2SHORTANGLE`, and three named `f32` locals in either order all leave 36
-// or 37 markers. The frame is 16 short and splits as +20 of low region below
-// the JUTTexture temporary minus 4 between it and the conversion doubles.
+// TODO: 94.8%, frame exact (0xd0) since c-k6: the inlined update() reads
+// the position through getPosition() and the map through getCurrentMap()
+// (+8 each, the 0x14 of dead low region below the JUTTexture; getRotation()
+// in place of getPosition() is the same price and the same code).
+// Left: scheduling of the inlined MsMtxSetXYZRPH conversions. Every build's
+// IR converts x, y, z (so both give x the highest temp, 0x90), but retail's
+// scheduler issues the fmuls/fctiwz/stfd chains z, y, x (the order init()'s
+// pre-RA schedule also takes, where the 65536/360 constant is loaded in the
+// block) while ours issues y first with the constant hoisted to f31.
+// Inert (13 markers each): explicit s16 overload casts, named f32 rotation
+// locals, getRotation() for all three, `mWaveAngle = mWaveAngle + speed`.
+// Earlier record (batch 128): getPosition()/getRotation() together are +24,
+// the s16 overload and DEG2SHORTANGLE leave the schedule unchanged.
 void TMapObjFlagManager::perform(u32 cue, JDrama::TGraphics* graphics)
 {
 	if (cue & CUE_CALC_ANIM) {
