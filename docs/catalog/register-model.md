@@ -265,3 +265,9 @@ Both were read from `dbg.sh` dumps (`frontend-00-ast-initial-code.txt`, `backend
 - A `bl` to a small inline that the rest of the TU expands is real depth evidence (the depth-5 rule) and removing the forwarding levels deletes the weak copy the map lists in that object (`crTimeAry__8TTimeRecFv` in Application.o); check the map for the weak symbol before removing such a ladder.
 - Statement-count fillers (`(void)0`) can be replaced by statement-level declarations of values already present: `T* em = f(); if (em)` instead of `if (T* em = f())` is +1 statement per site at identical code, and `TVec3 v; v.set(...)` instead of the constructor is +1 (TMareWallRock::appear).
 - `dbg.sh` on a Shift-JIS unit: convert to Shift-JIS with iconv, but first replace non-ASCII characters inside comments (an em dash's second Shift-JIS byte is 0x5C and breaks GC/1.1's parse of the next line); prepend the J3DModel/J3DJoint includes GC/1.1 needs.
+
+## Additions (c-k11)
+
+- One word short below a function's depth-1 vectors with a six-argument `startSoundActor(id, pos, 0, nullptr, 0, 4)` call: try the two-argument `startSoundActor(id, pos)` form first (closed `TMareEventDepressWall::rising`).
+- Two branches that spell the same effect block differently (raw global in one, binder in the other) can share one TU-local inline with real content; it places the effect's objects after both branches' vectors, retail's order (closed `depressing`).
+- Retail testing a call result as `cmplwi r3,0` and copying it to a saved register only after a following switch, where ours is `mr. rX, r3`, means the pointer was an inline temporary in retail, not a named local (`setNpcAnm_`, open).
