@@ -153,6 +153,15 @@ bool MSSetSoundGrp::startSoundSetGrp(u32 param1, const Vec* param2, u32 param3,
 // The raw unk1E read is what puts it first in the fmuls: a simple right
 // operand moves left of the getRandom_0_1() call at parse, the accessor
 // (a call there too) does not.
+// c-k7: the whole `bVar2` chain written as a TU-local `static inline bool`
+// predicate (bVar1/uVar5/uVar7 computed inside it, early `return false`s, a
+// fall-through `return true` behind `if (grp != nullptr) {...}`) reproduces
+// retail's shared `li r0, 1` and its r23/r24 (uVar7 r23, bVar1 r24) exactly,
+// but searchD is then expanded inside the predicate (+10 instructions, frame
+// +0x38) where retail calls it; defining the predicate after the caller is the
+// same. So retail's predicate shape is right and something keeps searchD out
+// of line in it. Also worse: `param_8 == nullptr || (...)` with `!(<)` or
+// `>=` (97.5/98.0), `bVar2 = true; if (param_8) {...}` (95.9).
 template <typename T>
 bool MSSetSoundTL<T>::startSoundSetDyna(u32 param_1, const Vec* param_2,
                                         u32 param_3, f32 param_4, u32 param_5,
