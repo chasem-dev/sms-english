@@ -21,10 +21,12 @@ set -uo pipefail
 unit=$1; sym=$2; shift 2
 
 src=
+# Middleware units (dolphin/..., JSystem/..., ...) live under libs/<lib>/src/.
 for ext in cpp c cp; do
 	[ -f "src/$unit.$ext" ] && { src="src/$unit.$ext"; break; }
+	[ -f "libs/${unit%%/*}/src/${unit#*/}.$ext" ] && { src="libs/${unit%%/*}/src/${unit#*/}.$ext"; break; }
 done
-[ -n "$src" ] || { echo "no src/$unit.{cpp,c,cp} here (run from the worktree root)" >&2; exit 2; }
+[ -n "$src" ] || { echo "no src/$unit.{cpp,c,cp} or libs/ source here (run from the worktree root)" >&2; exit 2; }
 obj="build/GMSE01/src/$unit.o"
 
 lock="build/.score-variant.lock"

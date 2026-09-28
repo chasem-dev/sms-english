@@ -109,7 +109,7 @@ _land_unlocked)
 	cd "$ROOT"
 	echo "== merged $(git log --oneline -1)"
 	# Only lines the merge *added*: pre-existing pragmas in touched files are not news.
-	git diff HEAD@{1} HEAD -- 'src/*' 'include/*' | grep -n '^+.*\(pragma dont_inline\|trash\[\|pad\[\)' \
+	git diff HEAD@{1} HEAD -- 'src/*' 'include/*' 'libs/*' | grep -n '^+.*\(pragma dont_inline\|trash\[\|pad\[\)' \
 		| grep -v '^[0-9]*:+\s*//' && echo "!! suspicious padding/pragma ADDED above" || true
 	rc=0
 	pre=$(git rev-parse HEAD@{1})
