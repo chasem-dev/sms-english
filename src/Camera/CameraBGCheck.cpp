@@ -106,6 +106,15 @@ bool CPolarSubCamera::isNeedGroundCheck_()
 		// product/sine/mDistMin levels, distY or a declared first, an
 		// NgMax-style helper, `(a > b ? a : b)`, JMASin over the s16, a named
 		// sine, b declared first or split, a params local.
+		// c-k9 (regalloc.py): retail keeps mDistMin (f2) and the product (f3)
+		// in separate webs, so `a` is single-definition
+		// (`f32 a = mDistMin * JMASSin(min);`). That spelling leaves only a
+		// distY/a swap, and the replay closes it when distY is coloured before
+		// a's IRO product temporary @714; distY as a named two-definition web
+		// is always coloured after it. distY single-definition before or
+		// between a and b splits b's `b = a` copy (fmr f4, 96.5%); distY or a
+		// declared first as `f32 distY;` and `a = JMASSin(); a = d * a;` are
+		// 99.6.
 		f32 a = mCurrentParams->mDistMin;
 		a *= JMASSin(mCurrentParams->mXAngleMin);
 		f32 b = mCurrentParams->mDistMax * JMASSin(mCurrentParams->mXAngleMax);
@@ -166,6 +175,12 @@ static inline bool should_clip_fabricated(const TBGCheckData* data)
 // three words from posArg's slot (0x60) rather than from mCurrentTarget.
 // Tried: posCam from posArg (copy-init, assigned, set(), xyz ctor, Vec cast),
 // posArg as a Vec.
+// c-k9: `JGeometry::TVec3<f32> posCam = posArg;` after the assignment reads
+// retail's 0x60 slot, but the copy is then scheduled lwz, lwz, stw, lwz, stw,
+// stw with x and z in r0 (98.4); retail's two-load, two-store order looks like
+// a source the scheduler cannot prove distinct from posCam (a reference).
+// Both copy-initialised, or posCam assigned after a default declaration, add a
+// temporary (frame +0x10) or are 97.3.
 bool CPolarSubCamera::execWallCheck_(Vec* param_1)
 {
 	bool moved = false;
@@ -252,6 +267,13 @@ bool CPolarSubCamera::execRoofCheck_(Vec param_1)
 // -0x10), by-value levels over the lerp ratio, groundChg, the lerp and
 // mPreviousTarget.y (+4/+8, ground moves up), `ground` declared first,
 // `groundY += groundOff` and a named sum.
+// c-k9 debugger: the named block is right; retail has one fewer dead word
+// *below* ground (ours: three get() receiver bindings, F/P temporaries
+// @548/@549/@551 and should_clip's bool F @562). Any raw `.value` drops two
+// words and `getCamMode()` at the slider test adds one, which lands `ground`
+// and the frame, but every raw read swaps the two CLBLinearInbetween argument
+// loads (lfs 0xb8 before 0xcc). The helper's if/return and `&&` bodies are
+// worse in all three callers.
 bool CPolarSubCamera::execGroundCheck_(Vec param_1)
 {
 	bool moved    = false;
