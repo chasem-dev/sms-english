@@ -381,6 +381,11 @@ static inline JAISound* MSoundUnkC4(const MSound* p)
 // TODO: 99.9%. The second JAICamera() temp sits 4 bytes low (retail 0x1c,
 // ours 0x20; the first is exact at 0x2c). A `for (i < 2)` loop over unkAC
 // (int/s32/u32/u8 counters) unrolls to one shared temp: 97.3%.
+// c-k9 debugger: both temps are parse-time objects and retail has one word
+// created between them (so a parse-time 4-byte object) and one fewer of the
+// five below (@1764/@1765 binder locals, F 392, P 396, P 398). A
+// `MSoundResetCamera(JAICamera&)` level for the two resets is worse (99.8,
+// ~12) with or without a raw unkC4 test.
 void MSound::exitStage()
 {
 	for (u8 cat = 0; cat < JAIGlobalParameter::getParamSeCategoryMax(); ++cat)
