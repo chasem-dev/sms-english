@@ -1836,9 +1836,9 @@ void TMario::checkCurrentPlane()
 
 		if (mPosition.y > mFloorPosition.y + 100.0f)
 			mInput |= 0x4;
-
-		offFlag(MARIO_FLAG_GROUND_POUND_SIT_UP);
 	}
+
+	offFlag(MARIO_FLAG_GROUND_POUND_SIT_UP);
 }
 
 void TMario::getActorMtx(const THitActor&, Mtx) { }
