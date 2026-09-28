@@ -288,6 +288,19 @@ void TJumpBase::calcRootMatrix()
 // cc28: (2) is also inert to a TU-local wrapper over either JMASSin or
 // JMASCos (same 106 markers); `mVelocity.set(...)` and a velocity helper
 // taking the angle (int or s16, by out-reference or by value) are worse.
+// Closure c-k4: (2) is fixed by reading the angle through the header accessor
+// at both calls, `JMASSin(SMS_GetMarioAngleY())` / `JMASCos(...)`, as
+// TMapObjGeneral does: the two index trees are then different inline results,
+// the IR optimiser does not merge them, and the backend CSE merges only the
+// loads and the `clrlwi` (retail's two `sraw`). Case 5 is exact, slots
+// included (vector temporary at 0x60). What is left is (1) and the frame,
+// now 0x90 against 0x88: retail's copy of mVelocity is an unnamed temporary
+// at 0x54, right below the vector (created after it at parse time), with one
+// 4-byte object between the (f32)getEnd() conversion slot (0x70) and the
+// vector; our named `v2` sits in the named region at 0x6c. Measured: an
+// unnamed `TVec3<f32>(mVelocity)` (0x90, every temporary 0xc high), a named
+// or unnamed copy of getVelocity() (0x98), `add(TVec3(mVelocity))` (0x90),
+// and `+= getVelocity()` with no copy (7 instructions short).
 void TJumpBase::control()
 {
 	int prevState = unk138;
@@ -375,9 +388,8 @@ void TJumpBase::control()
 	case 5:
 		if (unk13C == 0) {
 			onLiveFlag(LIVE_FLAG_AIRBORNE);
-			int angle = *gpMarioAngleY;
-			mVelocity
-			    = JGeometry::TVec3<f32>(JMASSin(angle), 0.0f, JMASCos(angle));
+			mVelocity = JGeometry::TVec3<f32>(JMASSin(SMS_GetMarioAngleY()), 0.0f,
+			                                  JMASCos(SMS_GetMarioAngleY()));
 			JGeometry::TVec3<f32> v2 = mVelocity;
 			mPosition += v2;
 			offLiveFlag(LIVE_FLAG_UNK10);
