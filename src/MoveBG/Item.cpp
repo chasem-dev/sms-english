@@ -639,6 +639,11 @@ void TShine::movingDown()
 // and `trans`/`mtx`/`model` declared at function top (inert).
 // c-m24: retail has only two words above the GXColor (ours: the four named
 // locals); unnamed color/model/trans or a TVec3(x, y, z) all shrink the frame.
+// c-k1 (debugger): a named `GXColor color = {...}` (by value) gives retail's
+// two words above it (model, mtx), frame 0xa0; retail then still has 9 more
+// words between the colour and the TFlagT and 14 more below the flag, which
+// no local spelling here supplies (gpMSound, &getPosition() at the sound
+// sites, a TVec3 temporary for trans: all shrink or add instructions).
 void TShine::control()
 {
 	if (!isState(0x10))
