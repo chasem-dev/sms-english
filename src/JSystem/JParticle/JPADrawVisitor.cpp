@@ -647,6 +647,10 @@ static inline void JPACross(JGeometry::TVec3<f32>& out, const JGeometry::TVec3<f
 // through JPACross and the zeroed pt. Retail also has a 12-byte named slot above offs. Declaration
 // moves of pt are inert (pt has no slot). Without the angle level the Rot
 // siblings are 8 short too, so one 8-byte site is shared by all four.
+// c-k11: every accessed slot is 0x20 low and the saved registers 0x28, so
+// eight words are missing below local_80 (inline or IRO) and two at the
+// top. setLength(1.0f) for any subset of the three normalize() calls moves
+// the frame the wrong way (0xf8).
 void JPADrawExecDirectional::exec(const JPADrawContext* dc,
                                   JPABaseParticle* particle)
 {
