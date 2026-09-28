@@ -924,15 +924,15 @@ void TLeanMirror::controlShake()
 		// in the frame (0x40 more) and puts the speed in f31; we expand the
 		// ctor to nothing. The same inert result as the TU-local wrappers
 		// tried before (two or three static-inline levels deep, 69.9 at
-		// depth 3). Retail also multiplies the z term of the lean test
-		// first; swapping its addends or operands is inert.
+		// depth 3).
 		calcCurrentMtx(mtx);
 
 		if (getModel()->getAnmMtx(0)[1][1] < mLeanLimit) {
+			// Both matrices named: retail rounds the z term and fuses the x
+			// term into the sum (read inline, the x term was the rounded one).
 			MtxPtr now = getModel()->getAnmMtx(0);
-			if (mSpeed.x * getModel()->getAnmMtx(0)[0][1]
-			        + mSpeed.z * now[2][1]
-			    > 0.0f) {
+			MtxPtr cur = getModel()->getAnmMtx(0);
+			if (mSpeed.x * cur[0][1] + mSpeed.z * now[2][1] > 0.0f) {
 				gpMSound->startSoundActorWithInfo(
 				    MSD_SE_OBJ_MA_MIRROR_IMPACT, &mPosition, nullptr,
 				    fabsf(mSpeed.length()), 0, 0, nullptr, 0, 4);
