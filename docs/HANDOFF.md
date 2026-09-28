@@ -20,6 +20,12 @@ c-k8 showed that an empty `if (x != nullptr) {}` after a call survives to regist
 Writing those tests as empty bodies is currently on the rejected (fakematch) list.
 If the owner accepts them as the faithful rendering of compiled-out logging (perhaps via a named no-op macro), MapObjInit (`initMActor` 87.1 -> 98.6, `makeMActors` 98.65 -> 99.8) and the existing effectObj/coasterkiller/NpcCollision empty-if debts become legitimate; until then they stay parked.
 
+## Parked for an owner decision (2026-09-28, c-r21)
+
+Branch `wt/c-r21` commit `d28e1a4` writes `MsMtxSetRotZ`'s body through `f32* m = (f32*)mtx;` (+2 exact: HauntLegCallback, TobiPukuRollCallback; KillerBodyCallback 96.9 -> 99.7 and PakkunSeedCallback 93.2 -> 99.7 instruction-exact) but needs a unit-local plain copy `RollBlockRotZ` to keep TRollBlock::calcRootMatrix at 99.2.
+Not landed: the flat-pointer cast reads as the kind of cast CLAUDE.md forbids, and the per-site duplicate encodes a split nobody has explained (callbacks and loops want the cast body, straight-line members the plain one).
+Land it only if the owner accepts the cast, or once the per-site split is explained (see frame-gaps.md "Research batch c-r21").
+
 ## State 2026-09-27 night (session 5237deed, map + compiler-research round)
 
 All 72.72 -> 72.82% matched, 531/732 linked (MarNameRefGen linked), DOL identical, zero regressions.
