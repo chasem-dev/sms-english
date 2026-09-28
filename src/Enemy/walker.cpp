@@ -132,11 +132,11 @@ void TWalker::bind(TLiveActor* param_1)
 				const TBGCheckData* local_44;
 				if (enemy->checkLiveFlag(LIVE_FLAG_UNK1000)) {
 					dVar16 = gpMap->checkGroundIgnoreWaterSurface(
-					    local_30.x, local_30.y + enemy->getHeadHeight(),
+					    local_30.x, enemy->mPosition.y + enemy->getHeadHeight(),
 					    local_30.z, &local_44);
 				} else {
 					dVar16 = gpMap->checkGround(
-					    local_30.x, local_30.y + enemy->getHeadHeight(),
+					    local_30.x, enemy->mPosition.y + enemy->getHeadHeight(),
 					    local_30.z, &local_44);
 				}
 				dVar16 += 1.0f;
