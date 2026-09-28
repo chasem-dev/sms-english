@@ -75,7 +75,7 @@ Commit each batch yourself once it passes verification — no need to ask.
 A batch is committable when `ninja changes_all` shows no function regressions **and** the rebuilt `mario.dol` still matches `a6782903ef79d4196c8489ecb1b57decb5b3728f` byte-for-byte.
 If either check fails, fix or revert; never commit a red batch.
 
-Do **not** push.
-There is no fork configured, and every batch exists only on this disk — raise that with the user rather than inventing a remote.
+Work lands on `main` and is pushed to `origin` (the owner's fork, chasem-dev/sms-english) after each verified batch.
+Agents in worktrees commit on their own `wt/*` branch and never push; the orchestrator merges into `main` and pushes.
 
 Keep commit messages in the existing style: imperative mood, one line naming what was restored or corrected, and the `Claude-Session:` trailer.
