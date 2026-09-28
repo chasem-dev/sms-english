@@ -272,6 +272,7 @@
     "Map/MapEventDolpic.cpp",
     "Map/MapEventSirena.cpp",
     "Map/MapModel.cpp",
+    "Map/MapStaticObject.cpp",
     "Map/MapXlu.cpp",
     "Map/MarineSnow.cpp",
     "Map/PollutionAction.cpp",
