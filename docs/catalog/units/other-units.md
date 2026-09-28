@@ -89,6 +89,7 @@ Longer evidence for batches 25-39 is in `docs/progress/GMSE01-closure-audit-batc
   A separate `maxPlaying` initialised from one load is split by the IR optimiser (`maxPlaying = @250 = load`, the hoisted `+ 1` reads `@250`), which costs a copy and rotates every callee-saved register; with two definitions the local is never split and the load lands in its register.
   Tell: retail's load writes straight into a callee-saved register that an earlier, unrelated counter also used.
   Open: `it`/`pi`/`(u8)camEnd` (r18/r20/r27 in retail). The replay closes with top declarations `it; cam; pi; num` after `bVar18` plus one extra coalesced web neighbouring the four hoisted pool temps but not `it`; the declarations alone are 85 markers (the pool temps fall in the second sweep).
+- **JKRExpHeap::allocFromHead** (c-k4, open, debugger-read): the `nor` placement is colouring: the loop-invariant mask (`@167`) is created after getContent()'s forced-load result (`@166`, which `content` becomes) and so coloured after it; retail colours the mask first. Raw `(void*)(block + 1)` fixes the mask but recolours the rest (97.1).
 
 ## MoveBG and Animal
 

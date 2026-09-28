@@ -224,6 +224,18 @@ void* JKRExpHeap::alloc(u32 size, int alignment)
 // (ALIGN_PREV with/without named content, one-line ALIGN_NEXT) are 94.6-96.4%,
 // and `(u32)align`, int aligned/offset, `~mask & (...)` and hand-spelled
 // rounding are 94.3-98.8% with the `nor` still in the pre-`stwu` slot.
+// Closure c-k4, debugger reading (unit flags): the pre-allocation schedule
+// already has the `not` after `addi r55,r4,3`, so the placement follows from
+// colouring. The mask is the loop-invariant hoist `@167`, created by the IR
+// optimiser after getContent()'s forced-load inline result `@166` (which is
+// what `content` becomes), so it is numbered lower, pushed earlier and
+// coloured after it: `content` takes r4 and the mask r6. Retail colours the
+// mask first. A raw `(void*)(block + 1)` removes the inline result and gives
+// retail's `nor r4` and exact structure, but `content` then stays a named web
+// and every other register moves (97.1, one more callee-saved register);
+// naming the mask inside the loop (any type), a second getContent() at the
+// `aligned` or `offset` use, and a split `content` declaration are inert or
+// worse.
 void* JKRExpHeap::allocFromHead(u32 size, int align)
 {
 	size                    = ALIGN_NEXT(size, 4);
