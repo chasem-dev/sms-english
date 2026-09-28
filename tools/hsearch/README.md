@@ -1,0 +1,99 @@
+# hsearch: honest source search
+
+`hsearch` searches source spellings of one near-exact function by machine.
+It compiles each variant with the unit's own MWCC command, scores it in-process against the retail object, and keeps every trial in one SQLite database so nothing is compiled twice.
+It only generates honest moves: value-preserving rewrites that read like code a person wrote.
+It never writes to the source tree while searching; winners come out as patch files.
+
+Run it from the repo or worktree root, after a full build (it needs `build.ninja`, `objdiff.json` and the retail objects under `build/GMSE01/obj`).
+
+```
+python3 -m tools.hsearch run -u Enemy/hanasambo -f attackToMario__10TSamboHeadFv
+python3 -m tools.hsearch batch --list targets.tsv --out DIR --db DIR/trials.sqlite
+python3 -m tools.hsearch moves -u Enemy/hanasambo -f attackToMario__10TSamboHeadFv -v
+python3 -m tools.hsearch score -u Enemy/hanasambo -f attackToMario__10TSamboHeadFv
+python3 -m tools.hsearch apply DIR/attackToMario__10TSamboHeadFv.patch --revert
+python3 -m tools.hsearch stats --db DIR/trials.sqlite
+```
+
+`batch` takes a TSV of `unit<TAB>mangled symbol` rows, is resumable (a function with a recorded run is skipped unless `--rerun`), and stops cleanly before the next function when the `--stop-file` exists.
+Defaults: `--budget 900` seconds per function, `-j 3` parallel compiles, database `$HSEARCH_DB` or `$TMPDIR/hsearch/trials.sqlite`.
+The machine has four cores shared with other agents: keep `-j` at 3 or below.
+
+## Files
+
+- `elfscore.py`: the scorer. It parses both ELF objects, extracts the function, masks every relocated field, and compares relocation targets by name (or, for `@NNN` pool symbols and section symbols, by the bytes they point at).
+- `moves.py`: the honest move set. It imports lever-search's generators and keeps a whitelist of them, and adds this package's levers.
+- `search.py`: shadow-root compiles, the trial database and the search.
+- `__main__.py`: the command line, including the `apply` verification.
+
+## The score
+
+The score is lexicographic, lower is better:
+
+1. byte-exact or not;
+2. differing instructions (opcode, immediate or relocation target differ, plus the length difference);
+3. the frame-size delta;
+4. register-operand mismatches;
+5. `r1` slot-offset mismatches.
+
+On the full tree the scorer agrees with `tools/mwcc-stack/census.py` on 11992 of 11998 exact functions (the rest are relocation-name artefacts of the split, and a few functions census calls `other` that are byte-exact).
+Scoring a function takes milliseconds; the compile dominates.
+
+An exact variant is accepted only when the honesty lint passes and a whole-unit profile shows no other function and no data section getting worse than the base source.
+
+## The move set
+
+Kept from lever-search: accessor vs raw member (`acc->raw`, `raw->acc`, `set-assign`, only accessors that exist in a header), null tests, `int`/`s32` only, naming and unnaming single-use values (`unname`, `name-call`, `name-read`, `name-conv`), declaration order and scope (`decl-order`, `decl-split`, `decl-hoist`), compound assignments (`compound`, `split-sum`), `TVec3` constructor vs `set`, UNUSED stubs called instead of pasted code, rotation helpers.
+
+Left out: its TU-local forks and binders, chain helpers, parameter-alias `bind` names and file-scope colours.
+
+Added here:
+
+- `commute`: commutative operand order for `+` and `*`, when at most one operand has a call with side effects; literal operands are skipped because the frontend canonicalises them anyway (docs/catalog/register-model.md, c-r11).
+- `ternary`: if/return and if/else assignment against `?:`, both ways.
+- `cond-zero`: `if (f())` against `if (f() != 0)` for non-pointer call results.
+- `stmt-swap`: adjacent statements with no data dependency (read/write sets per local and per member name; calls with side effects never cross memory accesses).
+- `for-scope`: a `for` counter declared in the header, at the loop or at the block top.
+- `accumulate`: `T x = a OP b;` as `T x = a; x OP= b;` (this also gives the u8 two-step mask), and a sum in a comparison named and accumulated.
+- `merge-assign`: the reverse of `accumulate`.
+- `addr-assign`: `(p = &G)->m = ...` at the first store through a pointer initialised with a global's address.
+- `pred-level`: `return E;` against a `bool result` local set in an `if`, both ways.
+- `extract`: a run of one to four statements moved into a TU-local `static inline void` level; a single statement qualifies only with a computation or a control statement, so pass-through helpers are never generated.
+  Members are rewritten as `self->m`; the compiler is the type check, so a wrong guess just fails to compile.
+- `conv-raw`: a matrix argument through its conversion operator against the raw `.mMtx` array.
+- `sound-short`: `startSoundActor(id, pos, 0, nullptr, 0, 4)` against the two-argument `startSoundActor(id, pos)` overload (and the handle form against the three-argument one), per site (codegen-tells.md, batch 82).
+
+Plausibility filters drop generated moves that compile but read wrong:
+
+- a single-site or subset accessor/raw flip that leaves the other spelling of the same member within four lines (`unk18.x; unk18.y; getUnk18().z`);
+- a `raw->acc` whose accessor is not the member's accessor in the function's class (the header index is keyed by name, so a namesake would change the value), or whose "member" is a local;
+- naming a value (`name-call`, `name-read`, `name-conv`) while an identical read stays within four lines, or naming an accessor's result next to a raw read of its member;
+- `name-read` of a `stream >> m` operand (the copy would not be written back) and `name-call` of a constructor declaration;
+- `== 0` to `== nullptr` on a non-pointer.
+
+`stmt-swap` treats any operator on a class-typed local (`stream >> x`) as a call that changes it, so such statements never swap.
+
+The lint refuses a winner that gained `volatile`, a pragma, `reinterpret_cast`, a padding array, a `(void)0` filler, an empty `if` body, a pass-through helper or a binder helper.
+Review every winner by eye anyway: generated helper names (`bindPart3`) must be renamed, and a helper must read like a real inline level.
+
+## The search
+
+Within the budget:
+
+1. singles: every move on the base source (up to 60% of the budget);
+2. beam: pairs, triples and quadruples of the useful singles (better, or a different object at the same score);
+3. hill-climbing with restarts: regenerate the moves on the current text, score a batch of neighbours, take the best, allow sideways moves across plateaus, and kick with two or three random moves at once; it stops early when forty rounds in a row compile nothing new.
+
+Moves are weighted by how often their kind has improved a score in this function.
+
+## The database
+
+`trials(fn, unit, hash, score, sig, moves, secs, at)` holds every compiled variant, keyed by the SHA-1 of the whole source text, so a re-run, a resumed batch or a different move order never compiles the same text twice.
+`runs` holds one row per searched function; `results.tsv` in `--out` mirrors it with the patch path and `best_at`, the second at which the final best score was first reached (a measure of whether a longer budget would help).
+
+## Applying a winner
+
+`apply PATCH` applies the patch to this checkout, then runs `build/venv/bin/ninja -k 0`, checks the DOL SHA-1, runs `ninja changes_all` and fails on any lowered value, and compares `tools/validate-symbol-order.py` before and after.
+With `--revert` a failed patch is undone.
+Commit only after reviewing the diff for honesty; rename generated helper names first.
