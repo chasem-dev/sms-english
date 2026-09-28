@@ -517,110 +517,50 @@ int TEnemyManager::countLivingEnemy() const
 
 void TEnemyManager::createCopyAnmMtx(int) { }
 
-// Binding level worth +8 of low region; with getScaling() above it this lands
-// copyAnmMtx's frame at retail's 0xc0 (base 0xb0). Applied at one site only --
-// the level saturates per receiver, so any single site does it.
+// Binding level that lands copyAnmMtx's frame at retail's 0xc0 (0xb0
+// without it). Applied at one site only -- the level saturates per receiver.
 static inline MActor* EnemymanagerGetMActor(const TSpineEnemy* p)
 {
 	MActor* actor = p->getMActor();
 	return actor;
 }
 
-static inline int EnemymanagerGetCurAnmFrameNo(const TSpineEnemy* p)
-{
-	return p->getCurAnmFrameNo(ANM_TYPE_BCK);
-}
-
-// TODO: frame-exact, but retail keeps the scaled animation-frame index in r27
-// and the scratch matrix pointer in r28 while we have them the other way
-// round, which costs the slwi/lfs/addi ordering at 0x88 too. afStack_5C also
-// sits at 0x64 in retail and 0x68 here, so one 4-byte named local is missing
-// above it even though the frame total is right. By the callee-saved rule
-// (r31 downwards in reverse introduction order) retail's claim order is
-// r29 stride temp, r28 wtf, r27 f, r26 mtx, i.e. an introduction order of
-// mtx, f, wtf -- our build introduces them in exactly reverse source order
-// (mtx, wtf, f), so no permutation of the three that keeps `wtf = afStack_5C`
-// after its array can produce retail's. Measured: moving `wtf` after `mtx`
-// 96.1 -> 96.0; hoisting `afStack_5C` + `wtf` above the getCurAnmFrameNo call
-// 96.1 -> 96.8 but the swap survives and the wtf materialisation moves ahead
-// of the call. Declaration-order permutations of `f`, `afStack_5C` and `wtf`
-// (six tried earlier) do not move it, and dropping `wtf` loses two
-// instructions retail has.
-// Closed (header round 24): the UNUSED
-// `TPosition3<TMatrix34<SMatrix34C<f>>>::TPosition3()` is not a missing
-// definition and is not a lead for this function. JGPosition3.hpp already
-// spells it in-class with an empty body, which is exactly the map's 4 bytes
-// (one `blr`), and a weak in-class body that every site inlines leaves no
-// symbol -- so nothing about it can be "defined" anywhere. What the map
-// records is a weak out-of-line copy that survived compilation and was then
-// dead-stripped, and its emission slot places it between createCopyAnmMtx and
-// countLivingEnemy, i.e. immediately after the function that referenced it.
-// That reference has to be an array construction: `new TPosition3f[n]` passes
-// the constructor's *address* to __construct_array, which forces the
-// out-of-line copy, and because createCopyAnmMtx (UNUSED, 0x15c) is itself
-// dead both references die with it. So the real finding is about that stub:
-// createCopyAnmMtx allocates the `unk48` buffer as an array of TPosition3f,
-// and `unk48` is therefore a TPosition3f array rather than the `Mtx**` we
-// declare. Spelling `afStack_5C` as TPosition3f is codegen-identical here
-// (96.1%, same five markers), so the r27/r28 swap has to come from somewhere
-// else.
-// Closure batch 211: our four locals come out in **forward** declaration order
-// (f r28, wtf r27, mtx r26, i r25) and retail's are wtf, f, mtx, i, so retail
-// declares the scratch matrix before the frame index -- which is the variant
-// batch 205 measured at 96.8% with the swap surviving, because an initialised
-// `MtxPtr wtf = afStack_5C;` also drags its materialisation ahead of the
-// getCurAnmFrameNo call. The 4-byte hole above afStack_5C (0x64 retail against
-// 0x68 here, same 0xc0 total) says retail's first-declared named local is a
-// 4-byte one, i.e. something declared *before* the matrix. Research 210's
-// inlined-call rule does not apply: the rotated pair is a local and a stack
-// address, not a receiver and an argument (see the bucket ladder recorded on
-// TBossHanachan::setHeadAndBodyAnm).
-// Closure batch 222 applied research 221's lever and landed most of it:
-// routing the frame number through the TU-local binding level
-// `EnemymanagerGetCurAnmFrameNo` makes the instruction stream **exact** (109
-// instructions, no inserted or deleted ones, frame 0xc0) -- the `lfs f0` /
-// `addi rD, r1, off` pair at 0x88 now comes out in retail's order -- taking
-// the function 96.1 -> 99.7%.  A *named* local inside that helper
-// (`int frame = ...; return frame;`) is a different and worse lever: it splits
-// the raw index from its `slwi` into two callee-saved values and costs +8 of
-// frame (0xc8, Mtx at 0x70, 12 markers), i.e. research 221's "a named local in
-// an inlined callee reserves stack" priced here at 8, not 4.
-// Residue (6 markers): retail reuses one register for the index and its
-// `slwi` (r27) and gives `wtf` r28, we spend r29 on the raw index, r28 on the
-// shifted one and r27 on `wtf`; afStack_5C is still 0x68 against retail's
-// 0x64, so the low region is 4 bytes too big (retail pays the difference back
-// as alignment pad under the 8-aligned float-conversion slot at 0x98, which is
-// why both frames are 0xc0).  Dropping `wtf` is -8 of low region, not -4
-// (0xb8, 14 markers, and it loses an instruction retail has), so the missing
-// knob is a -4 one below the matrix.
+// Closed (c-k5). The scratch matrix is a TPosition3f, as `unk48` is (the
+// dead-stripped weak TPosition3 ctor after createCopyAnmMtx): its conversion
+// operator is what keeps the matrix address in r28 across the loop, which a
+// fabricated `MtxPtr wtf = afStack;` used to imitate. The scale reads are
+// raw `mScaling` (a named `getScaling()` reference left a dead word under the
+// matrix, 0x68 for retail's 0x64), and the frame index is read straight from
+// `getCurAnmFrameNo`, so the raw value and its `slwi` share r27.
+// TODO: EnemymanagerGetMActor is an identity binder kept only for its +0x10
+// of frame (0xb0 without it); every raw/named/accessor spelling of the first
+// test and every getModel() subset of the other three sites is worse.
 bool TEnemyManager::copyAnmMtx(TSpineEnemy* enemy)
 {
 	if (unk4C != EnemymanagerGetMActor(enemy)->getCurAnmIdx(ANM_TYPE_BCK))
 		return false;
 
-	int f = EnemymanagerGetCurAnmFrameNo(enemy);
+	int f = enemy->getCurAnmFrameNo(ANM_TYPE_BCK);
 	enemy->calcRootMatrix();
 	enemy->updateAnmSound();
 	enemy->getMActor()->frameUpdate();
 
-	Mtx afStack_5C;
-	MtxPtr wtf = afStack_5C;
+	TPosition3f concat;
 	MtxPtr mtx = enemy->getMActor()->getModel()->getBaseTRMtx();
 
-	const JGeometry::TVec3<f32>& v = enemy->getScaling();
-	mtx[0][0] *= v.x;
-	mtx[0][1] *= v.y;
-	mtx[0][2] *= v.z;
-	mtx[1][0] *= v.x;
-	mtx[1][1] *= v.y;
-	mtx[1][2] *= v.z;
-	mtx[2][0] *= v.x;
-	mtx[2][1] *= v.y;
-	mtx[2][2] *= v.z;
+	mtx[0][0] *= enemy->mScaling.x;
+	mtx[0][1] *= enemy->mScaling.y;
+	mtx[0][2] *= enemy->mScaling.z;
+	mtx[1][0] *= enemy->mScaling.x;
+	mtx[1][1] *= enemy->mScaling.y;
+	mtx[1][2] *= enemy->mScaling.z;
+	mtx[2][0] *= enemy->mScaling.x;
+	mtx[2][1] *= enemy->mScaling.y;
+	mtx[2][2] *= enemy->mScaling.z;
 
 	for (int i = 0; i < unk50; ++i) {
-		MTXConcat(mtx, unk48[f][i], afStack_5C);
-		enemy->getMActor()->getModel()->setAnmMtx(i, wtf);
+		MTXConcat(mtx, unk48[f][i], concat);
+		enemy->getMActor()->getModel()->setAnmMtx(i, concat);
 	}
 
 	if (enemy->getMActor()->getModel()->getModelData()->getWEvlpMtxNum())
