@@ -362,11 +362,12 @@ BOOL TTabePuku::receiveMessage(THitActor* sender, u32 message)
 	}
 }
 
-// TODO: the frame is exact. Retail builds the translation straight from
-// mouth into fresh FPRs (a second in-place scaleAdd keeps it in f29-f31);
-// x and y still swap f1/f2 there, inert under named components, raw ref()
-// stores and operand order. What remains is setQuat's FPR scheduling in
-// JGRotation3.hpp, the known regswap there.
+// TODO: 99.6%. Retail builds the translation straight from mouth into fresh
+// FPRs (a second in-place scaleAdd keeps it in f29-f31); x and y still swap
+// f1/f2 there, inert under named components, raw ref() stores and operand
+// order. The frame is 8 short (0xe0 against 0xe8) since setQuat took its
+// nine-local body (c-r22); the old eleven-local body had it exact but
+// scheduled setQuat itself wrong.
 MtxPtr TTabePuku::getTakingMtx()
 {
 	mTakingMtx.setQuat(mQuat);
