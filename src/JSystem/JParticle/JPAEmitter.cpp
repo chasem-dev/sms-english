@@ -422,8 +422,8 @@ JPABaseParticle* JPABaseEmitter::createParticle()
 						    = -JPAEmitterInfoObj.mSphereCurrentPitch;
 						JPAEmitterInfoObj.mHemisphereFlipFlop = true;
 					}
+					JPAEmitterInfoObj.mSphereCurrentYaw = 0;
 				}
-				JPAEmitterInfoObj.mSphereCurrentYaw = 0;
 			}
 		}
 
