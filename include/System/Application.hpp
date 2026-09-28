@@ -92,6 +92,12 @@ public:
 
 extern TApplication gpApplication;
 
+// fabricated name. The application as a reference: MarDirectorEvent,
+// MarDirectorDirect and MenuDir each need this level (retail folds
+// setNextArea's stores onto the &gpApplication base and the movie stores
+// cost one pool word per site), which the raw global does not give.
+inline TApplication& SMSGetApplication() { return gpApplication; }
+
 class TCardManager;
 extern TCardManager* gpCardManager;
 

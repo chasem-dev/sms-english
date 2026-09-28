@@ -181,10 +181,6 @@ int TMenuDirector::rsetup()
 	return 0;
 }
 
-// Reference-returning accessor, as MarDirectorEvent's MDEApp() and
-// MarDirectorDirect's MDDApp(): setNextArea's stores fold onto &gpApplication.
-static inline TApplication& MNApp() { return gpApplication; }
-
 int TMenuDirector::direct()
 {
 	if (!unk50) {
@@ -347,7 +343,7 @@ int TMenuDirector::direct()
 			gpApplication.mFader->startFadeoutT(0.25f);
 			// TODO: instructions match; frame 0x78 vs retail 0x128 (a dead
 			// low region, as MarDirectorDirect::decideNextStage).
-			MNApp().setNextArea(TGameSequence(unk48, unk4C));
+			SMSGetApplication().setNextArea(TGameSequence(unk48, unk4C));
 		} else if (unk44->checkFlag(0x2)) {
 			unk18 = 0;
 			unk40->unfade();
