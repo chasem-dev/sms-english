@@ -1606,12 +1606,18 @@ void TMammaMirrorMapOperator::perform(u32 cue, JDrama::TGraphics* graphics)
 		const JGeometry::TVec3<f32>& camPos = gpMirrorModelManager->unk24->unk98;
 		JGeometry::TVec3<f32> toMirror;
 		toMirror.sub(camPos, mMirrorPos[gpMirrorModelManager->getUnk18()]);
-		f32 mirrorDist = toMirror.length();
+		f32 sqX        = toMirror.x * toMirror.x;
+		f32 sqY        = toMirror.y * toMirror.y;
+		f32 sqZ        = toMirror.z * toMirror.z;
+		f32 mirrorDist = JGeometry::TUtil<f32>::sqrt(sqX + sqY + sqZ);
 
 		for (int i = 0; i < MIRROR_JOINT_NUM; i++) {
 			JGeometry::TVec3<f32> toJoint;
 			toJoint.sub(camPos, mJointCenter[i]);
-			f32 jointDist = toJoint.length();
+			f32 jointSqX  = toJoint.x * toJoint.x;
+			f32 jointSqY  = toJoint.y * toJoint.y;
+			f32 jointSqZ  = toJoint.z * toJoint.z;
+			f32 jointDist = JGeometry::TUtil<f32>::sqrt(jointSqX + jointSqY + jointSqZ);
 
 			if (jointDist > mJointRadius[i] || jointDist > mirrorDist)
 				show(i);
