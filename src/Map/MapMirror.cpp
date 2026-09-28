@@ -402,6 +402,21 @@ static inline void MapMirrorSetPlaneFromGround(TMirrorModelManager* manager,
 	manager->unk24->makeMirrorViewMtx();
 }
 
+// TODO: 91.3%, frame 0x168 vs 0x1a8. Structural residue in the deep
+// (CUE_ENTRY -> entry -> makeMirrorViewMtx) expansion, read by c-k6:
+//  * retail evaluates each camera vector address once and keeps it in r28
+//    for both the dot argument and the out-of-line scaleAdd's `c`
+//    (`addi r28, r4, 0x124; ...; mr r5, r28`); ours re-reads gpCamera after
+//    `bl dot`. That is one binding used twice, i.e. an inline parameter.
+//  * retail has no `bl TVec3::TVec3()` for the two reflected vectors (only
+//    for the plane's normal); MapMirrorVecs costs two.
+//  Tried: a `MapMirrorPlane::reflect(out, point)` level (with MapMirrorVecs
+//  71.7, with plain locals 53.3: the extra level moves scaleAdd/dot across
+//  the depth budgets in both copies), named `const TVec3&` camera vectors
+//  (73.9, the added statements change the shallow copy's inlining), plain
+//  target/up locals alone (73.8). The fix probably removes the fabricated
+//  MapMirrorSetPlaneFromGround/MapMirrorMakeViewMtx levels at the same time
+//  as it adds the parameter level.
 void TMirrorModelManager::perform(u32 cue, JDrama::TGraphics* graphics)
 {
 	if (cue & CUE_MOVE) {
