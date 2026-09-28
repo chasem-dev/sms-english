@@ -508,14 +508,6 @@ int TEnemyManager::countLivingEnemy() const
 
 void TEnemyManager::createCopyAnmMtx(int) { }
 
-// Binding level that lands copyAnmMtx's frame at retail's 0xc0 (0xb0
-// without it). Applied at one site only -- the level saturates per receiver.
-static inline MActor* EnemymanagerGetMActor(const TSpineEnemy* p)
-{
-	MActor* actor = p->getMActor();
-	return actor;
-}
-
 // Closed (c-k5). The scratch matrix is a TPosition3f, as `unk48` is (the
 // dead-stripped weak TPosition3 ctor after createCopyAnmMtx): its conversion
 // operator is what keeps the matrix address in r28 across the loop, which a
@@ -523,12 +515,15 @@ static inline MActor* EnemymanagerGetMActor(const TSpineEnemy* p)
 // raw `mScaling` (a named `getScaling()` reference left a dead word under the
 // matrix, 0x68 for retail's 0x64), and the frame index is read straight from
 // `getCurAnmFrameNo`, so the raw value and its `slwi` share r27.
-// TODO: EnemymanagerGetMActor is an identity binder kept only for its +0x10
-// of frame (0xb0 without it); every raw/named/accessor spelling of the first
-// test and every getModel() subset of the other three sites is worse.
+// TODO: 99.9%, every instruction matching; frame 0xb8 vs retail 0xc0. An
+// identity binder over getMActor() at the first test gave the 0xc0 and was
+// removed as a fakematch. The named actor is 8 short; the unnamed accessor,
+// a named index and the raw member are 0x10 short (the raw member also
+// reorders), and every getModel() subset of the other three sites is worse.
 bool TEnemyManager::copyAnmMtx(TSpineEnemy* enemy)
 {
-	if (unk4C != EnemymanagerGetMActor(enemy)->getCurAnmIdx(ANM_TYPE_BCK))
+	MActor* actor = enemy->getMActor();
+	if (unk4C != actor->getCurAnmIdx(ANM_TYPE_BCK))
 		return false;
 
 	int f = enemy->getCurAnmFrameNo(ANM_TYPE_BCK);
