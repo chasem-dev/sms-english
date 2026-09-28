@@ -192,6 +192,10 @@ void TFlyEnemy::fly()
 // Tried: params named or not, getSLNormalFlySpeed()/.get()/.value (and the
 // same for the force gravity), speed-first products, velocity.set(), and
 // every MsVECNormalize argument spelling: none moves the register.
+// mwcc-stack (c-k10): `params` is a named web whose only neighbours are r0, r1
+// and `this`, so it takes the lowest free volatile, r3; retail's r4 means r3
+// is held by a neighbour over the two param loads (a value live across them,
+// such as a call result or a second copy of the pointer), not an order issue.
 void TFlyEnemy::calcChaseParam()
 {
 	JGeometry::TVec3<f32> toMario(FlyMarioX() - FlyPosX(this),
