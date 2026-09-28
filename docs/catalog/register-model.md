@@ -182,3 +182,11 @@ Both were read from `dbg.sh` dumps (`frontend-00-ast-initial-code.txt`, `backend
   Proved by `MSHandle::setSeDistanceVolume` (MSHandle closed).
 - Comparing retail's slot offsets with ours in the debugger's `variables.txt` can pin a missing object and a creation-order swap exactly (see the MapObjBase `initAndRegister` entry in `units/other-units.md`).
 - The debugger (`tools/mwcc-stack/dbg.sh`) takes about 7 s per function once retrowin32 is built; build it first, it closed both units.
+
+## Additions (c-k3)
+
+- Address-constant propagation: a local initialised with `&global` is replaced by the constant at every load/store base but kept at call arguments.
+  When retail stores once through the fresh address and the rest through the argument's register, `(p = &G)->m = ...` makes only that statement's base the constant (proved by `TMario::hitNormal`, MarioCheckCol closed).
+- Spill ranking when no register can be pushed normally: webs are ranked by cost / remaining degree, cost = sum of weight x (2 per use + 1 per def), weight 8 inside a loop and 1 outside.
+  It reproduced all five TRKSuppAccessFile costs exactly; use it to decide whether a swap needs one more or one less degree or cost, and in which region a new copy must live.
+- A named reference to a global (`TApplication& app = gpApplication;`) creates no stack object and does not change the frame.
