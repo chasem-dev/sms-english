@@ -529,6 +529,10 @@ static inline TYumbo* YunboDanceBody(TSpineBase<TLiveActor>* s)
 // `*gpMarioPos` plus `yumbo->getPosition()` in the sub gives the frame but puts
 // both bindings between them (pos 0x6c); the two-argument `sub(a, b)` changes
 // the code.
+// c-k6, inert or worse: `toMario(SMS_GetMarioPos()); toMario -= pos` (same
+// 4 markers), `*gpMarioPos` with `-=` or assigned after a default
+// construction (frame 0xa8), `set(*gpMarioPos)` then `sub` (88.5),
+// `SMS_GetMarioPos() - pos` (92.3, frame 0xc8).
 DEFINE_NERVE(TNerveYumboDancing, TLiveActor)
 {
 	TYumbo* yumbo = YunboDanceBody(spine);
