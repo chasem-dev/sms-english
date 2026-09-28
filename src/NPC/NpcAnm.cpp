@@ -51,6 +51,16 @@ void TBaseNPC::offStopMotionBlend() { mInbetweenCtrl->stopMotionBlend(); }
 void TBaseNPC::onStopMotionBlend() { mInbetweenCtrl->startMotionBlend(); }
 
 // TODO: 0x20 short; this in r29 vs retail r31, blend param inverted.
+// c-k11 tells: the 0x4000015 case's two zeroed indices share one zero
+// (`li r26, 0; addi r28, r26, 0`), the c-k5 inliner-object shape, so that
+// case body was an inline level in retail; the other four parts sites test
+// getPartsMActor's result in r3 (`cmplwi r3, 0`) and copy it to a saved
+// register only after the index switch, so there the part actor is an
+// inline temporary, not a named local. A pass-through level over
+// `getPartsMActor(i, 0)` gives retail's `this` in r31 and the cmplwi, but
+// the copy is scheduled early and the frame is 0x58; the three case bodies
+// as TU-local inline levels (every subset) keep the 0x40 frame. MActor::setBck
+// and on/offStopMotionBlend are inert.
 void TBaseNPC::setNpcAnm_(EnumNpcAnmKind param_1,
                           EnumNpcStopMotionBlendOnOff param_2)
 {
