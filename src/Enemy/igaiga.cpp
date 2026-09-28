@@ -204,10 +204,11 @@ void TGorogoroManager::requestPolluteModel(JGeometry::TVec3<f32>& pos,
 	unk6C->generatePolluteModel(pos, scale);
 }
 
-// UNUSED, 0x34 in the map.
+// UNUSED, 0x34 in the map. Its one expansion, in TGorogoroManager::perform,
+// yields the null manager pointer itself (FALSE) when there is no area.
 BOOL TGorogoroManager::inArea(const JGeometry::TVec3<f32>& pos)
 {
-	return unk70 ? unk70->contain(pos) : TRUE;
+	return unk70 ? unk70->contain(pos) : FALSE;
 }
 
 TRollEnemy::TRollEnemy(const char* name)
