@@ -88,6 +88,10 @@ void MActorAnmDataBase::sortByFileNameRaw(void** anms)
 // std-list.hpp. Inert in the header (tl1): mSize/mAllocator set in the body,
 // `const A&` parameter, TList()/TList(const A&) overloads, a named node local
 // or a static InitNode_(&oEnd_) in Initialize_; a derived list wrapper type.
+// c-k1 (dbg.sh): ours has exactly one object, the allocator default-argument
+// temporary @650 at 0xc (`this` at 0x8). Retail needs one or two words created
+// before it (the 0x20 frame puts the top above 0x18) and two created after it
+// (0xc, 0x10). Inert: a chained `mBrkNum = ... = mBckNum = 0;`.
 MActorAnmData::MActorAnmData()
     : unk0(0)
 {
