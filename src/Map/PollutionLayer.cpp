@@ -193,6 +193,13 @@ TPollutionLayerWallBase::TPollutionLayerWallBase()
 // and a TU-local predicate for the whole test regress.
 // c-m29: an unnamed `model->getBaseTRMtx()[0][3]` at both x sites gives
 // retail's mMinX-then-x order but loads z late (93.0); named z is always early.
+// TODO: 99.3%, one load-order pair: retail loads mMinX (0x38(r3)) before the
+// matrix x (0x2c(r4)); ours loads x first. c-k7 debugger read: the
+// pre-regalloc schedule puts `mr r33,r4; addi r34,r33,0x20` ahead of the x
+// load (getBaseTRMtx() returns the embedded matrix's address), so x's chain is
+// one instruction longer than mMinX's and wins the tie. Retail's x has no
+// longer chain than mMinX. Inert (6): x unnamed, z named first, no named
+// locals, `mMinX > x` operand order, getMinX()/getMinZ(), a named minX.
 void TPollutionLayer::stampModel(J3DModel* model)
 {
 	MtxPtr mtx = model->getBaseTRMtx();
