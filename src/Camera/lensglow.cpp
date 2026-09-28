@@ -100,11 +100,14 @@ TLensGlow::TLensGlow(bool param_1, const char* name)
 	unk60 = unk64 = unk6C;
 }
 
-// TODO: 99.8%, frame exact (0x178), all instructions right. The 88 missing
-// bytes of pool were the `gpSunModel` reads: a TU-local accessor that names
-// and returns the pointer is ~+8 of pool per site (a 2187-way per-site sweep
-// found retail's frame with every read through it except `tx`'s; with the
-// screen-centre level below, `ty` is read raw too).
+// TODO: 99.7%, all instructions right; frame 0x120 vs retail 0x178. The 88
+// missing bytes of pool are at the seven `gpSunModel` reads: a TU-local
+// binder that names and returns the pointer is ~+8 of pool per site and
+// landed the frame (a 2187-way per-site sweep found retail's frame with every
+// read through it except `tx`'s and `ty`'s), but it was removed as a
+// fakematch. A direct-return `SMSGetSunModel()`-style accessor is +0x20
+// (0x140); retail's sites are probably TSunModel accessors or inline levels
+// not yet identified.
 // Closed (c-m27): the f27-f31 rotation (cx/cy have to colour before
 // dispRatio's IRO temp, which they do as locals of an inlined callee: the
 // screen-centre block below), the `t` conversion pair (`t *= ...`), the avg
@@ -113,16 +116,15 @@ TLensGlow::TLensGlow(bool param_1, const char* name)
 // Left: avg's zero lands in f5 and is copied to f6 (retail loads f6; ctor,
 // zero(), set(), both chained orders are inert); the named block (c, mtx,
 // scaleV) sits 8 high; matCount r26 vs r27 against the `i * 4` web.
-static inline TSunModel* lgSunN() { TSunModel* m = gpSunModel; return m; }
 // The screen-centre and target-offset block of the move cue. Its cx/cy have
 // to be callee locals: as the perform's own named locals they colour after
 // dispRatio's IRO temporary (regalloc), where retail has them f31/f30.
 static inline void LGCalcCenter(TLensGlow* lg, u8 thing, f32 dispRatio)
 {
 	f32 cy, cx, b, a;
-	a  = lgSunN()->unkF8[0].x;
+	a  = gpSunModel->unkF8[0].x;
 	cx = (f32)(SMSGetGameRenderWidth() >> 1) * a;
-	b  = lgSunN()->unkF8[0].y;
+	b  = gpSunModel->unkF8[0].y;
 	cy = (f32)(SMSGetGameRenderHeight() >> 1) * b;
 
 	if (thing == 0) {
@@ -136,8 +138,8 @@ static inline void LGCalcCenter(TLensGlow* lg, u8 thing, f32 dispRatio)
 			JGeometry::TVec2<f32> avg;
 			avg.zero();
 
-			const JGeometry::TVec2<f32>* it2 = lgSunN()->unkF8;
-			const bool* it1                  = lgSunN()->unk180;
+			const JGeometry::TVec2<f32>* it2 = gpSunModel->unkF8;
+			const bool* it1                  = gpSunModel->unk180;
 			for (int i = 0; i < 17; ++i, ++it2, ++it1)
 				if (*it1)
 					avg += *it2;
@@ -172,12 +174,12 @@ void TLensGlow::perform(u32 cue, JDrama::TGraphics* graphics)
 	if (gpCameraMario->isMarioIndoor()) {
 		inBounds = false;
 	} else {
-		inBounds = lgSunN()->isInBounds(unk94);
+		inBounds = gpSunModel->isInBounds(unk94);
 	}
 
 	if (cue & CUE_MOVE) {
-		f32 dispRatio = lgSunN()->getUnk194();
-		u8 thing      = lgSunN()->getUnk191();
+		f32 dispRatio = gpSunModel->getUnk194();
+		u8 thing      = gpSunModel->getUnk191();
 
 		if (thing <= unk5D) {
 			unk4C = 0.0f;
