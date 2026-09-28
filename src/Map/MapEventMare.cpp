@@ -218,6 +218,10 @@ void TMareWallRock::initEffect()
 // temporaries are still missing below it. Dropping the joint local for
 // two getJoint() reads fixed the max/min `lfsu` order. Inert: raw mJoint
 // at any subset of the three sites.
+// c-k11: retail's buffer is the top object (0x64..0x164) and nine more words
+// are created after it than ours. Worse: `mPosition.set(...)` (90.4), a TVec3
+// centre copied into mPosition, `Vec`/TVec3 copies of max/min, the two init
+// calls as a two-iteration loop (86.9); `* 0.5f` is inert.
 void TMareWallRock::loadAfter()
 {
 	JDrama::TNameRef::loadAfter();
