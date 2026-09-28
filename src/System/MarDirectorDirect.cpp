@@ -282,19 +282,20 @@ static inline void decideNextStageOfClear()
 	}
 }
 
-// TODO: frame 0xd0 vs retail 0x168 and `this` in r28 vs r31; the temporaries
-// shift non-uniformly (0x7c->0xf4, 0x40->0x90), so a case body is probably
-// a missing inline level (cf. decideNextStageOfClear).
+// TODO: 99.9%, the frame is short of retail's 0x168 and r27/r29 swap in the
+// STATE_UNK1 wipe test. Body from upstream (its accessor levels put `this`
+// in r31, 98.8 -> 99.9), with our decideNextStageOfClear in STATE_UNK7:
+// retail inlines the SMS_isExMap test there.
 int TMarDirector::changeState()
 {
 	int desiredAppState = TApplication::APP_STATE_DEFAULT;
 	u8 nextState        = mState;
 	switch (mState) {
 	case STATE_UNK0:
-		switch (gpApplication.mCurrArea.unk0) {
+		switch (SMSGetApplication()->mCurrArea.getStage()) {
 		case 0xf:
 			nextState = STATE_UNK4;
-			unk50 |= 1;
+			onTransitionFlag(TRANSITION_FLAG_STAGE_BGM_STARTED);
 			break;
 
 		case 0x2:
@@ -306,13 +307,16 @@ int TMarDirector::changeState()
 		case 0x9:
 		case 0x34:
 			nextState = STATE_UNK1;
-			unk50 |= 0x6;
+			onTransitionFlag(TRANSITION_FLAG_GO_BANNER_PENDING
+			                 | TRANSITION_FLAG_SCENARIO_NAME_BANNER_PENDING);
 			break;
 
 		case 1:
-			if (checkUnk4EFlag(2)) {
+			if (checkDemoFlag(DEMO_FLAG_CAMERA_DEMO_ON_START)) {
 				nextState = STATE_UNK1;
-				unk50 |= 6;
+				onTransitionFlag(
+				    TRANSITION_FLAG_GO_BANNER_PENDING
+				    | TRANSITION_FLAG_SCENARIO_NAME_BANNER_PENDING);
 			} else {
 				nextState = STATE_UNK2;
 			}
@@ -321,7 +325,8 @@ int TMarDirector::changeState()
 		default:
 			if (JKRGetResource("/scene/map/camera/startcamera.bck")) {
 				nextState = STATE_UNK1;
-				unk50 |= 10;
+				onTransitionFlag(TRANSITION_FLAG_GO_BANNER_PENDING
+				                 | TRANSITION_FLAG_OPENING_WIPE_PENDING);
 			} else {
 				nextState = STATE_UNK4;
 			}
@@ -330,31 +335,36 @@ int TMarDirector::changeState()
 		break;
 
 	case STATE_UNK1:
-		if (checkUnk4EFlag(4)) {
-			if (mConsole->unk94->unk2B8 == 4) {
+		if (checkDemoFlag(DEMO_FLAG_CAMERA_DEMO_WIPE_STARTED)) {
+			if (getConsole()->unk94->unk2B8 == 4) {
 				nextState = STATE_UNK3;
-				offUnk4EFlag(0x4);
+				offDemoFlag(DEMO_FLAG_CAMERA_DEMO_WIPE_STARTED);
 			}
 		} else {
-			TGameSequence& curArea = gpApplication.mCurrArea;
-			TConsoleStr* str       = mConsole->unk94;
+			TGameSequence& curArea = SMSGetApplication()->mCurrArea;
+			TConsoleStr* str       = getConsole()->unk94;
 			f32 iVar2              = gpCamera->getRestDemoFrames() / 120.0f;
 			if (iVar2 <= str->getWipeCloseTime()
 			    || ((curArea.getStage() != 1 || curArea.getScenario() != 1)
 			        && (curArea.getStage() != 1 || curArea.getScenario() != 9)
-			        && (unk18[0]->mEnabledFrameMeaning & 0x61))) {
-				onUnk4EFlag(4);
-				mConsole->unk94->startCloseWipe((unk50 & 8) != 0);
-				unk50 &= ~0x8;
+			        && unk18[0]->checkFrameMeaning(
+			            TMarioGamePad::MEANING_0x1
+			            | TMarioGamePad::MEANING_0x20
+			            | TMarioGamePad::MEANING_0x40))) {
+				onDemoFlag(DEMO_FLAG_CAMERA_DEMO_WIPE_STARTED);
+				getConsole()->unk94->startCloseWipe(
+				    checkTransitionFlag(TRANSITION_FLAG_OPENING_WIPE_PENDING)
+				    != FALSE);
+				offTransitionFlag(TRANSITION_FLAG_OPENING_WIPE_PENDING);
 			}
 		}
 		break;
 
 	case STATE_UNK3:
-		if (gpApplication.mCurrArea.unk0 == 1) {
-			if (mConsole->unk94->unk2B8 == 6)
+		if (SMSGetApplication()->mCurrArea.getStage() == 1) {
+			if (getConsole()->unk94->unk2B8 == 6)
 				nextState = STATE_UNK2;
-		} else if (mConsole->unk94->unk2B8 == 6
+		} else if (getConsole()->unk94->unk2B8 == 6
 		           && !gpMarioOriginal->checkStatusType(
 		               MARIO_STATUS_FLAG_UNK1000)) {
 			nextState = STATE_UNK4;
@@ -371,7 +381,7 @@ int TMarDirector::changeState()
 		nextState = updateGameMode();
 		break;
 
-	case STATE_UNK5:
+	case STATE_PAUSE_MENU:
 		switch (unkAC->getNextState()) {
 		case 0:
 			nextState = STATE_UNK4;
@@ -383,7 +393,7 @@ int TMarDirector::changeState()
 			break;
 		case 5:
 			decideNextStage();
-			offUnk4CFlag(0x100);
+			unk4C &= ~DIRECTOR_FLAG_MOVIE_PENDING;
 			moveStage();
 			unkE4     = 2;
 			nextState = STATE_UNK9;
@@ -391,25 +401,25 @@ int TMarDirector::changeState()
 		}
 		break;
 
-	case STATE_UNK10:
-		if (unk78->unkC4 && gpApplication.mFader->isFullyFadedIn())
+	case STATE_GUIDE:
+		if (unk78->unkC4 && SMSGetApplication()->getFader()->isFullyFadedIn())
 			nextState = STATE_UNK4;
 		break;
 
-	case STATE_UNK11: {
+	case STATE_CARD_SAVE: {
 		switch (unkAC->mCardSave->getNextState()) {
 		case 0:
 			if (unk261 == 7) {
-				TFlagManager::smInstance->restore();
-				TFlagManager::smInstance->setBool(true, 0x30001);
-				if (!TFlagManager::smInstance->getFlag(0x40000)) {
-					getNextArea().set(0, 0, 0);
+				TFlagManager::getInstance()->restore();
+				TFlagManager::getInstance()->setBool(true, 0x30001);
+				if (!TFlagManager::getInstance()->getFlag(0x40000)) {
+					SMSGetApplication()->mNextArea.set(0, 0, 0);
 				} else {
-					getNextArea().set(1, 0xff, 0);
+					SMSGetApplication()->mNextArea.set(1, 0xff, 0);
 				}
-				offUnk4CFlag(0x100);
+				unk4C &= ~DIRECTOR_FLAG_MOVIE_PENDING;
 				moveStage();
-				gpApplication.mFader->setFadeStatus(
+				SMSGetApplication()->getFader()->setFadeStatus(
 				    TSMSFader::FADE_STATUS_FULLY_FADED_OUT);
 				desiredAppState = TApplication::APP_STATE_GAMEPLAY;
 			} else {
@@ -418,7 +428,7 @@ int TMarDirector::changeState()
 			break;
 		case 1:
 			if (unk261 == 7) {
-				gpApplication.mFader->setFadeStatus(
+				SMSGetApplication()->getFader()->setFadeStatus(
 				    TSMSFader::FADE_STATUS_FULLY_FADED_OUT);
 				desiredAppState = TApplication::APP_STATE_DONE;
 			} else {
@@ -432,30 +442,32 @@ int TMarDirector::changeState()
 	}
 
 	case STATE_UNK7:
-		if (gpApplication.mFader->isFullyFadedOut()
+		if (SMSGetApplication()->getFader()->isFullyFadedOut()
 		    && (MSBgm::getHandle(2) == 0 || unk5C - unk60 >= 1200)) {
-			if (TFlagManager::smInstance->getFlag(0x20001) >= 0) {
-				TFlagManager::smInstance->setBool(true, 0x30002);
+			if (TFlagManager::getInstance()->getFlag(0x20001) >= 0) {
+				TFlagManager::getInstance()->setBool(true, 0x30002);
 				decideNextStageOfClear();
-				offUnk4CFlag(0x100);
+				unk4C &= ~DIRECTOR_FLAG_MOVIE_PENDING;
 				moveStage();
 				unkE4 = 0xf;
-				gpApplication.mFader->setColor(JUtility::TColor(0, 0, 0, 0xff));
+				SMSGetApplication()->getFader()->setColor(
+				    JUtility::TColor(0, 0, 0, 0xff));
 				nextState = STATE_UNK12;
 			} else {
-				gpApplication.mFader->startWipe(0xE, 0.3f, 0.0f);
-				gpApplication.mFader->setColor(JUtility::TColor(0, 0, 0, 0xff));
+				SMSGetApplication()->getFader()->startWipe(0xE, 0.3f, 0.0f);
+				SMSGetApplication()->getFader()->setColor(
+				    JUtility::TColor(0, 0, 0, 0xff));
 				unk261    = 7;
-				nextState = STATE_UNK11;
-				mConsole->startDisappearStar();
-				mConsole->startDisappearCoin();
+				nextState = STATE_CARD_SAVE;
+				getConsole()->startDisappearStar();
+				getConsole()->startDisappearCoin();
 			}
 		}
 		break;
 
 	case STATE_UNK9:
 	case STATE_UNK12:
-		if (gpApplication.mFader->isFullyFadedOut()
+		if (SMSGetApplication()->getFader()->isFullyFadedOut()
 		    && gpMSound->checkWaveOnAram(MS_WAVE_DEFAULT))
 			desiredAppState = unkB4;
 		break;
@@ -463,9 +475,10 @@ int TMarDirector::changeState()
 
 	if (unk18[0]->isSomethingPushed()
 	    && gpCardManager->getLastStatus() != CARD_RESULT_BUSY
-	    && checkUnk4CFlag(0x4000) && !checkUnk50Flag(0x10)) {
+	    && (unk4C & DIRECTOR_FLAG_LAST_SIMULATION_TICK)
+	    && !checkTransitionFlag(TRANSITION_FLAG_RESET_HANDLED)) {
 		nextState = STATE_UNK12;
-		unk50 |= 0x10;
+		onTransitionFlag(TRANSITION_FLAG_RESET_HANDLED);
 		unkE4 = 4;
 		unkB4 = TApplication::APP_STATE_DONE;
 	}
