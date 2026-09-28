@@ -102,6 +102,11 @@ TObjHitCheck::checkWaterWithActorsInList(const JGeometry::TVec3<f32>& pos,
 // still has particlePositions r30, particleHitActors r29, pos r28. Inert on
 // top of it: swapping the two pointers, pos declared after them, all three
 // or also i declared at the top, fVar2 moved below them; unnamed pos -0x8.
+// c-k9 regalloc.py: moving `pos` to colouring position 1 (before @1176, the
+// particle pointer's IRO temporary) replays retail exactly, so pos is an `@`
+// object in retail (an inline binding or split temporary created early), not
+// a named web. Inert: pos as a loop-scope pointer or reference, or
+// `particlePositions + i`.
 void TObjHitCheck::checkWater()
 {
 	const JGeometry::TVec3<f32>* pos;
