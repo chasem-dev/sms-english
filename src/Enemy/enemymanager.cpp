@@ -282,33 +282,23 @@ void TEnemyManager::copyFromShared()
 	j3dSys.setViewMtx(viewMtx);
 }
 
-// TODO: 99.7%, frame-exact (0xf0). Two residues, both known-open classes.
-// (1) The two TTimeRec::startTimer(0xff,...) colour temporaries: retail builds
-// them at 0xb8 and 0xbc, i.e. adjacent with a 4-byte stride, while ours are at
-// 0xb0 and 0xb8 -- the JUTColor temp-stride residue.
-// (2) One opcode at 0x81c: in the alive-count loop retail materialises the
-// strength-reduced byte offset by copying the zero it already has in
-// aliveNum's register (`li r5, 0; addi r3, r5, 0`) where we emit two
-// independent `li 0`s. The same shape is open in TEMario::perform, so it is a
-// constant-reuse property of MWCC's loop setup, not a spelling here.
-// TODO: 99.7%. Two residues, probably one cause: our low region is 4 bytes
-// short (the TTimeRec colour temp sits at 0xb8 not 0xbc -- the known-open
-// JUTColor temp stride), and retail initialises the first loop's index by
-// copying the already-materialised zero (`addi r3, r5, 0`) instead of a fresh
-// `li r3, 0`. Refuted: hoisting the index declaration out of the `for`.
+// The alive count is the inlined countLivingEnemy() (c-k5): as inliner
+// objects its counter and the loop's byte offset share one zero (retail's
+// `li r5, 0; addi r3, r5, 0`), which the old spelled-out loop with named
+// locals could not give; countLivingEnemy reads the objects one level
+// shallower than getObj() so that it still expands here at depth 2.
+// TODO: every instruction exact; frame 0xf8 against 0xf0. Retail's two
+// TTimeRec colour temporaries sit at 0xbc/0xb8, ours at 0xc4/0xbc: one dead
+// word too many between them (countLivingEnemy's int result object, dead at
+// the `<= 0` test) and one more below the second. A named `aliveNum` and
+// `!(... > 0)` are inert; `getActiveObjNum()` in the loop condition breaks
+// countLivingEnemy.
 void TEnemyManager::performShared(u32 param_1, JDrama::TGraphics* param_2)
 {
 	if (unk30 & 1)
 		TTimeRec::startTimer();
 
-	int num2     = getActiveObjNum();
-	int aliveNum = 0;
-	for (int i = 0; i < num2; ++i)
-		if (!((TSpineEnemy*)TObjManager::getObj(i))
-		         ->checkLiveFlag(LIVE_FLAG_DEAD))
-			++aliveNum;
-
-	if (aliveNum <= 0) {
+	if (countLivingEnemy() <= 0) {
 		if ((unk30 & 1))
 			TTimeRec::endTimer();
 		return;
@@ -509,7 +499,8 @@ int TEnemyManager::countLivingEnemy() const
 
 	int result = 0;
 	for (int i = 0; i < num; ++i)
-		if (!getObj(i)->checkLiveFlag(LIVE_FLAG_DEAD))
+		if (!((const TSpineEnemy*)TObjManager::getObj(i))
+		         ->checkLiveFlag(LIVE_FLAG_DEAD))
 			++result;
 
 	return result;
