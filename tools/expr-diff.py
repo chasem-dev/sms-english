@@ -309,8 +309,10 @@ def iadd(*terms):
         ads = [t for t in out if t.op == 'AD']
         if len(ads) == 1:
             obj, sec, off = ads[0].v
-            out[out.index(ads[0])] = obj.at(sec, off + (k - (1 << 32) if k & 0x80000000 else k))
-            k = 0
+            new = off + (k - (1 << 32) if k & 0x80000000 else k)
+            if obj.same_object(sec, off, new):       # an offset within the object names a place
+                out[out.index(ads[0])] = obj.at(sec, new)
+                k = 0
     if k:
         out.append(C(k))
     if not out:
@@ -736,17 +738,18 @@ class Obj:
             if shndx == 0 or shndx >= len(self.secs):
                 return None
             sec, off = self.secs[shndx]['name'], val + addend
-            if not anon_name(name):
+            if not anon_name(name) and (not size or 0 <= addend < size or sec == '.text'):
                 return sec, off, size - addend if size else 0, name, addend
+            # an offset past the named object reaches whatever lies there
         best = None
         for val, size, n in self.bysec.get(sec, ()):
             if val <= off < val + max(size, 1) and (best is None or anon_name(best[2]) and not anon_name(n)):
                 best = (val, size, n)
         if best and (not anon_name(best[2]) or t is None):
             return sec, off, best[1] - (off - best[0]), best[2], off - best[0]
-        if t is not None:
+        if t is not None and anon_name(name):
             return sec, off, t[2] - addend if t[2] else 0, name, addend
-        return sec, off, 0, name, 0
+        return sec, off, 0, '.' + sec.lstrip('.'), 0
 
     def addr(self, target):
         """The address a relocation names: A(global) + addend, or, for a compiler-named
@@ -759,13 +762,24 @@ class Obj:
             anon = all(anon_name(x) for x in (name, sname))
             # a file-static table in one build is often an anonymous pool object in the
             # other: initialised local data is named by its content too
-            if not anon and sname in self.local and (
-                    sec in READONLY or sec in ('.data', '.sdata') and off in self.rel.get(sec, {})
-                    and self.syms[sname][2] >= 8):
+            if not anon and (sname in self.local and sec in READONLY
+                             or sec in ('.data', '.sdata') and off in self.rel.get(sec, {})
+                             and self.syms[sname][2] >= 8):
                 anon = self.content_key(sec, off) != 'zero'     # read-only data or a pointer table
             if anon and sec in DATA_SECS and sec not in ('.bss', '.sbss'):
                 return self.at(sec, off)
         return A('A', atom(self.key(target)))
+
+    def same_object(self, sec, a, b):
+        """Whether offsets a and b of a data section lie in the same object (a biased
+        array base such as table - 0x40 is left as an address expression)."""
+        s = self.sec(sec)
+        if s is None or not (0 <= b < len(s['data'])):
+            return False
+        for val, size, n in self.bysec.get(sec, ()):
+            if size and val <= a < val + size and not n.startswith('...'):
+                return val <= b < val + size
+        return True
 
     def at(self, sec, off):
         k = (sec, off)
@@ -795,9 +809,9 @@ class Obj:
             return 'zero'
         parts = []
         for o, (n, add, typ) in win:
-            if depth < 1 and anon_name(n):
-                r = self.resolve(n + ('+0x%x' % add if add else ''))
-                parts.append('%d=%s' % (o, self.content_key(r[0], r[1], depth + 1) if r else n))
+            r = self.resolve(n + ('+0x%x' % add if add else '')) if depth < 1 else None
+            if r and r[0] in DATA_SECS and r[0] not in ('.bss', '.sbss'):
+                parts.append('%d=%s' % (o, self.content_key(r[0], r[1], depth + 1)))   # data by content
             else:
                 parts.append('%d=%s' % (o, n if not anon_name(n) else 'anon'))
         return 'D:' + data[off:off + 4].hex() + (('|' + ','.join(parts)) if parts else '')
@@ -826,10 +840,9 @@ class Obj:
             return normname(sname) + ('+%d' % inner if inner else '')
         if not anon:
             k = normname(sname) + ('+%d' % inner if inner else '')
-            if sname in self.local and sec in DATA_SECS:
-                self.keyloc.setdefault(k, (sec, off, sname in self.local))
-            else:
-                self.keyloc.setdefault(k, (sec, off, False))
+            # a named object is read as a constant only from a read-only section:
+            # a file-static variable in .data/.sdata can be written
+            self.keyloc.setdefault(k, (sec, off, sec in READONLY))
             return k
         s = self.sec(sec)
         data = s['data'] if s else b''
@@ -2543,15 +2556,33 @@ def report(unit, name, oa, ob, verbose, out):
     return 'DIFF'
 
 
+def same_code(ia, ib):
+    """Byte-identical modulo relocation names and the function's place in its section."""
+    if len(ia) != len(ib):
+        return False
+    a0, b0 = ia[0][0], ib[0][0]
+    for x, y in zip(ia, ib):
+        if x[1] != y[1]:
+            return False
+        if x[2] != y[2]:
+            if not x[1].startswith('b'):
+                return False
+            px, py = x[2].split(','), y[2].split(',')
+            try:
+                if px[:-1] != py[:-1] or int(px[-1], 16) - a0 != int(py[-1], 16) - b0:
+                    return False
+            except ValueError:
+                return False
+    return True
+
+
 def exact_funcs(rel):
     oa = getobj(B + '/GMSE01/obj/' + rel)
     ob = getobj(B + '/GMSE01/src/' + rel)
     res = []
     for name, ia in oa.funcs.items():
         ib = ob.funcs.get(name)
-        if ib is None or len(ia) != len(ib):
-            continue
-        if all(x[1] == y[1] and x[2] == y[2] for x, y in zip(ia, ib)):
+        if ib is not None and ia and same_code(ia, ib):
             res.append(name)
     return oa, ob, res
 
@@ -2580,11 +2611,11 @@ def main():
                       for r, _, fs in os.walk(B + '/GMSE01/obj') for f in fs if f.endswith('.o'))
         rels = [r for r in rels if os.path.exists(B + '/GMSE01/src/' + r)]
         # spread the sample over the tree
-        step = max(1, len(rels) // 150)
+        step = max(1, len(rels) * 20 // args.exact) if args.exact < len(rels) * 20 else 1
         done = 0
         for r in rels[::step]:
             oa, ob, names = exact_funcs(r)
-            for n in names[:6]:
+            for n in names:
                 cnt[report(r[:-2], n, oa, ob, args.verbose, out)] += 1
                 done += 1
             if done >= args.exact:
@@ -2608,8 +2639,7 @@ def main():
                 ib = ob.funcs.get(n)
                 if ib is None:
                     continue
-                if not args.func and all(x[1] == y[1] and x[2] == y[2] for x, y in zip(ia, ib)) \
-                        and len(ia) == len(ib):
+                if not args.func and ia and same_code(ia, ib):
                     continue
                 todo.append((args.unit, n))
         for u, n in todo:
