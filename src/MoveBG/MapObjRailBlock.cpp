@@ -556,6 +556,8 @@ void TRollBlock::calcRootMatrix()
 	// `MTXConcat(mtx, roll, mtx)` gives that pair but hoists `addi r4, roll`
 	// above the scale copy (r6 for mScaling.x, 97.3); both getBaseTRMtx() the
 	// same as this. Two getPosition() sites (any two) pay the frame's last 8.
+	// c-k5: `(mtx, roll, model->getBaseTRMtx())`, the accessor twice and
+	// `Mtx roll` declared first all keep two `mr`s (the first two swap r3/r5).
 	MsMtxSetXYZRPH(mtx, mPosition.x, getPosition().y - mYOffset, getPosition().z,
 	               mInitialRotation.x, mInitialRotation.y, mInitialRotation.z);
 	model->setBaseScale(getScaling());
