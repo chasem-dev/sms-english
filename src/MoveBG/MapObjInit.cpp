@@ -11071,6 +11071,15 @@ bool isAlreadyRegistered(const TMapObjAnimDataInfo* anim, int i)
 // cc41: an empty inline taking param_2 (before calc, before or after the
 // restore), a dead named copy, and a guarded empty body all compile away
 // without keeping the register.
+// c-k8: the guard has to be an explicit comparison. `if (param_2) {}` is
+// folded by the frontend, but `if (param_2 != nullptr) {}` after viewCalc()
+// (or after the restore) reaches the backend, keeps param_2 in r29 across the
+// calls and is deleted only after register allocation: initMActor 87.1 ->
+// 98.6 (left: retail `mr r3, r30` for our `addi r3, r30, 0` at the return)
+// and makeMActors 98.65 -> 99.8 (every instruction and the two unkC loads
+// exact; frame 0x40 short). So retail tested param_2 in a block whose body
+// did not survive preprocessing. Not landed: an empty body is on the
+// rejected list; it needs a policy decision.
 MActor* TMapObjBase::initMActor(const char* param_1, const char* param_2,
                                 u32 param_3)
 {
