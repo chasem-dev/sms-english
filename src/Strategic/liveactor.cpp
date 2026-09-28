@@ -95,6 +95,11 @@ BOOL TLiveActor::belongToGround() const
 // forks/by-value adders (+8 frame), `f32 v = m; v += d;` (breaks the
 // schedule); `f32 d = diff; d += m; m = d;` fixes operand order but not
 // the colouring.
+// c-k9 regalloc.py: MsAngleDiff's result is the IRO temporary @1565, coloured
+// last; the replay closes when it is coloured before the member load's pcode
+// temporary (or that load after it). An inline result stays an IRO
+// temporary, so only a spelling where the difference is not a forced-load
+// inline result (or the member is a named web) can move it.
 void TLiveActor::calcRideMomentum()
 {
 	if (unkE8 == 0)
@@ -480,6 +485,10 @@ static inline MAnmSound* LiveactorAnmSound(const TLiveActor* p)
 // word may precede it; raw `mAnmSound` at the test with the binder at the
 // final receiver lands the frame (0x40) with the binder local 4 above the
 // buffer and one word short below: that local must be created at depth > 3.
+// c-k9: iro.py shows the dead set below the buffer as six IRO words (four F,
+// two P from the MAnmSoundNPC ctor's random byte); retail has eight words
+// below it and nothing above, i.e. the binder word moved under the buffer and
+// one more IRO word.
 void TLiveActor::initAnmSound()
 {
 	if (LiveactorAnmSound(this))
