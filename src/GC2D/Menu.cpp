@@ -29,6 +29,10 @@ void TMenuBase::perform(u32 cue, JDrama::TGraphics* graphics)
 	// the scissor reference declared before orthoGraph, pointer forms of
 	// both rects, an unnamed viewport (0x1c), a scissor helper, and a
 	// named width.
+	// c-k6: with raw `unk10` the explicit `rect.x2 - rect.x1` widths give
+	// retail's frame (0x118) but put orthoGraph at 0x1c and swap the r0/r5
+	// loads; an unnamed viewport is 0x110; the scissor reference declared
+	// before orthoGraph costs instructions (94.0).
 	if (cue & CUE_DRAW) {
 		const JUTRect& viewport = graphics->getViewport();
 		J2DOrthoGraph orthoGraph(viewport);
