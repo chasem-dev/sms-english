@@ -42,39 +42,40 @@ void TMareWallRock::depress() { }
 // where retail has 0x40, so the low pool below the named block is 4 bytes
 // too tall. Exhausted: the call-temporary spelling (whole frame +8), a
 // named rotation vector shared by both emitters (-0x10), `JPABaseEmitter*
-// em` declared before `trans` and assigned after (the if-condition
-// declaration is what shapes the two emitter blocks), `trans.set()`.
+// em` declared before `trans` and assigned after, the if-condition emitter
+// declarations, `trans.set()` against the constructor.
 // c-k9 debugger: below trans sit the two setRotation TVec3 temporaries (12
 // each), six S words and four s16 bindings (y and z per site); retail has one
-// word fewer (five S words or at most two s16 bindings). The four `(void)0`
-// fillers are real: without them movement() inlines appear (8%), so retail
-// had at least four more statements here. Inert: named `em`/`em2` at
-// statement level (+2 statements, same slots); a named `rot` per site is
+// word fewer (five S words or at most two s16 bindings).
+// Statement count: movement() calls this, so retail's body is over the
+// inliner's depth-1 budget. The if-condition emitter declarations with the
+// TVec3 constructor are three statements short (movement() then inlines it,
+// 8%); the statement-level emitter locals and the separate `trans.set()`
+// supply them and replace four `(void)0` fillers. Also enough: a named
+// `z = unkFC` or a named joint receiver in place of `trans.set()`. A named
+// collision receiver changes the code (93.9); a named `rot` per site is
 // frame +8; setGlobalDynamicsScale first reorders the code.
 void TMareWallRock::appear()
 {
-	// TODO: hack, remove me
-	(void)0;
-	(void)0;
-	(void)0;
-	(void)0;
-
 	unk10C[0]->setUp();
 	unk104->awake();
-	JGeometry::TVec3<f32> trans(0.0f, 0.0f, unkFC);
+	JGeometry::TVec3<f32> trans;
+	trans.set(0.0f, 0.0f, unkFC);
 	unk10C[0]->moveTrans(trans);
 	f32 rotY = unk128;
 
-	if (JPABaseEmitter* em = gpMarioParticleManager->emit(
-	        MAP_MAP_MS_MARE_OBJUP_A, &unk11C, 0, &unk11C)) {
+	JPABaseEmitter* em = gpMarioParticleManager->emit(MAP_MAP_MS_MARE_OBJUP_A,
+	                                                  &unk11C, 0, &unk11C);
+	if (em) {
 		em->setRotation(JGeometry::TVec3<f32>(0.0f, rotY, 0.0f));
 		em->setGlobalDynamicsScale(unk110);
 	}
 
-	if (JPABaseEmitter* em = gpMarioParticleManager->emit(
-	        MAP_MAP_MS_MARE_OBJUP_B, &unk11C, 2, &unk11C)) {
-		em->setRotation(JGeometry::TVec3<f32>(0.0f, rotY, 0.0f));
-		em->setGlobalDynamicsScale(unk110);
+	JPABaseEmitter* em2 = gpMarioParticleManager->emit(MAP_MAP_MS_MARE_OBJUP_B,
+	                                                   &unk11C, 2, &unk11C);
+	if (em2) {
+		em2->setRotation(JGeometry::TVec3<f32>(0.0f, rotY, 0.0f));
+		em2->setGlobalDynamicsScale(unk110);
 	}
 
 	unkF4 = 2;
