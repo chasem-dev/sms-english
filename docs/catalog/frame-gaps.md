@@ -2109,3 +2109,64 @@ Measured with `tools/mwcc-stack/udbg.py` dumps, per-unit scoring and tree-wide `
 - The open question is the same one c-r20 left for `operator-`: retail's by-value operators add exactly one dead word per site below the body locals, and the only way found to make one word (`return (const Vec&)...`) costs float copies.
   V2 plus that one word per site would give landEffect's slot map exactly, so a construct that adds it is worth looking for in the copy constructor or `operator*=` rather than in `operator*` itself.
 - Tongue's `canGo` residue (retail's `sub` operand three words lower than ours) belongs to the `operator-` class, not to `operator*`.
+
+## Research batch c-r22 (sister decomps) (2026-09-28): MKDD's setQuat product order closes the rotation class; no sister shape settles TVec3, TColor or JGadget
+
+Sources, cloned read-only (sparse, blobless) into `/home/user/ext/sister/`:
+- zeldaret/tww `1f9e8cb` (`include/JSystem/JGeometry.h`, `JUtility/TColor.h`, `JGadget/`);
+- zeldaret/tp `c8fa8c9` (`libs/JSystem/include/JSystem/JGeometry.h`, `JUtility/TColor.h`, `JGadget/std-list.h`);
+- doldecomp/mkdd `ffc513c` (`include/JSystem/JGeometry/{Vec,Matrix,Quat}.h`, `JUtility/TColor.h`, `JGadget/std-list.h`);
+- doldecomp/pikmin2 `e3e6f6f` (`include/JSystem/JGeometry.h`, `JUtility/TColor.h`, `JGadget/list.h`).
+Every file read is a reconstruction (they carry "fabricated", "TODO: OK?", "Non matching" and "From SMG" notes); none looked like leaked original source.
+None of the four has JDrama or any SMS-only header.
+Measured tree-wide with `census.py`/`cmpcensus.py` (about a minute per full rebuild here) against 12004 exact, then 12007 and 12008 after the two landings; site scores with the c-r20 `score.sh` adapted to the libs layout (scratch `r22/`).
+
+### Landed: `TRotation3::setQuat` and `setSQ`
+
+- MKDD's `setQuat` (Matrix.h) names nine products in the order yy zz xx xy xz yz wz wx wy and spells each diagonal `1.0f - a - b`, with no named `1 - xx`.
+  Ours had eleven locals (the two `1 - n*n` terms named) in x-first order.
+- Taken verbatim it makes the weak copy in fireWanwan byte-exact (98.5 -> 100) and closes `TKazekun::calcRootMatrix` (98.08 -> 100) and `TBathtub::calcRootMatrix` (87.82 -> 100), with `TTabePuku::getTakingMtx` 93.45 -> 99.58, `TWireTrap::calcRootMatrix` 96.94 -> 99.05 and `KoopaNeckCallBack` 93.72 -> 94.97: +3 exact, nothing down.
+  The retail FPR schedule c-m11 read off Corona (2y, 2z, 2x, 2w first) falls out of this declaration order; the eight bytes Kazekun and Bathtub lacked were the two dead homes of the named `1 - n*n` locals.
+- No sister has `setSQ`, but the same order with each row scaled makes its only ROM copy (weak in BeeHive.o) byte-exact (91.05 -> 100): +1 exact, nothing down.
+  The batch-era table under `setSQ` permuted the product groups of the old body but never tried the squares as yy, zz, xx with the `1 - n*n` terms unnamed.
+- Two frames moved the other way without losing exactness anywhere: `getTakingMtx` is now 8 short (0xe0 against 0xe8) and `TWireTrap::calcRootMatrix` 0x10 short, both recorded in their TODOs.
+- MKDD's `getQuat` is worse here (Kazekun's weak copy 99.5 -> 98.2) and MKDD marks it non-matching too; ours stays.
+
+### TVec3 (`operator-`, copy constructor, `operator=`): no sister shape helps
+
+| Shape (source) | Exact | Gained / lost |
+| --- | --- | --- |
+| copy ctor through a `setTVec3f(const f32*, f32*)` level, lwz/stw body (MKDD, TP; theirs is psq asm) | 11985 | 0 / 23 (Kumokun, BathtubKiller nerves, `calcForces`, ...) |
+| the same level in `operator=` too | 11966 | 0 / 42 |
+| member `TVec3 operator-(const TVec3&) const { TVec3 tmp(*this); tmp -= b; return tmp; }` (MKDD, pikmin2, TP's `operator+`) | 12001 | 0 / 7: the four torocco `.length()` sites, `execUTurn`, `TNerveMameGessoJitabata`, and Tongue's `__ami__` MISSING |
+| pikmin2's `result = *this; result.sub(other)` | sites only | `sub` inlines away: coaster bind 99.9 -> 56.0, every bind site -10 |
+| member by-value `operator+` (TP, pikmin2) | 12008 | 0 / 0, 9 non-exact functions down |
+| TWW's unnamed `squared(const TVec3&)` | 12007 | 0 / 1 (`TShine::calc`) |
+| TP's `TVec3<s16>::operator=` (word plus halfword) | 12005 | 0 / 3 (TTrembleModelEffect) |
+
+- The member `operator-` is c-r20's local-`r` family (zero copy-out words) with `this` in place of a reference parameter; it loses the same sites c-r20's `TVec3 r(a)` did, so the member/friend difference is inert.
+- Refuted by the map rather than measured: TWW's `operator=` as `set(b.x, b.y, b.z)` (float copies; the weak `__as__` in enemy.cpp is lwz/stw), TWW's and pikmin2's missing user copy constructor (the map has the weak 0x1c `__ct__`), and every sister's self-contained `normalize()`/`setLength(f32)` (the ROM's normalize sites call the two-argument `setLength` out of line, so ours forwards).
+- None of the four has a `const TVec3&`-returning `operator-` or a by-value left operand; MKDD, TP and pikmin2 all return by value from a member, TWW has no `operator-` at all.
+  So the sister record agrees with c-r20 that retail returns by value, and says nothing about the one dead word per site c-r20 and c-r21 are looking for.
+- TWW's TVec2 `length()` through a named `sqr` is inert tree-wide (0 up, 0 down).
+
+### JUTColor stride: no sister shape helps
+
+- Scored at the ten TColor sites (TMenuPlane ctor, `setTimer`, `startAppearLife`, `moveStage`, `drawShadow`, `SMS_AddDamageFogEffect`, `TSelectDir::direct`, and the three already exact).
+- MKDD's `ALIGN(4)` (`__attribute__((aligned(4)))`) on `TColor` is byte-identical at all ten, so the 8-byte conversion temporary is not an alignment effect.
+- TWW's and TP's `set(GXColor)` through a named `GXColor* temp = this` puts TSwingBoard::initDraw 8 over (exact -> 99.9) and moves the TMenuPlane ctor and `drawShadow` the wrong way.
+- TWW's `TColor& operator=(const TColor&) { GXColor::operator=(other); ... }` does not compile under MWCC 1.2.5 (an explicit call to a C struct's implicit assignment); spelled `static_cast<GXColor&>(*this) = other` it moves the TMenuPlane ctor 0x4c0 -> 0x4a8 and `startAppearLife` two markers down.
+- Every sister keeps the `TColor(const TColor&)` copy constructor commented out, as ours does; none has our `get()`.
+
+### JGadget iterators: no sister shape helps
+
+- The map's `__eq__7JGadgetF...8iterator...8iterator` fixes `operator==` as a friend taking both iterators by value, which is ours and pikmin2's, not MKDD's `const iterator&`.
+- pikmin2's user `void operator=(const iterator&)` on the base iterator is byte-identical at all ten sites (the four ObjHitCheck loops, MirrorActor, riccohook, PerformList, SDLModel, gatekeeper, SelectDir `rsetup`, `setupObjects`).
+- pikmin2's `TNode_::getElement()` level (in `operator*`, `operator->`, `CreateNode_`, `DestroyNode_`) adds 12 bytes per loop where retail needs 8: `clearHitNum` 0x1f8 -> 0x240 against 0x228, `entryGroup` exact -> 0x120, `SDLModel::entry` exact -> 0xd0.
+- MKDD's `std-list.h` and TP's were already covered by cc39 and js1 (body-assigned constructors, `const&` comparisons, iterator-returning `push_back`).
+
+### What stays open
+
+- The `operator-`/`operator*` one-word-per-site class (c-r20, c-r21), the JUTColor 4-versus-8 stride and the JGadget per-site pools are not header shapes any sister project reconstructed differently from ours in a way that helps.
+- `getQuat`'s `fadds` operand order (Kazekun's weak copy, 99.5) survives MKDD's body too.
+- Any later sister lead is most likely to be in the other rotation bodies (`setEular`, `mult33`, the TQuat4 inlines), where declaration order sets the schedule the way it did for `setQuat`; MKDD's versions of those are paired-single or absent.
