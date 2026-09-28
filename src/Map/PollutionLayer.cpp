@@ -210,21 +210,21 @@ void TPollutionLayer::stampModel(J3DModel* model)
 	gpPollution->unk70.pushModelStampTask(mIndexInParent & 0xff, model);
 }
 
-// Pragma residue (sweep 360): protects TPollutionLayer::cleaned (99.91 ->
-// 97.9). The body is *empty* and the map lists it (func,global) at 4 bytes,
-// yet retail bl's it from cleaned in the same TU -- a zero-statement body the
-// compiler must not expand, which no statement count can explain. Measured and
-// rejected: an explicitly qualified call (this->TPollutionLayer::appearItem)
-// does not suppress the expansion.
-#pragma dont_inline on
+// (func,global) at 4 bytes in the map, and retail `bl`s this empty body from
+// cleaned in the same TU; see the TODO on cleaned.
 void TPollutionLayer::appearItem(f32, f32, f32) { }
-#pragma dont_inline off
 
 // A direct-return conversion level over each offset-table read: +0x18 of
 // pool for the pair in cleaned (the product stays in the caller, so fp_contract
 // still fuses the `+=`; a fork returning the product unfuses it).
 static inline f32 PollutionLayerOffset(int offset) { return offset; }
 
+// TODO: 98.0%, every instruction matching except that retail calls the empty
+// appearItem at the end (`bl` plus its three argument moves) where ours
+// expands it to nothing. A `#pragma dont_inline` around appearItem closed it
+// and was removed as a fakematch. No statement count explains a `bl` to a
+// zero-statement body; inert: `{ return; }`, named parameters, defining it
+// after cleaned, an explicitly qualified call.
 void TPollutionLayer::cleaned(f32 x, f32 y, f32 z, f32 s)
 {
 	static int effect_counter = 1;
