@@ -81,22 +81,11 @@ TSpineEnemy* THauntLegManager::createEnemyInstance()
 	return new THauntLeg("ハントレッグ");
 }
 
-// Binding level worth +8 of low region, landing
-// THauntLegManager::initSetEnemies's frame at 0xe0 (batch 124).
-static inline MActor* HauntLegGetMActor(const THauntLeg* p)
-{
-	MActor* mActor = p->getMActor();
-	return mActor;
-}
-
 // Every leg starts on a random node of the "main" rail, one of eight colour
 // pairs cycling over the group.
 //
-// TODO: 99.8%, frame exact: `point` sits at 0x6c, retail 0x68 (a 4-byte hole
-// between it and `range` at 0x78), and the range-min/graph-node loads swap
-// r3/r5. Tried: `point` declared at loop or function top (+8/+0x10 frame),
-// by-value/reference/out-param point helpers (94-99.7), a named node
-// pointer, an unnamed TMsRange temporary, a TU-local rand level.
+// The dead named `index` is the word between `range` and `point`, and the
+// node reference taken through getGraphNode() the word below `point`.
 void THauntLegManager::initSetEnemies()
 {
 	static const GXColorS10 tevColorData1[] = {
@@ -117,14 +106,16 @@ void THauntLegManager::initSetEnemies()
 		TGraphWeb* graph = gpConductor->getGraphByName("main");
 		THauntLeg* leg   = (THauntLeg*)getObj(i);
 		TMsRange<int> range(0, graph->unk8);
+		int index = range.rand();
+		TGraphNode& node = graph->getGraphNode(index);
 		JGeometry::TVec3<f32> point;
-		graph->unk0[range.rand()].getPoint(point);
+		node.getPoint(point);
 		leg->mPosition = point;
 		leg->mPosition.y += 5.0f;
 		leg->onLiveFlag(LIVE_FLAG_AIRBORNE);
 		leg->reset();
 		for (u16 j = 0;
-		     j < HauntLegGetMActor(leg)
+		     j < leg->getMActor()
 		             ->getModel()
 		             ->getModelData()
 		             ->getMaterialNum();
@@ -230,13 +221,12 @@ void THauntLeg::reset()
 // plane: the frame's Y axis is the ground (or, while it is web-climbing, the
 // wall) normal, and the spider mode tilts it forward as the climb ramps up.
 //
-// TODO: 85.1%, and every instruction of both branches matches. The ROM keeps
-// the Y-axis vector's .y and .z in f30/f31 across both MsVECNormalize calls and
-// only re-reads its .x; ours reloads all three, because MsVECNormalize takes
-// non-const `Vec*` and the second argument could alias. The difference is
-// register allocation driven by the frame (0x178 against our 0x128): retail has
-// 60 more bytes of inline-expansion temporaries below the named locals, whose
-// declaration order and stack order this code already reproduces.
+// TODO: 99.6%, instructions exact, frame 0x138 against retail's 0x178.
+// mwcc-stack (c-k10): with the named `angle` (the dead word retail has between
+// `side` and `lean`) every named local sits exactly 0x40 below retail, so
+// retail creates 16 more words after `jointMtx`, all in the inline/IRO region
+// (ours: 29 inline, 13 F/P words). Not found; the four TVec3::cross and two
+// MsVECNormalize sites are the likely carriers (4 words each).
 void THauntLeg::calcRootMatrix()
 {
 	gpCurHauntLeg = this;
@@ -269,8 +259,9 @@ void THauntLeg::calcRootMatrix()
 		mtx[1][3] = 0.0f;
 		mtx[2][3] = 0.0f;
 
+		f32 angle = 90.0f * (1.0f - getWalker()->unk2C->unk10);
 		Mtx lean;
-		MsMtxSetRotX(lean, 90.0f * (1.0f - getWalker()->unk2C->unk10));
+		MsMtxSetRotX(lean, angle);
 		MTXConcat(mtx, lean, mtx);
 	} else {
 		JGeometry::TVec3<f32> forward(JMASSin(DEG2SHORTANGLE(mRotation.y)),
