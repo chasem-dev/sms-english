@@ -192,11 +192,6 @@ int TMarDirector::direct()
 	return desiredAppState;
 }
 
-// Reference-returning accessor, as MarDirectorEvent's MDEApp(): retail folds
-// setNextArea's stores onto the &gpApplication base (0x12/0x13/0x14) in r31
-// instead of binding &mNextArea.
-static inline TApplication& MDDApp() { return gpApplication; }
-
 // TODO: 99.6%, instruction-exact; retail's frame is 8 bytes larger (one more
 // stack temporary, the same open class as TApplication::TApplication's
 // +0x10). Spelling the copy as `gpApplication.mNextArea = local_3C` or a
@@ -217,7 +212,7 @@ static void decideNextStage()
 		local_3C.set(1, 0xff, JDrama::TFlagT<u16>());
 		break;
 	}
-	MDDApp().setNextArea(local_3C);
+	SMSGetApplication().setNextArea(local_3C);
 }
 
 // UNUSED, 0x10c.
@@ -1096,7 +1091,7 @@ u8 TMarDirector::updateGameMode()
 
 // TODO: 98.6%, frame 0x48 vs retail 0x70: the three TColor temporaries sit
 // 0x24 higher (a dead low region) and `this` is r31 vs r29. Inert (c-sys1):
-// no nextArea binding, a pointer binding, declaring it first, MDDApp().
+// no nextArea binding, a pointer binding, declaring it first, SMSGetApplication().
 void TMarDirector::moveStage()
 {
 	unkB4 = TApplication::APP_STATE_GAMEPLAY;

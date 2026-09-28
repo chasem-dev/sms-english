@@ -206,8 +206,8 @@ void TMarDirector::movement()
 
 // TODO: 99.7%, instruction-exact since TFlagT::operator= returns void; the
 // frame is 0x40 against retail's 0x50 (`next` 0xc low, the four flag
-// temporaries 4 low). MDEApp().setMovie(6) is +8 and an identity fork over
-// param_2 the other +8 (100% together, refused as a fabricated level);
+// temporaries 4 low). SMSGetApplication().setMovie(6) is +8 and an identity
+// fork over param_2 the other +8 (100% together, refused as a fabricated level);
 // `curr` declared inside the else arm lands `next` on 0x38 but renumbers
 // r29/r30. Inert or worse: `curr` or a split `cur` declared at the top, an
 // int/u16 copy of param_1, a conversion helper (by reference, pointer or
@@ -223,15 +223,14 @@ void TMarDirector::movement()
 // low (0x30) and the frame 0x48: 8 bytes created before the ctor's temps.
 // Inert or worse there: raw `unk4C & 2`, `next` above the guard, `next(0, 0)`,
 // `next = TGameSequence()`, a named switch value.
-// Reference-returning accessor: retail folds the TGameSequence stores onto
-// the &gpApplication base (0x12/0x13/0x14) instead of binding &mNextArea.
-// c-k3 debugger reading: after `next` (0x30) come `curr` and MDEApp()'s
+// The reference-returning SMSGetApplication(): retail folds the
+// TGameSequence stores onto the &gpApplication base (0x12/0x13/0x14)
+// instead of binding &mNextArea.
+// c-k3 debugger reading: after `next` (0x30) come `curr` and the accessor's
 // result @1062, both register-held, then the ctor's TFlagT temporary @1069
 // (0x2c, as retail). Retail's 8 bytes are two dead objects created between
 // `next` and @1069: `curr` and @1062 homed would fit. A named
 // `TApplication& app` is inert (an alias, no object).
-static inline TApplication& MDEApp() { return gpApplication; }
-
 void TMarDirector::setNextStage(u16 param_1, JDrama::TActor* param_2)
 {
 	if (checkUnk4CFlag(0x2))
@@ -246,7 +245,7 @@ void TMarDirector::setNextStage(u16 param_1, JDrama::TActor* param_2)
 		next.unk1 = 0xFF;
 	}
 
-	MDEApp().setNextArea(next);
+	SMSGetApplication().setNextArea(next);
 
 	const TGameSequence& curr = gpApplication.mCurrArea;
 	if (param_2 != nullptr) {
@@ -302,8 +301,8 @@ void TMarDirector::fireStartDemoCamera(const char* param_1,
 
 void TMarDirector::fireEndDemoCamera() { unk4C |= 0x80; }
 
-// The 0x28 of pool is the setter level through MDEApp() at the seven movie
-// stores plus the flag-manager binder at the first setBool.
+// The 0x28 of pool is the setter level through SMSGetApplication() at the
+// seven movie stores plus the flag-manager binder at the first setBool.
 void TMarDirector::fireStreamingMovie(u8 param_1)
 {
 	switch (param_1) {
@@ -313,7 +312,7 @@ void TMarDirector::fireStreamingMovie(u8 param_1)
 			setNextStage(0x1, nullptr);
 			TMarDirectorGetFlagManager()->setBool(true, 0x10389);
 			TFlagManager::smInstance->setBool(true, 0x30004);
-			MDEApp().setMovie(param_1);
+			SMSGetApplication().setMovie(param_1);
 		}
 		break;
 
@@ -321,7 +320,7 @@ void TMarDirector::fireStreamingMovie(u8 param_1)
 		if (!checkUnk4CFlag(0x100)) {
 			onUnk4CFlag(0x100);
 			setNextStage(0x3B, nullptr);
-			MDEApp().setMovie(param_1);
+			SMSGetApplication().setMovie(param_1);
 		}
 		break;
 
@@ -329,7 +328,7 @@ void TMarDirector::fireStreamingMovie(u8 param_1)
 		if (!checkUnk4CFlag(0x100)) {
 			onUnk4CFlag(0x100);
 			setNextStage(0xE06, nullptr);
-			MDEApp().setMovie(param_1);
+			SMSGetApplication().setMovie(param_1);
 		}
 		break;
 
@@ -337,7 +336,7 @@ void TMarDirector::fireStreamingMovie(u8 param_1)
 		if (!checkUnk4CFlag(0x100)) {
 			onUnk4CFlag(0x100);
 			setNextStage(0xE07, nullptr);
-			MDEApp().setMovie(param_1);
+			SMSGetApplication().setMovie(param_1);
 		}
 		break;
 
@@ -345,7 +344,7 @@ void TMarDirector::fireStreamingMovie(u8 param_1)
 		if (!checkUnk4CFlag(0x100)) {
 			onUnk4CFlag(0x100);
 			setNextStage(0x3C, nullptr);
-			MDEApp().setMovie(param_1);
+			SMSGetApplication().setMovie(param_1);
 		}
 		break;
 
@@ -353,7 +352,7 @@ void TMarDirector::fireStreamingMovie(u8 param_1)
 		if (!checkUnk4CFlag(0x100)) {
 			onUnk4CFlag(0x100);
 			setNextStage(0x101, nullptr);
-			MDEApp().setMovie(param_1);
+			SMSGetApplication().setMovie(param_1);
 		}
 		break;
 
@@ -364,7 +363,7 @@ void TMarDirector::fireStreamingMovie(u8 param_1)
 		if (!checkUnk4CFlag(0x100)) {
 			onUnk4CFlag(0x100);
 			setNextStage(0xF, nullptr);
-			MDEApp().setMovie(param_1);
+			SMSGetApplication().setMovie(param_1);
 		}
 		break;
 	}
