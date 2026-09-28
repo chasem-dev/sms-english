@@ -78,7 +78,7 @@ void TMarDirector::initECTGft(
 		const ResTIMG* img = gpPollution->getLayer(i)->getPollutionImage();
 
 		efbTex->setImgPtr((u8*)img + img->imageDataOffset);
-		JDrama::TSize size(img->height, img->width);
+		JDrama::TSize size(img->width, img->height);
 		efbTex->setDstSize(size);
 		efbTex->setTexFmt(GX_CTF_R8);
 		JDrama::TRect rect;
