@@ -221,3 +221,9 @@ Both were read from `dbg.sh` dumps (`frontend-00-ast-initial-code.txt`, `backend
 - Ghost degree in reverse: adding `getMActor()->f()` result webs can push arguments and named locals into a later simplify sweep and fix a callee-saved rotation (closed `TBossHanachanPartsBody::setAnm_`).
 - A local pointer that is simple in an emitted function becomes an inliner object in inlined copies, so every accessor called on it adds a dead receiver binding: per-expansion frame gaps can come from accessor calls on callee locals.
 - A loop test that references `this` (even through a dead load) keeps a `this` reload inside the loop; iterate with the pane's own `getFirstChild()/getEndChild()` to avoid it.
+
+## Additions (c-k7)
+
+- A callee containing a loop is not expanded inside a conditionally evaluated sub-expression (a ternary arm, or a `&&`/`||` operand whose result is used as a value); the same call is expanded as a statement, in a ternary condition, or in `if (a && (n = f()))`. Caller size does not matter (a 400-statement caller still expanded it). A weak loop helper that retail calls from a large function points to a value context at that site (MSoundStruct `startSoundSetDyna`, scratch-TU proof).
+- A by-value class argument's copy is created when the body holding the call is expanded, not when the callee is; moving the call into a helper moves the copy to that helper's expansion position in the depth-1 pass.
+- A logical expression materialised as a value is kept in a saved register (`li r24,0/1`); nested ternaries keep retail's branch form.
