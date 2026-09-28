@@ -171,3 +171,14 @@ Both were read from `dbg.sh` dumps (`frontend-00-ast-initial-code.txt`, `backend
 - **Not source order, per the dumps.** `li r8,0; addi r7,r8,0` (TSelectGrad::perform) is two copies of `nextCycle`'s zero into `i` and the strength-reduced `i*4`; our three `li` are separate object webs that CSE and constant propagation never merge (`s32`/`BOOL`/`u8` flags and hoisted or outer-scope `i` are all inert).
   The `new JUTTexture(res())` extra copy (Talk2D2, CardSave, SelectMenu, GCConsole2) is a second web for storeTIMG's `this` that the scheduler hoists above `getGlbResource`; after inlining, our AST substitutes `@new` directly (no `this` binding survives to `frontend-00`), and the class shapes tried in a scratch TU (base class, init list, virtual dtor, out-of-class inline ctor) never create one.
   `addi rD, rS, 0` in the final code is only MWCC's spelling of a PCode `mr`, not an add of zero.
+
+## Additions (c-k2)
+
+- An inline body's shape decides its temporary's colouring rank.
+  A ternary return is lowered into an optimiser temporary created after the caller's named locals' split temporaries; an if/return keeps the inliner's own return object, which is coloured earlier.
+  Proved by `TAfterEffect::checkFlag` inside `TAfterEffect::perform` (ScreenUtil closed).
+- Splitting `a >> s & m` into two statements (`u8 x = a >> s; x &= m;`) keeps the source register live one instruction longer in the pre-allocation schedule.
+  `u32`/`int` two-step spellings are inert; the `u8` truncation was needed.
+  Proved by `MSHandle::setSeDistanceVolume` (MSHandle closed).
+- Comparing retail's slot offsets with ours in the debugger's `variables.txt` can pin a missing object and a creation-order swap exactly (see the MapObjBase `initAndRegister` entry in `units/other-units.md`).
+- The debugger (`tools/mwcc-stack/dbg.sh`) takes about 7 s per function once retrowin32 is built; build it first, it closed both units.
