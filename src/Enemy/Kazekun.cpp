@@ -134,8 +134,8 @@ void TKazekun::initParticle()
 	                 KAZEKUN_JPA_MS_KAZE_BLUR);
 }
 
-// The 8 bytes of frame this lacked were the two dead homes of the old
-// eleven-local TRotation3::setQuat body (c-r22).
+// The 8 bytes of frame this had over retail were the two dead homes of the
+// old eleven-local TRotation3::setQuat body (c-r22).
 void TKazekun::calcRootMatrix()
 {
 	if (isTaken()) {

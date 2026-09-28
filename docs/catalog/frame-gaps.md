@@ -2126,7 +2126,7 @@ Measured tree-wide with `census.py`/`cmpcensus.py` (about a minute per full rebu
 - MKDD's `setQuat` (Matrix.h) names nine products in the order yy zz xx xy xz yz wz wx wy and spells each diagonal `1.0f - a - b`, with no named `1 - xx`.
   Ours had eleven locals (the two `1 - n*n` terms named) in x-first order.
 - Taken verbatim it makes the weak copy in fireWanwan byte-exact (98.5 -> 100) and closes `TKazekun::calcRootMatrix` (98.08 -> 100) and `TBathtub::calcRootMatrix` (87.82 -> 100), with `TTabePuku::getTakingMtx` 93.45 -> 99.58, `TWireTrap::calcRootMatrix` 96.94 -> 99.05 and `KoopaNeckCallBack` 93.72 -> 94.97: +3 exact, nothing down.
-  The retail FPR schedule c-m11 read off Corona (2y, 2z, 2x, 2w first) falls out of this declaration order; the eight bytes Kazekun and Bathtub lacked were the two dead homes of the named `1 - n*n` locals.
+  The retail FPR schedule c-m11 read off Corona (2y, 2z, 2x, 2w first) falls out of this declaration order; the eight bytes Kazekun and Bathtub had over retail were the two dead homes of the named `1 - n*n` locals.
 - No sister has `setSQ`, but the same order with each row scaled makes its only ROM copy (weak in BeeHive.o) byte-exact (91.05 -> 100): +1 exact, nothing down.
   The batch-era table under `setSQ` permuted the product groups of the old body but never tried the squares as yy, zz, xx with the `1 - n*n` terms unnamed.
 - Two frames moved the other way without losing exactness anywhere: `getTakingMtx` is now 8 short (0xe0 against 0xe8) and `TWireTrap::calcRootMatrix` 0x10 short, both recorded in their TODOs.
