@@ -190,3 +190,13 @@ Both were read from `dbg.sh` dumps (`frontend-00-ast-initial-code.txt`, `backend
 - Spill ranking when no register can be pushed normally: webs are ranked by cost / remaining degree, cost = sum of weight x (2 per use + 1 per def), weight 8 inside a loop and 1 outside.
   It reproduced all five TRKSuppAccessFile costs exactly; use it to decide whether a swap needs one more or one less degree or cost, and in which region a new copy must live.
 - A named reference to a global (`TApplication& app = gpApplication;`) creates no stack object and does not change the frame.
+
+## Additions (c-k4)
+
+- A named local initialised once from a load is split by the IR optimiser; if a hoisted expression reads the split temporary, the named copy survives as an extra `mr` and colouring rotates.
+  Retail reusing one variable for two jobs (two definitions, never split) is a real source shape; tell: retail's load goes straight into a callee-saved register an unrelated earlier counter also used (JAIGFrameSe `checkNextFrameSe`).
+- Every `getMActor()->f()` result is a coalesced web that stays in its neighbours' degree; fifteen of them blocked `this` past the second sweep in `TJumpBase::control`, and raw member reads removed them.
+- Two separate inline-accessor calls as trig arguments defeat the IR optimiser's CSE of the table index (retail's two `sraw` from one `lha`/`clrlwi`); a named local or `*gpMarioAngleY` twice merges it.
+- The header `TVec3::cross` temporaries are depth-1 inline objects coloured before IR CSE temporaries; when retail colours the components last, write them out (MapObjDolpic `hitByWater`). Not universal: in feetinv it made things worse.
+- IR loop-invariant hoists are created after forced-load inline results in the same loop, so they are numbered lower and coloured later (JKRExpHeap `allocFromHead`).
+- `tools/mwcc-stack/dbg.sh` hardcodes the game's flags; JSystem units need their own flags (see `udbg.py`).
