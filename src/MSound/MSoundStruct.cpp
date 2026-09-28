@@ -145,23 +145,56 @@ bool MSSetSoundGrp::startSoundSetGrp(u32 param1, const Vec* param2, u32 param3,
 // last-loaded parameter raw (`unk30.unk0`, `unk34.unk0`, `unk48.unk0`,
 // `unk4C.unk0`: an inline get() is a call and is generated first), and the
 // 1.0f pairs by `f30 = f29 = 1.0f` (retail materialises f29, copies to f30).
-// Still open: uVar7 is an IRO split web (@932, with a dead 4-byte home) and
-// is coloured before the named bVar1; retail colours bVar1 first (r24) and
-// its local_94 sits 4 higher, i.e. retail has a 4-byte home declared after
-// local_94 and before uVar7's, and no home above it (dVar9 moved to the top
-// of the else block closes the slots, but it is a dead local: not taken).
 // The raw unk1E read is what puts it first in the fmuls: a simple right
 // operand moves left of the getRandom_0_1() call at parse, the accessor
 // (a call there too) does not.
-// c-k7: the whole `bVar2` chain written as a TU-local `static inline bool`
-// predicate (bVar1/uVar5/uVar7 computed inside it, early `return false`s, a
-// fall-through `return true` behind `if (grp != nullptr) {...}`) reproduces
-// retail's shared `li r0, 1` and its r23/r24 (uVar7 r23, bVar1 r24) exactly,
-// but searchD is then expanded inside the predicate (+10 instructions, frame
-// +0x38) where retail calls it; defining the predicate after the caller is the
-// same. So retail's predicate shape is right and something keeps searchD out
-// of line in it. Also worse: `param_8 == nullptr || (...)` with `!(<)` or
-// `>=` (97.5/98.0), `bVar2 = true; if (param_8) {...}` (95.9).
+// 99.5% (c-k7): the restart test is the inline predicate below, which fixes
+// r23/r24 and the first JAIActor's slot (21 -> 9 markers). Still open:
+// - the shared `li r0, 1`: retail's `param_8 == nullptr` branch lands on the
+//   innermost `true`; ours has its own `li r0, 1` plus a branch. The same
+//   test written as `if` statements with a fall-through `return true` gives
+//   exactly retail's blocks, but a statement context expands searchD. Worse:
+//   `grp == nullptr || ...` with `!(<)`, `>=` or a ternary inside, `!(grp &&
+//   (... || <))`, swapped outer arms, `!(<)` innermost (mfcr).
+// - local_AC 4 high (0x88, retail 0x84): the named `bVar2` in the caller
+//   is one of retail's two words above it (without it 8 high); a named
+//   `result` in the predicate as well is frame +8.
+// - the volume/pitch `snd` takes r23 (lowest in use) where retail has r24:
+//   the second frame counter's IRO temp @803 holds r23 and is not its
+//   neighbour; reusing `sound` for it is inert.
+
+// Whether a sound already playing in this slot may be restarted: not before
+// its minimum interval (plus the random shift) has run, not while the thinning
+// window holds it and it is close enough, and not when the group has a member
+// for it that asks for a longer wait. Parked here, not in MSSetSound.hpp: the
+// map has no symbol for it. Written this way (c-k7) it gives retail's r23/r24
+// for the frame counter and the interval and the first JAIActor's slot; the
+// member lookup sits in a ternary arm, where MWCC does not expand a callee that
+// has a loop, which is what keeps searchD out of line as in retail (the same
+// test as `if` statements expands it: +10 instructions, frame +0x38).
+template <typename T>
+static inline bool MSSetSoundCanRestart(MSSetSoundTL<T>* tl, f32 dist,
+                                        MSSetSoundGrp* grp)
+{
+	u32 bVar1 = tl->unk1D.get();
+	u32 uVar5 = JALCalc::getRandom_0_1() * tl->unk1E.unk0;
+	bVar1 += uVar5;
+	u32 uVar7 = tl->unk5C[tl->unk5A]->getPlayGameFrameCounter();
+	if (uVar7 < bVar1)
+		return false;
+	if (tl->unk24.get() == 1 && uVar7 < tl->unk1F.get()
+	    && dist < tl->unk20.get())
+		return false;
+
+	MSSetSoundMember* candidate;
+	return grp != nullptr
+	          ? ((candidate = grp->searchD(tl->unk5C[tl->unk5A]->getID()))
+	                     == nullptr
+	                 ? false
+	                 : (uVar7 < candidate->unk18 ? false : true))
+	          : true;
+}
+
 template <typename T>
 bool MSSetSoundTL<T>::startSoundSetDyna(u32 param_1, const Vec* param_2,
                                         u32 param_3, f32 param_4, u32 param_5,
@@ -212,29 +245,7 @@ bool MSSetSoundTL<T>::startSoundSetDyna(u32 param_1, const Vec* param_2,
 		unkAC = *param_2;
 		unkB8 = 1;
 	} else {
-		bool bVar2;
-		MSSetSoundMember* candidate;
-
-		u32 bVar1 = unk1D.get();
-		u32 uVar5 = JALCalc::getRandom_0_1() * unk1E.unk0;
-		bVar1 += uVar5;
-		u32 uVar7 = unk5C[unk5A]->getPlayGameFrameCounter();
-		if (uVar7 < bVar1) {
-			bVar2 = false;
-		} else {
-			if (unk24.get() == 1 && uVar7 < unk1F.get() && f31 < unk20.get()) {
-				bVar2 = false;
-			} else {
-				bVar2 = param_8 != nullptr
-				            ? ((candidate
-				                = param_8->searchD(unk5C[unk5A]->getID()))
-				                       == nullptr
-				                   ? false
-				                   : (uVar7 < candidate->unk18 ? false : true))
-				            : true;
-			}
-		}
-
+		bool bVar2 = MSSetSoundCanRestart(this, f31, param_8);
 		if (!bVar2)
 			return true;
 
