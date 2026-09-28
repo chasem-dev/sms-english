@@ -259,9 +259,14 @@ static inline void TongueSubTo(Vec& out, const JGeometry::TVec3<f32>& a, const J
 // The grab-range test copies the difference into a by-value parameter before
 // squaring it and calls TUtil<f32>::sqrt out of line while expanding `sub`
 // (AnimalNerve's calcDist shape plus one by-value length level).
+// Retail squares each component unfused (three fmuls, two fadds); squared()
+// here would let fp_contract fold x*x into the sum, as a local by-value copy.
+static inline f32 TongueSquare(f32 a) { return a * a; }
+
 static inline f32 TongueLength(JGeometry::TVec3<f32> v)
 {
-	f32 r = JGeometry::TUtil<f32>::sqrt(v.squared());
+	f32 r = JGeometry::TUtil<f32>::sqrt(TongueSquare(v.x) + TongueSquare(v.y)
+	                                    + TongueSquare(v.z));
 	return r;
 }
 
