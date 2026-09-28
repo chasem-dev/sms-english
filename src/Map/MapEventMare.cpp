@@ -308,16 +308,12 @@ void TMareEventDepressWall::setJointPosX(f32 x, int idx)
 	unk28[idx].moveTrans(t);
 }
 
-// TODO: 99.88%. Instruction- and register-exact; frame 0x88 against retail's
-// 0x90. Every temporary slot sits 8 high (low region 8 too tall) and the
-// named block above them is 0x10 short. Inert: if/else vs early-return
-// spelling, `setJointPosX(x - mRiseSpeed, ...)`, a named index for
-// emitEffect, gpMSound raw, TVec3 temporaries inside the helpers.
+// The two-argument startSoundActor form supplies the one word below the
+// finishEvent vectors that the six-argument call lacked.
 void TMareEventDepressWall::rising()
 {
 	f32 x = TMapObjBase::getJointTransX(unk30[unk48]);
-	SMSGetMSound()->startSoundActor(MSD_SE_OBJ_QUAKE, &unk34[unk48], 0, nullptr,
-	                                0, 4);
+	SMSGetMSound()->startSoundActor(MSD_SE_OBJ_QUAKE, &unk34[unk48]);
 
 	emitEffect(unk48);
 
@@ -356,12 +352,18 @@ void TMareEventDepressWall::emitEffect(int idx)
 	}
 }
 
+// Both depressing branches start the same quake: rumble, camera shake and
+// sound. As one inline level its objects are created after both branches'
+// setJointPosX vectors, which is retail's slot order.
+static inline void DepressWallQuake(TMareEventDepressWall* wall, int i)
+{
+	SMSRumbleMgr->start(0x13, -1, (f32*)nullptr);
+	gpCameraShake->keepShake(CAM_SHAKE_MODE_BUILDING_APPEAR, 0.5f);
+	SMSGetMSound()->startSoundActor(MSD_SE_OBJ_QUAKE, &wall->unk34[i]);
+}
+
 // Both branches expand the UNUSED setJointPosX and emitEffect, which gives
-// retail's slot order; the second branch's accessor spellings land the frame.
-// TODO: frame-exact; the second branch's setJointPosX vector sits 8 low
-// (0x64 against 0x6c). Inert for it: spelling either helper out at either
-// site, the setUpTrans vectors as temporaries, the other sites' raw/binder
-// choices for sound, rumble and camera shake.
+// retail's slot order.
 void TMareEventDepressWall::depressing()
 {
 	int doneCount = 0;
@@ -371,10 +373,7 @@ void TMareEventDepressWall::depressing()
 			if (x < unk20[i]) {
 				if (!TMapObjBase::isDemo()) {
 					x += mDepressSpeed;
-					SMSRumbleMgr->start(0x13, -1, (f32*)nullptr);
-					gpCameraShake->keepShake(CAM_SHAKE_MODE_BUILDING_APPEAR, 0.5f);
-					SMSGetMSound()->startSoundActor(MSD_SE_OBJ_QUAKE, &unk34[i],
-					                                0, nullptr, 0, 4);
+					DepressWallQuake(this, i);
 					emitEffect(i);
 				} else {
 					SMSRumbleMgr->stop(0x13);
@@ -393,14 +392,10 @@ void TMareEventDepressWall::depressing()
 			if (x > -unk20[i]) {
 				if (!TMapObjBase::isDemo()) {
 					x -= mDepressSpeed;
-					SMSRumbleMgr->start(0x13, -1, (f32*)nullptr);
-					MareWallRockCameraShake()->keepShake(
-					    CAM_SHAKE_MODE_BUILDING_APPEAR, 0.5f);
-					gpMSound->startSoundActor(MSD_SE_OBJ_QUAKE, &unk34[i], 0,
-					                          nullptr, 0, 4);
+					DepressWallQuake(this, i);
 					emitEffect(i);
 				} else {
-					MareWallRockRumbleMgr()->stop(0x13);
+					SMSRumbleMgr->stop(0x13);
 				}
 				setJointPosX(x, i);
 				if (x <= -unk20[i]) {
@@ -415,8 +410,7 @@ void TMareEventDepressWall::depressing()
 		}
 	}
 	if (doneCount == unk10) {
-		SMSGetMSound()->startSoundSystemSE(MSD_SE_SY_CLEAR_SIGN_BIG, 0, nullptr,
-		                                   0);
+		gpMSound->startSoundSystemSE(MSD_SE_SY_CLEAR_SIGN_BIG, 0, nullptr, 0);
 		SMSRumbleMgr->stop(0x13);
 		unk48 = 0;
 		unk4C = unk18[unk48];
