@@ -236,3 +236,12 @@ Both were read from `dbg.sh` dumps (`frontend-00-ast-initial-code.txt`, `backend
   `if (p) {}` on a bare pointer is also removed early, but `if (p != nullptr) {}` survives.
   So retail had bodies the preprocessor emptied (release `JUT_WARNING`/`JUT_LOG_F`-style macros).
   Whether to write such compiled-out bodies as empty `if`s is an open policy decision (see HANDOFF); MapObjInit `initMActor` 87.1 -> 98.6 and `makeMActors` 98.65 -> 99.8 wait on it.
+
+## Additions (c-k9)
+
+- Debugger tell: an inlined callee's local that sits high (created early) where retail has it low means the callee is one inline level deeper in retail; a TU-local helper with real content moves it exactly (`TBaseNPC::walkAnmRateChange_` 0xb8 -> 0x78 in one step, closed).
+- An offset only counts objects created after it: when the frame bound leaves room, "4 high" means one extra word below, not one missing word above.
+- A predicate written as an inline level with a `bool result` local makes the flag an inliner object whose constant `1` can share a register with an inner inline's result (`mr r0, r3` where a named flag gives a fresh `li`).
+- `if (acc())` creates no forced-load word; `if (acc() != 0)` on a u16 accessor creates one.
+- A switch-bodied inline (`getDataInt`) is not expanded inside a temporary's constructor argument.
+- `regalloc.py --move V:bW` takes a vreg number after `b`/`a`, not a colouring position.

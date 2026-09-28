@@ -10,7 +10,8 @@ Agents this session found pre-existing constructs that break the no-fakematch ru
 - pass-through binders that only return a global/member: `EventWatcherRawMSound`, `EventWatcherDirectorForTalkNPC` (EventWatcher), `TabePukuGetSaveParams`, `IgaigaGoroAt`/`IgaigaInitTracer`, `MapObjBallWaterDrag`, `CannonBody`, `NameKuriMSound`, the `ApplicationCrTimeAry1-3` chain, `lgSunN()` (lensglow), `CNParams` (CameraNormal), `KoopaGetParam` (Koopa);
 - empty/no-op statements: `if (mGroundPlane) { (void)mGroundPlane; }` in `TBaseNPC::bind`, `(void)&mtx;` in both JPADrawVisitor stripe draws (load-bearing: removing it costs 22 instructions), the empty `if (cue & CUE_MOVE) { }` in coasterkiller.cpp:89;
 - a no-op cast `(Vec*)&point` in `TGorogoroManager::initSetEnemies`;
-- `#pragma dont_inline` on `appearItem` in Map/PollutionLayer.cpp (found by c-k7; blocks linking that unit).
+- `#pragma dont_inline` on `appearItem` in Map/PollutionLayer.cpp (found by c-k7; blocks linking that unit);
+- four `(void)0` filler statements in MapEventMare `appear` standing in for unknown real statements (c-k9: without them `movement` inlines `appear`).
 The rule for new work is in docs/agent-brief.md (no pass-through helpers).
 
 ## Policy decision needed (2026-09-28, c-k8)
