@@ -86,7 +86,10 @@ void TCoasterEnemy::reset()
 void TCoasterEnemy::perform(u32 cue, JDrama::TGraphics* graphics)
 {
 	TWalkerEnemy::perform(cue, graphics);
-	if (cue & CUE_MOVE) { } // required to move param_1 into r31
+	// TODO: fabricated. Retail keeps cue in r31 across the call and drops
+	// the test after register allocation; only a statement the preprocessor
+	// empties reproduces that (see TEffectObjBase::perform's c-k8 note).
+	if (cue & CUE_MOVE) { }
 }
 
 f32 TCoasterEnemy::getGravityY() const { return 0.0f; }
