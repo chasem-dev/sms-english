@@ -89,34 +89,10 @@ void TAfterEffect::calcDashBlurValue()
 	unk15 = 0;
 }
 
-// TODO: 99.8% — pure r30/r31 swap over 22 instructions (frame/slots/count
-// exact). Retail keeps the CSE'd constant 0 in r31 (color byte stores + the
-// first `checkFlag(4)` false path; sites 2 and 3 materialise into r0) and
-// `rect`'s address in r30; we have it the other way round.
-//
-// This is the residual compiler-temp-vs-named-local ranking class
-// (codegen-tells / frame-gaps batch 144–145): our build ranks the named
-// `rect` above the hoisted 0, retail ranks the 0 above `rect`. Live-range
-// length is inert for that class.
-//
-// Measured and rejected (codegen-neutral or worse):
-// - declaration order of color / rect / interpolation (all six; RAC/ACR/ARC
-//   cost six instructions); `rect` as pointer, by value, or raw
-//   `graphics->mViewportRect` (frame -> 0x98); per-site `getViewport()`
-//   (frame -> 0xe8); TU-local getViewport / viewport-pointer wrappers (inert)
-// - `GXColor color = {0,0,0,0}` (129 diffs); chained `color.a = ... = 0`;
-//   named `u8 colorZero` (inert); `BOOL isDash = FALSE` feeding color + the
-//   first checkFlag (+8 frame, 99.7%)
-// - ternary for the three if/else pairs (212); `unk14 & 4` (162);
-//   `checkFlag(4) != FALSE` (78)
-// - named midX/midY (function- or block-scope; 89.9% / inert); named rect
-//   component scalars (85.3%); named `JUTTexture*` binder (+8 frame);
-//   named-scalar-count sweep N=0..7 (never flips the swap; N>=2 grows frame)
-// - c-link5: `rect` declared just before the fVar block or GXBegin (99.2),
-//   `color` set after the interpolation (97.0), `!checkFlag(4)` arms swapped
-//   (99.7), per-site `checkFlag(4) ? unk24 : unk20` argument (85.2),
-//   `JUtility::TColor color(0, 0, 0, 0)` (inert), `TColor color(0)` (99.1),
-//   an unnamed `TColor(0, 0, 0, 0)` argument (96.6)
+// checkFlag's if/return body (ScreenUtil.hpp) is what gives retail's r31 for
+// the first site's flag, which also holds the colour's constant 0: an inlined
+// return value is created before the optimiser splits `rect`, so it is
+// coloured first. The ternary spelling left `rect` in r31 and the flag in r30.
 void TAfterEffect::perform(u32 cue, JDrama::TGraphics* graphics)
 {
 	if (!(unk14 & 1))

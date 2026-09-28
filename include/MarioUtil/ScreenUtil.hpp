@@ -24,7 +24,14 @@ public:
 	void setBlurDefaultValue();
 	void calcDashBlurValue();
 
-	BOOL checkFlag(u32 flag) { return unk14 & flag ? TRUE : FALSE; }
+	// if/return, not a ternary: the ternary becomes an optimiser temporary
+	// numbered below perform's `rect`, which then takes r31 from the flag.
+	BOOL checkFlag(u32 flag)
+	{
+		if (unk14 & flag)
+			return TRUE;
+		return FALSE;
+	}
 
 public:
 	/* 0x10 */ JUTTexture* unk10;
