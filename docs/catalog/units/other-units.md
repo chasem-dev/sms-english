@@ -107,6 +107,9 @@ Longer evidence for batches 25-39 is in `docs/progress/GMSE01-closure-audit-batc
   The `this`/pool-base swap (98.0 to 99.9) was ghost degree: `this` and `prevState` both reach the second sweep at remaining degree 30, 15 of it coalesced getMActor() result webs; raw `mMActor` at the thirteen sites removes them, both are pushed before the pool base, and it takes r31.
   Open: only the frame (0x90 against 0x88): retail's mVelocity copy is an unnamed temporary under the vector, not a named `v2`, and its low region has three fewer dead words than SMS_GetMarioAngleY's inlined trig leaves.
 
+- **MapObjDolpic TMonumentShine::hitByWater** (c-k4, 98.4 to 99.7, debugger-read): the header `cross()`'s `_x`/`_y` are depth-1 inline objects and are coloured before the IR CSE temporaries of the subtractions, stealing f4/f5; writing the three components out lets IRO scalar-replace `cross` into temporaries coloured last, retail's order.
+  Open: one 4-byte dead object below the named vectors (the inline's `_z` supplied it before); no cross spelling or accessor lever tried gives it back.
+
 ## MapObjOption (closure batch 136)
 
 - 100/100 with `validate-symbol-order` PASS and still 234 bytes of `.rodata` out of order at link time until `Map/MapCollisionEntry.hpp` was moved after `M3DUtil/InfectiousStrings.hpp` (second instance of the DebuTelesa finding, this time with a DOL consequence). Linked.
