@@ -466,30 +466,32 @@ bool CPolarSubCamera::isMomentDefinite_() const
 	return result;
 }
 
-// TODO: 94.9%. Two residues besides the checkStatusType block (see the note on
-// isMarioReadyGun_): frame 0x110 against the ROM's 0xd0, which is about five
-// more vector-sized locals than the five we declare and one more saved
-// register (r28), and the ground-plane predicate materialises its false value
-// with `li r0, 0` where the ROM reuses the already-zeroed result register, the
-// shape of a single `&&` chain rather than two statements.
+// The ground test is a predicate level with its own flag: its false arm then
+// reuses the flag's zero (`mr r0, r4`), which no spelling in the caller gives
+// (a plain `a && b` helper drops the materialisation, 95.6%).
+static inline bool CameragcIsOnThing(const TBGCheckData* plane)
+{
+	bool groundOK = false;
+	if (plane != nullptr && plane->isThing())
+		groundOK = true;
+	return groundOK;
+}
+
+// TODO: 98.4%. Frame 0xd0 against the ROM's 0x110, and one `fmr f2, f1`
+// (retail computes the height into f1 and copies it into matan's second
+// argument; `height -= grLevel` and a ternary are inert or worse). The
+// checkStatusType block: see the note on isMarioReadyGun_.
+// mwcc-stack (c-k10): retail's slots, first created highest, are diff 0xe0,
+// norm 0xd4, p3 0xc8, ground 0xc4, p2 0xb8, five more words, sample 0x98;
+// ours are diff, norm, sample, p2, p3, ground from 0xa0 down. p3 and ground
+// created before p2, and sample last, is the callee-local order of nested
+// inline levels (by-value copies of the sample point), not named locals.
 void CPolarSubCamera::calcSlopeAngleX_(s16* param_1)
 {
 	s16 result = 0;
 
 	if (!isMarioReadyGun_()) {
-		// TODO: one instruction left (98.07%): the false arm of the
-		// materialised isThing() bool is `mr r0, r4` (a copy of groundOK,
-		// known zero) in the ROM and `li r0, 0` here.  Ruled out: a TU-local
-		// `a && b` helper (drops materialisation, 95.6%); `groundOK =
-		// plane->isThing()` (96.7%); `thing = true/else thing = groundOK`
-		// (still `li r0, 0`, constant-folded).  groundOK is declared after
-		// the plane fetch so `li r4, 0` sits after the global load.
-		const TBGCheckData* plane = *gpMarioGroundPlane;
-		bool groundOK             = false;
-		if (plane != nullptr && plane->isThing())
-			groundOK = true;
-
-		if (groundOK && isSlopeCameraMode()) {
+		if (CameragcIsOnThing(*gpMarioGroundPlane) && isSlopeCameraMode()) {
 			JGeometry::TVec3<f32> diff;
 			diff.set(gpMarioPos->x - mPosition.x, 0.0f,
 			         gpMarioPos->z - mPosition.z);
