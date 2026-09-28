@@ -111,6 +111,13 @@ void TEffectObjBase::reset()
 // compiled to nothing (an empty `if (cue & CUE_DRAW) {}` there is byte-exact:
 // cue lives across the call in r31, then the test is dropped); empty bodies
 // are refused, and forceKill() is UNUSED so it cannot be that body.
+// c-k8 (scratch TU, game flags): after a call, `if (cue & 2) {}`, `{ ; }`,
+// `if (cue & 2) ;`, `{ do {} while (0); }` and `{ if (0) f(); }` all keep cue
+// in r31 and are deleted after register allocation; `{ (void)0; }` (the
+// release JUT_ASSERT), an empty inline call, a dead `int x = 0;` or a bare
+// `g;` are folded before it. A trailing `if (!(cue & 2)) return;` keeps the
+// test instruction. So retail's body was removed by the preprocessor (for
+// example a release JUT_WARNING/JUT_LOG_F, which expand to nothing).
 void TEffectObjBase::perform(u32 cue, JDrama::TGraphics*)
 {
 	if (cue & CUE_MOVE) {
