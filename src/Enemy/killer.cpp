@@ -471,14 +471,11 @@ TSpineEnemy* TKillerManager::createEnemyInstance() { return new TKiller; }
 
 // The rolling killer spins its body joint around Z on top of whatever the
 // animation produced, then re-applies the body scale.
-// TODO: 96.9%. Frame, slots and r31 (the roll matrix) now match; the ROM
-// loads roll[2][2]'s 1.0f just before its store where ours hoists it to the
-// top, which shifts every FPR by one. Tried: the roll build as a TU-local
-// helper (-8 frame), a chained zero row, a named angle, killer-> reads, an
-// s16 angle through JMASSin, the scale build as a helper, a 1.0f-returning
-// helper and a named `one` local.
-// Also inert (c-ident): the rows or MsMtxSetRotZ through a named MtxPtr with
-// the concats on the array or the pointer (92.8-96.9).
+// TODO: 99.7%, instruction-exact since MsMtxSetRotZ writes through its flat
+// pointer (c-r21); the frame is 8 short (0xc0 against 0xc8) with both
+// matrices 0xc low, so retail has three more words below `roll`.
+// Earlier spellings (hand-written rows through a named MtxPtr, the roll or
+// scale build as a TU-local helper, killer-> reads, an s16 angle) are 92.8-96.9.
 static int KillerBodyCallback(J3DNode* node, int param)
 {
 	if (param == 0) {
@@ -505,25 +502,10 @@ static int KillerBodyCallback(J3DNode* node, int param)
 		scale[2][1] = 0.0f;
 		scale[2][2] = s;
 
-		f32 rs      = JMASin(gpCurKiller->mRollAngle);
-		f32 rc      = JMACos(gpCurKiller->mRollAngle);
-		roll[0][0]  = rc;
-		roll[0][1]  = -rs;
-		roll[0][2]  = 0.0f;
-		roll[0][3]  = 0.0f;
-		roll[1][0]  = rs;
-		roll[1][1]  = rc;
-		roll[1][2]  = 0.0f;
-		roll[1][3]  = 0.0f;
-		roll[2][0]  = 0.0f;
-		roll[2][1]  = 0.0f;
-		roll[2][2]  = 1.0f;
-		roll[2][3]  = 0.0f;
-
-		MtxPtr rollMtx = roll;
-		MTXConcat(anmMtx, rollMtx, anmMtx);
+		MsMtxSetRotZ(roll, gpCurKiller->mRollAngle);
+		MTXConcat(anmMtx, roll, anmMtx);
 		MTXConcat(anmMtx, scale, anmMtx);
-		MTXConcat(J3DSys::mCurrentMtx, rollMtx, J3DSys::mCurrentMtx);
+		MTXConcat(J3DSys::mCurrentMtx, roll, J3DSys::mCurrentMtx);
 		MTXConcat(J3DSys::mCurrentMtx, scale, J3DSys::mCurrentMtx);
 	}
 	return 1;

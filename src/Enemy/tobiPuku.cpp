@@ -106,24 +106,13 @@ static int TobiPukuRollCallback(J3DNode* param_1, int param_2)
 		MtxPtr anmMtx   = gpCurTobiPuku->getMActor()->getModel()->getAnmMtx(
             joint->getJntNo());
 
-		// A named pointer to the rotation binds &local_44 into r30 once, as
-		// retail does.
-		// TODO: 96.8%. Retail loads the 0.0f/1.0f literals after the sine
-		// table reads; ours hoists both. Tried: the rotation body written out
-		// with one shared s16 angle, a named zero, chained zero stores, a
-		// TPosition3f matrix.
-		// Also inert (c-ident): a TMtx34f, a named angle, the pointer declared
-		// above the joint (96.7-96.8); TMtx34f identity() first is 76.9.
-		// c-c5: 100% only with a no-op `(MtxPtr)local_44` argument plus an
-		// internal MtxPtr copy (stores the scheduler cannot resolve); natural
-		// stand-ins are inert: one reassigned row pointer 98.1, row pointers
-		// 98.0, *p++ stores 96.9, a modified parameter 96.7, an aggregate 74.5.
+		// MsMtxSetRotZ's flat-pointer body keeps &local_44 in r30 and loads the
+		// literals after the sine table reads, as retail does (c-r21).
 		Mtx local_44;
-		MtxPtr rot = local_44;
-		MsMtxSetRotZ(rot, gpCurTobiPuku->unk1EC);
+		MsMtxSetRotZ(local_44, gpCurTobiPuku->unk1EC);
 
-		MTXConcat(anmMtx, rot, anmMtx);
-		MTXConcat(J3DSys::mCurrentMtx, rot, J3DSys::mCurrentMtx);
+		MTXConcat(anmMtx, local_44, anmMtx);
+		MTXConcat(J3DSys::mCurrentMtx, local_44, J3DSys::mCurrentMtx);
 	}
 	return true;
 }

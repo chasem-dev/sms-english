@@ -546,12 +546,37 @@ Mtx* TRollBlock::getRootJointMtx() const
 	return (Mtx*)getModel()->getAnmMtx(0);
 }
 
+// The roll matrix stores straight into the stack array: retail loads the
+// 0.0f/1.0f literals ahead of the sine table reads, which is the plain row
+// body, not the header MsMtxSetRotZ's flat-pointer fill that every joint
+// callback shows (c-r21). With the header body this is 93.3.
+static inline void RollBlockRotZ(MtxPtr mtx, f32 angle)
+{
+	f32 sin = JMASSin(DEG2SHORTANGLE(angle));
+	f32 cos = JMASCos(DEG2SHORTANGLE(angle));
+
+	mtx[0][0] = cos;
+	mtx[0][1] = -sin;
+	mtx[0][2] = 0.0f;
+	mtx[0][3] = 0.0f;
+
+	mtx[1][0] = sin;
+	mtx[1][1] = cos;
+	mtx[1][2] = 0.0f;
+	mtx[1][3] = 0.0f;
+
+	mtx[2][0] = 0.0f;
+	mtx[2][1] = 0.0f;
+	mtx[2][2] = 1.0f;
+	mtx[2][3] = 0.0f;
+}
+
 void TRollBlock::calcRootMatrix()
 {
 	J3DModel* model = getModel();
 	MtxPtr mtx      = model->getBaseTRMtx();
-	// TODO: 99.2%, frame and every slot exact; the roll matrix is the header's
-	// MsMtxSetRotZ (the hand-written sin/cos copy was 97.3). Left: retail sets
+	// TODO: 99.2%, frame and every slot exact; the roll matrix is a plain
+	// row fill (the hand-written sin/cos copy was 97.3). Left: retail sets
 	// MTXConcat's r3 with `mr` and r5 with `addi r5, r30, 0`, ours `mr` twice.
 	// `MTXConcat(mtx, roll, mtx)` gives that pair but hoists `addi r4, roll`
 	// above the scale copy (r6 for mScaling.x, 97.3); both getBaseTRMtx() the
@@ -563,7 +588,7 @@ void TRollBlock::calcRootMatrix()
 	model->setBaseScale(getScaling());
 
 	Mtx roll;
-	MsMtxSetRotZ(roll, unk138);
+	RollBlockRotZ(roll, unk138);
 	MTXConcat(model->getBaseTRMtx(), roll, mtx);
 }
 

@@ -153,6 +153,9 @@ void MsMtxSetRotRPH(MtxPtr mtx, f32 x, f32 y, f32 z);
 // expansion), a switch on the axis, a guard on `mtx`, and
 // TRotation3f/TPosition3f/TMtx34f locals at the call site (their conversion
 // operator adds 8 bytes of frame).
+// c-r21: an explicit cast inside the body alone (a flat `f32* m = (f32*)mtx`)
+// reproduces both tells without the caller-side cast; see MsMtxSetRotZ,
+// the only one of the three where it is a pure gain.
 inline void MsMtxSetRotX(MtxPtr mtx, f32 angle)
 {
 	f32 sin = JMASSin(DEG2SHORTANGLE(angle));
@@ -197,25 +200,38 @@ inline void MsMtxSetRotY(MtxPtr mtx, f32 angle)
 // The third sibling. The map has no MsMtxSetRotZ symbol anywhere, so unlike
 // MsMtxSetRotX and MsMtxSetRotY it happens to be expanded in every TU that
 // uses it; it still belongs beside them rather than in hauntLeg.cpp.
+// It fills the matrix through a flat f32 pointer (research c-r21). The cast
+// is an explicit conversion, which the IR optimiser never copy-propagates, so
+// the stores stay through the pointer: the literals load after the preceding
+// stores and &mtx stays in a saved register across the caller's concats,
+// the two tells every Z-rotation joint callback carries. It closed
+// HauntLegCallback and TobiPukuRollCallback and makes KillerBodyCallback and
+// PakkunSeedCallback instruction-exact, with no function lost tree-wide.
+// No MsMtxSetRotZ site in the tree wants the plain body. The same body for
+// MsMtxSetRotX/Y keeps both weak bodies exact but is a per-site split: it
+// closes TTamaNokoFlower::perform and TSmallEnemy::genEventCoin (Y) and
+// loses TGorogoro::generateByGateKeeper and TCraneUpDown::control (Y), and
+// TBGPolDrop::perform and TBossGesso::calcRootMatrix (X).
 inline void MsMtxSetRotZ(MtxPtr mtx, f32 angle)
 {
+	f32* m = (f32*)mtx;
 	f32 sin = JMASSin(DEG2SHORTANGLE(angle));
 	f32 cos = JMASCos(DEG2SHORTANGLE(angle));
 
-	mtx[0][0] = cos;
-	mtx[0][1] = -sin;
-	mtx[0][2] = 0.0f;
-	mtx[0][3] = 0.0f;
+	m[0] = cos;
+	m[1] = -sin;
+	m[2] = 0.0f;
+	m[3] = 0.0f;
 
-	mtx[1][0] = sin;
-	mtx[1][1] = cos;
-	mtx[1][2] = 0.0f;
-	mtx[1][3] = 0.0f;
+	m[4] = sin;
+	m[5] = cos;
+	m[6] = 0.0f;
+	m[7] = 0.0f;
 
-	mtx[2][0] = 0.0f;
-	mtx[2][1] = 0.0f;
-	mtx[2][2] = 1.0f;
-	mtx[2][3] = 0.0f;
+	m[8] = 0.0f;
+	m[9] = 0.0f;
+	m[10] = 1.0f;
+	m[11] = 0.0f;
 }
 
 void MsMtxSetXYZRPH(MtxPtr mtx, f32 x, f32 y, f32 z, s16 r, s16 p, s16 h);
