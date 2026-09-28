@@ -1259,6 +1259,16 @@ DEFINE_NERVE(TNerveElecCarapaceMove, TLiveActor)
 	// setGoalPath TPathNode above it (0xe8), we the reverse. operator-,
 	// a const& fork, an explicit temporary copy, raw mPosition or mNokonoko
 	// at setGoalPath, and getPosition() in ElecSubDist were inert or worse.
+	// c-k7 (debugger): the TPathNode is parse-time object @1577; the by-value
+	// copy is created when the body holding the ElecSubDist call is expanded.
+	// Moving the test into a depth-1 predicate (`ElecIsNearGoal(carapace,
+	// range)` over ElecSubDist or TSpineEnemy::calcDist) puts the TPathNode on
+	// retail's 0xe8 (24 -> 12 markers) but the copy lands at 0xdc, directly
+	// under it; retail has ElecIsNerve's two bindings (@1786 nerve, @1791
+	// spine, depth 1, later in source) between them, so its copy was created
+	// after the depth-1 pass, i.e. one expansion level deeper still. Not landed:
+	// the predicate is fabricated. A named `goal` reference and calcDist at
+	// the site are worse (35).
 	JGeometry::TVec3<f32> toGoal(carapace->getUnk104().getPoint());
 	toGoal.sub(carapace->getPosition());
 	toGoal.y = 0.0f;
