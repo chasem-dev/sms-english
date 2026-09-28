@@ -170,23 +170,20 @@ void TConductor::polluterExterminated() { }
 
 BOOL TConductor::isBossDefeated()
 {
-	// TODO: frame is exact. Residue is the switch pivot (retail cmpwi 2 /
-	// cmpwi 4, everything but map 3 to the hinokuri arm). `default:` next
-	// to `case 2:` and an empty `case 4:` both fold the tree and cost ~3%;
-	// so do `default: ;`, `case 1:`/`case 0:` labels, an int switch operand,
-	// and `case 3:` first with `case 2: default:` after it.
-	// The hinokuri body after the switch (`case 2: break;` or no case 2)
-	// relays the arms out entirely (~29%). `default: goto` a label inside
-	// case 2 and `default:` above `case 2:` also fold (95.6%), and an
-	// if/else on map 3 is 95.0%. Until a matching spelling is found, maps
-	// other than 2 and 3 fall off the end (retail sends them to hinokuri).
-	// 2026-09-27: a third, folded label (`case 1: break;` after case 3)
-	// gives retail's pivot tree exactly (99.7, only default's target and
-	// the 4-low iterator slots left), so retail's case set had three values.
-	// c-m28: every spelling giving case 2 and default one label folds the tree;
-	// `case 1: break;` + `case 2: default:` gives the tree plus `cmpwi 1` (98.1).
+	// Retail sends every map but 3 to the hinokuri arm (pivots cmpwi 2 /
+	// cmpwi 4: 2, below 2 and 4 upwards all branch there), so case 2 is also
+	// the default; without it maps other than 2 and 3 fell off the end.
+	// TODO: 95.6%. `case 2: default:` folds retail's tree into a single
+	// `cmpwi 3` test. Retail's tree needs a third case value: an extra
+	// label (`case 0:` 98.1, `case 5:` 98.4) reproduces it but has no
+	// evidence behind it. Already tried without that label: `default:` above
+	// `case 2:`, `default: ;`, an empty `case 4:`, an int switch operand,
+	// `case 3:` first (28.8), the hinokuri body after the switch (~29) and
+	// an if/else on map 3 (95.0). The remaining residue is the 4-low
+	// iterator slots.
 	switch (gpMarDirector->mMap) {
-	case 2: {
+	case 2:
+	default: {
 		TLiveManager* mgr = getManagerByName("ヒノクリ２マネージャー");
 		if (!mgr)
 			return true;
