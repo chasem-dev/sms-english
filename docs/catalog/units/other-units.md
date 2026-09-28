@@ -113,3 +113,16 @@ Longer evidence for batches 25-39 is in `docs/progress/GMSE01-closure-audit-batc
 ## MapObjOption (closure batch 136)
 
 - 100/100 with `validate-symbol-order` PASS and still 234 bytes of `.rodata` out of order at link time until `Map/MapCollisionEntry.hpp` was moved after `M3DUtil/InfectiousStrings.hpp` (second instance of the DebuTelesa finding, this time with a DOL consequence). Linked.
+
+## Closure batch c-k5 (2026-09-28)
+
+- **enemymanager `copyAnmMtx`** closed (99.71 -> 100). Three changes, each read from the debugger: the scratch matrix is a `TPosition3f` (as `unk48` is, per the dead-stripped weak TPosition3 ctor), whose conversion operator keeps its address in r28 across the loop where a fabricated `MtxPtr wtf = afStack;` had imitated it; the scale is read from raw `mScaling` (the named `const TVec3& v = getScaling()` reference was a dead word under the matrix, 0x68 for 0x64); and the frame index comes straight from `getCurAnmFrameNo` (the direct-return fork split the raw index from its `slwi`).
+  The `EnemymanagerGetMActor` identity binder is still needed for 0x10 of frame (0xb0 without it); raw, named, reversed and `int` spellings of the first test and every `getModel()` subset of the other sites are worse.
+  `performShared` (TTimeRec colour stride, `addi r3, r5, 0` zero reuse) still blocks the unit.
+- **enemyAttachment `generatePolluteModel`**: the ground check belongs in the UNUSED `TEnemyPolluteModel::generate`. Inlined callee locals are created last-declared first (frame-model 8b), so only a body declaring `check` before the matrix puts `check` (0x3c) directly under the matrix (0x40); and with the check inside, the out-of-line `generate` is the map's 0x178 exactly (it was 0xf8, and the old TODO blamed `identity33` depth).
+  Left: both slots 4 low, one dead word short after `check`. `isIllegalData()`/`checkFlag()` without the flag binder give frame 0x90; `SMS_IsWaterSurface()` drops `generate` to 0x140; `!isLegal()` adds six instructions. `bind` is the known-open `a = b - c` class, so the unit cannot close yet.
+- **JPAMath `JPAVecToRotaMtx`** (62%): checked term by term against retail (cross, sum of squares, dot, guarded sqrt, zero-or-scale, the nine entries): same behaviour, the gap is purely retail's memory-resident `axis`. Whole body in a TU-local inline (62.7) and an asm `fres` helper (42.6) do not make it memory-resident. `JPAGetRMtxTVecElement`: `regalloc.py` does not replay this function (22 misses with the current order).
+- **CameraChange `changeCamModeSub_`**: the `bgt; b join` pair survives six more TU-local pop bodies and two call-site shapes.
+- **MapWarp `init`**: the swapped registers are the IRO CSE temporaries of `local_180[i]`/`local_1d0[i]` (`regalloc.py`: one move fixes two of three webs); named copies are worse.
+- **smallEnemy `genEventCoin`**: our PCode keeps the stores in source order until the scheduler, which puts `local_d0.x` before `mtx[2][3]`; a priority difference, not a spelling of the stores.
+- **MarioPhysics `checkGroundAtJumping`**: retail's `pos` has one named 4-byte local above it and one more dead word below; an uninitialised `f32` carrying `checkRoofPlane`'s result takes a register instead.
