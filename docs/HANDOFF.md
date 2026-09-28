@@ -26,6 +26,13 @@ Branch `wt/c-r21` commit `d28e1a4` writes `MsMtxSetRotZ`'s body through `f32* m 
 Not landed: the flat-pointer cast reads as the kind of cast CLAUDE.md forbids, and the per-site duplicate encodes a split nobody has explained (callbacks and loops want the cast body, straight-line members the plain one).
 Land it only if the owner accepts the cast, or once the per-site split is explained (see frame-gaps.md "Research batch c-r21").
 
+## Fakematch cleanup c-f1 (2026-09-28)
+
+Landed with no function dropping: igaiga's `(Vec*)&point` cast and `IgaigaGoroAt`/`IgaigaInitTracer` (now the header accessors; initSetEnemies 99.30 -> 99.33), `MapObjBallWaterDrag` (now `TMapObjBall::getUnk17C()`), the three TU-local application binders (`MDEApp`/`MNApp`/`MDDApp`, now one `SMSGetApplication()` in Application.hpp) and MapEventMare's four `(void)0` fillers (real statements).
+Parked on branch `wt/c-f1`, because each honest replacement costs matching (owner decision: honesty over match?):
+`EventWatcherDirectorForTalkNPC` (284fb22, loses exact evGetTalkNPC), `EventWatcherRawMSound` (e66a684, loses exact evAppearMushroom1up), `EnemymanagerGetMActor` (f89d2d7, loses exact copyAnmMtx), PollutionLayer's `dont_inline` (ddabac5, loses exact TPollutionLayer::cleaned; retail really calls the empty body), and fuzzy-only drops `TabePukuGetSaveParams` (b0f1878), `NameKuriMSound` (7770a5b), `lgSunN` (8b0b8a2), `CNParams` (d146161), enemyAttachment's flag binder (5e02e99).
+Left in place with debugger readings in their TODOs: `CannonBody` (3 exact at stake), `KoopaGetParam` (2), the `ApplicationCrTimeAry1-3` chain and killer's `MsGetVecFromRotY_L1-3` (real depth-5 calls, upper levels unknown; removing them deletes the map's weak `crTimeAry`), JPADrawVisitor's `(void)&mtx` (22-44 instructions; likely JGRotation3.hpp).
+
 ## State 2026-09-27 night (session 5237deed, map + compiler-research round)
 
 All 72.72 -> 72.82% matched, 531/732 linked (MarNameRefGen linked), DOL identical, zero regressions.
