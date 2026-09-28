@@ -313,7 +313,10 @@ void CPolarSubCamera::changeCamModeSub_(int mode, int tween_frames, bool force)
 	// five popThing bodies (early return, two returns, empty then/else arm,
 	// a named count, `unk4 = unk4 - 1`) and five call-site spellings (two
 	// separate ifs, `== true`, inverted arms, `else if (!bVar11)`, no
-	// braces). This is the unit's whole data gap: @3715 is a 51-entry jump
+	// braces). c-k5, also inert: a TU-local pop with `?:`, `-= 1`, a named
+	// count, `if (!(n > 0)) return;`, then-return + return, `else return;`;
+	// a `?:` or inverted if/else at the call site is worse (90.6/96.2).
+	// This is the unit's whole data gap: @3715 is a 51-entry jump
 	// table whose grouping already matches and whose addends sit 4 bytes
 	// low, gated on this function's size.
 	if (bVar11) {
