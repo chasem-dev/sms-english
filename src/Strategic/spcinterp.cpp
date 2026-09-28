@@ -239,6 +239,13 @@ void TSpcInterp::execdec()
 // argument binding; retail has nothing there and one more word below the
 // temp. Direct field writes drop the binding but schedule the mType store
 // early; a named `f32 f` keeps the schedule but sits above the pop temps.
+// c-k9: retail's temp is the first object after @190, so setDataFloat's
+// binding must be created after push(int)'s temp (a depth-2 setter) or not
+// at all. The int arm cannot be a parse-time temporary: any
+// `mProcessStack.push(TSpcSlice(sum))` or implicit `push(sum)` leaves both
+// getDataInt calls out of line (78.6%; a switch-bodied inline is not
+// expanded inside a temporary's constructor argument). Also inert: data
+// before type, `result = TSpcSlice(f)` (frame +0x10), push(result).
 void TSpcInterp::execadd()
 {
 	TSpcSlice arg2 = mProcessStack.pop();
