@@ -129,6 +129,13 @@ void TMapObjGeneral::put()
 // f1/f4/f5 on y/z/rate. Inert: component stores in either order, named
 // x/y/z locals (with or without the power), a named rate, both speed
 // accessors, rate operand order.
+// c-k7 (debugger, regalloc.py --move 36:b37 replays retail exactly): set()'s
+// z binding (@1479) must be coloured before its y binding (@1478); then z
+// takes f1, y f4 and the IRO rate temp f5. Bindings are created x, y, z, so y
+// needs no binding (it then becomes a named web, coloured after the rate:
+// y f5, rate f4) or an IRO split temp created before the rate's. Inert or
+// worse: a named y before/after power (raw, getMapObjData() or the
+// TMapObjGeneralGetPhysicalData level), a named TMapObjPhysicalData*.
 void TMapObjGeneral::thrown()
 {
 	mPosition.set(SMS_GetMarioPos().x, SMS_GetMarioPos().y, SMS_GetMarioPos().z);
