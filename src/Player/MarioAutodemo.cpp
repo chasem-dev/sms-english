@@ -50,6 +50,9 @@ BOOL TMario::readBillboard()
 	// TODO: instruction-exact; frame 0x30 against retail's 0x70, every slot
 	// 0x40 low (the inlined sqrt temporary is 0x4c there). getPosition() on
 	// the NPC's four reads adds 8 each but forms a +0x18 pointer for .z.
+	// c-k11: `TVec3 diff; diff.sub(mPosition, npc->mPosition)` read by
+	// component is instruction-count exact at 0x40 but swaps f6/f7; the
+	// operator- and `diff -= ` spellings change code.
 
 	TBaseNPC* talkingNpc = gpMarDirector->getTalkingNPC();
 	switch (mStatusState) {
