@@ -417,24 +417,21 @@ void TMapObjBall::touchActor(THitActor* param_1)
 	boundByActor(param_1);
 }
 
-// Horizontal speed: the two components go in as arguments, one copy of the
-// velocity each, and the sum of squares fuses the x product only.
-static inline f32 MapObjBallSqXZ(f32 x, f32 z) { return x * x + z * z; }
-
+// Horizontal speed, one copy of the velocity per read. Retail rounds z*z and
+// fuses x*x into the sum (fma(x, x, z*z)); this spelling does the same.
 static inline f32 MapObjBallXZSpeed(const JGeometry::TVec3<f32>& v)
 {
-	return JGeometry::TUtil<f32>::sqrt(MapObjBallSqXZ(
-	    JGeometry::TVec3<f32>(v).x, JGeometry::TVec3<f32>(v).z));
+	return JGeometry::TUtil<f32>::sqrt(
+	    JGeometry::TVec3<f32>(v).x * JGeometry::TVec3<f32>(v).x
+	    + JGeometry::TVec3<f32>(v).z * JGeometry::TVec3<f32>(v).z);
 }
 
-// TODO: retail rounds z*z of the rolling speed and fuses x*x into the sum
-// (fma(x, x, z*z)); ours rounds x*x and fuses z*z (tools/expr-diff.py), at
-// most 1 ulp in the roll angle. Retail's first velocity temporary supplies z,
-// ours x; swapping the arguments, the addends or naming a square does not move
-// it (naming z*z stops the fusion altogether, 97.1).
-// Otherwise every instruction matches; the frame is 0x48 short. Retail leaves
-// 0x10 between `axis` and `cur` and its low-region temporaries (the setRotate
-// axis copy) sit 0x24 higher; f5-f7 in the setRotate expansion are permuted.
+// TODO: 96.1%. The speed spelled as two arguments to a TU-local
+// `x * x + z * z` helper matched every instruction (99.3%, frame 0x48 short)
+// but rounded x*x and fused z*z, the reverse of retail (tools/expr-diff.py):
+// up to 1 ulp in the roll angle. Swapping that helper's arguments or addends,
+// or naming a square, did not reverse the fusion; the plain four-copy sum
+// above does, at the cost of the velocity temporaries' order.
 void TMapObjBall::calcCurrentMtx()
 {
 	TPosition3f rot;
