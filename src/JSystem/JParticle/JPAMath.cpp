@@ -189,6 +189,12 @@ void JPAGetZRotateMtx(s16 z, MtxPtr dst)
 // a TU-local helper holding the zero-or-scale `if` (by reference or pointer,
 // with or without the sqrt), and `cross` through a pointer helper; routing
 // `cross` through a by-value return costs 23-49 instructions.
+// c-k5: behaviour checked against retail term by term (cross, sum of
+// squares, dot, guarded sqrt, zero-or-scale, the nine entries): identical, so
+// the 62% is layout only. Also inert on the residency: the whole body in a
+// TU-local inline taking `a`/`b` by const reference (62.7, axis still in
+// FPRs), and an asm `fres` helper (42.6). Retail's frame holds nothing but
+// the three argument homes (0x8..0x13) and `axis` (0x14..0x1f).
 void JPAVecToRotaMtx(MtxPtr dst, JGeometry::TVec3<f32> a,
                      JGeometry::TVec3<f32> b)
 {
