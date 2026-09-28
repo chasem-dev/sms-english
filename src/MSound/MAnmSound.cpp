@@ -204,6 +204,17 @@ void MAnmSoundNPC::startAnimSound(void* interface, u32 sound_id,
 				// volume or in the `if`. A TU-local volume helper taking
 				// (actor, ptr, index) fixes r27/r29 but hoists the
 				// mDataCounter read and keeps the volume in f29.
+				// c-k2 (mwcc-debugger replay): the FPR residue is one
+				// degree -- dVar10 has 31 neighbours (K 32), so it is
+				// pushed in the first sweep and coloured last; retail
+				// needs a 32nd FPR neighbour live across the distance
+				// (a ghost copy web would do). The GPR residue is
+				// colouring order: getDistFromMario's `pos` is the IRO
+				// temp @417, coloured after the inlined `mario` (@404);
+				// retail colours it among the pcode temporaries. Inert:
+				// named 2000/600 locals, a named calcVolume result, an
+				// else arm, and an (this, ptr, actor) volume helper with
+				// or without the MarioDistance level (frame -8 / +8).
 				f32 dVar10 = 1.0f;
 
 				f32 fVar11 = MarioDistance(actor);

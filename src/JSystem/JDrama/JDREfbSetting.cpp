@@ -103,6 +103,13 @@ bool JDrama::IssueGXSetCopyClear(JUtility::TColor clear_color, u32 clear_z,
 // Unit pass c-jdr 2026-09-23: `&sample_pattern[0]`/`&vfilter[0]`,
 // `(bool)(flags & 0x20)` and `(GXBool)render_mode.aa` are identical; ternaries
 // into bool (77-94.5%) and `aa == GX_TRUE` (97.0%) are worse.
+// c-k2 (mwcc-debugger replay): all six webs are pcode temporaries, coloured
+// latest-generated first. The antialias binding (`lbz`, neg/addic/subfe) is
+// generated before the `flags & 0x20` test, so the test is coloured first and
+// takes r0; retail's r4 needs the test generated before the aa chain (or made
+// an @ object). A named `u32`/`int`/`u16`/`u8` copy of `flags & 0x20`, before
+// or after GXSetCopyClamp, is forwarded back into the test (registers
+// unchanged, frame +8); a named `GXBool aa` is 93.4%.
 void JDrama::IssueGXCopyDisp(void* param_1, const TRect& src_rect,
                              const GXRenderModeObj& render_mode,
                              JUtility::TColor clear_color, u32 clear_z,

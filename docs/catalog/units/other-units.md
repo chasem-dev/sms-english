@@ -7,6 +7,7 @@ Longer evidence for batches 25-39 is in `docs/progress/GMSE01-closure-audit-batc
 
 ## Camera
 
+- **CameraDemo** (c-k2, debugger-read): `updateDemoCamera_`'s two `origin + offset` return buffers are parse-time objects @616/@617 (`pointer(void)`), allocated directly under the named block; retail has 36 bytes of objects created before them. Not closed.
 - **cameragc / CameraChange / cameralib sweep (2026-09-17):** chained assignment puts the inner `operator=` one level deeper (`mPreviousTarget = mCurrentTarget = mTargetBeforeFixedMode`: the ROM inlines the outer off the returned reference and calls the inner, weak `__as__13TTargetCamera`; one wrapper level above the statement flips it, `changeCamModeSub_` 89 -> 98). The depth-2 allowance measured **10** statements here (`checkStatusType` expands at 10, calls at 11). Per-call-site inlining is not `if`-nesting (a copy of `calcExternalData_()` outside all `if`s expands the same helpers). `inline` is *not* how retail got weak-and-not-inlined: adding it to `ctrlGameCamera_` (0x468) expands it into `perform` (95 -> 70); open. Factoring `CLBCalcNearNinePos`'s duplicated up/right transform into one helper: 37 -> 62. `mult33` writes over its argument (the ROM copies the input after `setRotate`); `identity33()` (9 stores) not `identity()`. MWCC extends `s16` returns at the caller: an `s16` accumulator gives the ROM's `mr r3, r5`. A named `const TCameraMapTool* prev = unk70;` was worth 8 bytes (qualifies "pointer locals are worth zero"). `getThing`'s `return unk8[unk4 - 1]` needs an explicit `const int* p;` if/else for the ROM's `subi` + shared `lwz 0(p)`. Fabricated `execLButtonCameraOnProc_` adds the level that makes `changeCamModeSpecifyFrame_` a `bl` at depth 4 while keeping it expanded at depth 2. Two missing behaviours restored in `execCameraModeChangeProc_` (`MSD_SE_SY_NOT_COLLECT` behind `checkFrameMeaning(0x4000)`; `CAMERA_MODE_FOLLOW_D` short-circuit). Open header items: `TMario::checkStatusType(s32)` must be callable from cameragc (five sites; forcing it gives unit 95 -> 97 and `isMarioReadyGun_` size-exact; the one-statement in-class body at depth 2 expands; three extra levels flip it); one-arg `TRotation3::mult33(TVec3&)` should forward as `TVec3 tmp(v); mult33(tmp, v);` (`CLBRotatePosAndUp` 73 -> 84); `MsClamp<f32>` needs to be out of line from `perform`/`changeCamModeSub_` (local 0x20 in both TUs). `CLBIsPointInCube`/`CLBCalcPointInCubeRatio`/`CLBCalc2DFPos` are pure 64/64/24-byte frame gaps.
 
 - **CameraMode** (linked): current-mode check is an out-of-line call, previous-mode check an inline switch. Added a fabricated current-mode predicate analogous to `isLButtonCamera`, used only for the current-mode branch.
@@ -47,6 +48,8 @@ Longer evidence for batches 25-39 is in `docs/progress/GMSE01-closure-audit-batc
 
 ## MSound
 
+- **MSHandle** (closed c-k2): `setSeDistanceVolume`'s curve index is `u8 curve = getSwBit() >> 16; curve &= 7;`. The folded `>> 16 & 7` is one pcode op that consumes getSwBit's r3 before get_thing's `>> 30`, which then takes r3; the split mask keeps r3 live past it in the first schedule, giving retail's r5.
+- **MAnmSound** (c-k2, open, debugger-read): `MAnmSoundNPC::startAnimSound`'s volume `dVar10` has FPR degree 31 (K 32), one short of being deferred and coloured first (retail f31); the translation pointer is the IRO temp @417 coloured after the inlined `mario` @404, retail colours it among pcode temps. Inert: named 2000/600 locals, a named calcVolume result, an else arm, `(this, ptr, actor)` volume helpers (frame +-8).
 - **MSModBgm**: repeated zero-load mismatch survives bool/u8, integer-zero, assignment-order and early-return trials. `getTiming` optional-output behaviour lacks evidence.
 - **MovieRumble**: `init`/`checkRumbleOff` share a missing pointer move inside `readCurInfo`; getter placement, validity locals, signed group, const pointer all fail.
 
@@ -68,8 +71,13 @@ Longer evidence for batches 25-39 is in `docs/progress/GMSE01-closure-audit-batc
 - **PerformList**: `load` differs by one stream-read slot; by-value iterator in `perform`.
 - **MarioGamePad**: see padding list in `../frame-gaps.md`.
 
+## JSystem
+
+- **JDREfbSetting::IssueGXCopyDisp** (c-k2, open, debugger-read): the six webs are pcode temps coloured latest-first; the `flags & 0x20` test is generated after the inlined antialias conversion, so it takes r0 where retail has r4. Named copies of the test are forwarded back (+8 frame, registers unchanged).
+
 ## MoveBG and Animal
 
+- **MapObjBase::initAndRegister** (c-k2, open, debugger-read): retail's slots are ours plus one 4-byte object created first (above the end() return buffer) and the TNameRefGen binder created before insert's argument pair. Named group binds the group, not the list (`addi r31, r3, 0`), `getChildren()` spellings are +8.
 - **MapObjAirport**: `0x484D` clear-sign sound via `MSound::startSoundSystemSE`; use the director accessor and pollution global. Open: passed camera flag 0x34 vs 0x3C; pool ctor and `appear` UNUSED bodies undersized.
 - **MapObjBall**: per-call-site inlining, see `../codegen-tells.md`. Scores: `hold` 48%, `touchWall` 75%, `TBigWatermelon::touchActor` 61%, `TResetFruit::control` 52%, `receiveMessage` 69%.
 - **MapObjPollution**: accessor/loop trial reached the right frame with wrong registers (batch 39 audit).

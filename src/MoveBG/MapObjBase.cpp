@@ -662,6 +662,14 @@ BOOL TMapObjBase::receiveMessage(THitActor* sender, u32 message)
 // before) and one extra optimizer temp at the bottom. Named group plus
 // getChildren fixes the order with two extra temps (+8); a direct
 // getRootNameRef()->search() into a named group leaves the depth-1 pair 4 low.
+// c-k2 (mwcc-debugger variables): ours allocates, top down, @1038 0x60, @1039
+// 0x5c, @1040 0x58, insert's @1044/@1045 0x54/0x50, @1046 0x4c, the
+// TNameRefGen binder @1047 0x48, end()'s @1049/@1050 0x44/0x40. Every retail
+// offset fits the same objects with one extra 4-byte object created first
+// (above @1038) and the binder created before @1044 (0x60 extra, 0x5c ..
+// 0x3c). A named `TIdxGroupObj* group` binds the group, not its list
+// (`addi r31, r3, 0`; 99.3), `group->getChildren()` and an unnamed
+// `->getChildren()` are +8 (0x78), a named `const char*` name is 97.6-97.7.
 void TMapObjBase::initAndRegister(const char* param_1)
 {
 	unkF4 = param_1;
