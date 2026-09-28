@@ -844,22 +844,16 @@ static void evKillMushroom1up(TSpcTypedInterp<TEventWatcher>* interp,
 	interp->push();
 }
 
-// Binder over the raw global, named again at the call site: retail's 0x88
-// frame with every pool slot in place. The SMSGetMSound() binder is 4 high,
-// and naming the popped mushroom as well moves the pop slices 4 high.
-static inline MSound* EventWatcherRawMSound()
-{
-	MSound* sound = gpMSound;
-	return sound;
-}
-
 static void evAppearMushroom1up(TSpcTypedInterp<TEventWatcher>* interp,
                                 u32 arg_num)
 {
 	interp->verifyArgNum(1, &arg_num);
 	((TMushroom1up*)getNameRefPtr(interp->pop()))->appear();
-	MSound* sound = EventWatcherRawMSound();
-	sound->startSoundSystemSE(MSD_SE_SY_1UP_APPEAR, 0, nullptr, 0);
+	// TODO: 99.8%, every instruction matching; frame 0x80 vs retail 0x88.
+	// A TU-local binder returning gpMSound through a local supplied the
+	// missing words and was removed as a fakematch. The raw global and a
+	// named `MSound* sound = gpMSound;` are 0x78.
+	SMSGetMSound()->startSoundSystemSE(MSD_SE_SY_1UP_APPEAR, 0, nullptr, 0);
 	interp->push();
 }
 
@@ -1264,14 +1258,12 @@ static void evStartEventSE(TSpcTypedInterp<TEventWatcher>* interp, u32 arg_num)
 		se = 0x485B;
 		break;
 	}
-	MSound* sound = EventWatcherRawMSound();
-	sound->startSoundSystemSE(se, 0, nullptr, 0);
-	// TODO: 99.9%, all 98 instructions matching at retail's 0x58 frame. The
-	// named receiver through the raw-global binder (as in
-	// evAppearMushroom1up) puts the pushed slice in place; the popped slice
-	// and its fctiwz reads remain 4 high (0x3c vs 0x38). The SMSGetMSound()
-	// binder, the plain accessor and the raw global, named or not, with the
-	// switch on a named int or a u32 `se`, are all 4-8 further off.
+	SMSGetMSound()->startSoundSystemSE(se, 0, nullptr, 0);
+	// TODO: 99.8%, all 98 instructions matching; frame 0x50 vs retail 0x58.
+	// A TU-local binder returning gpMSound through a local (removed as a
+	// fakematch) gave 0x58 with the pushed slice in place, leaving the
+	// popped slice 4 high. The raw global, named or not, is 0x48; a switch
+	// on a named int or a u32 `se` was 4-8 further off.
 	interp->push();
 }
 
