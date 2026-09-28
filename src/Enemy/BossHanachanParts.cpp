@@ -487,16 +487,6 @@ void TBossHanachanPartsBase::considerSetAnm_(EnumBossHanachanNerveAnm nerve)
 	}
 }
 
-// TODO(shared header): TBossHanachan::getWeakBodyIndex() belongs in
-// Enemy/BossHanachan.hpp as `s32 getWeakBodyIndex() const`; parked here.
-// Reading the weak index through it (not the raw member) closes body setAnm_
-// (c-k6): its dead unkFC binding and the getMActor() receivers give retail's
-// frame and its changed/anm/this/blend colouring.
-static inline s32 BossHanachanGetWeakBodyIndex(const TBossHanachan* p)
-{
-	return p->mWeakBodyIndex;
-}
-
 bool TBossHanachanPartsBody::setAnm_(EnumBossHanachanAnmKind anm,
                                     EnumBossHanachanStopMotionBlendOnOff blend)
 {
@@ -509,7 +499,7 @@ bool TBossHanachanPartsBody::setAnm_(EnumBossHanachanAnmKind anm,
 		mCurrentAnm = anm;
 		if (sBodyBckIndex[anm] != getMActor()->getCurAnmIdx(ANM_TYPE_BCK)) {
 			int index = sBodyBckIndex[anm];
-			if (unk114 == BossHanachanGetWeakBodyIndex(unkFC)) {
+			if (unk114 == unkFC->getWeakBodyIndex()) {
 				switch (anm) {
 				case BOSS_HANACHAN_ANM_UNK2: index = 11; break;
 				case BOSS_HANACHAN_ANM_UNK3: index = 14; break;

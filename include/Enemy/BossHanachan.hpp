@@ -279,6 +279,7 @@ public:
 	void execHeadCalcAnim_();
 	void throwMario_(THitActor*);
 	void setRandomWeakBodyIndex();
+	s32 getWeakBodyIndex() const { return mWeakBodyIndex; }
 	void changeAnmRateAndFrameUpdate_();
 	void copyFrameFromOldAnmToNewAnm_();
 	void setHeadAndBodyNonstopMotionBlendRatio_(f32);
