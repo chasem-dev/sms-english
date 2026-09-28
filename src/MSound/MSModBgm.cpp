@@ -166,6 +166,9 @@ void MSBgmXFade::xFadeBgm(f32 param_1)
 	//    loop-invariant local f1 and the per-iteration `scTiming[i]`
 	//    f0, we do the reverse, which is exactly what introduction
 	//    order predicts, our local being introduced before anything
+	//    (2026-09-28: the second crossing test read `scTiming[i] >= f1`,
+	//    the reverse of retail's `unk0 >= scTiming[i]`; fixed by
+	//    tools/expr-diff.py, 99.4 -> 99.2, the register swap remains)
 	//    else in the body.  So the real body introduces at least one
 	//    other float value *before* it reads `unk0` -- another reason
 	//    to reconstruct the missing `param_2` code first.
@@ -222,7 +225,7 @@ u8 MSBgmXFade::getTiming(f32 param_1, u32* param_2)
 	for (u8 i = 0; i < 18; ++i) {
 		if (param_1 > scTiming[i] && f1 <= scTiming[i])
 			return i;
-		if (param_1 < scTiming[i] && scTiming[i] >= f1)
+		if (param_1 < scTiming[i] && f1 >= scTiming[i])
 			return i;
 	}
 
