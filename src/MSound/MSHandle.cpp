@@ -212,22 +212,10 @@ f32 MSHandle::calcDolby(const Vec& pos, f32 dist)
 	return r < 0.0f ? 0.0f : r;
 }
 
-// TODO: 99.8%, three operand-only differences, i.e. a GPR permutation. Retail
-// keeps get_thing's `param_1 >> 30` in r5 at this one site (r3 in the other
-// two, which match) -- it declines to reuse getSwBit's return register even
-// though r3 is free until `this` is reloaded for setDistanceVolumeCommon.
-// Swapping get_thing's two declarations and inlining `tmp` into the argument
-// list both leave it unchanged. Closure 217 added two more inert spellings:
-// naming the category index (`u32 idx = get_thing(getID());`) and dropping
-// get_thing's `uVar1` so the shift is anonymous at all three compares (MWCC
-// re-CSEs it).
-// cc30, all inert or worse: TU-local returning helpers for the curve bits
-// (u32/u8/named, by receiver or by value), `u8`/`int`/top-declared `tmp`,
-// reusing `swBit`, a named id, a `SeCategory&` binder, a returning or
-// reference category helper, if/else-chain and switch get_thing forks, a
-// `const u32&`/`int` get_thing parameter or `int` return, a `MSSelf(this)`
-// receiver fork, a named receiver pointer, and a forwarding helper around
-// the virtual call (95.6: the category load moves ahead of `this`).
+// The curve index is truncated to the u8 that setDistanceVolumeCommon takes
+// and masked in a second statement: the separate `&=` keeps getSwBit's r3
+// live past get_thing's `>> 30` in the first schedule, which is what gives
+// retail's r5 there (one folded `>> 16 & 7` lets the shift reuse r3).
 void MSHandle::setSeDistanceVolume(u8 moveTime)
 {
 	u32 swBit = getSwBit();
@@ -239,14 +227,10 @@ void MSHandle::setSeDistanceVolume(u8 moveTime)
 
 	f32 volume;
 	if (!(swBit & JAISeSwBit_NoDistanceVolume)) {
-		// TODO: registers only: get_thing's `>> 30` (@579) takes r3 where
-		// retail has r5, i.e. retail keeps getSwBit's r3 (or the call's
-		// receiver) live across it before the first scheduling pass. Inert:
-		// the shift inline in the call (reorders), a named get_thing index,
-		// a named getSwBit copy (adds a copy).
-		u32 tmp = getSwBit() >> JAISeSwBit_DistanceVolumeCurveShift & 0x7;
+		u8 curve = getSwBit() >> JAISeSwBit_DistanceVolumeCurveShift;
+		curve &= 0x7;
 		volume = setDistanceVolumeCommon(
-		    smSeCategory[get_thing(getID())].unk4, tmp);
+		    smSeCategory[get_thing(getID())].unk4, curve);
 	} else {
 		volume = 1.0f;
 	}
