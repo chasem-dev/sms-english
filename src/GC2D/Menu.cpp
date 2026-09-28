@@ -58,27 +58,22 @@ TMenuPlane::TMenuPlane(const TMarioGamePad* param_1, J2DPane* param_2,
 	// The loop bound below must be `int`: retail's `cmpw` is a signed
 	// compare against the `int` member, a `u32` index gives `cmplw`.
 	//
-	// TODO: besides the JUTColor temp stride described at perform(), the
-	// loop body has one structural residue. Retail reloads `this` from its
-	// 8(r1) spill slot into r6 at the top of the `mInfoTag == 0x13` block
-	// and then reads `unk28` *twice* -- once for `local_420[unk28]` and
-	// again for the `unk28 == 0` test, because the `stwx` between them
-	// invalidates the cached load. We keep `this` in r31 across the whole
-	// loop and therefore cache `unk28` in r3. Retail's r31 holds something
-	// else for the duration (it reloads `this` again after the loop), so
-	// there is one more value live in retail's loop than in ours; the
-	// candidate is a second iterator-derived local we have not identified.
-	// cc30: retail's three colour temporaries are 4-byte (0x9c/0x98/0x94)
-	// against our 8-byte stride, but the `(u32)c` conversion that fixed
-	// perform() removes them here (frame 0x4a0), so the ctor wants another
-	// spelling. A TU-local loop-body helper taking `this` (with get() or
-	// `(u32)` colours, with or without a `self` copy) keeps the cached
-	// unk28 and costs two more instructions.
+	// TODO: 96.3%, frame exact. The loop runs over the pane's own
+	// getFirstChild()/getEndChild() with the iterator declared in the for
+	// (c-k6): the `this` reload now sits in the textbox block as in retail.
+	// Left (1) retail reads unk28 again after the `stwx` into local_420, so
+	// its IR optimiser saw that store as possibly aliasing `this->unk28`;
+	// ours CSEs the read. Only a store through a separate pointer
+	// (`J2DTextBox** boxes = local_420;`) reproduces the reload, and it moves
+	// the array address out of the loop preheader (95.8); inert: `*(a + i)`,
+	// `&a[i]` through a pointer, a named index, `!unk28`, storing the pane
+	// before the cast. (2) The three colour temporaries have an 8-byte
+	// stride (0x98/0x90/0x88) against retail's 4 (0x9c/0x98/0x94); the
+	// `(u32)c` conversion that fixed perform() removes them here.
 	J2DTextBox* local_420[256];
 
-	JSUTreeIterator<J2DPane> iterator;
-	for (iterator = unk14->mPaneTree.getFirstChild();
-	     iterator != unk14->mPaneTree.getEndChild();) {
+	for (JSUTreeIterator<J2DPane> iterator = unk14->getFirstChild();
+	     iterator != unk14->getEndChild();) {
 		J2DPane* pane = iterator.getObject();
 
 		if (pane->mInfoTag == 0x13 && pane->mUserInfoTag != 'rset') {
