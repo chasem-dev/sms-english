@@ -272,6 +272,18 @@ void TJumpBase::calcRootMatrix()
 // high: SMS_GetMarioAngleY's inlined trig leaves four dead 4-byte F/P
 // temporaries at 0x18-0x24 where retail has room for one), a named or unnamed
 // copy of getVelocity() (0x98), and `+= getVelocity()` (7 instructions short).
+// Debugger layout (c-k4): `int angle = SMS_GetMarioAngleY();`, then
+// `mVelocity = TVec3<f32>(JMASSin(angle), 0.0f, JMASCos(angle));` and
+// `mPosition += TVec3<f32>(mVelocity);` gives retail's frame and every slot
+// exactly (conversion 0x70, vector 0x60, copy 0x54; the accessor makes
+// `angle` an IR temporary with no named slot, and the trig inlines then leave
+// one dead word where two accessor calls leave four) -- but the IR optimiser
+// merges the two index trees again (99.3, retail's second `sraw`/`slwi`
+// missing). So retail's source has the one-read slot layout *and* two index
+// derivations. Inert or worse on that: `s16`/`u16`/`const int`/`f32 angle`,
+// named `c`/`s` results in either order (instructions exact with two accessor
+// calls, but +8 frame from their split slots), one named result, mixed
+// accessor/raw arguments, and a named `vel` vector.
 // History:
 // (1) `this`/pool-base swap (r31/r29, retail r29/r31): closed by c-k4 with raw
 //     `mMActor` at the thirteen getMActor() sites. Debugger reading: `this`
