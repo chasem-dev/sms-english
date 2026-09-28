@@ -437,7 +437,10 @@ static int MarioHeadCtrl(J3DNode* param_1, int param_2)
 			s16 headAngle
 			    = gpMarioForCallBack->mUpperBodyParams.mFeelDeepHeadAngle.get();
 			MsMtxSetRotRPH(transform, 0.0f, 0.0f, SHORTANGLE2DEG(headAngle));
-		} else if (gpMarioForCallBack->isWallInFront()) {
+		} else if (gpMarioForCallBack->mStatus == MARIO_STATUS_WAIT
+		           && gpMarioForCallBack->isWallInFront()) {
+			// TODO: retail tests the WAIT status once for both arms (any
+			// other status jumps straight to the default); ours re-tests it.
 
 			s16 headAngle = gpMarioForCallBack->mUpperBodyParams
 			                    .mFrontWallHeadAngle.get();
