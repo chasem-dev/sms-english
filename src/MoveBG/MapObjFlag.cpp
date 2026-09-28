@@ -148,8 +148,8 @@ void TMapObjFlag::updateVertex()
 // CUE_CALC_ANIM loop, inlined there.
 void TMapObjFlag::update()
 {
-	MsMtxSetXYZRPH(mMtx, getPosition().x, getPosition().y, getPosition().z,
-	               mRotation.x, mRotation.y, mRotation.z);
+	MsMtxSetXYZRPH(mMtx.mMtx, getPosition().x, getPosition().y,
+	               getPosition().z, mRotation.x, mRotation.y, mRotation.z);
 	updateVertex();
 
 	mWaveAngle += mFlutterSpeed;
@@ -159,7 +159,7 @@ void TMapObjFlag::update()
 	// Only the big flags are loud enough to be heard, and Delfino Plaza has
 	// its own ambience.
 	if (mScaling.y > 3.0f && mScaling.z > 3.0f
-	    && gpMarDirector->getCurrentMap() != 3
+	    && SMSGetMarDirector()->getCurrentMap() != 3
 	    && gpMSound->gateCheck(MSD_SE_OBJ_FLAG))
 		MSoundSESystem::MSoundSE::startSoundActor(MSD_SE_OBJ_FLAG, &mPosition,
 		                                          0, nullptr, 0, 4);
@@ -271,19 +271,12 @@ void TMapObjFlagManager::initDraw()
 	GXSetCullMode(GX_CULL_NONE);
 }
 
-// TODO: 94.8%, frame exact (0xd0) since c-k6: the inlined update() reads
-// the position through getPosition() and the map through getCurrentMap()
-// (+8 each, the 0x14 of dead low region below the JUTTexture; getRotation()
-// in place of getPosition() is the same price and the same code).
-// Left: scheduling of the inlined MsMtxSetXYZRPH conversions. Every build's
-// IR converts x, y, z (so both give x the highest temp, 0x90), but retail's
-// scheduler issues the fmuls/fctiwz/stfd chains z, y, x (the order init()'s
-// pre-RA schedule also takes, where the 65536/360 constant is loaded in the
-// block) while ours issues y first with the constant hoisted to f31.
-// Inert (13 markers each): explicit s16 overload casts, named f32 rotation
-// locals, getRotation() for all three, `mWaveAngle = mWaveAngle + speed`.
-// Earlier record (batch 128): getPosition()/getRotation() together are +24,
-// the s16 overload and DEG2SHORTANGLE leave the schedule unchanged.
+// Exact since c-k6. The inlined update() passes the matrix as the raw
+// `mMtx.mMtx` array: through TMatrix34's conversion operator the argument
+// needed a binding web (`addi rA; mr r3, rA`) that shifted the pre-RA
+// schedule of the three rotation conversions (retail z, y, x; ours was y
+// first). The low region below the JUTTexture is update()'s getPosition()
+// reads and SMSGetMarDirector()->getCurrentMap().
 void TMapObjFlagManager::perform(u32 cue, JDrama::TGraphics* graphics)
 {
 	if (cue & CUE_CALC_ANIM) {
