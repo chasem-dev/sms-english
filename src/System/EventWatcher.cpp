@@ -247,17 +247,17 @@ static void evIsNearActors(TSpcTypedInterp<TEventWatcher>* interp, u32 arg_num)
 	interp->push(count);
 }
 
-static inline TMarDirector* EventWatcherDirectorForTalkNPC()
-{
-	TMarDirector* marDirector = gpMarDirector;
-	return marDirector;
-}
-
 static void evGetTalkNPC(TSpcTypedInterp<TEventWatcher>* interp, u32 arg_num)
 {
 	interp->verifyArgNum(0, &arg_num);
 
-	TBaseNPC* npc = EventWatcherDirectorForTalkNPC()->getTalkingNPC();
+	// TODO: 99.8%, every instruction matching; frame 0x30 vs retail 0x38
+	// with the pushed slice 4 low (0x18 vs 0x1c), the evIsTalkModeNow
+	// class. Retail has one more dead object above the slice and one below;
+	// a TU-local binder returning gpMarDirector through a local supplied
+	// both and was removed as a fakematch. Inert: the raw global, a named
+	// director (0x28), `npc == nullptr`, `npc ? (int)npc : 0` (worse).
+	TBaseNPC* npc = SMSGetMarDirector()->getTalkingNPC();
 
 	interp->push(!npc ? 0 : (int)npc);
 }
