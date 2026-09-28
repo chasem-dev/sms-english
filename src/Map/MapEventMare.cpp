@@ -44,6 +44,13 @@ void TMareWallRock::depress() { }
 // named rotation vector shared by both emitters (-0x10), `JPABaseEmitter*
 // em` declared before `trans` and assigned after (the if-condition
 // declaration is what shapes the two emitter blocks), `trans.set()`.
+// c-k9 debugger: below trans sit the two setRotation TVec3 temporaries (12
+// each), six S words and four s16 bindings (y and z per site); retail has one
+// word fewer (five S words or at most two s16 bindings). The four `(void)0`
+// fillers are real: without them movement() inlines appear (8%), so retail
+// had at least four more statements here. Inert: named `em`/`em2` at
+// statement level (+2 statements, same slots); a named `rot` per site is
+// frame +8; setGlobalDynamicsScale first reorders the code.
 void TMareWallRock::appear()
 {
 	// TODO: hack, remove me
