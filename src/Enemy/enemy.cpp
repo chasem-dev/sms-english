@@ -583,9 +583,9 @@ void TSpineEnemy::walkToCurPathNode(f32 march_speed, f32 turn_speed,
 	updateStayCount(fVar7);
 }
 
-// TODO: 95.9%. Retail keeps march_speed in f31 and computes `dVar13 * cycle`
-// unfused after getPhaseShift(); its frame is 0x18 larger. Spelling the
-// product/phase sum other ways is inert or fuses into an fmadds.
+// TODO: 98.0%. Retail keeps march_speed in f31 and its frame is 0x18 larger.
+// Naming the `dVar13 * cycle` product keeps it unfused after getPhaseShift(),
+// as retail rounds it (a single expression fused into an fmadds).
 // Routing the stay-count tail through the UNUSED updateStayCount (0x38, as
 // the map has it) is inert here and in walkToCurPathNode.
 void TSpineEnemy::zigzagToCurPathNode(f32 march_speed, f32 turn_speed,
@@ -603,7 +603,8 @@ void TSpineEnemy::zigzagToCurPathNode(f32 march_speed, f32 turn_speed,
 	f32 dVar13 = MsWrap(dVar9, 0.0f, cycle);
 
 	cycle = 360.0f * (1.0f / cycle);
-	dVar13 = dVar13 * cycle + getPhaseShift();
+	f32 phase = dVar13 * cycle;
+	dVar13 = phase + getPhaseShift();
 
 	f29 *= JMASin(dVar13);
 
