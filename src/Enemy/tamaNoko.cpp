@@ -559,6 +559,13 @@ void TTamaNoko::requestShadow()
 // level, so operator* is 2, operator*= 3 and scale 4. The copy in front of
 // the `bl` is operator*'s by-value left operand and the copy behind it is its
 // return value (landEffect 57.2 -> 94.6).
+// TODO: frame 0x80 against retail's 0x90. mwcc-stack (c-k10): retail creates
+// the four operator* return copies first (0x74/0x68/0x5c/0x50, source order)
+// and the four scale() operands after them (0x40/0x34/0x28/0x1c), the order
+// frame-model rule 8d gives a by-value return with a body local (`TVec3
+// r(a); r *= k; return r;`); the header's by-value `fst` parameter pairs each
+// copy with its operand instead. JGVec3.hpp item; a TU-local helper of that
+// shape is inert here (99.7) since it changes the call depth.
 void TTamaNoko::landEffect()
 {
 	if (mGroundPlane->isSand()) {
@@ -695,6 +702,10 @@ DEFINE_NERVE(TNerveTamaNokoSleep, TLiveActor)
 	return false;
 }
 
+// c-k10: TGessoPolluteObj::set has the same tell (two velocity test copies
+// created at depth 1 after the earlier sites' inline words); a by-value
+// velocity getter over the raw member does not reproduce it here (same
+// markers).
 // 3 in 1: chase mario & try to initiate & land a jump attack
 // TODO: retail places the two velocity copies (local_48, local_54) below the
 // inline temporaries, as if they were by-value temporaries themselves.
