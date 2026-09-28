@@ -38,6 +38,10 @@ Actor IDs 0x08000016-0x08000021 do nothing; 0x08000022/23 call `keepDistance`.
 In the 0x10000008 case name the `TSmallEnemy*` receiver before `doKeepDistance`.
 `hitNormal` copies Mario's position into the static water-hit actor then adds 80 to that actor's Y; don't reread Mario's Y.
 Open: frame 0x1E0 vs 0x238; `hitNormal` 0x18 vs 0x30.
+`hitNormal` closed (c-k3): retail stores the first word of the position copy through the static's address and the rest through `water`, which is already the message argument's register (`addi r3; mr r4, r3; stw 0x10(r3); stw 0x14(r4)...`).
+The debugger showed IRO propagating the address constant into every store base while the call argument keeps `water`; `(water = &TModelWaterManager::mStaticHitActor)->mPosition = mPosition;` makes only the copy's base the constant.
+Inert: the first statement on the static with `water` for the rest, `water` declared after the copy, a separate `water = &...;` statement, `THitActor*`/cast arguments.
+`jumpingBasic` (c-k3 debugger reading): our dead set is 10 words (6 F, 1 P, 3 inliner, 0x14..0x40); retail's 18 more words sit below every accessed slot, so any carrier is an IRO or inliner object; a by-value `TVec3 normal` for the fence test changes code (98.6).
 
 ## `TMario::TMario` (batch 46, exact)
 

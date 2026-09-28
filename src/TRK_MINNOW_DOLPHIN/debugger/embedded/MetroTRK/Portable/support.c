@@ -34,6 +34,13 @@
    cost/degree first: done 91/28 = 3.25, replyBuffer 88/28 = 3.14, so done is
    coloured first (r29). Retail needs replyBuffer's ratio higher; declaration
    order cannot reach that (replyBuffer first, or done after it: 27 markers). */
+/* c-k3 debugger reading: the spill cost is 2 x uses + defs, loop-weighted
+   (8 in the loop): done 91, replyBuffer 88. Both have 28 remaining
+   neighbours when blocked, 16 of them coalesced call-result copies. One more
+   such copy live with done but not replyBuffer (between `done = 0` and the
+   loop, or after it) gives 91/29 < 88/28 and retail's colouring. Inert:
+   `done = error = 0`, a `for` init, reordered inits, `exit == FALSE`,
+   `&data[done]`. */
 DSError TRKSuppAccessFile(u32 file_handle, u8* data, size_t* count,
                           DSIOResult* io_result, BOOL need_reply, BOOL read)
 {

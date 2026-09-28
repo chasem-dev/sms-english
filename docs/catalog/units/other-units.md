@@ -70,6 +70,17 @@ Longer evidence for batches 25-39 is in `docs/progress/GMSE01-closure-audit-batc
 - **Strategy / ObjHitCheck**: `s32` counter keeps the initial branch; ObjHitCheck already matches.
 - **PerformList**: `load` differs by one stream-read slot; by-value iterator in `perform`.
 - **MarioGamePad**: see padding list in `../frame-gaps.md`.
+- **MarDirectorEvent::setNextStage** (c-k3, open, debugger-read): named `next` 0x30 (retail 0x38), then `curr` and the `MDEApp()` result `@1062`, both register-held, then the ctor's `TFlagT(0)` temporary `@1069` at 0x2c (retail's too).
+  Retail's 8 extra bytes are created after `next` and before `@1069`, i.e. two dead 4-byte named or parse-time objects; `curr` and `@1062` homed would be exactly that.
+  Inert: a named `TApplication& app = gpApplication` for setNextArea and `curr` (a reference to a global is an alias with no object); `app.setMovie`/a `TApplication*` local change code (93.8).
+- **liveinterp::linGetSRT** (c-k3, open): a TU-local `pushFloat(interp, const f32& value)` (default slice, direct writes, push) at the nine float sites is instruction-exact at frame 0xc0 (retail 0xe0); the by-value `f32 value` form and one calling `setDataFloat` change code (93.7).
+
+## TRK
+
+- **support::TRKSuppAccessFile** (c-k3, open, debugger-read with GC/1.1p1 and the unit's C flags): MWCC's spill cost is `2 x uses + defs`, each weighted by the block's loop weight (8 in the loop, 1 outside): `done` 2x41 + 9 = 91, `replyBuffer` 2x40 + 8 = 88, `length` 120, `read` 97, `data` 35, all exact.
+  Both reach the blocked phase with 28 remaining neighbours (12 physical registers plus 16 coalesced call-result copies, `mr rN, r3; mr error, rN`, which never leave the degree), so `done` (3.25) is pushed after `replyBuffer` (3.14) and coloured first.
+  One more ghost neighbour on `done` flips it (91/29 = 3.138 < 3.143); every ghost inside the loop also neighbours `replyBuffer`, so the extra copy must sit between `done = 0` and the loop or after the loop before `*count = done`.
+  Inert: `done = error = DS_NoError`, the init as a `for` clause, `*io_result` first, `exit == FALSE`, `&data[done]`; the `length = *count - done` clamp and the release after `done += length` change code.
 
 ## JSystem
 

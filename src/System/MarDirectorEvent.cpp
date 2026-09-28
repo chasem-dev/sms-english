@@ -225,6 +225,11 @@ void TMarDirector::movement()
 // `next = TGameSequence()`, a named switch value.
 // Reference-returning accessor: retail folds the TGameSequence stores onto
 // the &gpApplication base (0x12/0x13/0x14) instead of binding &mNextArea.
+// c-k3 debugger reading: after `next` (0x30) come `curr` and MDEApp()'s
+// result @1062, both register-held, then the ctor's TFlagT temporary @1069
+// (0x2c, as retail). Retail's 8 bytes are two dead objects created between
+// `next` and @1069: `curr` and @1062 homed would fit. A named
+// `TApplication& app` is inert (an alias, no object).
 static inline TApplication& MDEApp() { return gpApplication; }
 
 void TMarDirector::setNextStage(u16 param_1, JDrama::TActor* param_2)

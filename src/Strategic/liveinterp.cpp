@@ -465,6 +465,9 @@ static void linSetAnmRate(TSpcTypedInterp<TLiveActor>* interp, u32 arg_num)
 // 4-byte object under each float slice (the arg is simple, so no binding).
 // c-m25, on that helper: setDataFloat(value) inside it loads the member one
 // slot early (96.1), accessor arguments overshoot (+0x48), `+member` is inert.
+// c-k3: `pushFloat(interp, const f32& value)` (slice, direct writes, push)
+// at all nine sites is instruction-exact at 0xc0; by-value `f32 value` or
+// setDataFloat inside it change code (93.7).
 static void linGetSRT(TSpcTypedInterp<TLiveActor>* interp, u32 arg_num)
 {
 	interp->verifyArgNum(2, &arg_num);

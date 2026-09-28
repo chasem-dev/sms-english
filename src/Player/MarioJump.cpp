@@ -168,6 +168,8 @@ bool TMario::askStrongGroundTouch()
 
 // TODO: instruction-exact; retail's frame is 0xa0 against our 0x58 and
 // the body touches no stack slot, so 0x48 of dead inline temporaries is missing.
+// c-k3 debugger reading: ours has 10 dead words (6 F, 1 P, 3 inliner) at
+// 0x14..0x40; a by-value `TVec3 normal` at the fence test changes code (98.6).
 BOOL TMario::jumpingBasic(int statusOnGround, int animation, int processArg)
 {
 	doJumping();
