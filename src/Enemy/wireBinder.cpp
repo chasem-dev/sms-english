@@ -51,6 +51,13 @@ bool TWireBinder::reset(const JGeometry::TVec3<f32>& param_1)
 // only UNUSED carrier, getRangePos, also feeds the byte-exact out-of-line
 // isEndWire and getPoint(TVec3*, const TVec3&), so it breaks them).
 //
+// c-k1: TU-local by-value `operator-` helpers at the site (`const Vec*` left
+// operand with `r = *fst; r -= snd;`, `const TVec3&` with `r = fst` or
+// `r(fst)`, by-value left operand) all add retail's six-instruction return
+// copy (96.2-96.4%): elision needs the uncast `operator=(const TVec3&)` in
+// JGVec3.hpp, so this closes only with the header migration (frame-gaps.md,
+// research cc23), not in this TU.
+//
 // The rest of the frame was two anti-levers: actor->getPosition() at the two
 // position reads (+16) and, once those were raw, TLiveActor's fabricated
 // getNextFramePosition() wrapper.  Its body belongs to bind() -- `velocity` is
