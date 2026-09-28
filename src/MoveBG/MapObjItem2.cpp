@@ -262,45 +262,34 @@ void TJumpBase::calcRootMatrix()
 	TMapObjBase::calcRootMatrix();
 }
 
-// TODO: 97.2%, instruction count now exact (326/326) with 110 operand-only
-// markers. Closure batch 128 restored the missing `unk13C = 0; unk138 = 2;`
-// pair -- it belongs to the *ground-plane* block at the end of the function
-// (after makeObjDead/makeObjDefault/makeObjAppeared), not to case 5 as batch
-// 123's note guessed. Two items left:
-// (1) `this` and the `.rodata` string-pool base are swapped between r29 and
-//     r31 for the whole body (retail: r29 = `this`, r30 = `prevState`, r31 =
-//     pool base and later the per-case `ctrl`; ours has `this` in r31 and the
-//     pool in r29, with the prologue `mr` emitted one save earlier). This is
-//     the "retail ranks the .rodata pool address above `this`" item from
-//     frame-gaps.md batch 110; the liveness rule does not cover it. Moving
-//     `int prevState = unk138;` below the isAirborne block is worse
-//     (97.2 -> 96.5).
-// (2) case 5's `JMASSin(angle)`/`JMASCos(angle)` share one `sraw`/`slwi`
-//     index derivation where retail derives it twice from a single `lha` +
-//     `clrlwi` (the codegen-tells.md batch-56 tell). Not steerable from here:
-//     `JMASSin(*gpMarioAngleY)` twice (95.9, +1 instruction and +8 frame),
-//     `s16 angle` (95.9), and two separate `s16 sinAngle/cosAngle` locals
-//     (95.9) are all worse than the shared `int angle`.
-// Closure re-pass (batch 161): (1) is the `this`-vs-pool-base callee-saved
-// swap that RULES.md lists as known-open, confirmed here -- hoisting
-// `J3DFrameCtrl* ctrl` to function scope so the body holds two named locals
-// instead of one leaves the ranking untouched (97.2%, same 106 markers).
-// cc28: (2) is also inert to a TU-local wrapper over either JMASSin or
-// JMASCos (same 106 markers); `mVelocity.set(...)` and a velocity helper
-// taking the angle (int or s16, by out-reference or by value) are worse.
-// Closure c-k4: (2) is fixed by reading the angle through the header accessor
-// at both calls, `JMASSin(SMS_GetMarioAngleY())` / `JMASCos(...)`, as
-// TMapObjGeneral does: the two index trees are then different inline results,
-// the IR optimiser does not merge them, and the backend CSE merges only the
-// loads and the `clrlwi` (retail's two `sraw`). Case 5 is exact, slots
-// included (vector temporary at 0x60). What is left is (1) and the frame,
-// now 0x90 against 0x88: retail's copy of mVelocity is an unnamed temporary
-// at 0x54, right below the vector (created after it at parse time), with one
-// 4-byte object between the (f32)getEnd() conversion slot (0x70) and the
-// vector; our named `v2` sits in the named region at 0x6c. Measured: an
-// unnamed `TVec3<f32>(mVelocity)` (0x90, every temporary 0xc high), a named
-// or unnamed copy of getVelocity() (0x98), `add(TVec3(mVelocity))` (0x90),
-// and `+= getVelocity()` with no copy (7 instructions short).
+// TODO: 99.9%, every instruction and register exact; only the frame is left
+// (0x90 against 0x88): retail's (f32)getEnd() conversion slot is at 0x70
+// (ours 0x78) and its copy of mVelocity is an unnamed 12-byte object at 0x54,
+// right below case 5's vector temporary (0x60, which matches), with one 4-byte
+// object between the conversion slot and the vector; our named `v2` sits in
+// the named region at 0x6c. Measured on this body: an unnamed
+// `TVec3<f32>(mVelocity)` or `add(TVec3(mVelocity))` (0x90, both vectors 0xc
+// high: SMS_GetMarioAngleY's inlined trig leaves four dead 4-byte F/P
+// temporaries at 0x18-0x24 where retail has room for one), a named or unnamed
+// copy of getVelocity() (0x98), and `+= getVelocity()` (7 instructions short).
+// History:
+// (1) `this`/pool-base swap (r31/r29, retail r29/r31): closed by c-k4 with raw
+//     `mMActor` at the thirteen getMActor() sites. Debugger reading: `this`
+//     and `prevState` reach the second simplify sweep at remaining degree 30,
+//     15 of it coalesced ghost webs (each getMActor() result bound into r3),
+//     so both are blocked and coloured before the pool base; with two fewer
+//     ghosts they are pushed ahead of it and the pool base takes r31.
+//     Earlier trials: `prevState` below the isAirborne block (96.5), a
+//     function-scope `ctrl` (inert).
+// (2) case 5's sine/cosine index: retail derives it twice (two `sraw` from one
+//     `lha`/`clrlwi`). Closed by c-k4 with `SMS_GetMarioAngleY()` at both
+//     calls, as TMapObjGeneral does: two inline results are not merged by the
+//     IR optimiser and the backend CSE merges only the loads and the `clrlwi`.
+//     A named `int`/`s16 angle` or `*gpMarioAngleY` twice merges the whole
+//     index (95.9-97.2); TU-local JMASSin/JMASCos wrappers and
+//     `mVelocity.set(...)` were inert or worse.
+// Closure batch 128 restored the ground-plane `unk13C = 0; unk138 = 2;` pair
+// at the end of the function (not case 5).
 void TJumpBase::control()
 {
 	int prevState = unk138;
@@ -310,8 +299,8 @@ void TJumpBase::control()
 	switch (unk138) {
 	case 0:
 		if (unk13C == 0) {
-			getMActor()->setBck("jumpbase_shrink");
-			J3DFrameCtrl* ctrl = getMActor()->getFrameCtrl(ANM_TYPE_BCK);
+			mMActor->setBck("jumpbase_shrink");
+			J3DFrameCtrl* ctrl = mMActor->getFrameCtrl(ANM_TYPE_BCK);
 			if (ctrl) {
 				ctrl->setFrame((f32)ctrl->getEnd());
 				ctrl->setRate(0.0f);
@@ -326,8 +315,8 @@ void TJumpBase::control()
 			if (mMapCollisionManager)
 				mMapCollisionManager->getUnk8()->setUp();
 
-			getMActor()->setBck("jumpbase_set");
-			J3DFrameCtrl* ctrl = getMActor()->getFrameCtrl(ANM_TYPE_BCK);
+			mMActor->setBck("jumpbase_set");
+			J3DFrameCtrl* ctrl = mMActor->getFrameCtrl(ANM_TYPE_BCK);
 			if (ctrl) {
 				ctrl->setFrame((f32)ctrl->getEnd());
 				ctrl->setRate(0.0f);
@@ -337,8 +326,8 @@ void TJumpBase::control()
 
 	case 2:
 		if (unk13C == 0) {
-			getMActor()->setBck("jumpbase_set");
-			J3DFrameCtrl* ctrl = getMActor()->getFrameCtrl(ANM_TYPE_BCK);
+			mMActor->setBck("jumpbase_set");
+			J3DFrameCtrl* ctrl = mMActor->getFrameCtrl(ANM_TYPE_BCK);
 			if (ctrl) {
 				ctrl->setFrame(0.0f);
 				ctrl->setRate(SMSGetAnmFrameRate());
@@ -346,7 +335,7 @@ void TJumpBase::control()
 			offLiveFlag(LIVE_FLAG_UNK10);
 			mScaledBodyRadius = 100.0f;
 		}
-		if (getMActor()->curAnmEndsNext(ANM_TYPE_BCK, nullptr)) {
+		if (mMActor->curAnmEndsNext(ANM_TYPE_BCK, nullptr)) {
 			unk13C = 0;
 			unk138 = 3;
 		}
@@ -357,14 +346,14 @@ void TJumpBase::control()
 			if (mMapCollisionManager && mMapCollisionManager->getUnk8())
 				mMapCollisionManager->getUnk8()->remove();
 
-			getMActor()->setBck("jumpbase_shrink");
-			J3DFrameCtrl* ctrl = getMActor()->getFrameCtrl(ANM_TYPE_BCK);
+			mMActor->setBck("jumpbase_shrink");
+			J3DFrameCtrl* ctrl = mMActor->getFrameCtrl(ANM_TYPE_BCK);
 			if (ctrl) {
 				ctrl->setFrame(0.0f);
 				ctrl->setRate(SMSGetAnmFrameRate());
 			}
 		}
-		if (getMActor()->curAnmEndsNext(ANM_TYPE_BCK, nullptr)) {
+		if (mMActor->curAnmEndsNext(ANM_TYPE_BCK, nullptr)) {
 			unk13C = 0;
 			unk138 = 0;
 		}
@@ -372,14 +361,14 @@ void TJumpBase::control()
 
 	case 4:
 		if (unk13C == 0) {
-			getMActor()->setBck("jumpbase_jump");
-			J3DFrameCtrl* ctrl = getMActor()->getFrameCtrl(ANM_TYPE_BCK);
+			mMActor->setBck("jumpbase_jump");
+			J3DFrameCtrl* ctrl = mMActor->getFrameCtrl(ANM_TYPE_BCK);
 			if (ctrl) {
 				ctrl->setFrame(0.0f);
 				ctrl->setRate(SMSGetAnmFrameRate());
 			}
 		}
-		if (getMActor()->curAnmEndsNext(ANM_TYPE_BCK, nullptr)) {
+		if (mMActor->curAnmEndsNext(ANM_TYPE_BCK, nullptr)) {
 			unk13C = 0;
 			unk138 = 3;
 		}

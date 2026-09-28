@@ -103,7 +103,8 @@ Longer evidence for batches 25-39 is in `docs/progress/GMSE01-closure-audit-batc
 
 - **MapObjItem2 TJumpBase::control** (c-k4, 97.2 to 98.0): case 5's two `sraw` (retail derives the sine and cosine index twice from one `lha`/`clrlwi`) come from `JMASSin(SMS_GetMarioAngleY())`/`JMASCos(SMS_GetMarioAngleY())`: two inline results are not merged by the IR optimiser, and the backend CSE merges only the loads and the `clrlwi`.
   A named `int angle` (or `*gpMarioAngleY` twice) is merged whole.
-  Open: `this`/pool-base swap, and the frame (0x90 against 0x88): retail's mVelocity copy is an unnamed temporary under the vector, not a named `v2`.
+  The `this`/pool-base swap (98.0 to 99.9) was ghost degree: `this` and `prevState` both reach the second sweep at remaining degree 30, 15 of it coalesced getMActor() result webs; raw `mMActor` at the thirteen sites removes them, both are pushed before the pool base, and it takes r31.
+  Open: only the frame (0x90 against 0x88): retail's mVelocity copy is an unnamed temporary under the vector, not a named `v2`, and its low region has three fewer dead words than SMS_GetMarioAngleY's inlined trig leaves.
 
 ## MapObjOption (closure batch 136)
 
