@@ -2058,3 +2058,54 @@ Nothing landed; the worktree is back on the stock header.
 - Inert or worse, all measured in the synthetic TU: an implicit copy constructor (identical to `: Vec(other) {}`), a copy constructor forwarding to `*this = other`, a `const TVec3&` `operator-=`, a member `operator-`, `TVec3 r; r = a;` (7 P), the comma returns `return (a -= b, a)` and `return (r -= b, r)` (0 words, 4-5 P), `return *&(a -= b)` and `static_cast` forms (2 words), `operator-=` spelled `return sub(o), *this;` (adds an F), and a static by-value helper under a const-reference `operator-` (3 P at `.length()`, but `-=` goes out of line at the bind sites).
 - Tool trap: `ninja build/GMSE01/mario.dol` does not rebuild the objects of unlinked units, so a census after it is stale; build the default target with `-k 0` (the SHA check fails last) before `census.py`.
 - Next: a construct that makes the return copy's source add exactly one dead word at no instruction cost, or proof that the six two-word sites carry their own per-site word (an accessor or a named operand in retail's source), which would make the zero-word local-`r` shape plus per-site words the migration.
+
+## Research batch c-r21 (2026-09-28): `MsMtxSetRotZ` fills through a flat pointer; `operator*` stays open
+
+Measured with `tools/mwcc-stack/udbg.py` dumps, per-unit scoring and tree-wide `census.py`/`cmpcensus.py` plus `ninja changes_all` (base 12001 exact, then 12003 after the landed commit).
+
+### Class 1: the `MsMtxSetRot*` expansions
+
+- Retail's sequence at the pointer sites (HauntLegCallback, TobiPukuRollCallback, KillerBodyCallback, PakkunSeedCallback, TTamaNokoFlower::perform, TSmallEnemy::genEventCoin): the matrix is the only stack object the rotation adds, `&mtx` is held in a callee-saved register from before the sine lookup until after the last concat or `MTXMultVec`, and each 0.0f/1.0f literal is loaded after the stores that precede it.
+  The frame is already right at HauntLeg (0xa0), so the missing piece is one pointer web, not a slot.
+- The pointer web needs an inline-owned pointer whose definition is an explicit conversion (c-r15), and the conversion can sit inside the header body: `f32* m = (f32*)mtx;` with the twelve stores as `m[0]`..`m[11]` reproduces both tells with no caller-side cast.
+  `f32* m = &mtx[0][0];` and `f32* m = *mtx;` are inert (propagated like a bare address); `f32* m = mtx[0];` adds 8 bytes of frame at every site, including the weak bodies.
+- The flat-pointer body keeps the weak `MsMtxSetRotX` (MapObjPinna) and `MsMtxSetRotY` (MapObjFence) bodies byte-exact, so the map does not choose between the two bodies.
+- Tree-wide exact counts (census, against 12001):
+
+| Flat-pointer body in | Exact | Gained | Lost |
+| --- | --- | --- | --- |
+| `MsMtxSetRotZ` only | 12003 | HauntLegCallback, TobiPukuRollCallback | none (TRollBlock::calcRootMatrix 99.24 -> 93.28, not exact) |
+| `MsMtxSetRotY` and `Z` | 12003 | the two above, TTamaNokoFlower::perform, TSmallEnemy::genEventCoin | TGorogoro::generateByGateKeeper, TCraneUpDown::control |
+| all three | 12001 | the same four | the two above, TBGPolDrop::perform, TBossGesso::calcRootMatrix; THauntLeg::calcRootMatrix and TPinnaShell::control move away |
+
+- It is a per-site split, not a header fact: within one TU the two bodies coexist (hauntLeg's callback wants the pointer, its `calcRootMatrix` the plain X body; igaiga's roll callback the pointer, `generateByGateKeeper` the plain Y body).
+  The sites that want the pointer are the static joint callbacks and rotations inside a loop body; the ones that want the plain body are straight-line member functions (TRollBlock, Gorogoro, Crane, BGPolDrop, TBossGesso, THauntLeg::calcRootMatrix).
+  No construct was found that makes that difference inside one header body; it is the lead for whoever takes this up next.
+- Landed on wt/c-r21: the flat-pointer `MsMtxSetRotZ` (no `MsMtxSetRotZ` site in the tree wanted the plain body except TRollBlock), closing HauntLegCallback and TobiPukuRollCallback (its `MtxPtr rot` alias removed), with KillerBodyCallback 96.9 -> 99.7 and PakkunSeedCallback 93.2 -> 99.7 made instruction-exact by calling `MsMtxSetRotZ` instead of hand-written rows.
+  TRollBlock keeps its 99.2 through a TU-local plain `RollBlockRotZ`, which records the split at that site; drop it and take the 93.3 if that helper is judged a codegen pick.
+- Residues after the landing: KillerBodyCallback's frame is 8 short with both matrices 0xc low (three more retail words below `roll`); PakkunSeedCallback's is 0x10 short with `spin` 0x14 low (five words); igaiga's RollEnemyBodyCallback under a flat-pointer X body is instruction-exact except an r30/r31 swap between the joint number and `&roll`.
+- The flat-pointer X/Y bodies are worth re-measuring together with TU-local plain helpers at the four straight-line losers only if the loop/callback discriminator is explained first.
+
+### Class 2: by-value `operator*` on `TVec3<f32>`
+
+- Retail `TTamaNoko::landEffect` (frame 0x90): the four `operator*` return temporaries at 0x74/0x68/0x5c/0x50, one word at 0x4c, the four scaled operands at 0x40/0x34/0x28/0x1c, and four more words from 0xc to 0x1c; the stock header pairs each operand with its return temporary and has no words between or below (0x80).
+- `friend TVec3 operator*(const TVec3& fst, f32 snd) { TVec3 r(fst); r *= snd; return r; }` (rule 8d, V2) gives exactly retail's grouping, returns first and the `r` locals after them, with the one word between (a `checkGround` binding), but not the four words below, so the frame stays 0x80.
+- Retail `TYoshiTongue::emit` shows the same grouping: the `vel * 0.5f` return temporary at 0x3c above the `dir` operand (0x30) and the `vel` operand (0x24).
+- Retail `TEffectColumWater::generate` copies the scaled operand straight into `mScaling` (one object), which no by-value return gives: the consumption split of batch 159 still holds.
+- Tree-wide (census against 12003, then `changes_all` for V2):
+
+| `operator*` body | Exact | Notes |
+| --- | --- | --- |
+| stock `(TVec3 fst, f32) { fst *= snd; return fst; }` | 12003 | |
+| V2 `(const TVec3&, f32) { TVec3 r(fst); r *= snd; return r; }` | 12001 | damageExec 97.71 -> 99.83; calcForces exact -> slots, Tongue's weak `__ami__` MISSING, landEffect/generate/touchPlayer/movement a few hundredths down |
+| member `TVec3 operator*(f32) const`, same body | 12001 | same movers as V2 |
+| V3 `(TVec3 fst, f32) { TVec3 r(fst); r *= snd; return r; }` | 12002 | landEffect 0xb0, emit 0x68, TWarpInCallBack 0xf0: the parameter copy is 12 per site too many |
+| `(const TVec3&, f32) { TVec3 r(fst); return r *= snd; }` | 12001 | landEffect 0xa0 (two words per site), emit frame right, `__ami__` MISSING |
+| `(TVec3 fst, f32) { return fst *= snd; }` | 12002 | landEffect 0xa0, emit frame right |
+| V2 with `r.scale(snd)`, `r.set(fst)` | not built tree-wide | landEffect 76.7 / 89.8: the call depth moves |
+| V2 with `TVec3 r; r = fst;` or `return TVec3(r);` | not built tree-wide | identical to V2 at the five scored sites |
+
+- None is a net gain; nothing landed for class 2.
+- The open question is the same one c-r20 left for `operator-`: retail's by-value operators add exactly one dead word per site below the body locals, and the only way found to make one word (`return (const Vec&)...`) costs float copies.
+  V2 plus that one word per site would give landEffect's slot map exactly, so a construct that adds it is worth looking for in the copy constructor or `operator*=` rather than in `operator*` itself.
+- Tongue's `canGo` residue (retail's `sub` operand three words lower than ours) belongs to the `operator-` class, not to `operator*`.
