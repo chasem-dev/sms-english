@@ -210,6 +210,11 @@ void TRideCloud::control()
 	// i.e. unk160 generated first); inert: a named unk160 before or after.
 	// Also inert (c-m24): raw mScaling.x (+18), a two-argument product inline
 	// taking (300 * x, unk160), `radius *= unk160`, `unk160 * radius`.
+	// c-k1 (regalloc.py on a dbg.sh dump): the only differing webs are the
+	// two loads (x = f59, unk160 = f60); moving x's web to colouring
+	// position 0 fixes both, i.e. retail numbered unk160's load below x's
+	// (generated first, then scheduled after it). Inert: reusing the
+	// two-definition `fVar8` for unk160 before or after `radius`.
 	f32 radius = 300.0f;
 	radius *= getScaling().x;
 	mDamageRadius = radius * unk160;
