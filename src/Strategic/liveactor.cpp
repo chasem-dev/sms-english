@@ -100,6 +100,10 @@ BOOL TLiveActor::belongToGround() const
 // temporary (or that load after it). An inline result stays an IRO
 // temporary, so only a spelling where the difference is not a forced-load
 // inline result (or the member is a named web) can move it.
+// c-k11: with a named `f32 diff = MsAngleDiff(...)` and `m = m + diff`, or a
+// `TVec3& angVel = mAngularVelocity` reference, the colouring is unchanged and
+// the frame grows by 8; hand-expanding MsAngleDiff around a named rotation
+// loses the f31 home (82.6%).
 void TLiveActor::calcRideMomentum()
 {
 	if (unkE8 == 0)
