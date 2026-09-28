@@ -1052,6 +1052,13 @@ void TGessoPolluteObj::set()
 		// retail has a 12-byte hole under local_54. A named copy tested
 		// twice is 84.5%; local_54 assigned later, or built from an explicit
 		// TVec3 temporary, or declared above mtx is worse.
+		// mwcc-stack (c-k10): the hole is the three depth-1 words of the
+		// GessoUnk160/getAnmMtx sites (0x38/0x34/0x30 here), so retail
+		// creates the two copies after them, as depth-1 inline objects, in
+		// source order. The test as a TU-local predicate gets the depth but
+		// reverses the copies and materialises a bool (94%); a by-value
+		// velocity getter (`TVec3 f(p) { return p->mVelocity; }`) is 99.7
+		// with a 0x68 frame.
 		if (JGeometry::TVec3<f32>(getVelocity()).x != 0.0f
 		    || JGeometry::TVec3<f32>(getVelocity()).z != 0.0f)
 			MsVECNormalize(&local_54, &local_54);
