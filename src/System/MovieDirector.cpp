@@ -159,7 +159,7 @@ TMovieDirector::TMovieDirector()
     , unk20(nullptr)
     , unk24(nullptr)
     , unk30(0)
-    , unk34(nullptr)
+    , mEndingString(nullptr)
     , mEndingTimer(0)
 {
 }
@@ -250,8 +250,8 @@ int TMovieDirector::rsetup()
 	switch (gpApplication.getMovie()) {
 	case 16:
 	case 17:
-		unk34 = new TEndingString;
-		group2d->getChildren().push_back(unk34);
+		mEndingString = new TEndingString;
+		group2d->getChildren().push_back(mEndingString);
 		// fallthrough
 	case 18:
 	case 19:
@@ -406,7 +406,7 @@ int TMovieDirector::direct()
 		if (!OSIsThreadTerminated(&gSetupThread))
 			return 0;
 
-		u32 errc;
+		void* errc;
 		OSJoinThread(&gSetupThread, &errc);
 		if (errc)
 			return 5;
@@ -415,7 +415,7 @@ int TMovieDirector::direct()
 
 		gpMSound->initSound();
 		if (gpApplication.getMovie() == 16)
-			unk34->startFadeIn();
+			mEndingString->startFadeIn();
 
 		if (gpApplication.getMovie() == 9) {
 			gpApplication.mFader->startWipe(12, 0.0f, 0.0f);
@@ -485,10 +485,10 @@ int TMovieDirector::direct()
 			mEndingTimer++;
 
 		if (gpApplication.getMovie() == 17 && mEndingTimer == 30)
-			unk34->startFadeIn();
+			mEndingString->startFadeIn();
 
 		if (gpApplication.getMovie() == 17 && mEndingTimer == 220)
-			unk34->mFadeState = TEndingString::ENDING_FADE_OUT;
+			mEndingString->mFadeState = TEndingString::ENDING_FADE_OUT;
 		break;
 
 	case STATE_FADE_OUT:

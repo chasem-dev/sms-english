@@ -39,6 +39,13 @@ enum MSBgmSwBit {
 	MSBgmSwBit_YoshiPercussion = 0x10000000,
 };
 
+enum MSSeGate {
+	MSSeGate_None       = 0,
+	MSSeGate_Continuous = 1 << 0,
+	MSSeGate_OneShot    = 1 << 1,
+	MSSeGate_All        = MSSeGate_Continuous | MSSeGate_OneShot,
+};
+
 class MSSeCallBack {
 public:
 	static u16 setParameterSeqSync(JASystem::TTrack*, u16);
@@ -102,8 +109,8 @@ public:
 	void setPlayerInfo(Vec*, Vec*, MtxPtr, bool);
 	void setCameraInfo(Vec*, Vec*, MtxPtr, u32);
 	f32 getDistFromCamera(Vec*);
-#if defined(VERSION_GMSE01)
-	f32 getDistPowFromCamera(const Vec&);
+#if defined(VERSION_GMSP01) || defined(VERSION_GMSE01)
+	f32 getDistPowFromCamera(const Vec& pos);
 #endif
 	bool cameraLooksAtMario();
 
@@ -289,17 +296,26 @@ public:
 	}
 
 public:
-#if defined(VERSION_GMSE01)
-	/* 0x98 */ u8 mWaterFilterOverride;
-	/* 0x9A */ u16 mTimerParameter;
+	// US shares PAL's layout here: the word at 0x94 (the constructor stores
+	// -1 there, startMarioVoice uses it as the previous voice ID), the water
+	// filter flag MSSeCallBack::setWaterCameraFir compares with 1, and the
+	// timer value every MSound::playTimer branch writes. JP keeps only the
+	// halfword at 0x94. The word is unsigned: US startMarioVoice compares it
+	// against voice IDs unsigned (s32, upstream's PAL spelling, costs 0.3).
+#if defined(VERSION_GMSP01) || defined(VERSION_GMSE01)
+	/* 0x94 */ u32 unk94;
+	/* 0x98 */ bool mWaterFirEnabled;
+	/* 0x9A */ u16 mTimerSyncValue;
+#else
+	/* 0x94 */ u16 mTimerSyncValue;
 #endif
-	// The following legacy names/offsets describe the Japanese layout.
-	// In GMSE01 these fields are four bytes later.
+	// The following offsets describe the Japanese layout.
+	// In GMSP01 and GMSE01 these fields are four bytes later.
 	/* 0x98 */ MSModBgm* unk98;
 	/* 0x9C */ MSBgmXFade* unk9C;
 	/* 0xA0 */ u32 unkA0;
 	/* 0xA4 */ u32 unkA4;
-	/* 0xA8 */ u8 unkA8;
+	/* 0xA8 */ u8 mSeGateMask;
 	/* 0xAC */ JAICamera unkAC[2];
 	/* 0xC4 */ JAISound* unkC4;
 	/* 0xC8 */ u8 unkC8[5];

@@ -2,7 +2,8 @@
 #include <Map/MapCollisionEntry.hpp>
 #include <Map/MapData.hpp>
 #include <algorithm>
-#include <types.h>
+#include <MarioUtil/MathUtil.hpp>
+#include <dolphin/types.h>
 
 TBGCheckData* TMapCollisionData::allocCheckData(u32 count)
 {

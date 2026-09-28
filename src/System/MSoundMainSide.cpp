@@ -587,7 +587,7 @@ void MSMainProc::setMSoundEnterStage(u8 param_1, u8 param_2)
 	}
 	MSSeCallBack::setWaterCameraFir(bVar2);
 #if defined(VERSION_GMSE01)
-	gpMSound->mWaterFilterOverride = bVar2;
+	gpMSound->mWaterFirEnabled = bVar2;
 #endif
 	if (MSStageInfo::stageBgmSilent != 0xfffffff0
 	    && MSStageInfo::stageBgmSilentStartStatus == 0

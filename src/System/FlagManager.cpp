@@ -1,6 +1,7 @@
 #include <System/FlagManager.hpp>
 #include <System/StageUtil.hpp>
 #include <dolphin/os.h>
+#include <string.h>
 
 TFlagManager* TFlagManager::smInstance = 0;
 
@@ -96,7 +97,7 @@ s32 TFlagManager::getFlag(u32 flag) const
 		}
 		break;
 	case 7:
-		if (flag < 0x70003) {
+		if (flag < FLAG_SAVED_OPTION_BOOL_END) {
 			return mSavedOptionBools[low >> 3] >> (low & 7) & 1;
 		}
 		break;
@@ -106,7 +107,7 @@ s32 TFlagManager::getFlag(u32 flag) const
 		}
 		break;
 	case 9:
-		if (flag < 0x90002) {
+		if (flag < FLAG_OPTION_BOOL_END) {
 			return mOptionBools[low >> 3] >> (low & 7) & 1;
 		}
 		break;
@@ -157,7 +158,7 @@ void TFlagManager::setFlag(u32 flag, s32 value)
 		}
 		break;
 	case 7:
-		if (flag < 0x70003) {
+		if (flag < FLAG_SAVED_OPTION_BOOL_END) {
 			mSavedOptionBools[low >> 3] &= ~(1 << (low & 7));
 			mSavedOptionBools[low >> 3] |= (value & 1) << (low & 7);
 		}
@@ -168,7 +169,7 @@ void TFlagManager::setFlag(u32 flag, s32 value)
 		}
 		break;
 	case 9:
-		if (flag < 0x90002) {
+		if (flag < FLAG_OPTION_BOOL_END) {
 			mOptionBools[low >> 3] &= ~(1 << (low & 7));
 			mOptionBools[low >> 3] |= (value & 1) << (low & 7);
 		}
@@ -200,12 +201,12 @@ bool TFlagManager::getBool(u32 flag) const
 		}
 		break;
 	case 7:
-		if (flag < 0x70003) {
+		if (flag < FLAG_SAVED_OPTION_BOOL_END) {
 			return getFlag(flag) != 0;
 		}
 		break;
 	case 9:
-		if (flag < 0x90002) {
+		if (flag < FLAG_OPTION_BOOL_END) {
 			return getFlag(flag) != 0;
 		}
 		break;
@@ -238,14 +239,14 @@ void TFlagManager::setBool(bool value, u32 flag)
 	case 6:
 		break;
 	case 7:
-		if (flag < 0x70003) {
+		if (flag < FLAG_SAVED_OPTION_BOOL_END) {
 			setFlag(flag, value ? 1 : 0);
 		}
 		break;
 	case 8:
 		break;
 	case 9:
-		if (flag < 0x90002) {
+		if (flag < FLAG_OPTION_BOOL_END) {
 			setFlag(flag, value ? 1 : 0);
 		}
 		break;

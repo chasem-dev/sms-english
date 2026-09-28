@@ -1,7 +1,7 @@
 #include <System/Application.hpp>
 #include <stdio.h>
 #include <stdlib.h>
-#include <types.h>
+#include <dolphin/types.h>
 #include <dolphin/os.h>
 #include <dolphin/vi.h>
 #include <dolphin/gx.h>
@@ -896,7 +896,7 @@ JKRMemArchive* TApplication::mountStageArchive()
 		TNameRefAryT<TScenarioArchiveName>* stageAry = tmp.getChildren()[mCurrArea.getStage()];
 		if (mCurrArea.getScenario() < stageAry->size()) {
 			const char* scenarioArcName
-			    = stageAry->getChildren()[mCurrArea.getScenario()].unkC;
+			    = stageAry->getChildren()[mCurrArea.getScenario()].mArcName;
 
 			DVDChangeDir("/data/scene");
 			if (void* archBlob

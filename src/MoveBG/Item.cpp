@@ -208,7 +208,7 @@ TItem::TItem(const char* name)
 
 void TCoin::taken(THitActor* param_1)
 {
-	u8 thing = gpApplication.mCurrArea.unk0;
+	u8 thing = SMSGetApplication()->mCurrArea.getStage();
 	TFlagManager::getInstance()->incGoldCoinFlag(SMS_getShineStage(thing), 1);
 
 	SMSGetMSound()->startSoundActor(MSD_SE_SY_COIN, &mPosition, 0, nullptr, 0,
@@ -836,7 +836,7 @@ void TShine::appearWithTime(int param_1, int param_2, int param_3, int param_4)
 	onHitFlag(HIT_FLAG_NO_COLLISION);
 }
 
-s32 TShine::appearWithTimeCallback(u32 param_1, u32 param_2)
+s32 TShine::appearWithTimeCallback(uintptr_t param_1, u32 param_2)
 {
 	TShine* shine = (TShine*)param_1;
 	if (param_2 == 0) {
@@ -879,8 +879,8 @@ void TShine::appearWithDemo(const char* param_1)
 	    = JDrama::TNameRefGen::instance->search<TCameraMapTool>(param_1);
 	unk18C = tool->getDemoLengthFrames();
 	SMSGetMarDirector()->fireStartDemoCamera(
-	    param_1, &mPosition, -1, 0.0f, true, appearWithTimeCallback, (u32)this,
-	    nullptr, JDrama::TFlagT<u16>());
+	    param_1, &mPosition, -1, 0.0f, true, appearWithTimeCallback,
+	    (uintptr_t)this, nullptr, JDrama::TFlagT<u16>());
 }
 
 void TShine::kill()

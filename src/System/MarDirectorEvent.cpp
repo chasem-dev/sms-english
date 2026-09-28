@@ -206,7 +206,7 @@ void TMarDirector::movement()
 
 // TODO: 99.7%, instruction-exact since TFlagT::operator= returns void; the
 // frame is 0x40 against retail's 0x50 (`next` 0xc low, the four flag
-// temporaries 4 low). SMSGetApplication().setMovie(6) is +8 and an identity
+// temporaries 4 low). SMSGetApplication()->setMovie(6) is +8 and an identity
 // fork over param_2 the other +8 (100% together, refused as a fabricated level);
 // `curr` declared inside the else arm lands `next` on 0x38 but renumbers
 // r29/r30. Inert or worse: `curr` or a split `cur` declared at the top, an
@@ -245,7 +245,7 @@ void TMarDirector::setNextStage(u16 param_1, JDrama::TActor* param_2)
 		next.unk1 = 0xFF;
 	}
 
-	SMSGetApplication().setNextArea(next);
+	SMSGetApplication()->setNextArea(next);
 
 	const TGameSequence& curr = gpApplication.mCurrArea;
 	if (param_2 != nullptr) {
@@ -312,7 +312,7 @@ void TMarDirector::fireStreamingMovie(u8 param_1)
 			setNextStage(0x1, nullptr);
 			TMarDirectorGetFlagManager()->setBool(true, 0x10389);
 			TFlagManager::smInstance->setBool(true, 0x30004);
-			SMSGetApplication().setMovie(param_1);
+			SMSGetApplication()->setMovie(param_1);
 		}
 		break;
 
@@ -320,7 +320,7 @@ void TMarDirector::fireStreamingMovie(u8 param_1)
 		if (!checkUnk4CFlag(0x100)) {
 			onUnk4CFlag(0x100);
 			setNextStage(0x3B, nullptr);
-			SMSGetApplication().setMovie(param_1);
+			SMSGetApplication()->setMovie(param_1);
 		}
 		break;
 
@@ -328,7 +328,7 @@ void TMarDirector::fireStreamingMovie(u8 param_1)
 		if (!checkUnk4CFlag(0x100)) {
 			onUnk4CFlag(0x100);
 			setNextStage(0xE06, nullptr);
-			SMSGetApplication().setMovie(param_1);
+			SMSGetApplication()->setMovie(param_1);
 		}
 		break;
 
@@ -336,7 +336,7 @@ void TMarDirector::fireStreamingMovie(u8 param_1)
 		if (!checkUnk4CFlag(0x100)) {
 			onUnk4CFlag(0x100);
 			setNextStage(0xE07, nullptr);
-			SMSGetApplication().setMovie(param_1);
+			SMSGetApplication()->setMovie(param_1);
 		}
 		break;
 
@@ -344,7 +344,7 @@ void TMarDirector::fireStreamingMovie(u8 param_1)
 		if (!checkUnk4CFlag(0x100)) {
 			onUnk4CFlag(0x100);
 			setNextStage(0x3C, nullptr);
-			SMSGetApplication().setMovie(param_1);
+			SMSGetApplication()->setMovie(param_1);
 		}
 		break;
 
@@ -352,7 +352,7 @@ void TMarDirector::fireStreamingMovie(u8 param_1)
 		if (!checkUnk4CFlag(0x100)) {
 			onUnk4CFlag(0x100);
 			setNextStage(0x101, nullptr);
-			SMSGetApplication().setMovie(param_1);
+			SMSGetApplication()->setMovie(param_1);
 		}
 		break;
 
@@ -363,7 +363,7 @@ void TMarDirector::fireStreamingMovie(u8 param_1)
 		if (!checkUnk4CFlag(0x100)) {
 			onUnk4CFlag(0x100);
 			setNextStage(0xF, nullptr);
-			SMSGetApplication().setMovie(param_1);
+			SMSGetApplication()->setMovie(param_1);
 		}
 		break;
 	}

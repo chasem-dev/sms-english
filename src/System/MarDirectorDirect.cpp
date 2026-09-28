@@ -52,7 +52,7 @@ int TMarDirector::direct()
 		if (!OSIsThreadTerminated(&gSetupThread))
 			return 0;
 
-		u32 local_40;
+		void* local_40;
 		OSJoinThread(&gSetupThread, &local_40);
 		if (local_40)
 			return 4;
@@ -65,7 +65,7 @@ int TMarDirector::direct()
 
 	JDrama::TGraphics local_140;
 
-	u8 bVar2 = gpMSound->unkA8;
+	u8 bVar2 = gpMSound->mSeGateMask;
 	unk54 += vsyncRate;
 
 	int i = 0;
@@ -88,7 +88,7 @@ int TMarDirector::direct()
 				uVar8 |= 2;
 				bVar7 &= ~0x1;
 			}
-			gpMSound->unkA8 = bVar7;
+			gpMSound->mSeGateMask = bVar7;
 
 			switch (mState) {
 			case STATE_UNK5:
@@ -188,7 +188,7 @@ int TMarDirector::direct()
 		offUnk4CFlag(0x6000);
 	}
 
-	gpMSound->unkA8 = bVar2;
+	gpMSound->mSeGateMask = bVar2;
 	return desiredAppState;
 }
 
@@ -212,7 +212,7 @@ static void decideNextStage()
 		local_3C.set(1, 0xff, JDrama::TFlagT<u16>());
 		break;
 	}
-	SMSGetApplication().setNextArea(local_3C);
+	SMSGetApplication()->setNextArea(local_3C);
 }
 
 // UNUSED, 0x10c.
@@ -1091,7 +1091,7 @@ u8 TMarDirector::updateGameMode()
 
 // TODO: 98.6%, frame 0x48 vs retail 0x70: the three TColor temporaries sit
 // 0x24 higher (a dead low region) and `this` is r31 vs r29. Inert (c-sys1):
-// no nextArea binding, a pointer binding, declaring it first, SMSGetApplication().
+// no nextArea binding, a pointer binding, declaring it first, SMSGetApplication()->
 void TMarDirector::moveStage()
 {
 	unkB4 = TApplication::APP_STATE_GAMEPLAY;

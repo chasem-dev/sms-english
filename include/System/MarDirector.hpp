@@ -70,8 +70,8 @@ public:
 		/* 0x8 */ u32 unk8;
 		/* 0xC */ f32 unkC;
 		/* 0x10 */ bool unk10;
-		/* 0x14 */ s32 (*unk14)(u32, u32);
-		/* 0x18 */ u32 unk18;
+		/* 0x14 */ s32 (*unk14)(uintptr_t, u32);
+		/* 0x18 */ uintptr_t unk18;
 		/* 0x1C */ JDrama::TActor* unk1C;
 		/* 0x20 */ JDrama::TFlagT<u16> unk20;
 	};
@@ -89,8 +89,8 @@ public:
 	void fireStreamingMovie(u8);
 	void fireEndDemoCamera();
 	void fireStartDemoCamera(const char*, const JGeometry::TVec3<f32>*, s32,
-	                         f32, bool, s32 (*)(u32, u32), u32, JDrama::TActor*,
-	                         JDrama::TFlagT<u16>);
+	                         f32, bool, s32 (*)(uintptr_t, u32), uintptr_t,
+	                         JDrama::TActor*, JDrama::TFlagT<u16>);
 	void fireStageEvent(TMapObjBase*);
 	void setNextStage(u16, JDrama::TActor*);
 	void movement();
@@ -192,6 +192,36 @@ public:
 		STATE_UNK10 = 10,
 		STATE_UNK11 = 11,
 		STATE_UNK12 = 12,
+	};
+
+	enum {
+		DIRECTOR_FLAG_SHINE_GET_PENDING                   = 0x1,
+		DIRECTOR_FLAG_STAGE_TRANSITION_PENDING            = 0x2,
+		DIRECTOR_FLAG_ACTOR_DEMO_STAGE_TRANSITION_PENDING = 0x4,
+		DIRECTOR_FLAG_GATE_DEMO_STAGE_TRANSITION_PENDING  = 0x8,
+		DIRECTOR_FLAG_GAME_OVER_PENDING                   = 0x20,
+		DIRECTOR_FLAG_DEMO_PENDING                        = 0x40,
+		DIRECTOR_FLAG_END_DEMO_PENDING                    = 0x80,
+		DIRECTOR_FLAG_MOVIE_PENDING                       = 0x100,
+		DIRECTOR_FLAG_CARD_SAVE_PENDING                   = 0x200,
+		DIRECTOR_FLAG_FIRST_SIMULATION_TICK               = 0x2000,
+		DIRECTOR_FLAG_LAST_SIMULATION_TICK                = 0x4000,
+		DIRECTOR_FLAG_SHINE_TAKEN                         = 0x8000,
+	};
+
+	enum {
+		DEMO_FLAG_SHINE_GET_STOP_THE_WORLD = 0x1,
+		DEMO_FLAG_CAMERA_DEMO_ON_START     = 0x2,
+		DEMO_FLAG_CAMERA_DEMO_WIPE_STARTED = 0x4,
+		DEMO_FLAG_HELL_DEAD                = 0x8,
+	};
+
+	enum {
+		TRANSITION_FLAG_STAGE_BGM_STARTED            = 0x1,
+		TRANSITION_FLAG_GO_BANNER_PENDING            = 0x2,
+		TRANSITION_FLAG_SCENARIO_NAME_BANNER_PENDING = 0x4,
+		TRANSITION_FLAG_OPENING_WIPE_PENDING         = 0x8,
+		TRANSITION_FLAG_RESET_HANDLED                = 0x10,
 	};
 
 	/* 0x18 */ TMarioGamePad** unk18;

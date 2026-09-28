@@ -337,6 +337,7 @@ void TJuiceBlock::kill()
 	makeObjDead();
 }
 
+#if defined(VERSION_GMSP01) || defined(VERSION_GMSE01)
 void TJuiceBlock::touchActor(THitActor* actor)
 {
 	// 0x400002C6 is the juice block's own MapObjInit type word, so a block
@@ -345,6 +346,7 @@ void TJuiceBlock::touchActor(THitActor* actor)
 	    && !actor->isActorType(0x400002C6))
 		kill();
 }
+#endif
 
 void TTelesaBlock::initMapObj() { TMapObjBase::initMapObj(); }
 

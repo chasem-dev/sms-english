@@ -1,7 +1,7 @@
 #ifndef GC2D_SHINE_TABLE_HPP
 #define GC2D_SHINE_TABLE_HPP
 
-#include <types.h>
+#include <dolphin/types.h>
 #include <System/FlagManager.hpp>
 #include <System/StageUtil.hpp>
 

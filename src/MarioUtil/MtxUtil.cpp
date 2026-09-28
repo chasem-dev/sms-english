@@ -2,7 +2,7 @@
 
 #include <MarioUtil/MtxUtil.hpp>
 
-#include <printf.h>
+#include <stdio.h>
 #include <JSystem/J3D/J3DGraphAnimator/J3DModel.hpp>
 #include <JSystem/J3D/J3DGraphAnimator/J3DJoint.hpp>
 #include <Strategic/HitActor.hpp>

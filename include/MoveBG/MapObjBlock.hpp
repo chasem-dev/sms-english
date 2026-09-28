@@ -109,7 +109,9 @@ public:
 	}
 
 	virtual void kill();
+#if defined(VERSION_GMSP01) || defined(VERSION_GMSE01)
 	virtual void touchActor(THitActor* actor);
+#endif
 	virtual void moveObject();
 	virtual void initMapObj();
 

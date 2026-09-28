@@ -54,7 +54,7 @@ public:
 	    : unk4(nullptr)
 	    , unk8(nullptr)
 	    , unkC(nullptr)
-	    , unk10(nullptr)
+	    , unk10(0)
 	    , unk14(nullptr)
 	    , unk1C(nullptr)
 	{

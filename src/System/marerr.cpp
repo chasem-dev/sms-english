@@ -35,6 +35,8 @@ void MarErrInit()
 	JUTException::createConsole(new u8[0x1400], 0x1400);
 #if defined(VERSION_GMSE01)
 	JUTException::appendMapFile(const_cast<char*>(sStrMapFile));
+#elif defined(VERSION_GMSP01)
+	JUTException::appendMapFile("/marioEU.MAP");
 #else
 	JUTException::appendMapFile("/mario.MAP");
 #endif

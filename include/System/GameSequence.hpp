@@ -33,7 +33,6 @@ public:
 		unk2 = param_3;
 	}
 
-	// fabricated
 	u8 getStage() const { return unk0; }
 	u8 getScenario() const { return unk1; }
 
