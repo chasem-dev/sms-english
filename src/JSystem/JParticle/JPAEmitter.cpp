@@ -596,9 +596,7 @@ JPABaseParticle* JPABaseEmitter::createParticle()
 					s16 ang = (s16)((r27_param168 << 16) / r26_param164);
 					f22_f23_f24.set(JMASSin(ang), 0.0f, JMASCos(ang));
 				} else {
-					f22_f23_f24.x = getRandomSF();
-					f22_f23_f24.y = 0.0f;
-					f22_f23_f24.z = getRandomSF();
+					f22_f23_f24.set(getRandomSF(), 0.0f, getRandomSF());
 				}
 				f22_f23_f24.setLength(unk200);
 			} else {
