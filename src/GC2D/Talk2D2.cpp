@@ -593,7 +593,11 @@ void TTalk2D2::makeBoxLine(s8 line, char* text)
 		// sits on: translate by -mid, rotate, translate back.  The -0.5f and
 		// +0.5f terms cancel in exact arithmetic but retail emits both, and
 		// accumulating into rotX/rotY is what keeps -mid computed ahead of
-		// cosf.
+		// cosf. Retail adds the rotated term to -mid before adding +mid
+		// back (float addition does not reassociate).
+		// TODO: the separate `+= half` statements cost 97.3 -> 96.4 (one
+		// extra instruction); a single-expression spelling that keeps
+		// retail's association has not been found.
 		f32 sumX = prevX + curX;
 		f32 sumY = prevY + curY;
 		f32 rotX = -0.5f * sumX;
@@ -602,8 +606,10 @@ void TTalk2D2::makeBoxLine(s8 line, char* text)
 		f32 sin  = sinf(angle);
 		f32 halfX = 0.5f * sumX;
 		f32 halfY = 0.5f * sumY;
-		rotX += (prevX * cos + prevY * -sin) + halfX;
-		rotY += (prevX * sin + prevY * cos) + halfY;
+		rotX += prevX * cos + prevY * -sin;
+		rotY += prevX * sin + prevY * cos;
+		rotX += halfX;
+		rotY += halfY;
 
 		s16 x = rotX + (rotX > 0.0f ? 0.5f : -0.5f);
 		s16 y = rotY + (rotY > 0.0f ? 0.5f : -0.5f);
