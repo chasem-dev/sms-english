@@ -49,3 +49,6 @@ Shared rules that came from here (bool normalisation, vector temporaries, trig o
 - Effects: one shared `int i` across loops, explicit `(s16)` on the water counter did nothing.
 - Tumble nerve frame 0x38 vs 0x40: named console/director locals don't help.
 - Hit predicate UNUSED size 208 vs 196; `isCanWalk` sizes fixed at 192.
+- c-k6: body `setAnm_` closed by reading the actor through `getMActor()` at every site (its coalesced result webs are the ghost neighbours that defer `anm` and `changed` to the second simplify sweep, giving retail's changed r31 / anm r30 / this r29 / blend r28) and the weak index through a parked `TBossHanachan::getWeakBodyIndex()` (its dead `unkFC` binding is the frame's last 8 bytes). The fabricated two-local model binder is gone.
+  `considerSetAnm_` (frame 0xe8 vs 0x110, instruction-exact) is open: `getRotation().z` is +8; four isCurBckAlreadyEnd_ expansions at +8 each would make up the rest, but no body tried is +8 inline and +0 out of line.
+
