@@ -245,3 +245,11 @@ Both were read from `dbg.sh` dumps (`frontend-00-ast-initial-code.txt`, `backend
 - `if (acc())` creates no forced-load word; `if (acc() != 0)` on a u16 accessor creates one.
 - A switch-bodied inline (`getDataInt`) is not expanded inside a temporary's constructor argument.
 - `regalloc.py --move V:bW` takes a vreg number after `b`/`a`, not a colouring position.
+
+## Additions (c-k10)
+
+- A result register shared with one operand (`add r4, r4, r3` where the other operand is dead) means the value and the sum are one web: retail accumulated into a named local (`x = load; x += y; if (t > x)`), not an expression `a + b`.
+  A plain expression, a named sum and every operand order leave the sum a fresh web that colours before the load (TPoiHana::walkBehavior, closed).
+- A dead named scalar (`int index = range.rand();` used once as an index) is homed between the named locals around it; a reference local initialised through a header accessor (`T& node = graph->getGraphNode(index)`) creates no object itself but its accessor's IRO words land below the next named local (THauntLegManager::initSetEnemies, closed).
+- The c-k9 shared-constant rule also covers a caller-side flag: a predicate level with a `bool ok = false; if (...) ok = true; return ok;` body gives the materialised inner predicate's false arm as `mr r0, rX` of the flag's zero (CPolarSubCamera::calcSlopeAngleX_).
+- A named web whose only neighbours are r0, r1 and `this` always takes r3; when retail has r4 there, the fix is a neighbour live across it in retail (a kept call result or a second pointer copy), not a declaration order (TFlyEnemy::calcChaseParam, open).

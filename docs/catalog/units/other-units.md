@@ -188,3 +188,21 @@ Longer evidence for batches 25-39 is in `docs/progress/GMSE01-closure-audit-batc
   `execWallCheck_`: `posCam = posArg` reads retail's slot but schedules the copy differently (98.4).
 - **MapEventMare `appear`**: one dead word too many below `trans`; the four `(void)0` fillers stand for real statements (without them movement inlines appear, 8%).
 - **liveactor, GCLogoDir, MSound `exitStage`, ObjHitCheck `checkWater`**: readings recorded in the TODOs (object sequences and the colouring moves that replay retail); none closed.
+
+## Closure batch c-k10 (2026-09-28)
+
+- **poihana `walkBehavior`: closed.**
+  Retail's `add r4, r4, r3` writes the sum into the wake frame's own register, so the two are one web: `int wakeFrame = ...mSLWakeFrame.get(); wakeFrame += getInstanceIndex() * 100; if (mGoToSleepTimer > wakeFrame)`.
+  `regalloc.py --move` had shown the timer web alone could not replay retail (one miss left), which pointed at the coalescing rather than the order.
+  Left: `genEventCoin` and `TNervePoihanaTrapped` (the `a = b - c` class), `init` (iterator/insert pair, studied), `initSetEnemies` (the family's dead region).
+- **hauntLeg `THauntLegManager::initSetEnemies`: closed.**
+  The 4-byte hole between `range` and `point` is a dead named `int index = range.rand();`, and the missing word below `point` is the reference taken through the header accessor, `TGraphNode& node = graph->getGraphNode(index); node.getPoint(point);`; the old `HauntLegGetMActor` binder (it only padded the frame) is gone.
+  `calcRootMatrix`: a named `f32 angle` for the lean makes the named block exact (every named slot then sits 0x40 low), so retail has 16 more inline/IRO words; the four `TVec3::cross` and two `MsVECNormalize` sites are the suspects.
+  `HauntLegCallback` is the `MsMtxSetRot*` class (MathUtil.hpp note); `init` the iterator class; the Haunt nerve the `a = b - c` class.
+- **cameragc `calcSlopeAngleX_`**: 98.07 -> 98.39. The ground test as a predicate level with its own flag (`CameragcIsOnThing`) gives retail's `mr r0, r4` false arm, the c-k9 shared-constant rule.
+  Retail creates `p3`, `ground`, `p2`, five words, then `sample`: the sample-point copies are callee locals of nested inline levels, not named locals (frame 0xd0 vs 0x110).
+  The constructor's residue is one word created after the `TPlacement` ctor's `this` binding (depth 3), i.e. a deeper inline object or an IRO temporary.
+- **Yoshi `thinkAnimation`**: the named `sliding` flag was a byte retail lacks; without it the named block is retail's and every slot is exactly 0xdc (55 words) low. `entry`: a loop-local colour plus one shared mirror colour gives the 0x148 frame with every object 8 low (retail needs three S-replaced copy sources in 12 bytes of named space).
+- **gesso `TGessoPolluteObj::set` / tamaNoko `TNerveTamaNokoAttack`**: both velocity test copies are created at depth 1, after the earlier sites' inline words, in source order (gesso: the 12-byte hole under `local_54` is exactly the three GessoUnk160/getAnmMtx words). A TU-local predicate reaches the depth but reverses the copies and materialises a bool; a by-value velocity getter is inert.
+- **tamaNoko `landEffect`**: retail creates the four `operator*` return copies first and the four `scale()` operands after them, the rule-8d order of a by-value return with a body local (`TVec3 r(a); r *= k; return r;`); JGVec3.hpp item.
+- **killer**: `calcChaseParam`'s `params` has only r0/r1/`this` as neighbours, so r3 must be held by something live across the two param loads in retail; `KillerBodyCallback` and gesso's `GessoBodyCallback` are the `MsMtxSetRot*` literal-order class; `fly`, `TNerveGessoFall`/`Freeze`, Tongue's `canGo` the `a = b - c` class.
