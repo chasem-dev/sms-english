@@ -66,6 +66,10 @@ DEFINE_NERVE(TNerveNPCGraphWander, TLiveActor)
 		// the map emits getCurGraphIndex weak out of line *in this TU*.
 		// Inert (2026-09-27): defining hasOnlyOneNext above the two accessors
 		// in TGraphTracer (in-class bodies are not order-sensitive here).
+		// c-k8: this is also why the unit lists getCurGraphIndex at 0%: the
+		// name, the class and the 8-byte body (`lwz r3,4(r3); blr`) are
+		// right, but no site here calls it out of line, so the weak copy the
+		// map places in this TU is never emitted. It closes with this site.
 		if (self->getTracer()->hasOnlyOneNext()) {
 			bVar6 = true;
 			if (self->getTracer()->currPitchIsZero())
