@@ -172,3 +172,19 @@ Longer evidence for batches 25-39 is in `docs/progress/GMSE01-closure-audit-batc
 - **`mr` against `addi rD,rS,0`** (MapObjFence `TFenceWater::initMapObj`, MapObjSirena `partsRollCallback`, both one instruction from closure): the post-RA peephole respells a `mr` as `addi` when the next instruction in the pre-RA schedule is an integer add (add, addi, lis, mr) and keeps `mr` before a load, compare, call or `fmr` (every case in five dumps). The fix is a pre-RA schedule change next to the copy, not a spelling of the copy.
 - **NpcNerve** `getCurGraphIndex` at 0% is the weak copy never emitted because both GraphWander tracer sites expand it; retail calls it (and the const `getGraph`) at the first site only. Name and body are right. `TNerveNPCTurnToMario` is the `a = b - c` operator- class (axis, then two by-value copies above it).
 - Read only, earlier TODOs confirmed (deep searches recorded): effectObj `moveObject` (conversion temp x copy colours last) and `TEffectColumWater::generate` (the operator* return), coasterkiller `moveCoaster`/`TCoasterKiller::perform` (raw `mPosition` for the distance is 95.5), CameraNotice (frame gaps 0x18-0x20, matan `extsh` pair), MapObjSirena `generateItem`/`moveObject`, JASChannel (0x10 frame in both `__UpdateJcToDSP*`; FPR clamp temps), MarioAutodemo (frame-only: warpOut 0x10, warpIn 8, readBillboard 0x40; `getStatusState()`/`getStatusTimer()`/`(u8)` arg spellings inert in warpOut).
+
+## Closure batch c-k9 (2026-09-28)
+
+- **NpcAnm `walkAnmRateChange_`: closed.**
+  The debugger put MsSqrtf's `volatile` at 0xb8 (first depth-1 object) where retail has 0x7c, below every depth-1 parameter binding: the square root is one inline level down.
+  `static inline f32 NpcAnmSpeedXZ(const TVec3<f32>& v) { return MsSqrtf(v.x * v.x + v.z * v.z); }` moved it to 0x78.
+  The blend flag written as a depth-1 predicate (`NpcAnmIsBlending(const TBaseNPC*)`, the `bool result = true; if (!a && !b) result = false;` body) gives retail's shared `1` (`mr r0, r3`) and moves two receiver bindings below the volatile (0x80).
+  `if (getColNum())` in place of `!= 0` drops the u16 forced load, the last word: byte-exact.
+  NpcAnm is left with `npcMadding` (the `a - b` class), `npcWetting` and `setNpcAnm_`.
+- **spcinterp** (4 arithmetic ops, open): retail's int-arm temporary is the first object after the second pop temporary, so setDataFloat's binding is created after it (depth 2) or not at all.
+  The int arm cannot be a parse-time temporary: `mProcessStack.push(TSpcSlice(sum))` and the implicit `push(sum)` leave both getDataInt calls out of line (78.6%).
+- **CameraBGCheck**: `isNeedGroundCheck_` with `f32 a = mDistMin * JMASSin(min);` (single definition) is left with a distY/a swap that `regalloc.py --move` closes by colouring distY before a's product temporary; no spelling found.
+  `execGroundCheck_` has one dead word too many *below* `ground` (not above); a raw `.value` (-2) plus `getCamMode()` (+1) lands every slot but swaps the CLBLinearInbetween argument loads.
+  `execWallCheck_`: `posCam = posArg` reads retail's slot but schedules the copy differently (98.4).
+- **MapEventMare `appear`**: one dead word too many below `trans`; the four `(void)0` fillers stand for real statements (without them movement inlines appear, 8%).
+- **liveactor, GCLogoDir, MSound `exitStage`, ObjHitCheck `checkWater`**: readings recorded in the TODOs (object sequences and the colouring moves that replay retail); none closed.
