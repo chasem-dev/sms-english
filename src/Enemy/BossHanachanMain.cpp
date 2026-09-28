@@ -564,8 +564,11 @@ void TBossHanachan::perform(u32 cue, JDrama::TGraphics* graphics)
 						JGeometry::TVec3<f32> delta = sand->mPosition - mPosition;
 						JGeometry::TVec3<f32> direction;
 						direction = delta;
-						if (direction.x * direction.x + direction.z * direction.z
-						    <= CLBSquared(50.0f)) {
+						// Retail fuses x*x into the sum (fmadds), which fp_contract only does
+						// for products of scalar locals.
+						f32 dx = direction.x;
+						f32 dz = direction.z;
+						if (dx * dx + dz * dz <= CLBSquared(50.0f)) {
 							body->unk120 = 0.0f;
 						} else {
 							f32 yaw = BossHanachanWrapDegree(MsGetRotFromZaxisY(direction));
