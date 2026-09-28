@@ -391,6 +391,9 @@ void TSmallEnemy::genEventCoin()
 	// slots). Left: retail stores mtx[2][3] before local_d0.x (both f26),
 	// ours the reverse; store order of d0 (all six), TVec3 zero()/set()/ctor,
 	// braces on the z override and the Vec declaration hoisted are inert.
+	// c-k5 (debugger): our PCode has the stores in source order (mtx[2][3]
+	// then local_d0.x) up to scheduling; the scheduler swaps them, so the
+	// residue is a scheduling-priority difference, not store order.
 	if (unk18C > 0) {
 		for (int i = 0; i < unk18C; ++i) {
 			Mtx local_c0;
