@@ -369,6 +369,13 @@ static inline bool BossHanachanIsBlending(const TNpcInbetween* p)
 // change the out-of-line isCurBckAlreadyEnd_. Four expansions at +8 plus the
 // getRotation +8 would be exactly 0x28, so the lead is a body shape that is
 // +8 per inlined copy but +0 in the emitted copy (frame 0x30).
+// Also measured: the blend helper taking the part (`p->mInbetween->...`)
+// instead of the TNpcInbetween is +8 (0xf0, 0xf8 with getRotation); a
+// parked mCurrentAnm accessor at every read another +8 (0x100). Not
+// committed: none closes, and a frame that only moves toward 0x110 does
+// not show which objects retail has. In the inlined copies `ctrl` is an
+// inliner object, so every J3DFrameCtrl accessor on it gets a dead
+// receiver binding that the emitted copy (named `ctrl`) does not have.
 void TBossHanachanPartsBase::considerSetAnm_(EnumBossHanachanNerveAnm nerve)
 {
 	if (nerve == BOSS_HANACHAN_NERVE_ANM_UNK0) {
