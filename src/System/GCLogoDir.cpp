@@ -269,6 +269,10 @@ bool TGCLogoDir::direct_nlogo()
 // the dead low region, so the carrier is TU-wide, not a lever here (k5).
 // c-h18 inert for the mState reload: nested ifs, a state-change helper (by
 // pointer or `int&`), a comparison helper and raw mResetFlag.check.
+// c-k9 debugger: ours has four dead inline words, retail sixteen; the
+// twelve extra words and the reload both point at code in this body that the
+// release build drops (e.g. in the empty `nextState != 2` arm, whose branch
+// survives), which the dead-code rule keeps as objects; not identified.
 bool TGCLogoDir::direct_dolby()
 {
 	bool ended    = false;
