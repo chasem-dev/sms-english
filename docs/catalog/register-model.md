@@ -200,3 +200,11 @@ Both were read from `dbg.sh` dumps (`frontend-00-ast-initial-code.txt`, `backend
 - The header `TVec3::cross` temporaries are depth-1 inline objects coloured before IR CSE temporaries; when retail colours the components last, write them out (MapObjDolpic `hitByWater`). Not universal: in feetinv it made things worse.
 - IR loop-invariant hoists are created after forced-load inline results in the same loop, so they are numbered lower and coloured later (JKRExpHeap `allocFromHead`).
 - `tools/mwcc-stack/dbg.sh` hardcodes the game's flags; JSystem units need their own flags (see `udbg.py`).
+
+## Additions (c-k5)
+
+- An UNUSED function whose map size is off can be missing a caller's statements: when the caller's slot order needs a local declared inside the inlined callee (callee locals are created last-declared first), move those statements into the callee (`TEnemyPolluteModel::generate` became map-size exact).
+- Inliner-object counters share one zero: a loop moved into an existing inline (`countLivingEnemy`) gives the `li rA,0; addi rB,rA,0` copy that named locals never give (`TEnemyManager::performShared`). Worth trying on `TSelectGrad::perform` and `TEMario::perform`.
+- A `TPosition3f`-typed local used through its conversion operator keeps its address in a saved register across a loop; it replaces a fabricated `MtxPtr alias = mtx;` (`copyAnmMtx` closed).
+- A named `const T& v = accessor()` reference costs a dead word below the named block; reading the raw member removes it.
+- `udbg.py` takes the unit without the `mario/` prefix; `regalloc.py` needs it.
