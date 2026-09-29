@@ -255,6 +255,40 @@ void TNpcParts::partsFrameUpdate()
 		}
 }
 
+// Which of Peach's parts show in her current pose. As a predicate level its
+// `result` is a callee object, so the flag load and the `li 1` take retail's
+// r5/r4 (spelled in the loop they swap); the frame goes 0xd0 -> 0xc8.
+static inline bool NpcPartsIsPeachPartShown(const TBaseNPC* npc, int part)
+{
+	bool result = true;
+	if (npc->checkUnk1D8(TBaseNPC::UNK1D8_FLAG_UNK4)) {
+		switch (part) {
+		case 1:
+		case 2:
+		case 4:
+			result = false;
+			break;
+		}
+	} else if (npc->checkUnk1D8(TBaseNPC::UNK1D8_FLAG_UNK1)) {
+		switch (part) {
+		case 1:
+		case 2:
+			result = false;
+			break;
+		}
+	} else {
+		switch (part) {
+		case 4:
+		case 5:
+		case 6:
+			result = false;
+			break;
+		}
+	}
+
+	return result;
+}
+
 void TNpcParts::partsPerform(u32 param_1, JDrama::TGraphics* param_2)
 {
 	int i = 0;
@@ -265,37 +299,9 @@ void TNpcParts::partsPerform(u32 param_1, JDrama::TGraphics* param_2)
 		if (*it == nullptr)
 			continue;
 
-		if (unk60->getActorType() == 0x4000018) {
-			// Peach stuff
-			bool r4 = true;
-			if (unk60->checkUnk1D8(TBaseNPC::UNK1D8_FLAG_UNK4)) {
-				switch (i) {
-				case 1:
-				case 2:
-				case 4:
-					r4 = false;
-					break;
-				}
-			} else if (unk60->checkUnk1D8(TBaseNPC::UNK1D8_FLAG_UNK1)) {
-				switch (i) {
-				case 1:
-				case 2:
-					r4 = false;
-					break;
-				}
-			} else {
-				switch (i) {
-				case 4:
-				case 5:
-				case 6:
-					r4 = false;
-					break;
-				}
-			}
-
-			if (!r4)
-				continue;
-		}
+		if (unk60->getActorType() == 0x4000018
+		    && !NpcPartsIsPeachPartShown(unk60, i))
+			continue;
 
 		if (param_1 & 2) {
 			if (unk60->isJellyFishMare() && i == 11) {
@@ -317,6 +323,9 @@ void TNpcParts::partsPerform(u32 param_1, JDrama::TGraphics* param_2)
 				// (97.9%, frame 0xe8); passing the string, the MActor or
 				// the model data as the parameter, a named J3DTexMtx or
 				// J3DModel, `u16 matNum` and `mtx` first are no better.
+				// c-k19: with the Peach predicate level the frame is
+				// 0xc8 (0x30 short); the starglow block as a helper on
+				// top of it is 98.3 (0xe0), taking the parts or MActor.
 				Mtx44 mtx;
 				SMS_GetLightPerspectiveForEffectMtx(mtx);
 				J3DModelData* data = mactor->getModel()->getModelData();
