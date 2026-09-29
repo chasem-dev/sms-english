@@ -63,18 +63,14 @@ void TMapObjBall::touchWall(JGeometry::TVec3<f32>* param_1,
 		const TBGCheckData* wall = param_2->mResultWalls[i];
 
 		JGeometry::TVec3<f32> vel(mVelocity);
-		f32 into = vel.x * wall->getNormal().x + vel.y * wall->getNormal().y
-		    + vel.z * wall->getNormal().z;
+		f32 into = vel.dot(wall->getNormal());
 		if (into < 0.0f) {
 			// Push the ball back out to exactly one radius from the plane.
-			// TODO: 98%. The ROM re-reads wall->mNormal.x and param_1->x
-			// after dist is complete; every spelling tried here (the raw
-			// member, getNormal(), a named normal reference) lets MWCC
-			// reuse the earlier loads.
-			f32 dist = param_1->x * wall->getNormal().x
-			        + param_1->y * wall->getNormal().y
-			        + param_1->z * wall->getNormal().z
-			    + wall->mPlaneDistance;
+			// Both products are TVec3::dot() (c-k15: the written-out sums let
+			// MWCC reuse the normal's loads, 98.0 -> 99.8).
+			// TODO: every instruction and register matches; the frame is
+			// 0xf0 against 0x120 (the velocity copies sit 0x1c-0x38 low).
+			f32 dist = param_1->dot(wall->getNormal()) + wall->getPlaneDistance();
 			param_1->x += (mBodyRadius - dist) * wall->getNormal().x;
 			param_1->z += (mBodyRadius - dist) * wall->getNormal().z;
 
