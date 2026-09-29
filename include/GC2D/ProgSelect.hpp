@@ -12,6 +12,9 @@ public:
 	TProgSelect(u8, const char* name = "ProgSelect");
 
 	void perform(u32 cue, JDrama::TGraphics* graphics);
+#ifdef VERSION_GMSP01
+	void setLang(s32);
+#endif
 
 	TMarioGamePad* getGamePad() { return mGamePad; }
 	u8 getSelection() const { return mSelection; }
@@ -34,6 +37,9 @@ public:
 	/* 0x120 */ J2DTextBox* unk120[2];
 	/* 0x128 */ int unk128;
 	/* 0x12C */ f32 mRefreshRate;
+#ifdef VERSION_GMSP01
+	/* 0x130 */ void* mMessageBmg;
+#endif
 };
 
 #endif

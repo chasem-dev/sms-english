@@ -26,20 +26,17 @@ void TMario::playerRefrection(int param_1)
 
 // A zero distance resets dx too: retail loads 1.0f into dx's register and
 // copies it to dist, and matan later reads that dx.
-// TODO: instruction-exact; the three entry loads take f5/f4/f3 where retail
-// has f4/f3/f5 (declaration order of thresh/dx/dz is inert or worse), and
-// newPos/floorY sit 4/8 high and the diff sub temporary 0x2c high.
+// thresh initialised at its declaration gives retail's entry registers.
+// TODO: instruction-exact; only slots differ: two inline temporaries 8 high,
+// floorY/ground swapped, and the diff sub temporaries 0x20-0x28 high.
 void TMario::keepDistance(const JGeometry::TVec3<f32>& target, f32 param_2,
                           f32 param_3)
 {
-	f32 thresh;
+	f32 thresh = param_3 + (param_2 + unk15C);
 	f32 dx;
-	f32 dz;
-
-	dz     = getPosition().z - target.z;
-	dx     = mPosition.x - target.x;
-	thresh = param_3 + (param_2 + unk15C);
-	f32 dist   = MsSqrtf(dx * dx + dz * dz);
+	f32 dz   = mPosition.z - target.z;
+	dx       = mPosition.x - target.x;
+	f32 dist = MsSqrtf(dx * dx + dz * dz);
 
 	if (dist == 0.0f)
 		dist = dx = 1.0f;
@@ -85,10 +82,6 @@ void TMario::keepDistance(const JGeometry::TVec3<f32>& target, f32 param_2,
 
 	JGeometry::TVec3<f32> diff = newPos - mPosition;
 
-	// TODO: retail's length keeps the squared sum live in f1 (the sqrt runs
-	// into a fresh register) and normalize reuses it; our TUtil sqrt works in
-	// place and normalize recomputes it. Tried: a named squared(), sqrt of
-	// squared()/dot(), a returning length helper, std::sqrtf.
 	f32 step = diff.length();
 	if (step > 0.0f) {
 		if (50.0f < step)

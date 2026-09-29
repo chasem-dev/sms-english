@@ -1,7 +1,7 @@
 #include <System/Application.hpp>
 #include <stdio.h>
 #include <stdlib.h>
-#include <types.h>
+#include <dolphin/types.h>
 #include <dolphin/os.h>
 #include <dolphin/vi.h>
 #include <dolphin/gx.h>
@@ -755,6 +755,15 @@ int TApplication::gameLoop()
 	return nextState;
 }
 
+static inline void DrawInitFullViewport(TApplication* app)
+{
+	SMS_DrawInit();
+	JDrama::TVideo* video = app->mDisplay->unk60;
+
+	GXRenderModeObj& mode = video->mNextRenderMode;
+	GXSetViewport(0.0f, 0.0f, mode.fbWidth, mode.efbHeight, 0.0f, 1.0f);
+}
+
 int TApplication::drawDVDErr()
 {
 	char message[512];
@@ -814,11 +823,7 @@ int TApplication::drawDVDErr()
 
 	if (error != 0) {
 		ReInitializeGX();
-		SMS_DrawInit();
-		JDrama::TVideo* video = mDisplay->unk60;
-
-		GXRenderModeObj& mode = video->mNextRenderMode;
-		GXSetViewport(0.0f, 0.0f, mode.fbWidth, mode.efbHeight, 0.0f, 1.0f);
+		DrawInitFullViewport(this);
 		Mtx44 afStack_260;
 		C_MTXOrtho(afStack_260, 16.0f, 464.0f, 0.0f, 600.0f, -1.0f, 1.0f);
 		GXSetProjection(afStack_260, GX_ORTHOGRAPHIC);
@@ -859,9 +864,10 @@ int TApplication::drawDVDErr()
 		if (gpSystemFont != nullptr)
 			font = gpSystemFont;
 		J2DPrint print(font, 0);
-		// TODO: frame is exact (0x318); the J2DPrint/Mtx44 block sits 4
-		// bytes low (0x50/0xb4 vs 0x54/0xb8). Retail has no dead `video`
-		// slot, and its second copy of the colour pair is one 8-byte object
+		// TODO: frame and every slot but two exact (0x318). The draw-init
+		// and viewport level (DrawInitFullViewport, hsearch c-k12) put the
+		// J2DPrint/Mtx44 block on retail's 0x54/0xb8. Still open: retail's
+		// second copy of the colour pair is one 8-byte object
 		// at 0x2c with 8 bytes between it and the by-value parameter at
 		// 0x3c, where ours has the two TColor conversion temporaries apart.
 		// Named `display`, `getVideo()`, and a caller-side pointer local
@@ -896,7 +902,7 @@ JKRMemArchive* TApplication::mountStageArchive()
 		TNameRefAryT<TScenarioArchiveName>* stageAry = tmp.getChildren()[mCurrArea.getStage()];
 		if (mCurrArea.getScenario() < stageAry->size()) {
 			const char* scenarioArcName
-			    = stageAry->getChildren()[mCurrArea.getScenario()].unkC;
+			    = stageAry->getChildren()[mCurrArea.getScenario()].mArcName;
 
 			DVDChangeDir("/data/scene");
 			if (void* archBlob

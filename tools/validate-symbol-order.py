@@ -41,6 +41,9 @@ hatch should a genuinely reversed unit ever turn up.
 Usage:
   python tools/validate-symbol-order.py -u mario/MarioUtil/MathUtil
   python tools/validate-symbol-order.py -u mario/Enemy/areacylinder --map orig/GMSE01/files/marioUS.MAP
+
+The map defaults to the one named by `map:` in config/<version>/config.yml,
+for the version objdiff.json is currently configured for (configure.py -v).
 """
 
 import argparse
@@ -92,6 +95,28 @@ def _default_nm() -> str:
 
 
 NM = os.environ.get("NM", _default_nm())
+
+_RE_BUILD_VERSION = re.compile(r"^build[\\/]([^\\/]+)[\\/]")
+_RE_CONFIG_MAP = re.compile(r"^\s*#?\s*map:\s*(\S+)")
+
+
+def default_map_for_unit(unit: Dict) -> str:
+    """The linker map of the version the unit was built for.
+
+    objdiff.json follows the last `configure.py --version`, so the unit's
+    base_path names the version (build/<VERSION>/...). The map path is read
+    from config/<VERSION>/config.yml, where dtk keeps it as a `# map:` line.
+    Without such a line (GMSE01), fall back to the configured-tree guess."""
+    m = _RE_BUILD_VERSION.match(unit.get("base_path", ""))
+    if m:
+        config = os.path.join(root_dir, "config", m.group(1), "config.yml")
+        if os.path.exists(config):
+            with open(config, encoding="utf-8") as f:
+                for line in f:
+                    cm = _RE_CONFIG_MAP.match(line)
+                    if cm:
+                        return os.path.join(root_dir, cm.group(1))
+    return DEFAULT_MAP
 OBJDIFF_JSON = os.path.join(root_dir, "objdiff.json")
 
 
@@ -318,8 +343,10 @@ def main() -> None:
     )
     ap.add_argument("-u", "--unit", required=True,
                     help="objdiff unit name, e.g. mario/MarioUtil/MathUtil")
-    ap.add_argument("--map", default=DEFAULT_MAP,
-                    help=f"path to the linker map (default: {DEFAULT_MAP})")
+    ap.add_argument("--map",
+                    help="path to the linker map (default: the map named in "
+                         "config/<version>/config.yml for the version the unit "
+                         "was built for)")
     ap.add_argument("--map-tu",
                     help="override the map .text-layout TU identifier")
     ap.add_argument("--reverse", action="store_true",
@@ -335,6 +362,8 @@ def main() -> None:
     source_path = meta.get("source_path", "")
     base_path = os.path.join(root_dir, unit["base_path"])
     reverse_fn = bool(meta.get("reverse_fn_order"))
+    if not args.map:
+        args.map = default_map_for_unit(unit)
 
     tus = parse_text_layout(args.map)
     tu_id = find_map_tu(tus, source_path, args.map_tu)
@@ -361,6 +390,7 @@ def main() -> None:
     print(f"Unit        : {unit['name']}")
     print(f"Source      : {source_path}")
     print(f"Object      : {os.path.relpath(base_path, root_dir)}")
+    print(f"Map         : {os.path.relpath(args.map, root_dir)}")
     print(f"Map TU      : {tu_id}")
     print(f"Map symbols : {len(map_names)} ({len(unused_names)} UNUSED)   "
           f"Object .text symbols: {len(obj_names)}")

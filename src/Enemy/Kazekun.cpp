@@ -134,14 +134,8 @@ void TKazekun::initParticle()
 	                 KAZEKUN_JPA_MS_KAZE_BLUR);
 }
 
-// TODO: 98.1%, and the only difference is the frame: 0x68 in retail against
-// our 0x70, i.e. we build 8 bytes more inline temporaries before the local
-// matrix. setTrans(x, y, z), getMActor()->getModel() and checkTakeFlag in
-// place of isTaken() are all worse, so the extra pair sits inside one of the
-// inlined helpers (hasWind or updateEffect), not here. Also inert or worse
-// (2026-09-22): raw mHolder tests, mMActor->getModel() in updateEffect,
-// three-float setTrans; `hasWind() == true` lands the frame but drops the
-// match to 80.8.
+// The 8 bytes of frame this had over retail were the two dead homes of the
+// old eleven-local TRotation3::setQuat body (c-r22).
 void TKazekun::calcRootMatrix()
 {
 	if (isTaken()) {

@@ -1013,7 +1013,7 @@ Census: 531 retail `bl`s to the seven `TVec3<f>` members over 332 (function, mem
 
 - **Load-into-r3-then-copy-out versus load-into-callee-saved-then-copy-in says whether the receiver was named**: `x->f(x->g())` with the receiver spelled twice gives retail's `lwzx r3,...; mr r24, r3`; a named local gives `lwzx r20,...; mr r3, r20` (`J3DModel::entryModelData`, 99.76 -> 99.82 by dropping the named `J3DMaterial*`).
 - **The member offset of the first `sinf`/`cosf` argument names the Euler order**: `TSmJ3DAct::perform` reads `mRotation.z` (0x38) first and `.x` (0x30) last, so the concat chain is Z, Y, X (73.7 -> 74.5); check before touching a matrix block's registers.
-- `validate-symbol-order.py` exits 2 on `src/dolphin/os/__start.c` (cannot resolve the map TU; wants `--map-tu`), and linked library units can FAIL on pre-existing MISSING UNUSED symbols the linker dead-strips (OSThread 7, J3DModel 22, J3DMaterialFactory 2): a scaffolding follow-up, not a link blocker.
+- `validate-symbol-order.py` exits 2 on `libs/dolphin/src/os/__start.c` (cannot resolve the map TU; wants `--map-tu`), and linked library units can FAIL on pre-existing MISSING UNUSED symbols the linker dead-strips (OSThread 7, J3DModel 22, J3DMaterialFactory 2): a scaffolding follow-up, not a link blocker.
 
 ## Closure batch 136 (2026-09-18): MapObjOption and ScrnFader linked
 

@@ -213,3 +213,25 @@ Longer evidence for batches 25-39 is in `docs/progress/GMSE01-closure-audit-batc
 - **NpcAnm `setNpcAnm_` (c-k11 tells)**: the 0x4000015 case's two zeroed indices share one zero (an inline level in retail), and the other parts sites test `getPartsMActor`'s result in r3 and copy it only after the index switch (an inline temporary, not a named local); a pass-through level there gives retail's `this` in r31 but not the frame.
   `npcWetting`: `regalloc.py --search` closes the switch-value swap by colouring `@2277` first, i.e. its two per-case `mActorType` CSE neighbours must be created before it (or it needs two more degree).
 - **c-k11 frame readings, not closed**: cameragc's constructor word is not `mFlag()` (inert; the rest is the shared JDRCamera/JDRPlacement headers); JPADrawVisitor Directional is eight bottom words and two top words short, DirectionalCross two bottom words; MarioAutodemo `warpOut` has no dead object at all while retail has four or five, `readBillboard` sixteen below its sqrt temporary; Yoshi `init` is eight words short with only backend temporaries visible, `doSearch` is the `operator-` class.
+
+## Closure batch c-k12 (2026-09-29)
+
+- **rocket `TRocketManager::initSetEnemies`: closed.**
+  The debugger put retail's missing word between the `TMsRange` and `point`: a named `int index = node.rand();` (the THauntLegManager shape, c-k10).
+  Naming it alone costs two low words (the `getGraphNode` argument binding and one IRO temporary go away, frame 0x88); the header accessors `getObjNum()` for the loop bound and `web->getNodeNum()` for the range put exactly those two words back below `point`.
+  Tell: a named word missing between two named objects, and the frame short by 8 once it is named: look for header accessors on the same statement or loop, each one EFORCELOAD word at the bottom (c-f1).
+- **koopajr `TKoopaJr::perform`: closed.**
+  hsearch's triage moved the lazy bathtub lookup (`if (mBathtub == nullptr) mBathtub = search<TBathtub>(...)`) one inline level down (`KoopaJrFindBathtub`), which creates the search's objects after checkNerve's depth-1 objects.
+  The submarine and koopa lookups must stay at depth 1 (a shared level for two or three of them is 12 slot markers).
+  No out-of-line copy is in the map, so retail's level was class-inline or TU-local.
+- **bossManta `updateAttractor`**: raw `mPosition` at the first two of three sites lands the frame (0x168) and every slot; left is an f24/f25 swap between pusher's squared length and the second `length()` result.
+- **enemymanager `performShared`**: `getObjNum()` as the no-collision loop bound with raw `unk18[i]` lands the frame (0xf0); left is one slot pair: countLivingEnemy's int result object is created between the two TTimeRec colour temporaries, where retail creates it after the second.
+  A predicate level around the call stops countLivingEnemy expanding (frame 0xc0).
+- **Application `drawDVDErr`**: `SMS_DrawInit()` plus the full-screen viewport as one inline level (`DrawInitFullViewport`) lands the J2DPrint/Mtx44 block; the viewport alone, or a level taking the TVideo, is worse (95.3). Left is the known colour-pair stride (one 8-byte copy at 0x2c).
+- **conductor `genEnemyFromPollution`**: debugger reading only (TODO); without the two radius binders the frame drops 0x10-0x18.
+- **MapCheck `checkRoof`**: retail has one more named word above `local_4c` and one fewer low word; a named roof list, named extent sums and checkGround's own shape are inert or -8.
+- **MSoundSE `construct`**: retail stores `new MSoundSE` straight to `mObj` (no `se` slot); that spelling is frame 0x98 with every slot 8 low, so retail's twelfth low word is still missing.
+- **MSoundSE `randPlay`**: the two dead words below `actor` are the JAIActor constructor's `a`/`b` argument bindings of `vec->mTrans`; retail has one of them and one named word above `actor`; a named switch operand is +8 frame, a named `trans` removes both bindings.
+- **Guide `resetScore`**: retail's `remaining` holds the untruncated difference; the compound `u8 remaining = allShines; remaining -= total;` reaches that web but truncates the wrong operand.
+- **GCConsole2 `startDisappearStar`** (read only, unit held by c-tp2): `unk26A + offset` with the raw member (both operands simple, so source order survives, c-r11) gives retail's `add` operand order but one instruction changes (99.2, zero `~`).
+- Refused or inert this batch: named radius/normal locals in MarioRun `slopeProcess` (90.3), accessor forms of TLiveActor::init's binders (each binder is +8 and the accessors are +0), named x/y/z in `TBiancoMiniWindmill::touchWater`, `getPosition()` in `evIsWaterMelonIsReached`, a named `z` or collision receiver in `TMareWallRock::appear`.

@@ -351,7 +351,7 @@ void SMS_InitPacket_MatColor(J3DModel* param_1, u16 param_2,
 	userData->unk4 = param_3;
 	userData->unk8 = param_4;
 
-	packet->setUserArea((u32)userData);
+	packet->setUserArea((uintptr_t)userData);
 	packet->setCallback(&ShapePacketCallBackFunc);
 }
 
@@ -366,7 +366,7 @@ void SMS_InitPacket_OneTevColor(J3DModel* param_1, u16 param_2,
 	userData->unk4 = param_3;
 	userData->unk8 = param_4;
 
-	packet->setUserArea((u32)userData);
+	packet->setUserArea((uintptr_t)userData);
 	packet->setCallback(&ShapePacketCallBackFunc);
 }
 
@@ -384,7 +384,7 @@ void SMS_InitPacket_TwoTevColor(J3DModel* param_1, u16 param_2,
 	userData->unk8  = param_5;
 	userData->unk10 = param_6;
 
-	packet->setUserArea((u32)userData);
+	packet->setUserArea((uintptr_t)userData);
 	packet->setCallback(&ShapePacketCallBackFunc);
 }
 
@@ -405,7 +405,7 @@ void SMS_InitPacket_ThreeTevColor(J3DModel* param_1, u16 param_2,
 	userData->unkC  = param_7;
 	userData->unk18 = param_8;
 
-	packet->setUserArea((u32)userData);
+	packet->setUserArea((uintptr_t)userData);
 	packet->setCallback(&ShapePacketCallBackFunc);
 }
 
@@ -444,7 +444,7 @@ void SMS_InitPacket_Fog(J3DModel* param_1, u16 param_2)
 	userData->unk0               = 5;
 	userData->unk4               = fog;
 
-	packet->setUserArea((u32)userData);
+	packet->setUserArea((uintptr_t)userData);
 	packet->setCallback(&ShapePacketCallBackFunc);
 }
 
@@ -459,7 +459,7 @@ void SMS_InitPacket_OneTevKColor(J3DModel* param_1, u16 param_2,
 	userData->unk4 = param_3;
 	userData->unk8 = param_4;
 
-	packet->setUserArea((u32)userData);
+	packet->setUserArea((uintptr_t)userData);
 	packet->setCallback(&ShapePacketCallBackFunc);
 }
 
@@ -477,7 +477,7 @@ void SMS_InitPacket_TwoTevKColor(J3DModel* param_1, u16 param_2,
 	userData->unk8  = param_5;
 	userData->unk10 = param_6;
 
-	packet->setUserArea((u32)userData);
+	packet->setUserArea((uintptr_t)userData);
 	packet->setCallback(&ShapePacketCallBackFunc);
 }
 
@@ -512,7 +512,7 @@ void SMS_InitPacket_OneTevKColorAndFog(J3DModel* param_1, u16 param_2,
 	userData->unk10 = 5;
 	userData->unk14 = fog;
 
-	packet->setUserArea((u32)userData);
+	packet->setUserArea((uintptr_t)userData);
 	packet->setCallback(&ShapePacketCallBackFunc);
 }
 
@@ -531,7 +531,7 @@ void SMS_InitPacket_OneTevColorAndOneTevKColor(J3DModel* param_1, u16 param_2,
 	userData->unk8 = param_4;
 	userData->unkC = param_5;
 
-	packet->setUserArea((u32)userData);
+	packet->setUserArea((uintptr_t)userData);
 	packet->setCallback(&ShapePacketCallBackFunc);
 }
 
@@ -554,7 +554,7 @@ void SMS_InitPacket_TwoTevColorAndOneTevKColor(J3DModel* param_1, u16 param_2,
 	userData->unk10 = param_6;
 	userData->unk14 = param_7;
 
-	packet->setUserArea((u32)userData);
+	packet->setUserArea((uintptr_t)userData);
 	packet->setCallback(&ShapePacketCallBackFunc);
 }
 

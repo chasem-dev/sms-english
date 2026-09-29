@@ -268,9 +268,9 @@ Each `.o` file maps 1:1 to a `.cpp` file. The path is listed in `configure.py` u
 
 | Directory | Description |
 |-----------|-------------|
-| `src/JSystem/` | Nintendo's JSystem middleware (J3D, JParticle, JDrama, JAudio, etc.) |
-| `src/dolphin/` | Dolphin SDK (OS, GX, DVD, PAD, etc.) |
-| `src/PowerPC_EABI_Support/` | Metrowerks runtime & MSL |
+| `libs/JSystem/src/` (headers in `libs/JSystem/include/`) | Nintendo's JSystem middleware (J3D, JParticle, JDrama, JAudio, etc.) |
+| `libs/dolphin/src/` (headers in `libs/dolphin/include/`) | Dolphin SDK (OS, GX, DVD, PAD, etc.) |
+| `libs/PowerPC_EABI_Support/src/` | Metrowerks runtime & MSL |
 | `src/System/` | Game system framework (directors, params, events) |
 | `src/Strategic/` | Core game object hierarchy (actors, hit detection, spine/nerve AI) |
 | `src/Player/` | Mario player code |

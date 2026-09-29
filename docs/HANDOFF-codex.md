@@ -49,3 +49,11 @@
   RollBlock preserves its previous 99.24051% score and sole mr/addi operand shape. Full shared-header rebuild shows exactly the two gains and no regressions; symbol order and original DOL SHA-1 pass.
   Both callback units retain other non-exact functions and cannot yet be source-linked; no manifest entry was added.
   Combined verified state: All exact 73.21588%, source-linked 33.69769%, 12,017/12,904 exact functions, 536/732 source-linked units.
+
+- 2026-09-29: Fetched public fork/main at 9d8055c3 and merged its 153 additional commits beyond e4b7dacb, preserving the five local verified commits.
+  The only conflict was append-only frame-gaps.md evidence; both sections were retained. Middleware now lives in libs/<library>/include and libs/<library>/src.
+  This import adds 16 exact functions and source-links MoveBG/MapObjBase and System/MarDirectorEvent. All previous exact and fuzzy function scores are preserved.
+  KillerBodyCallback also adopts the verified typed RotZ operation and drops its redundant matrix handle, 96.94444% -> 99.71429%; every instruction/register now agrees apart from frame/slots.
+  Combined full build, zero regressions, original DOL SHA-1 and baseline/current symbol checks passed.
+  Measured state: All exact 73.47340%, source-linked 34.02236%, 12,033/12,904 exact functions, 538/732 source-linked units.
+  Port patch/include/source paths are being adapted to this library layout; no behavior workaround is used in the port.

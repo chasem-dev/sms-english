@@ -95,16 +95,13 @@ void TRocketManager::loadAfter() { JDrama::TNameRef::loadAfter(); }
 
 TSpineEnemy* TRocketManager::createEnemyInstance() { return new TRocket(); }
 
-// TODO: instruction-identical and the frame total is right, but the
-// TMsRange lands 4 bytes low: the ROM leaves a 4-byte hole between it and
-// `point`, i.e. one more 4-byte local was declared between the two.
-// Tried: point before node, a named int for rand(), a TGraphNode& or
-// pointer binding (lands node but lifts point 4), web or rocket declared
-// at function scope, `(int)web->unk8`, point at function scope.
+// The named `index` is the word retail keeps between the TMsRange and
+// `point`; the getObjNum()/getNodeNum() accessors supply the two low-region
+// words it would otherwise cost (c-k12, found with the debugger).
 void TRocketManager::initSetEnemies()
 {
 	TGraphWeb* web;
-	for (int i = 0; i < mObjNum; ++i) {
+	for (int i = 0; i < getObjNum(); ++i) {
 		web             = gpConductor->getGraphByName("main");
 		TRocket* rocket = (TRocket*)getObj(i);
 		if (!rocket->checkLiveFlag(LIVE_FLAG_DEAD))
@@ -112,9 +109,10 @@ void TRocketManager::initSetEnemies()
 		if (web->isDummy())
 			continue;
 
-		TMsRange<int> node(0, web->unk8);
+		TMsRange<int> node(0, web->getNodeNum());
+		int index = node.rand();
 		JGeometry::TVec3<f32> point;
-		web->getGraphNode(node.rand()).getPoint((Vec*)&point);
+		web->getGraphNode(index).getPoint((Vec*)&point);
 		rocket->mPosition = point;
 		rocket->mPosition.y += 5.0f;
 		rocket->onLiveFlag(LIVE_FLAG_AIRBORNE);

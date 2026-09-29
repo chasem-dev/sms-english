@@ -343,7 +343,7 @@ int TMenuDirector::direct()
 			gpApplication.mFader->startFadeoutT(0.25f);
 			// TODO: instructions match; frame 0x78 vs retail 0x128 (a dead
 			// low region, as MarDirectorDirect::decideNextStage).
-			SMSGetApplication().setNextArea(TGameSequence(unk48, unk4C));
+			SMSGetApplication()->setNextArea(TGameSequence(unk48, unk4C));
 		} else if (unk44->checkFlag(0x2)) {
 			unk18 = 0;
 			unk40->unfade();

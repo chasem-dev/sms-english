@@ -152,7 +152,7 @@ void CPolarSubCamera::startJetCoasterCam1()
 	unk2B0->setFrame(CameragcDemoFrame(gpMarDirector) * 0.5f);
 }
 
-static s32 JetCoasterDemoCallBack(u32 param_1, u32 param_2)
+static s32 JetCoasterDemoCallBack(uintptr_t param_1, u32 param_2)
 {
 	if (param_2 == 1)
 		((CPolarSubCamera*)param_1)->startJetCoasterCam1();
@@ -297,9 +297,10 @@ void CPolarSubCamera::loadAfter()
 	calcExternalData_();
 
 	if ((unk64 & CAMERA_FLAG_JET_COASTER_SCENE) && gpMarDirector->unk7D == 1) {
-		gpMarDirector->fireStartDemoCamera(
-		    cJetCoasterDemoBckName, nullptr, -1, 0.0f, true,
-		    &JetCoasterDemoCallBack, (u32)this, nullptr, JDrama::TFlagT<u16>());
+		gpMarDirector->fireStartDemoCamera(cJetCoasterDemoBckName, nullptr, -1,
+		                                   0.0f, true, &JetCoasterDemoCallBack,
+		                                   (uintptr_t)this, nullptr,
+		                                   JDrama::TFlagT<u16>());
 	} else {
 		if (!JKRGetResource(cStartCamBckFileName))
 			calcInHouseNo_(true);

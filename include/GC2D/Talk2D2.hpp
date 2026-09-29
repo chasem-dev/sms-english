@@ -15,6 +15,7 @@ class TBoundPane;
 class TMarioGamePad;
 
 class TTalk2D2;
+class TMarioGamePad;
 
 extern TTalk2D2* gpTalk2D;
 

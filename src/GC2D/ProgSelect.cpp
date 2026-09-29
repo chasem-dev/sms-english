@@ -6,6 +6,13 @@
 #include <JSystem/J2D/J2DPrint.hpp>
 #include <System/Application.hpp>
 #include <System/MarioGamePad.hpp>
+#include <GC2D/MessageUtil.hpp>
+#include <JSystem/JKernel/JKRFileLoader.hpp>
+#include <version.h>
+
+#ifdef VERSION_GMSP01
+#include <System/DummyStrings.hpp>
+#endif
 
 #if defined(VERSION_GMSE01)
 static char strDispProg[] = "Would you like to display in\nprogressive scan mode?";
@@ -35,6 +42,13 @@ TProgSelect::TProgSelect(u8 param_1, const char* name)
 	snprintf(unk1C, 0x100, strDispProg);
 	unk120[0] = new J2DTextBox(gpSystemFont->getResFont(), strYes);
 	unk120[1] = new J2DTextBox(gpSystemFont->getResFont(), strNo);
+#elif defined(VERSION_GMSP01)
+	mMessageBmg = nullptr;
+	char* yes   = new char[0x20];
+	unk120[0]   = new J2DTextBox(gpSystemFont->getResFont(), yes);
+	char* no    = new char[0x20];
+	unk120[1]   = new J2DTextBox(gpSystemFont->getResFont(), no);
+	setLang(0);
 #else
 	snprintf(unk1C, 0x100, "プログレッシブモードで\n表示しますか？");
 	unk120[0] = new J2DTextBox(gpSystemFont->getResFont(), "はい");
@@ -51,6 +65,25 @@ TProgSelect::TProgSelect(u8 param_1, const char* name)
 		unk120[0]->setBlackWhite(0x7f7f7f00, 0x7f7f7fff);
 	}
 }
+
+#ifdef VERSION_GMSP01
+void TProgSelect::setLang(s32 lang)
+{
+	static const char* filename[] = {
+		"/nintendo/progmessage_en.bmg", "/nintendo/progmessage_ge.bmg",
+		"/nintendo/progmessage_fr.bmg", "/nintendo/progmessage_sp.bmg",
+		"/nintendo/progmessage_it.bmg",
+	};
+
+	const char* name = filename[lang];
+	mMessageBmg      = JKRFileLoader::getGlbResource(name);
+	snprintf(unk1C, 0x100, SMSGetMessageData(mMessageBmg, 0));
+	snprintf(unk120[0]->getStringPtr(), 0x20,
+	         SMSGetMessageData(mMessageBmg, 4));
+	snprintf(unk120[1]->getStringPtr(), 0x20,
+	         SMSGetMessageData(mMessageBmg, 1));
+}
+#endif
 
 void TProgSelect::perform(u32 cue, JDrama::TGraphics* graphics)
 {
@@ -90,6 +123,15 @@ void TProgSelect::perform(u32 cue, JDrama::TGraphics* graphics)
 			}
 		} else if (getGamePad()->checkFrameMeaning(0x20) || thing()) {
 			{
+#ifdef VERSION_GMSP01
+				if (!mSelection) {
+					snprintf(unk1C, 256, SMSGetMessageData(mMessageBmg, 3));
+					OSSetEuRgb60Mode(1);
+				} else {
+					snprintf(unk1C, 256, SMSGetMessageData(mMessageBmg, 2));
+					OSSetEuRgb60Mode(0);
+				}
+#else
 				if (!mSelection) {
 #if defined(VERSION_GMSE01)
 					snprintf(unk1C, 256, strSetProg);
@@ -115,6 +157,7 @@ void TProgSelect::perform(u32 cue, JDrama::TGraphics* graphics)
 #endif
 					OSSetProgressiveMode(0);
 				}
+#endif
 				mHideTextBoxes = true;
 			}
 		}
@@ -135,13 +178,13 @@ void TProgSelect::perform(u32 cue, JDrama::TGraphics* graphics)
 		local_110.setup2D();
 		J2DPrint JStack_174(gpSystemFont, 0);
 		JStack_174.setUnk50(32);
-#if defined(VERSION_GMSE01)
-		JStack_174.printReturn(unk1C, 360, 160, HBIND_CENTER, VBIND_TOP, 145,
+		JStack_174.printReturn(unk1C,
+		                       VERSION_SELECT(GMSJ01(300), GMSP01(580),
+		                                      GMSE01(360)),
+		                       160, HBIND_CENTER, VBIND_TOP,
+		                       VERSION_SELECT(GMSJ01(175), GMSP01(35),
+		                                      GMSE01(145)),
 		                       300, 255);
-#else
-		JStack_174.printReturn(unk1C, 300, 160, HBIND_CENTER, VBIND_TOP, 175,
-		                       300, 255);
-#endif
 		if (!mHideTextBoxes) {
 			unk120[0]->draw(240, 400);
 			unk120[1]->draw(340, 400);

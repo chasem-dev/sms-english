@@ -27,6 +27,7 @@
 #include <MSound/MSSetSound.hpp>
 #include <MSound/MSoundBGM.hpp>
 #include <M3DUtil/InfectiousStrings.hpp>
+#include <macros.h>
 
 namespace {
 const GXColorS10 cBodyColorOnFire   = { 400, -50, -100, 0 };
@@ -1430,16 +1431,17 @@ void TFireWanwan::updatePollute()
 	v1.y = mtx[1][0];
 	v1.z = mtx[2][0];
 	v1.scaleAdd((MsRandF() - 0.5f) * 2.0f * mAttackRadius, v1, mPosition);
-	// TODO: retail names radius in f31 so the column sits in f30/f29/f28;
-	// declaring `f32 radius = 375.0f` first lands those FPRs but loads 375
-	// before getModel. Frame is exact at 0x90.
+	// TODO: 99.6%, every instruction and the frame (0x90) exact. The stamp
+	// goes through pollute(), which puts the column in f30/f29/f28; left is a
+	// volatile permutation in the scaleAdd factor (retail f5/f3/f4 for
+	// 2.0f, mAttackRadius and the product, ours f4/f5/f3).
 	f32 radius = 375.0f;
 	if (isAttacking())
 		radius *= getSaveParam2()->mPolluteAttackRate.get();
 	else
 		radius *= getSaveParam2()->mPolluteNormalRate.get();
 
-	gpPollution->stamp(1, v1.x, v1.y, v1.z, radius);
+	gpPollution->pollute(v1.x, v1.y, v1.z, radius);
 }
 
 void TFireWanwan::updateHitPoint()

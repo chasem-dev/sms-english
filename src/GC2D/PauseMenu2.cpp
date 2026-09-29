@@ -27,6 +27,7 @@
 #include <System/MarioGamePad.hpp>
 #include <GC2D/ShineTable.hpp>
 #include <stdio.h>
+#include <version.h>
 
 extern JPAEmitterManager* gpEmitterManager4D2;
 
@@ -127,10 +128,15 @@ void TPauseMenu2::load(JSUMemoryInputStream& pStream)
 		mMenuItems[i] = (J2DPicture*)mScreen->search('tx_1' + i);
 
 		if (mNumItems == 2) {
-			mMenuItems[i]->add(0, 20);
+			mMenuItems[i]->add(
+			    0, VERSION_SELECT(GMSJ01(14), GMSP01(20), GMSE01(20)));
 		}
 		mMenuItems[i]->hide();
 	}
+
+#ifdef VERSION_GMSP01
+	unk20 = mScreen->search('brek');
+#endif
 
 	mStageName = (J2DTextBox*)mScreen->search('map');
 	mStageName->setFont(gpSystemFont);
@@ -144,12 +150,21 @@ void TPauseMenu2::load(JSUMemoryInputStream& pStream)
 	u32 shineStage = SMS_getShineStage(SMSGetMarDirector()->mMap);
 	s32 flag       = TFlagManager::getInstance()->getFlag(0x40003);
 
+#ifdef VERSION_GMSP01
+	void* stageBmg = JKRFileLoader::getGlbResource("/cmn2d/stagename.bmg");
+	if (gpMarDirector->mMap == 0x14)
+		shineStage = 0;
+	mStageName->setString(SMSGetMessageData(stageBmg, shineStage));
+#else
 	mStageName->setString(SMSGetMessageData(
 	    JKRFileLoader::getGlbResource("/common/2d/stagename.bmg"), shineStage));
+#endif
 
 	if (PauseCurrentMap(SMSGetMarDirector()) != 0xF) {
-		void* scenarioBmg
-		    = JKRFileLoader::getGlbResource("/common/2d/scenarioname.bmg");
+		void* scenarioBmg = JKRFileLoader::getGlbResource(
+		    VERSION_SELECT(GMSJ01("/common/2d/scenarioname.bmg"),
+		                   GMSP01("/cmn2d/scenarioname.bmg"),
+		                   GMSE01("/common/2d/scenarioname.bmg")));
 		s16 shineID = SMS_getShineID(shineStage, flag, false);
 		const char* scenarioName;
 		if (scenarioBmg == nullptr || shineID == -1 || shineStage == 0) {

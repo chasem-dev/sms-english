@@ -382,6 +382,14 @@ static inline f32 MarioRunParamBind(const TParamRT<f32>& p)
 	return v;
 }
 
+// TODO: instruction- and frame-exact; four slots differ (slopeUp/slopeDown
+// 0x44/0x40, retail 0x3c/0x38). Debugger (c-k12): retail has four named
+// words above slopeUp; the named sin/cos (declared ahead of slopeUp, found by
+// hsearch) are two of them with `mag`. The fourth is missing, and retail has
+// no binder word (MarioRunGetNormal's local) between slopeDown and the first
+// MsSqrtf local (0x34). Dropping the binder is -8 of frame; named nx/nz (or
+// nx/ny/nz) and a named TVec3 copy change the loads; a `const TVec3&` or
+// pointer normal is 0x70; declaring slopeDown first lands only one of the two.
 void TMario::slideProcess(f32 baseAcc, f32 friction)
 {
 	const TBGCheckData* ground = mGroundPlane;
@@ -392,6 +400,8 @@ void TMario::slideProcess(f32 baseAcc, f32 friction)
 	                  + ground->getNormal().z * ground->getNormal().z);
 
 	s16 angDiff = mSlopeAngle - mFaceAngle.y;
+	f32 sinAng;
+	f32 cosAng;
 	f32 slopeUp;
 	f32 slopeDown;
 	getSlopeSlideAccele(&slopeUp, &slopeDown);
@@ -400,8 +410,10 @@ void TMario::slideProcess(f32 baseAcc, f32 friction)
 	else
 		baseAcc += slopeDown * mag;
 
-	mSlideVelX += baseAcc * JMASSin(dirAng);
-	mSlideVelZ += baseAcc * JMASCos(dirAng);
+	sinAng = JMASSin(dirAng);
+	mSlideVelX += baseAcc * sinAng;
+	cosAng = JMASCos(dirAng);
+	mSlideVelZ += baseAcc * cosAng;
 	mSlideVelX *= friction;
 	mSlideVelZ *= friction;
 	unk9E = matan(mSlideVelZ, mSlideVelX);
@@ -517,6 +529,10 @@ void TMario::slopeProcess()
 	// Retail has one more 4-byte named slot above slopeUp. Inert: both locals
 	// or angDiff declared at the top, `f32 mag;` assigned later, an int
 	// angDiff; declaring slopeDown first lands slopeUp at 0x70 but not both.
+	// c-k12 debugger: retail has two named words above slopeUp (ours only
+	// `mag`) and one inline word fewer among the five normal-binder words
+	// below slopeDown. A named `ground = mGroundPlane` (the trade that would
+	// move one binder word into the named block) changes the code (90.3%).
 	f32 mag = std::sqrtf(
 	    MarioRunGetNormal2(mGroundPlane).x * MarioRunGetNormal(mGroundPlane).x
 	    + mGroundPlane->getNormal().z * mGroundPlane->getNormal().z);

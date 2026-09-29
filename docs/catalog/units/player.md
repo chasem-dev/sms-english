@@ -68,3 +68,10 @@ Declared `static`; see `../frame-gaps.md`.
 - `TNozzleTrigger::movement`'s air-charge cue (0x4022) sits after the pressure decrement/clamp, gated on `!unk384`, with `prevPressure < unk388` where `prevPressure` is latched at entry (`f31`). `unk385` compares as `cmplwi` here (`u8`) but `isEmitting`/MarioMove/Yoshi want a signed compare: the consistent story is a `u8` field plus an `s32` accessor (header item).
 - Real bugs fixed in `TMario::pulling`: hold-release bit 0x200, drop status 0x0C00022F, yaw `backAngle - mIntendedYaw`, virtual `moveRequest(pos)` (vtable 0xac) not `receiveMessage`, `rateV`/`rateH` swapped.
 - Open: `#pragma dont_inline` still on `TNozzleBase::TNozzleBase`, `getEmitMtx`, `getEmitPosDirSpeed`; by the statement table each retail body had 15+ statements (`getEmitMtx` is at ~5). `mHoverHeight` should be `mHHoverHeight` (`@4096` string, ROM typo; four call sites in MarioWait/MarioJump/MarioRun).
+
+## MarioRun `slideProcess` (c-k12)
+
+- 8 -> 4 slot markers: `sinAng = JMASSin(dirAng)` and `cosAng = JMASCos(dirAng)` as named locals declared ahead of `slopeUp` (hsearch found the sine alone; the debugger showed retail's named block has four words above `slopeUp`).
+  Declaration order decides the slot here: declared after `slopeDown` they sit below it.
+- Still open: the fourth named word above `slopeUp`, and `MarioRunGetNormal`'s binder word, which retail does not have between `slopeDown` and the first MsSqrtf local.
+- `slopeProcess` has the same shape (two named words above `slopeUp` in retail); named sin/cos there overshoot by 8 or leave six markers.

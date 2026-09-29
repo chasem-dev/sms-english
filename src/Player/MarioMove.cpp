@@ -459,8 +459,8 @@ void TMario::setPlayerJumpSpeed(f32 speed_mult, f32 force)
 // reloads mSinkTimer for the `-=` in the sinking block; `a = a - x`, a named
 // decrement and swapped factors were inert.
 // Also inert: setPlayerVelocity() for the four slide-velocity blocks (+8
-// frame, same code), SMSGetPollution() or an unnamed size for the stamp
-// (retail loads gpPollution after the z,y,x arguments).
+// frame, same code). The stamp goes through TPollutionManager::pollute(),
+// whose parameters give retail's z, y, x loads before gpPollution.
 u32 TMario::setStatusToJumping(u32 status, u32 arg)
 {
 	u32 nextStatus = status;
@@ -468,7 +468,7 @@ u32 TMario::setStatusToJumping(u32 status, u32 arg)
 	unk2BC = mPosition.y;
 	if (mFootPrintTimer > mDeParams.mFootPrintTimerMax.get() / 2) {
 		f32 size = mDirtyParams.mPolSizeJump.get();
-		gpPollution->stamp(1, mPosition.x, mPosition.y, mPosition.z, size);
+		gpPollution->pollute(mPosition.x, mPosition.y, mPosition.z, size);
 	}
 
 	switch (status) {

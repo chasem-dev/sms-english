@@ -2,6 +2,7 @@
 #define GC2D_CARD_MANAGER_HPP
 
 #include <dolphin/card.h>
+#include <stddef.h>
 
 class JSUMemoryInputStream;
 class JSUMemoryOutputStream;

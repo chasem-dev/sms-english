@@ -40,6 +40,7 @@ Usage:
 import argparse
 import concurrent.futures as cf
 import difflib
+import glob
 import hashlib
 import itertools
 import json
@@ -583,10 +584,13 @@ _INDEX_CACHE = {}
 def header_index() -> Index:
     if "idx" not in _INDEX_CACHE:
         texts = []
-        for dp, _, fs in os.walk(os.path.join(ROOT, "include")):
-            for f in fs:
-                if f.endswith((".h", ".hpp", ".inc")):
-                    texts.append(open(os.path.join(dp, f), encoding="utf-8", errors="replace").read())
+        # Game headers live in include/, middleware headers in libs/*/include.
+        roots = [os.path.join(ROOT, "include")] + sorted(glob.glob(os.path.join(ROOT, "libs", "*", "include")))
+        for root in roots:
+            for dp, _, fs in os.walk(root):
+                for f in fs:
+                    if f.endswith((".h", ".hpp", ".inc")):
+                        texts.append(open(os.path.join(dp, f), encoding="utf-8", errors="replace").read())
         _INDEX_CACHE["idx"] = Index(texts)
     return _INDEX_CACHE["idx"]
 

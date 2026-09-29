@@ -12,6 +12,7 @@ Rewritten 2026-09-16. The milestone-by-milestone plan through batch 39 is archiv
 | A specific matching problem | `docs/catalog/README.md`, then one topic file |
 | General MWCC codegen | `docs/AGENT_MATCHING_TIPS.md` |
 | Scaffolding a new TU | `docs/PROGRAM_STRUCTURE_REVVING.md` |
+| Syncing with upstream doldecomp/sms | `docs/UPSTREAM.md` |
 
 ## Input
 

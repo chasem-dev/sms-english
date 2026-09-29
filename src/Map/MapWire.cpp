@@ -3,7 +3,7 @@
 #include <dolphin/mtx.h>
 #include <dolphin/gx.h>
 #include <fake_tgmath.h>
-#include <types.h>
+#include <dolphin/types.h>
 
 #include <JSystem/J3D/J3DGraphAnimator/J3DModel.hpp>
 #include <JSystem/J3D/J3DGraphLoader/J3DModelLoaderFlags.hpp>
@@ -192,8 +192,8 @@ bool TMapWire::updateMovePointAtReleased()
 		mMoveTimer -= 2.0f;
 	}
 
-	mHangOrBouncePoint.y = mBounceAmplitude * JMASCos(mMoveTimer * 32768.0f)
-	                       * mBounceRemainingPower;
+	f32 bounceCos = JMASCos(mMoveTimer * 32768.0f);
+	mHangOrBouncePoint.y = bounceCos * mBounceAmplitude * mBounceRemainingPower;
 	return false;
 }
 
@@ -328,14 +328,14 @@ void TMapWire::calcViewAndDBEntry()
 	mEndFittingModel->viewCalc();
 }
 
-// TODO: 99.6%: frame 0xd8 vs ours 0x88, every instruction right: retail's
+// TODO: 99.8%: frame 0xd8 vs ours 0x90, every instruction right: retail's
 // linePoint/defaultPoint pair sits 0x34 higher and the JMASCos fctiwz slot
 // 0x1c further above it. getPointPosDefault spelled as component stores,
 // a named sag or scaleAdd changes code (move 90-92%); declaring newPos,
 // linePoint/defaultPoint or a named y earlier is frame-inert or +8, and
-// computing power first changes code. Needs a structural lead. The JMASCos product
-// lands in f1 in retail, f0 in ours; operand order, a named cos result and a
-// named s16 angle are all inert.
+// computing power first changes code. Needs a structural lead. The JMASCos
+// product's register came from updateMovePointAtReleased naming the cosine
+// and multiplying it first (either alone is inert).
 void TMapWire::move()
 {
 	switch (mState) {
@@ -376,17 +376,8 @@ f32 TMapWire::getPosInWire(const JGeometry::TVec3<f32>& point) const
 	JGeometry::TVec3<f32> perpPoint
 	    = MsPerpendicFootToLineR(flatStart, flatEnd, point);
 
-	// TODO: retail names both differences (`TVec3 span = flatEnd - flatStart;`
-	// then `span.length()`): the inlined expansion in setFootPointsAtHanged
-	// copies the `operator-` temporary into a 12-byte named slot twice, and
-	// writing it that way takes that function 92.43 -> 99.59 with every opcode
-	// exact. It cannot be committed while `operator-` forwards through
-	// `operator-=`: the named store is one more inline level, so `sub` drops
-	// out of line here as well (85.94 -> 40.42) where retail still expands it.
-	// Retail's `operator-` must reach `sub` one level sooner -- a shared-header
-	// change (JGVec3.hpp).
-	f32 totalLength   = (flatEnd - flatStart).length();
-	f32 partialLength = (perpPoint - flatStart).length();
+	f32 totalLength   = JGeometry::TVec3<f32>(flatEnd - flatStart).length();
+	f32 partialLength = JGeometry::TVec3<f32>(perpPoint - flatStart).length();
 	return partialLength / totalLength;
 }
 
@@ -477,15 +468,15 @@ void TMapWire::init(const TCubeGeneralInfo* cubeInfo)
 
 	mWireSag = cubeInfo->getUnk24().y * 0.5f;
 
+	TMapWirePoint* point2;
 	for (int i = 0; i < mNumMapWirePoints; i++) {
-		// Inline suspect
 		{
-			f32 pos              = (f32)(i + 1) / (f32)(mNumMapWirePoints);
 			TMapWirePoint* point = &mMapWirePoints[i];
+			f32 pos              = (f32)(i + 1) / (f32)(mNumMapWirePoints);
 			point->mPosOnWire = point->mDefaultPosOnWire = pos;
 		}
 
-		TMapWirePoint* point2 = &mMapWirePoints[i];
+		point2 = &mMapWirePoints[i];
 		getPointPosDefault(point2->mPosOnWire, &point2->mDefaultPosition);
 
 		point2->reset();

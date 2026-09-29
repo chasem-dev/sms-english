@@ -4,6 +4,7 @@
 #include <Strategic/LiveActor.hpp>
 #include <MoveBG/MapObjBase.hpp>
 #include <JSystem/JDrama/JDRNameRefGen.hpp>
+#include <version.h>
 
 THelpActor::THelpActor(const char* name)
     : THitActor(name)

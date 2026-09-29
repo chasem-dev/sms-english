@@ -11,12 +11,12 @@ Measured from `build/GMSE01/report.json` on 2026-09-29.
 
 | | Fuzzy match | Perfect match | Fully linked | Linked units |
 | --- | ---: | ---: | ---: | ---: |
-| Game | 99.48% | 67.21% | 19.46% | 202 / 385 |
+| Game | 99.50% | 67.54% | 19.87% | 204 / 385 |
 | JSystem | 99.90% | 93.91% | 81.22% | 186 / 198 |
 | SDK | 100.00% | 99.71% | 99.54% | 148 / 149 |
-| All | 99.58% | 73.22% | 33.70% | 536 / 732 |
+| All | 99.59% | 73.47% | 34.02% | 538 / 732 |
 
-12,017 of 12,904 functions match. The rebuilt DOL remains byte-identical to the original.
+12,033 of 12,904 functions match. The rebuilt DOL remains byte-identical to the original.
 
 ## What recent batches have done
 
@@ -105,7 +105,7 @@ Most remaining differences in these units are frame gaps and per-call-site inlin
   padding is replaced by real locals (`docs/catalog/linking.md`, "Links 279").
 - `Camera/CameraInbetween` matches but will not link: `docs/catalog/linking.md`.
 - Units one function from linking (`MSoundBGM`, `MarioAccess`): `docs/catalog/frame-gaps.md`.
-- 890 functions remain non-exact and 196 units remain unlinked; source counterparts exist throughout the game.
+- 871 functions remain non-exact and 194 units remain unlinked; source counterparts exist throughout the game.
   Most remaining work is compiler stack layout, register allocation, inline structure and matching data layout.
 - **The `a = b - c` pool residue is the single largest open lever**: all 102 retail
   `bl TVec3::sub` sites are nonmatching, 40 of them at >= 99.3%, for one shared

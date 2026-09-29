@@ -214,7 +214,7 @@ def main():
         )
         return 2
 
-    idents = source_identifiers(["include", "src"])
+    idents = source_identifiers(["include", "src", "libs"])
 
     # Two very different defects hide behind "our objects define no copy":
     #  * NOBODY  - the member does not exist in our tree at all.  This is the

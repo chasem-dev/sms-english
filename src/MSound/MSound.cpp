@@ -1,4 +1,5 @@
 #include <MSound/MSound.hpp>
+#include <string.h>
 #include <MSound/MSRandVol.hpp>
 #include <MSound/MSHandle.hpp>
 #include <MSound/MSSetSound.hpp>
@@ -125,7 +126,7 @@ void MSSeCallBack::setWaterCameraFir(bool enabled)
 	else
 		smWaterFilter = 0;
 #if defined(VERSION_GMSE01)
-	if (MSGMSound->mWaterFilterOverride == 1)
+	if (MSGMSound->mWaterFirEnabled == 1)
 		smWaterFilter = 0x78;
 #endif
 }
@@ -148,11 +149,7 @@ u16 MSSeCallBack::setParameterSeqSync(JASystem::TTrack* param_1, u16 param_2)
 
 	switch (param_2) {
 	case 15:
-#if defined(VERSION_GMSE01)
-		return MSGMSound->mTimerParameter;
-#else
-		return MSGMSound->unk94;
-#endif
+		return MSGMSound->mTimerSyncValue;
 
 	case 20:
 		for (u16 i = 0; i < 2; ++i) {
@@ -549,7 +546,7 @@ MSound::MSound(JKRHeap* param_1, JKRHeap* param_2, u32 param_3, u8* param_4,
 	JAIGlobalParameter::setParamDistanceMax(fVar1);
 	JAIGlobalParameter::setParamMinDistanceVolume(0.0f);
 	JAIGlobalParameter::setParamMaxVolumeDistance(1200.0f);
-	unkA8     = 0x1 | 0x2;
+	mSeGateMask     = 0x1 | 0x2;
 	MSGBasic  = JAIBasic::getInterface();
 	MSGMSound = this;
 	JALSystem::init();
@@ -561,10 +558,10 @@ MSound::MSound(JKRHeap* param_1, JKRHeap* param_2, u32 param_3, u8* param_4,
 
 	unk7C = 0;
 	unk80 = 0;
-#if defined(VERSION_GMSE01)
+#if defined(VERSION_GMSP01) || defined(VERSION_GMSE01)
 	// Retail stores -1 here; costs -0.04 fuzzy until the `this` spill is fixed.
 	unk94 = -1;
-	mWaterFilterOverride = 0;
+	mWaterFirEnabled = 0;
 	MSSeCallBack::setWaterCameraFir(false);
 #endif
 
@@ -575,11 +572,7 @@ MSound::MSound(JKRHeap* param_1, JKRHeap* param_2, u32 param_3, u8* param_4,
 	unkAC[1] = JAInullCamera;
 
 	unk84 = 0;
-#if defined(VERSION_GMSE01)
-	mTimerParameter = 0;
-#else
-	unk94 = 0;
-#endif
+	mTimerSyncValue = 0;
 	unk8C[0] = 0;
 	unk8C[1] = 0;
 	unkC4    = 0;
@@ -597,7 +590,7 @@ void MSound::requestShineAppearFanfare() { }
 
 void MSound::mainLoop()
 {
-	if (unkCF == 0 && unkA8 == 0)
+	if (unkCF == 0 && mSeGateMask == 0)
 		return;
 
 	// US drops the deferred shine-appear BGM restart along with the only
@@ -656,7 +649,7 @@ static inline JAIData* MSoundUnk0D(const MSound* p) { return p->unk0; }
 
 void MSound::initSound()
 {
-	unkA8 |= 0x2;
+	mSeGateMask |= 0x2;
 	for (u8 cat = 0; cat < 16; ++cat) {
 		if (MSGMSound->unk0->mSeTable.mSoundMax[cat] != 0
 		    && JAIBasic::getInterface() != nullptr) {
@@ -821,7 +814,7 @@ bool MSound::resetAudioAll(u16 param_1)
 	if (dVar2 <= 0.002f) {
 		JASystem::Driver::setMixerLevel(0.802f, 0.0f);
 		JASystem::AudioThread::stop();
-		unkA8 = 0;
+		mSeGateMask = 0;
 		unkD0 = 0;
 		return true;
 	}
@@ -847,7 +840,7 @@ void MSound::setCategoryAllVolume(u8 category, f32 volume, u32 param_3,
 
 void MSound::fadeOutAllSound(u32 fadeout)
 {
-	unkA8 &= 1;
+	mSeGateMask &= 1;
 
 	for (u8 cat = 0; cat < JAIGlobalParameter::getParamSeCategoryMax(); ++cat) {
 		if (MSoundUnk0D(this)->mSeTable.mSoundMax[cat] != 0 && cat != 4) {
@@ -898,64 +891,36 @@ void MSound::playTimer(u32 time)
 		    MSD_SE_SY_TIMER, nullptr, (JAIActor*)0xffffffff, 0, 4);
 
 		if (time > 0x7530) {
-#if defined(VERSION_GMSE01)
-			mTimerParameter = 0x6e;
-#else
-			unk94 = 0x6e;
-#endif
+			mTimerSyncValue = 0x6e;
 			return;
 		}
 
 		if (time > 0x3A98) {
-#if defined(VERSION_GMSE01)
-			mTimerParameter = 0x32;
-#else
-			unk94 = 0x32;
-#endif
+			mTimerSyncValue = 0x32;
 			return;
 		}
 
 		if (time > 0x2710) {
-#if defined(VERSION_GMSE01)
-			mTimerParameter = 0x23;
-#else
-			unk94 = 0x23;
-#endif
+			mTimerSyncValue = 0x23;
 			return;
 		}
 
 		if (time > 0x1388) {
-#if defined(VERSION_GMSE01)
-			mTimerParameter = 0x19;
-#else
-			unk94 = 0x19;
-#endif
+			mTimerSyncValue = 0x19;
 			return;
 		}
 
 		if (time > 0x7D0) {
-#if defined(VERSION_GMSE01)
-			mTimerParameter = 10;
-#else
-			unk94 = 10;
-#endif
+			mTimerSyncValue = 10;
 			return;
 		}
 
 		if (time > 0x3E8) {
-#if defined(VERSION_GMSE01)
-			mTimerParameter = 3;
-#else
-			unk94 = 3;
-#endif
+			mTimerSyncValue = 3;
 			return;
 		}
 
-#if defined(VERSION_GMSE01)
-		mTimerParameter = 0;
-#else
-		unk94 = 0;
-#endif
+		mTimerSyncValue = 0;
 	}
 }
 
@@ -975,7 +940,7 @@ void MSound::playTimer(u32 time)
 // MSound::checkUnkA8 that used to gate every sound site here was really
 // MSound::gateCheck(id) with a *constant* id: for every id used in this TU
 // (id >> 11 & 1) | (id >> 24 & 0xC0) folds to 0 or 1, so gateCheck collapses
-// to exactly the `unkA8 & 1` / `unkA8 & 2` test the binary shows.  gateCheck
+// to exactly the `mSeGateMask & 1` / `mSeGateMask & 2` test the binary shows.  gateCheck
 // inlines at depth 1 only (budget 14); at depth 2 it stays a `bl`, which is
 // why every MSound::startSoundActor site in the rest of the game calls it out
 // of line and why these sites spell the gate out.  Folding it in closed
@@ -1337,13 +1302,13 @@ bool MSound::cameraLooksAtMario()
 
 bool MSound::gateCheck(u32 id)
 {
-	if (!(unkA8 & 1)) {
+	if (!(mSeGateMask & 1)) {
 		u8 tmp = (id >> 11 & 1) | (id >> 24 & 0xC0);
 		if (tmp == 0)
 			return false;
 	}
 
-	if (!(unkA8 & 2)) {
+	if (!(mSeGateMask & 2)) {
 		u8 tmp = (id >> 11 & 1) | (id >> 24 & 0xC0);
 		if (tmp == 1)
 			return false;

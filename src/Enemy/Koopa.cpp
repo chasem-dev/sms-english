@@ -1245,9 +1245,10 @@ void TKoopa::fall()
 }
 
 // The head matrix is the UNUSED getHeadMtx() (+8 of frame over the chain).
-// TODO: 99.5%. Frame 0x10 short and the set()'s y/z loads swap f1/f2; a TVec3
-// temporary, direct stores, set(mPosition), getAnmIndex() and an uncast
-// animeLoop argument are inert, alone and on top of getHeadMtx().
+// Retail reads the head translation bottom-up (z, y, then x).
+// TODO: 99.9%, every instruction in place; frame 0x10 short (0x40 vs 0x50). A
+// TVec3 temporary, direct stores, set(mPosition), getAnmIndex() and an uncast
+// animeLoop argument are inert.
 void TKoopa::updateAnmSound()
 {
 	if (getMActor()->getCurAnmIdx(ANM_TYPE_BCK) == KOOPA_ANM_HIPDROP) {
@@ -1256,7 +1257,10 @@ void TKoopa::updateAnmSound()
 		mAnmSoundPos.z = mPosition.z;
 	} else {
 		MtxPtr mtx = getHeadMtx();
-		mAnmSoundPos.set(mtx[0][3], mtx[1][3], mtx[2][3]);
+		f32 z      = mtx[2][3];
+		f32 y      = mtx[1][3];
+		f32 x      = mtx[0][3];
+		mAnmSoundPos.set(x, y, z);
 	}
 
 	if (mAnmSound && mAnmSoundPath) {

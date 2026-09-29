@@ -108,6 +108,8 @@ public:
 		PAD_FLAG_0x4  = 0x4,
 		PAD_FLAG_0x8  = 0x8,
 		PAD_FLAG_0x10 = 0x10,
+		PAD_FLAG_0x20 = 0x20,
+		PAD_FLAG_0x40 = 0x40,
 		PAD_FLAG_0x80 = 0x80,
 	};
 
@@ -183,6 +185,13 @@ public:
 	void keepRumble(TType type);
 	void rumble(TType type, u32 param_2);
 	void considerMarioStick(f32* stick);
+
+	// Fabricated
+	void resetButtons()
+	{
+		mButton.mTrigger = 0;
+		mButton.mRelease = 0;
+	}
 
 	// Fabricated
 	inline bool checkFlag(u32 flag) { return (mFlags & flag) != 0; }

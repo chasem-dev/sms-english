@@ -296,8 +296,8 @@ void TWireTrap::behaveHitWireTrap(
 // is the right-hand factor (`quat * spinQuat`, as the ROM's products read),
 // and the matrix goes through J3DModel::setBaseTRMtx, which is what keeps
 // &mtx in r31 across getModel() (BeeHive's shape).
-// TODO: the frame is still 8 short in the low region (every inline temporary
-// 8 low), getQuat's trace sum is `f2 + f0` in retail vs our `f0 + f2`, and the
+// TODO: the frame is 0x10 short in the low region (0x1c8 against 0x1d8; 8
+// short before setQuat took its nine-local body in c-r22), getQuat's trace sum is `f2 + f0` in retail vs our `f0 + f2`, and the
 // angle/half-angle loads are register-renumbered. Inert (bb9): setQT, a TU-local
 // copy/setQuat helper, `*=` for dir/scale, 2-arg scale, a named up vector,
 // getPosition() in setTrans, one-argument `quat.mul(spinQuat)` (frame +0x10).

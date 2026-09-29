@@ -197,6 +197,9 @@ def unlinked_units(unit_filter, category):
         src = md.get("source_path", "")
         if src.startswith("src/"):
             src = src[4:]
+        elif src.startswith("libs/") and "/src/" in src:
+            lib, _, rest = src[5:].partition("/src/")
+            src = f"{lib}/{rest}"
         if src in linked:
             continue
         m = u.get("measures", {})

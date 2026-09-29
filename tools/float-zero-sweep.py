@@ -17,6 +17,7 @@ Usage:
 
 import argparse
 import concurrent.futures as cf
+import glob
 import importlib.util
 import json
 import os
@@ -37,15 +38,17 @@ NEXT_OK = (")", "&&", "||", ";", "?", ",", ":")
 
 def f32_names():
     names = set()
-    for dp, _, fs in os.walk(os.path.join(ROOT, "include")):
-        for f in fs:
-            if f.endswith((".h", ".hpp")):
-                t = open(os.path.join(dp, f), encoding="utf-8", errors="replace").read()
-                for m in re.finditer(r"\b(?:f32|float)\s+([^;(){}]*);", t):
-                    for part in m.group(1).split(","):
-                        mm = re.match(r"\s*\**\s*([A-Za-z_]\w*)\s*(?:\[.*\])?\s*(?:=.*)?$", part)
-                        if mm:
-                            names.add(mm.group(1))
+    roots = [os.path.join(ROOT, "include")] + sorted(glob.glob(os.path.join(ROOT, "libs", "*", "include")))
+    for root in roots:
+        for dp, _, fs in os.walk(root):
+            for f in fs:
+                if f.endswith((".h", ".hpp")):
+                    t = open(os.path.join(dp, f), encoding="utf-8", errors="replace").read()
+                    for m in re.finditer(r"\b(?:f32|float)\s+([^;(){}]*);", t):
+                        for part in m.group(1).split(","):
+                            mm = re.match(r"\s*\**\s*([A-Za-z_]\w*)\s*(?:\[.*\])?\s*(?:=.*)?$", part)
+                            if mm:
+                                names.add(mm.group(1))
     return names
 
 

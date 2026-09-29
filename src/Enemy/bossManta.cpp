@@ -846,15 +846,13 @@ f32 TBossManta::getPolluteRadius()
 
 void TBossManta::updateAttractor()
 {
-	// TODO: 93.9%. Every instruction matches except that retail computes
-	// pusher.squared() once and keeps it in f24 across the two length()
-	// calls and normalize(); we recompute the dot product three times.
-	// The frame is 0x18 short: 8 of that is the extra saved FPR the CSE
-	// needs, the other 0x10 is four missing inline temporaries in the low
-	// region. The mario-delta squared() also loads x,y,z where retail
-	// loads x,z,y and keeps y/z in f5/f6 for the later accumulate.
+	// TODO: 99.7%, instruction-, frame- and slot-exact. The raw mPosition at
+	// the first two sites (getPosition() at the third) is what lands the
+	// frame (0x170 -> 0x168) and every slot (hsearch, c-k12). What remains
+	// is an f24/f25 swap: retail keeps pusher's squared length in f24 and
+	// the second length() result in f25; ours has them the other way round.
 	JGeometry::TVec3<f32> local_108 = unk158;
-	local_108 -= getPosition();
+	local_108 -= mPosition;
 	local_108.y = 0.0f;
 	local_108.normalize();
 	local_108 *= getSaveParams()->mSLAttractorPower.get();
@@ -862,7 +860,7 @@ void TBossManta::updateAttractor()
 	JGeometry::TVec3<f32> facing = unk170;
 	facing *= getSaveParams()->mSLEscapeLookPoint.get();
 
-	JGeometry::TVec3<f32> selfPos = getPosition();
+	JGeometry::TVec3<f32> selfPos = mPosition;
 	selfPos += facing;
 	selfPos.y = 0.0f;
 

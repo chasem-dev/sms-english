@@ -746,39 +746,27 @@ void TBossGesso::continuousRumble()
 		rumblePad(1, mBeak->mPosition);
 }
 
-// Retail keeps this a `bl` inside perform, which needs the body to cost 15
-// statements at depth one; four were missing. Naming the tentacle and the
-// node, splitting length() into squared() and sqrt(), and declaring tipPos
-// before assigning it (pass 167's TSolidStack::top() shape) are exactly those
-// four, and none of them changes a single instruction here: 412 bytes and
-// 107 instructions either way, while perform goes 82.2 -> 98.3.
-// Copying the node position through a `Vec&` inside an inlined callee gives
-// retail's `fmadds` (x*x folded onto y*y) and its y, z, x load order, as in
-// Tongue's TongueSubTo; the retail helper's real name is unknown.
-// TODO: every instruction now matches; the frame is 0x30 against retail's
-// 0x48, with tipPos at 0x1c instead of 0x30. An unused `SMS_GetMarioPos()`
-// copy (the name suggests a dropped Mario term) reaches 0x48 but not the
-// slot, so it is not committed. The literal pool agrees that retail expands
-// nothing here: its 100000.0f is @7822, the highest id in the TU.
-static inline void BGCopyTo(Vec& out, const JGeometry::TVec3<f32>& p)
-{
-	out = p;
-}
-
+// Retail keeps this a `bl` inside perform because perform passes the result
+// straight to startSoundActorWithInfo: a loop callee is not expanded in that
+// argument, while `f32 len = lenFromToeToMario();` expands it (perform 83.9).
+// The TVec3 copy of the node position gives retail's `fmadds` (x*x folded
+// onto y*y) and its y, z, x load order.
+// TODO: every instruction and tipPos's slot (0x30) match; the frame is 0x40
+// against retail's 0x48, eight bytes above the saved registers. The literal
+// pool agrees that retail expands nothing here: its 100000.0f is @7822, the
+// highest id in the TU.
 f32 TBossGesso::lenFromToeToMario()
 {
 	f32 min = 100000.0f;
 
 	for (int i = 0; i < 4; ++i) {
-		TBGTentacle* tentacle = mTentacles[i];
-		if (tentacle->isThing2())
+		if (mTentacles[i]->isThing2())
 			continue;
 
-		TBGTentacle::TNode* node = tentacle->getLastNode();
-		JGeometry::TVec3<f32> tipPos;
-		BGCopyTo(tipPos, node->getPosition());
-		f32 lenSq = tipPos.squared();
-		f32 len   = JGeometry::TUtil<f32>::sqrt(lenSq);
+		JGeometry::TVec3<f32> tipPos
+		    = mTentacles[i]->getLastNode()->getPosition();
+
+		f32 len = tipPos.length();
 		if (len < min)
 			min = len;
 	}
@@ -1804,10 +1792,9 @@ void TBossGesso::perform(u32 cue, JDrama::TGraphics* graphics)
 	if (cue & CUE_CALC_ANIM) {
 		if (mMActor->checkCurBckFromIndex(14)
 		    || mMActor->checkCurBckFromIndex(15)) {
-			f32 len = lenFromToeToMario();
-			SMSGetMSound()->startSoundActorWithInfo(MSD_SE_BS_GESO_ROLL,
-			                                        &mPosition, nullptr, len, 0,
-			                                        0, nullptr, 0, 4);
+			SMSGetMSound()->startSoundActorWithInfo(
+			    MSD_SE_BS_GESO_ROLL, &mPosition, nullptr, lenFromToeToMario(),
+			    0, 0, nullptr, 0, 4);
 		}
 	}
 

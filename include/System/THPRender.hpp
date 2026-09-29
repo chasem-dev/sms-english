@@ -3,6 +3,7 @@
 
 #include <JSystem/JDrama/JDRViewObj.hpp>
 #include <JSystem/JDrama/JDRGraphics.hpp>
+#include <JSystem/JDrama/JDRSize.hpp>
 #include <dolphin/gx/GXTransform.h>
 #include <JSystem/JGeometry/JGVec2.hpp>
 
@@ -13,7 +14,7 @@ class TTHPRender : public JDrama::TViewObj {
 public:
 	TTHPRender(const char* name = "<THPRender>");
 
-	virtual void perform(u32 cue, JDrama::TGraphics* graphics); /* override */
+	virtual void perform(u32 cue, JDrama::TGraphics* graphics);
 
 	s32 getFrameNumber() const { return frameNumber; }
 

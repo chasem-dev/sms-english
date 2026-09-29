@@ -428,7 +428,17 @@ void TKoopaJr::resetKoopaJr()
 	mTimers[KOOPAJR_TIMER_FAST_LAUNCH] = 0;
 }
 
-// TODO: 99.98%, frame exact; one slot pair left in checkNerve's expansion.
+// The bathtub lookup is one inline level below perform in retail: its search
+// objects are created after checkNerve's depth-1 objects, which lands the last
+// slot pair (found by hsearch, c-k12). The koopa and submarine lookups stay at
+// depth 1 (either inside this level costs 12 slot markers). No out-of-line
+// copy is in the map, so this stands in for a class-inline or TU-local level.
+static inline void KoopaJrFindBathtub(TKoopaJr* self)
+{
+	if (self->mBathtub == nullptr)
+		self->mBathtub = JDrama::TNameRefGen::search<TBathtub>("バスタブ");
+}
+
 void TKoopaJr::perform(u32 cue, JDrama::TGraphics* graphics)
 {
 	if (mSubmarine == nullptr) {
@@ -439,8 +449,7 @@ void TKoopaJr::perform(u32 cue, JDrama::TGraphics* graphics)
 		mKoopa = (TKoopa*)JDrama::TNameRefGen::search<TEnemyManager>(
 		             "クッパマネージャー")
 		             ->getObj(0);
-	if (mBathtub == nullptr)
-		mBathtub = JDrama::TNameRefGen::search<TBathtub>("バスタブ");
+	KoopaJrFindBathtub(this);
 
 	if (cue & 2)
 		checkSubmarineSwing();

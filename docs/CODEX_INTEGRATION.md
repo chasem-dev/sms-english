@@ -24,7 +24,7 @@ Everything below is shared by any two orchestrators on this machine:
 1. **Claim ledger (units and headers).**
    A small JSON file in the git common dir (`$(git rev-parse --git-common-dir)/sms-claims.json`, untracked, visible from every worktree), guarded by `flock`.
    Each entry: key, owner orchestrator, agent name, worktree, start time.
-   Keys: `unit:Enemy/Koopa` for unit work, `header:include/JSystem/JGeometry/JGVec3.hpp` for any shared-header edit, `research:<topic>` for research batches so both sides don't run the same study.
+   Keys: `unit:Enemy/Koopa` for unit work, `header:libs/JSystem/include/JSystem/JGeometry/JGVec3.hpp` for any shared-header edit, `research:<topic>` for research batches so both sides don't run the same study.
    Rule: claim before spawning an agent or starting a header round; release after landing or discarding. A claim held by the other orchestrator is a hard no.
    Stale claims (owner session gone, over 12 hours old) are released only by a human or by their owner.
 2. **One land lock.**

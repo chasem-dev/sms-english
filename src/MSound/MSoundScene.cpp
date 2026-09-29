@@ -67,8 +67,12 @@ MSSceneSE::MSSceneSE(u32 param_1)
 // C-style top declarations of listenerTrans/angle/clampedAngle/direction in
 // frameLoop. A TU-local `DistOf(Vec*)` wrapper over getDistFromCamera is +8 on
 // frameLoop (0x98) but +8 on sortMaxTrans too.
+// The first sortMaxTrans rank is a named u8: retail's expansion keeps it in
+// a register where a literal 0 is folded (96.8 -> 99.7). Left: the frame
+// (0x98 vs 0xc0) and one `mr r4, r25` retail spells `addi r4, r25, 0`.
 void MSSceneSE::frameLoop(u32 sound_id, Vec* trans, u8 trans_num)
 {
+	u32 id;
 	if (MSGMSound->gateCheck(sound_id) && trans_num <= ARRAY_COUNT(mTrans)) {
 		Vec* ptr = trans;
 		for (u8 i = 0; i < trans_num; ++i) {
@@ -108,7 +112,8 @@ void MSSceneSE::frameLoop(u32 sound_id, Vec* trans, u8 trans_num)
 				direction = DIRECTION_SR;
 			}
 
-			sortMaxTrans(mTrans[i], direction, 0);
+			u8 rank = 0;
+			sortMaxTrans(mTrans[i], direction, rank);
 		}
 
 		for (u8 i = 0; i < DIRECTION_NUM; ++i) {
@@ -131,7 +136,7 @@ void MSSceneSE::frameLoop(u32 sound_id, Vec* trans, u8 trans_num)
 		for (u8 i = 0; i < DIRECTION_NUM; ++i) {
 			if (mMaxTrans[i][0] != nullptr) {
 				if (!mUseRandPlay) {
-					u32 id = sound_id + i;
+					id = sound_id + i;
 					if (MSGMSound->gateCheck(id)) {
 						MSoundSESystem::MSoundSE::startSoundActor(
 						    id, &mAvgTrans[i], 0, nullptr, 0, 4);

@@ -178,7 +178,7 @@ static inline bool EnemyAttachmentIsDemoModeNow(const TMarDirector* p)
 
 void TEnemyAttachment::perform(u32 cue, JDrama::TGraphics* graphics)
 {
-	if (unk150 == nullptr) {
+	if (unk150 == 0) {
 		if (cue & CUE_CALC_ANIM)
 			behaveToHost();
 		return;

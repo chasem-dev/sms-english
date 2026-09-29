@@ -114,6 +114,9 @@ int TMarDirector::loadResource()
 			return 1;
 	}
 
+#ifdef VERSION_GMSP01
+	load2DResource2Aram();
+#endif
 	unkD4 = new (0x20) char[0x64000];
 	unkD8 = newMemArchive();
 	int errc = thpInit();
@@ -422,13 +425,25 @@ int TMarDirector::thpInit()
 {
 	if (mMap == 1) {
 		THPPlayerInit(0);
+#ifdef VERSION_GMSP01
+		const char* path = "/data/ex128x144_q0.thp";
+		if (VIGetTvFormat() == VI_PAL) {
+			char palPath[] = "/data/ex128x144_q0_pal.thp";
+			if (DVDConvertPathToEntrynum(palPath) != -1)
+				path = palPath;
+		}
+		if (!THPPlayerOpen(path, FALSE))
+			return 1;
+#else
 		if (!THPPlayerOpen("/data/ex128x144_q0.thp", FALSE))
 			return 1;
+#endif
 		u32 need = THPPlayerCalcNeedMemory();
 		THPPlayerSetBuffer(new (0x20) u8[need]);
 		if (!THPPlayerPrepare(0, 1, 0))
 			return 1;
 
+#if defined(VERSION_GMSP01) || defined(VERSION_GMSE01)
 		// Spin for half a second so the THP decoder has buffered
 		// ahead. The signed magic on the tick difference and the
 		// unsigned one on OS_TIMER_CLOCK are the two doubles the map
@@ -441,6 +456,7 @@ int TMarDirector::thpInit()
 				break;
 			OSYieldThread();
 		}
+#endif
 	}
 
 	return 0;

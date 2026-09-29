@@ -92,6 +92,11 @@ void TConeBeam::drawConeBeamAux(const GXColor& color, bool unk)
 // The "origin caching" is concrete: retail keeps coneInPlane's three origin
 // (unk00) loads from the dot product live in f5/f6/f0 and reuses them for the
 // final `+= origin`, where we reload all three from 0(r28)/4(r28)/8(r28).
+// c-tp1: naming origin.x/y/z at the top of coneInPlane and adding them back
+// one by one gives the caching here (98.3%) but shrinks the UNUSED
+// out-of-line copy from the map's 0x15c to 0x150 (retail's out-of-line copy
+// reloads them), so it is not the retail spelling; also 96.9% / 0x148 with the
+// numerator dot written out on the named components.
 // cc26: building the result in a coneInPlane-local TVec3 and storing it
 // through outPos = &mVtx[i] (so no address-taken caller local) is still a
 // reload (95.6%, frame unchanged); passing &mVtx[i] with the original body is

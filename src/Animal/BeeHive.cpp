@@ -392,38 +392,29 @@ void TBeeHive::bind()
 
 // Only one bee is collision-checked per frame; the rest have their collision
 // switched off so Mario cannot be hit by the whole swarm at once.
-// TODO: 89.6%. Retail keeps the dead wrap of `index` alive (`addi r29, r29, 1;
-// cmpw r30, r29` with no branch, costing r28); a trailing `(void)index;` gives
-// 98.6% but is a discarded statement, so the real consumer is still missing.
-// Also inert (89.4-89.6): reusing `index` for the second wrap, `++index`
-// in the test, reusing `bee`, and a TU-local wrap helper at all three sites.
-// c-h12: `unk154[index];` is the same 98.6% as `(void)index;`; both leave index/bee
-// swapped (r31/r29) and next in r0 not r4. Ternary wraps and a for-wrap are 88-89%.
+// TODO: 96.0%. Retail tests the bumped `index` twice (`cmpw r30, r29` with no
+// branch, then again after the store to 0x1B0); we test it once, so index, num
+// and bee sit one register over (r29/r30/r31 against r31/r29/r30).
 void TBeeHive::controlCollision()
 {
-	int index = mCheckBeeIndex;
-	int num   = mBeeNum;
+	int index           = mCheckBeeIndex;
+	TRealoidActor* bee  = unk154[index];
+	int num             = mBeeNum;
 
-	TRealoidActor* bee = unk154[index];
 	bee->checkHitActors();
+	++index;
 	bee->onHitFlag(HIT_FLAG_CANNOT_ATTACK);
+	++mCheckBeeIndex;
+	if (num <= index)
+		mCheckBeeIndex = 0;
 
-	index += 1;
+	index = mCheckBeeIndex;
 	if (num <= index)
 		index = 0;
 
-	int bumped     = mCheckBeeIndex + 1;
-	mCheckBeeIndex = bumped;
-	if (num <= bumped)
-		mCheckBeeIndex = 0;
-
-	int next = mCheckBeeIndex;
-	if (num <= next)
-		next = 0;
-
-	TRealoidActor* nextBee = unk154[next];
-	if (!nextBee->checkFlag(TRealoidActor::FLAG_UNK2_OR_UNK4))
-		nextBee->offHitFlag(HIT_FLAG_CANNOT_ATTACK);
+	bee = unk154[index];
+	if (!bee->checkFlag(TRealoidActor::FLAG_UNK2_OR_UNK4))
+		bee->offHitFlag(HIT_FLAG_CANNOT_ATTACK);
 }
 
 void TBeeHive::controlSound()
@@ -718,7 +709,8 @@ void TBeeHive::setShakePower(const JGeometry::TVec3<f32>& to_mario)
 
 // Mean position of every bee that is currently out, used as the swarm's
 // "where is it" for the give-up test.
-// TODO: frame 0x50 against retail's 0x68, and retail reloads the boid
+// TODO: 86.1%, frame 0x40 against retail's 0x68 with the per-component sums
+// (the add()/scale() spelling was 85.9% at 0x50). Retail reloads the boid
 // array for every unrolled element as if `center` were address-taken. The
 // old statement-body TVec3 copy constructor gave that (92.9%); with the
 // Vec-base one, inert: `+=`, `add(center, p)`, `*=`, `div(num)`, `zero()`,
@@ -733,13 +725,18 @@ JGeometry::TVec3<f32> TBeeHive::getCenterOfGravity() const
 	if (num == 0)
 		return JGeometry::TVec3<f32>(0.0f, 0.0f, 0.0f);
 
-	JGeometry::TVec3<f32> center;
-	center.set(0.0f, 0.0f, 0.0f);
+	JGeometry::TVec3<f32> center(0.0f, 0.0f, 0.0f);
+	for (int i = 0; i < num; ++i) {
+		const TBoid& boid = unk150->mBoids[i];
+		center.x += boid.mPosition.x;
+		center.y += boid.mPosition.y;
+		center.z += boid.mPosition.z;
+	}
 
-	for (int i = 0; i < num; ++i)
-		center.add(unk150->getBoid(i)->mPosition);
-
-	center.scale(1.0f / num);
+	f32 inv = 1.0f / num;
+	center.x *= inv;
+	center.y *= inv;
+	center.z *= inv;
 	return center;
 }
 

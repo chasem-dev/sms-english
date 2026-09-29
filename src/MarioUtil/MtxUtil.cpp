@@ -2,7 +2,7 @@
 
 #include <MarioUtil/MtxUtil.hpp>
 
-#include <printf.h>
+#include <stdio.h>
 #include <JSystem/J3D/J3DGraphAnimator/J3DModel.hpp>
 #include <JSystem/J3D/J3DGraphAnimator/J3DJoint.hpp>
 #include <Strategic/HitActor.hpp>
@@ -566,8 +566,10 @@ void TRope::constraintHead(const JGeometry::TVec3<f32>& param)
 	collision();
 }
 
-// TODO: frame 0x18 short (delta sits 0x18 low); the epsilonEquals receiver
-// order sets the r30/r31 split but retail compares cur against prev. Tried
+// Retail tests prev - cur per axis against epsilon and keeps the result as a
+// bool; the header's epsilonEquals (cur - prev, receiver in the other
+// register) and an unnamed condition (83.6) do not give that shape.
+// TODO: instruction-exact; frame 0x18 short (delta sits 0x20 low). Tried
 // (cc50): a loop-body helper either parameter order, sub()/add()/`*=`
 // spellings and swapped declarations; none moves the frame.
 void TRope::constraintTail(const JGeometry::TVec3<f32>& param)
@@ -577,7 +579,16 @@ void TRope::constraintTail(const JGeometry::TVec3<f32>& param)
 		TRopePoint& cur  = mPoints[i];
 		TRopePoint& prev = mPoints[i - 1];
 
-		if (!prev.unkC.epsilonEquals(cur.unkC)) {
+		bool same
+		    = (-JGeometry::TUtil<f32>::epsilon() <= prev.unkC.x - cur.unkC.x
+		       && prev.unkC.x - cur.unkC.x <= JGeometry::TUtil<f32>::epsilon())
+		      && (-JGeometry::TUtil<f32>::epsilon() <= prev.unkC.y - cur.unkC.y
+		          && prev.unkC.y - cur.unkC.y
+		                 <= JGeometry::TUtil<f32>::epsilon())
+		      && (-JGeometry::TUtil<f32>::epsilon() <= prev.unkC.z - cur.unkC.z
+		          && prev.unkC.z - cur.unkC.z
+		                 <= JGeometry::TUtil<f32>::epsilon());
+		if (!same) {
 			JGeometry::TVec3<f32> delta = prev.unkC;
 			delta -= cur.unkC;
 			VECNormalize(&delta, &delta);
@@ -589,10 +600,11 @@ void TRope::constraintTail(const JGeometry::TVec3<f32>& param)
 	collision();
 }
 
-// TODO: 93.6%, frame 0x80 vs 0x88. Retail is `(unkC - unk0) * scale` through
-// a reference-returning `operator*` (JGVec3.hpp header note: 99.80 here);
-// with the by-value header operator the spelling is left as is. Refuted
-// here (k5): named `v` with `*=`/`scale()` (scale inlines, 90.7%).
+// TODO: 93.6%, frame exact with the difference and the scaled step both
+// named. Retail is `(unkC - unk0) * scale` through a reference-returning
+// `operator*` (JGVec3.hpp header note: 99.80 here); with the by-value header
+// operator three stores stay out of place. Refuted here (k5): named `v` with
+// `*=`/`scale()` (scale inlines, 90.7%).
 void TRope::moveHead(const JGeometry::TVec3<f32>& param)
 {
 	for (int i = 0; i < mNumPoints; ++i) {
@@ -602,10 +614,10 @@ void TRope::moveHead(const JGeometry::TVec3<f32>& param)
 	constraintHead(param);
 	for (int i = 0; i < mNumPoints; ++i) {
 		f32 scale               = unk8;
-		JGeometry::TVec3<f32> v;
-		v = mPoints[i].unkC - mPoints[i].unk0;
-		mPoints[i].unk18        = v * scale;
-		mPoints[i].unk0         = mPoints[i].unkC;
+		JGeometry::TVec3<f32> v      = mPoints[i].unkC - mPoints[i].unk0;
+		JGeometry::TVec3<f32> scaled = v * scale;
+		mPoints[i].unk18             = scaled;
+		mPoints[i].unk0              = mPoints[i].unkC;
 	}
 }
 
@@ -620,10 +632,10 @@ void TRope::moveHeadAndTail(const JGeometry::TVec3<f32>& head,
 	constraintTail(tail);
 	for (int i = 0; i < mNumPoints; ++i) {
 		f32 scale               = unk8;
-		JGeometry::TVec3<f32> v;
-		v = mPoints[i].unkC - mPoints[i].unk0;
-		mPoints[i].unk18        = v * scale;
-		mPoints[i].unk0         = mPoints[i].unkC;
+		JGeometry::TVec3<f32> v      = mPoints[i].unkC - mPoints[i].unk0;
+		JGeometry::TVec3<f32> scaled = v * scale;
+		mPoints[i].unk18             = scaled;
+		mPoints[i].unk0              = mPoints[i].unkC;
 	}
 }
 

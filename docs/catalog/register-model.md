@@ -271,3 +271,17 @@ Both were read from `dbg.sh` dumps (`frontend-00-ast-initial-code.txt`, `backend
 - One word short below a function's depth-1 vectors with a six-argument `startSoundActor(id, pos, 0, nullptr, 0, 4)` call: try the two-argument `startSoundActor(id, pos)` form first (closed `TMareEventDepressWall::rising`).
 - Two branches that spell the same effect block differently (raw global in one, binder in the other) can share one TU-local inline with real content; it places the effect's objects after both branches' vectors, retail's order (closed `depressing`).
 - Retail testing a call result as `cmplwi r3,0` and copying it to a saved register only after a following switch, where ours is `mr. rX, r3`, means the pointer was an inline temporary in retail, not a named local (`setNpcAnm_`, open).
+
+## Additions (c-tp2)
+
+- A loop-containing callee written directly as a call argument stays a `bl` where `f32 x = f();` expands it; use that to keep a caller unchanged when a callee's better body would otherwise be expanded there (`TBossGesso::lenFromToeToMario` vs `perform`).
+- `TPollutionManager::pollute(x, y, z, size)` is retail's spelling of `stamp(1, ...)`: it gives the z, y, x load order before `gpPollution` (`TMario::setStatusToJumping`, `TFireWanwan::updatePollute`). Other `stamp()` sites pass `getUnk58()`, so it does not apply there.
+- A default scale argument (`newAndRegisterObj(..., scale = default)`) rather than named `scale(1,1,1)` locals is why retail computes the scale address first (`TCogwheel::initMapObj`).
+- Lead, shared header not changed: `mDirection = WrapRadianF(mDirection)` with `WrapRadianF` naming its result makes `calcNearerDirection` exact and `calcTurnDirection`'s frame exact, but then inlines into `makeRelativeAngle` (99.8 -> 30.4) where retail calls it at all three sites; ties to the open question of why `std::fmodf` never expands in retail.
+
+## Additions (c-k12)
+
+- When `tools/hsearch dbg` shows a named word missing between two named objects, name the value computed there; if the frame then comes up 8 short, header accessors on the same statement or loop each add one bottom word (closed `TRocketManager::initSetEnemies`, the same shape as THauntLeg's).
+- A named local declared early but assigned later is still placed in declaration order (repaired `TMario::slideProcess`'s named block); this corrects the earlier "first reference" note from setupEfbAlpha.
+- Many remaining candidates carry TU-local binders that only make up frame; replacing them with plain accessors costs 8 per binder (an accessor used only as a call receiver is free), so those functions need their real depth structure rather than more levers.
+- `dbg` located the missing/extra word exactly in about 17 of 81 candidates and pointed straight to the fix in 2; hsearch triage (100-150 s) gave 1 exact and 2 leads out of about 20.
