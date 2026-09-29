@@ -2175,7 +2175,7 @@ Measured tree-wide with `census.py`/`cmpcensus.py` (about a minute per full rebu
 
 Measured on main 8cce087b: JGVec3.hpp's `operator=(const TVec3&)` changed from `*(Vec*)this = *(Vec*)&other;` to `*(Vec*)this = other;`, full `ninja -k 0`, DOL SHA-1 intact, `ninja changes_all`.
 The weak `__as__` (enemy.cpp, 0x1c, lwz/stw) stays 100% under both bodies and is emitted only there.
-Not landed; wt/c-r25 carries only this record and the header comment.
+The header change is not landed. wt/c-r25 carries this record, the header comment, and the six respellings that are neutral under the current body (`calcVtx`, `pullTail`, the NPC turn, the hanachan sand check, `calcNrm`, `TTPHitActor::bind`; `changes_all` empty, symbol order unchanged).
 
 ### Header alone: +2 / -1 exact, 20 up, 12 down
 
@@ -2186,7 +2186,7 @@ Not landed; wt/c-r25 carries only this record and the header comment.
 ### With the site respellings: +3 / -0 exact, 22 up, 2 down
 
 Each is ordinary source; the first four also read better than what they replace.
-The next five and `pullTail` are neutral under the current (cast) header, so they can land ahead of the header.
+The next five and `pullTail` are neutral under the current (cast) header and are already on the branch; the first four regress under it (forceRequest to 89.45) and go in with the header.
 - `forceRequest`: `TVec3 delta = param_1.mPosition; delta -= gpCamera->getUnk124Vec();` drops the by-value `ShadowUtilRequestPos` helper and is byte-exact (Camera.hpp's comment on `getUnk124Vec` then needs updating).
 - `TTelesa::behaveToWater`: `local_20 = local_20 * fVar1; mVelocity = local_20;`, the spelling the old TODO predicted, is instruction-exact (99.96; the `operator*` copy sits at 0x60, retail 0x38: the c-r21 class).
 - `TBWLeashNode::calcMatrix`: the neighbour points read as `rope->mPoints[index ± 1].unkC` (retail rebuilds their address from `rope`); back to 99.15, instruction-exact, frame 0x80 against 0xe8. Dropping the `points` local too is worse (98.4).
