@@ -391,16 +391,13 @@ void TTobiPuku::hitWall()
 	                          1, 0);
 
 	if (gpMap->isTouchedWallsAndMoveXZ(&record)) {
-		// TODO: 97.1%. One load short -- the original re-reads mNormal.x
-		// for the x bounce -- and its frame is 0x30 larger: accessor pool
-		// inside the inlined TBGWallCheckRecord constructor. Tried:
-		// getVelocity().dot(mNormal) (adds an addi for the reference, 94.8)
-		// and getNormal() per component (92.6).
-		// 2026-09-22: TU-local dot levels over TVec3&/Vec&/Vec* and
-		// PSVECDotProduct are 87-95%.
-		f32 dot = getVelocity().x * record.mResultWalls[0]->mNormal.x
-		          + getVelocity().y * record.mResultWalls[0]->mNormal.y
-		          + getVelocity().z * record.mResultWalls[0]->mNormal.z;
+		// TODO: 98.8%. Every instruction is in place; the frame is 0x58
+		// against retail's 0x90 (accessor pool inside the inlined
+		// TBGWallCheckRecord constructor), so the record's slots differ.
+		// Using `wall` for the two bounce updates too drops the reloads
+		// retail does (96.2%).
+		const TBGCheckData* wall = record.mResultWalls[0];
+		f32 dot                  = mVelocity.dot(wall->mNormal);
 		f32 bounce = -(2.0f * dot);
 		mVelocity.x += bounce * record.mResultWalls[0]->mNormal.x;
 		mVelocity.y *= 0.5f;
