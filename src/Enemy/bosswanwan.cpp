@@ -511,6 +511,9 @@ MtxPtr TBWPicket::getTakingMtx() { return mTakingMtx; }
 
 // TODO: every instruction matches; the frame is 0x138 vs retail 0x1a0, a
 // uniform 0x68 shift of both direction blocks (a missing low region).
+// c-k15: the taking matrix through TPosition3's setXDir/setYDir/setZDir/
+// setTrans is code- and frame-identical; `setTrans(x, y, z)` is -8 and
+// reorders the stores. No UNUSED helper in the map fits the 26 words.
 void TBWPicket::perform(u32 cue, JDrama::TGraphics* graphics)
 {
 	if (cue & CUE_MOVE) {
@@ -538,18 +541,10 @@ void TBWPicket::perform(u32 cue, JDrama::TGraphics* graphics)
 			zDir.cross(xDir, yDir);
 			VECNormalize(zDir, zDir);
 
-			mTakingMtx.ref(0, 0) = xDir.x;
-			mTakingMtx.ref(1, 0) = xDir.y;
-			mTakingMtx.ref(2, 0) = xDir.z;
-			mTakingMtx.ref(0, 1) = yDir.x;
-			mTakingMtx.ref(1, 1) = yDir.y;
-			mTakingMtx.ref(2, 1) = yDir.z;
-			mTakingMtx.ref(0, 2) = zDir.x;
-			mTakingMtx.ref(1, 2) = zDir.y;
-			mTakingMtx.ref(2, 2) = zDir.z;
-			mTakingMtx.ref(0, 3) = mPosition.x;
-			mTakingMtx.ref(1, 3) = mPosition.y;
-			mTakingMtx.ref(2, 3) = mPosition.z;
+			mTakingMtx.setXDir(xDir);
+			mTakingMtx.setYDir(yDir);
+			mTakingMtx.setZDir(zDir);
+			mTakingMtx.setTrans(mPosition);
 
 			mHolder->moveRequest(mPosition);
 		}

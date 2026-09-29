@@ -453,8 +453,7 @@ TBGCheckData* TMario::findNearestWall(const TBGWallCheckRecord& record)
 		s16 ang = matan(w->mNormal.z, w->mNormal.x) - (mFaceAngle.y + 0x8000);
 		if (ang > -0x2000 && ang < 0x2000) {
 			JGeometry::TVec3<f32> pos = mPosition;
-			f32 d = w->mNormal.x * pos.x + w->mNormal.y * pos.y
-			        + w->mNormal.z * pos.z + w->mPlaneDistance;
+			f32 d = w->mNormal.dot(pos) + w->mPlaneDistance;
 			if (d < 50.0f)
 				found = record.mResultWalls[i];
 		}
@@ -469,7 +468,10 @@ TBGCheckData* TMario::findNearestWall(const TBGWallCheckRecord& record)
 // first record sits at 0x16c (retail 0x210) and the inlined findNearestWall's
 // `pos` at 0xdc (retail 0x16c); hangingCommon(int, int) (UNUSED, 0x78) is
 // likely a missing level -- the pulledUp animation block as a helper emits
-// 160 bytes, so that is not its body.
+// 160 bytes, so that is not its body. c-k15: findNearestWall's distance as
+// `mNormal.dot(pos)` is +0x10; through getNormal()/getPlaneDistance() it is
+// +0x40 with every instruction still in place but more slots off (99.5 ->
+// 99.4, not landed).
 BOOL TMario::hanging()
 {
 	BOOL pulledUp = FALSE;
@@ -910,16 +912,14 @@ BOOL TMario::wireWaitToSWaitR()
 	return 0;
 }
 
-void TMario::changeWireHanging()
+BOOL TMario::changeWireHanging()
 {
 	bool ok = false;
 	if (mHeldObject == nullptr && !onYoshi())
 		ok = true;
-	if (ok) {
-		changePlayerStatus(MARIO_STATUS_WIRE_HANGING, 0, false);
-	} else {
-		changePlayerStatus(MARIO_STATUS_LANDING, 0, false);
-	}
+	if (ok)
+		return changePlayerStatus(MARIO_STATUS_WIRE_HANGING, 0, false);
+	return changePlayerStatus(MARIO_STATUS_LANDING, 0, false);
 }
 
 BOOL TMario::wireWaitToHang()
@@ -928,12 +928,7 @@ BOOL TMario::wireWaitToHang()
 	mFaceAngle.y = mModelFaceAngle + 0x4000;
 	setAnimation(ANIM_ROPE_WHG, 1.0f);
 	if (isLast1AnimeFrame()) {
-		bool noHold = false;
-		if (mHeldObject == nullptr && !onYoshi())
-			noHold = true;
-		if (noHold)
-			return changePlayerStatus(MARIO_STATUS_WIRE_HANGING, 0, false);
-		return changePlayerStatus(MARIO_STATUS_LANDING, 0, false);
+		return changeWireHanging();
 	}
 	return 0;
 }
@@ -944,12 +939,7 @@ BOOL TMario::wireSWaitToHang()
 	mModelFaceAngle = mFaceAngle.y;
 	setAnimation(ANIM_ROPE_SWHG, 1.0f);
 	if (isLast1AnimeFrame()) {
-		bool noHold = false;
-		if (mHeldObject == nullptr && !onYoshi())
-			noHold = true;
-		if (noHold)
-			return changePlayerStatus(MARIO_STATUS_WIRE_HANGING, 0, false);
-		return changePlayerStatus(MARIO_STATUS_LANDING, 0, false);
+		return changeWireHanging();
 	}
 	return 0;
 }
@@ -1054,9 +1044,9 @@ s16 TMario::getNozzleEmitVX()
 	return speed;
 }
 
-// TODO: frame 0x198 against 0x1a0, and retail materialises noHold's zero in
-// r28 before the mFaceAngle.x/unkF6 stores (ours `li r0`); declaring noHold
-// earlier (block, function scope) was inert.
+// TODO: frame 0x198 against 0x1a0. The stop test ends in changeWireHanging(),
+// whose `ok` flag shares its zero with the mFaceAngle.x/unkF6 stores (c-k15:
+// the written-out copy materialised its own zero; 99.6 -> 99.9).
 BOOL TMario::wireRolling()
 {
 	s16 initialAngle = mFaceAngle.x;
@@ -1175,12 +1165,7 @@ BOOL TMario::wireRolling()
 			unkF6          = 0;
 			mWireBounceVel = 0.0f;
 			mWireSag       = 0.0f;
-			bool noHold    = false;
-			if (mHeldObject == nullptr && !onYoshi())
-				noHold = true;
-			if (noHold)
-				return changePlayerStatus(MARIO_STATUS_WIRE_HANGING, 0, false);
-			return changePlayerStatus(MARIO_STATUS_LANDING, 0, false);
+			return changeWireHanging();
 		}
 	}
 

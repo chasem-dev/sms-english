@@ -360,12 +360,6 @@ static inline MSound* MOBSound()
 	MSound* sound = SMSGetMSound();
 	return sound;
 }
-// Binder over the move frame control (+8 of frame in makeObjAppeared).
-static inline J3DFrameCtrl* MOBMoveCtrl(TMapObjBase* p)
-{
-	J3DFrameCtrl* ctrl = p->mMapObjData->mMove->unk8;
-	return ctrl;
-}
 
 void TMapObjBase::makeObjAppeared()
 {
@@ -386,7 +380,9 @@ void TMapObjBase::makeObjAppeared()
 		ctrl->setFrame((f32)ctrl->getStart());
 		ctrl->setRate(1.0f);
 
-		MOBMoveCtrl(this)->setRate(SMSGetAnmFrameRate());
+		// The data's accessor: its receiver binding and forced load are the
+		// 8 bytes of frame a binder used to stand in for (c-k15).
+		mMapObjData->getMoveFrameCtrl()->setRate(SMSGetAnmFrameRate());
 	}
 
 	startAnim(0);

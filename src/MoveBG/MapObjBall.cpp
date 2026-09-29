@@ -63,22 +63,18 @@ void TMapObjBall::touchWall(JGeometry::TVec3<f32>* param_1,
 		const TBGCheckData* wall = param_2->mResultWalls[i];
 
 		JGeometry::TVec3<f32> vel(mVelocity);
-		f32 into = vel.x * wall->getNormal().x + vel.y * wall->getNormal().y
-		    + vel.z * wall->getNormal().z;
+		f32 into = vel.dot(wall->getNormal());
 		if (into < 0.0f) {
 			// Push the ball back out to exactly one radius from the plane.
-			// TODO: 98%. The ROM re-reads wall->mNormal.x and param_1->x
-			// after dist is complete; every spelling tried here (the raw
-			// member, getNormal(), a named normal reference) lets MWCC
-			// reuse the earlier loads.
-			f32 dist = param_1->x * wall->getNormal().x
-			        + param_1->y * wall->getNormal().y
-			        + param_1->z * wall->getNormal().z
-			    + wall->mPlaneDistance;
+			// Both products are TVec3::dot() (c-k15: the written-out sums let
+			// MWCC reuse the normal's loads, 98.0 -> 99.8).
+			// TODO: every instruction and register matches; the frame is
+			// 0xf0 against 0x120 (the velocity copies sit 0x1c-0x38 low).
+			f32 dist = param_1->dot(wall->getNormal()) + wall->getPlaneDistance();
 			param_1->x += (mBodyRadius - dist) * wall->getNormal().x;
 			param_1->z += (mBodyRadius - dist) * wall->getNormal().z;
 
-			f32 bounce = into * -(1.0f + mMapObjData->mPhysical->unk4->unk8);
+			f32 bounce = into * -(1.0f + mMapObjData->getPhysicalData()->unk8);
 			mVelocity.x += bounce * wall->getNormal().x;
 			mVelocity.z += bounce * wall->getNormal().z;
 
@@ -237,7 +233,7 @@ void TMapObjBall::kicked()
 
 	// A ball kicked straight down would otherwise sit still, so give it a
 	// random nudge in XZ.
-	f32 minSpeed = mMapObjData->mPhysical->unk4->unkC;
+	f32 minSpeed = mMapObjData->getPhysicalData()->unkC;
 	if (abs(mVelocity.x) < minSpeed && abs(mVelocity.z) < minSpeed) {
 		mVelocity.x = 2.0f * MsRandF() - 1.0f;
 		mVelocity.z = 2.0f * MsRandF() - 1.0f;
@@ -290,7 +286,10 @@ u32 TMapObjBall::touchWater(THitActor* param_1)
 }
 
 // Reference binding over the physical-parameter chain, used in
-// TMapObjBall::boundByActor (a value copy orders its slots worse).
+// TMapObjBall::boundByActor's kick-up level (a value copy orders its slots
+// worse). c-k15: the two direct tests there read
+// TMapObjData::getPhysicalData() (code-identical); at the kick-up site the
+// accessor, a named `const f32&` over it or the raw chain are all worse.
 static inline f32 MapObjBallMinBoundSpeed(const TMapObjBall* p)
 {
 	const f32& min = p->mMapObjData->mPhysical->unk4->unkC;
@@ -354,9 +353,9 @@ void TMapObjBall::boundByActor(THitActor* param_1)
 
 		if (into >= 0.0f
 		    && abs(JGeometry::TVec3<f32>(mVelocity).x)
-		        > MapObjBallMinBoundSpeed(this)
+		        > mMapObjData->getPhysicalData()->unkC
 		    && abs(JGeometry::TVec3<f32>(mVelocity).z)
-		        > MapObjBallMinBoundSpeed(this)) {
+		        > mMapObjData->getPhysicalData()->unkC) {
 			mVelocity.x = -((1.0f + unk16C) * (away.x * into) - mVelocity.x);
 			mVelocity.y += unk168;
 			mVelocity.z = -((1.0f + unk16C) * (away.z * into) - mVelocity.z);
@@ -429,6 +428,11 @@ static inline f32 MapObjBallXZSpeed(const JGeometry::TVec3<f32>& v)
 // up to 1 ulp in the roll angle. Swapping that helper's arguments or addends,
 // or naming a square, did not reverse the fusion; the plain four-copy sum
 // above does, at the cost of the velocity temporaries' order.
+// c-k15: the four settle/roll tests read TMapObjData::getPhysicalData(); each
+// accessor's receiver binding and forced load land the frame at retail's
+// 0x1c0 (96.1 -> 96.3, 105 -> 59 markers). What is left is the speed: retail
+// makes two velocity copies (x from the first, z from the second) where the
+// four-copy sum makes four; the two-level SqXZ helper is 0x18 short with it.
 void TMapObjBall::calcCurrentMtx()
 {
 	TPosition3f rot;
@@ -436,9 +440,9 @@ void TMapObjBall::calcCurrentMtx()
 
 	// Settle a nearly-stopped ball on flat ground so it does not creep.
 	if (abs(JGeometry::TVec3<f32>(mVelocity).x)
-	    < mMapObjData->mPhysical->unk4->unkC) {
+	    < mMapObjData->getPhysicalData()->unkC) {
 		if (abs(JGeometry::TVec3<f32>(mVelocity).z)
-		        < mMapObjData->mPhysical->unk4->unkC
+		        < mMapObjData->getPhysicalData()->unkC
 		    && mGroundPlane->mNormal.y == 1.0f) {
 			mVelocity.x = 0.0f;
 			mVelocity.z = 0.0f;
@@ -446,9 +450,9 @@ void TMapObjBall::calcCurrentMtx()
 	}
 
 	if (abs(JGeometry::TVec3<f32>(mVelocity).x)
-	        > mMapObjData->mPhysical->unk4->unkC
+	        > mMapObjData->getPhysicalData()->unkC
 	    || abs(JGeometry::TVec3<f32>(mVelocity).z)
-	        > mMapObjData->mPhysical->unk4->unkC) {
+	        > mMapObjData->getPhysicalData()->unkC) {
 		// Roll about the horizontal axis square to the direction of travel,
 		// by the arc length the ball has covered over its own radius.
 		JGeometry::TVec3<f32> axis;
@@ -1111,7 +1115,7 @@ void TResetFruit::kicked()
 		mVelocity.x += unk170 * SMS_GetMarioSpeedX();
 		mVelocity.z += unk170 * SMS_GetMarioSpeedZ();
 
-		f32 minSpeed = mMapObjData->mPhysical->unk4->unkC;
+		f32 minSpeed = mMapObjData->getPhysicalData()->unkC;
 		if (abs(mVelocity.x) < minSpeed && abs(mVelocity.z) < minSpeed) {
 			mVelocity.x = 2.0f * MsRandF() - 1.0f;
 			mVelocity.z = 2.0f * MsRandF() - 1.0f;
@@ -1612,7 +1616,7 @@ void TBigWatermelon::touchActor(THitActor* param_1)
 
 	// A moving poihana bounces it back up instead.
 	if (param_1->isActorType(0x10000015) && ((TPoiHana*)param_1)->isMoving()) {
-		if (abs(mVelocity.y) < mMapObjData->mPhysical->unk4->unkC) {
+		if (abs(mVelocity.y) < mMapObjData->getPhysicalData()->unkC) {
 			mVelocity.y += 30.0f;
 			mState = STATE_LIVING;
 		}
