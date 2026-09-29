@@ -141,11 +141,14 @@ MSRandPlay::MSRandPlay(u32 sound_id, s32 wait_min, s32 wait_max,
 	mPlusSlope     = plus_slope;
 }
 
-// TODO: `actor` sits at 0x18 vs retail 0x14. Inert: fVar3 at function scope
-// (either order), a braced default arm, a named s32 wait, an s32 fVar3.
-// Retail's 4-byte slot at 0x24 (between actor and the fctiwz temp) is what a
-// named `u32 id = mSoundID;` switch operand takes; with `const Vec* trans`
-// for the actor arguments (-8 low) actor lands at 0x10, 4 short of 0x14.
+// Build the spatial actor and start the emitter with its sound handle.
+static inline void MSRandStartEmitter(const u32& soundID, const void* identity,
+                                     const Vec* position, JAISound** sound)
+{
+	JAIActor actor(identity, position, position, 0);
+	MSoundSE::startSoundActorInner(soundID, sound, &actor, 0, 4);
+}
+
 void MSRandPlay::randPlay(u32 vec_idx)
 {
 	MSRandPlayVec* vec = &mRandPlayVecs[vec_idx];
@@ -183,9 +186,8 @@ void MSRandPlay::randPlay(u32 vec_idx)
 			                            4);
 			break;
 		default:
-			JAIActor actor(vec->mTrans, vec->mTrans, vec->mTrans, 0);
-			MSoundSE::startSoundActorInner(mSoundID, &vec->mSound, &actor, 0,
-			                               4);
+			MSRandStartEmitter(mSoundID, vec->mTrans, vec->mTrans,
+			                   &vec->mSound);
 			break;
 		}
 		vec->mState     = MSRandPlayVec::STATE_PLAYING;
