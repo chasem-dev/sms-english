@@ -7,7 +7,8 @@ and run regalloc.py --search on its GPR and FPR webs.
 
 LIST is a TSV whose first two columns are the unit (Enemy/igaiga) and the
 mangled symbol; other columns are ignored.  Run from the repo root after a
-full build, with MWCC_DEBUGGER and RETROWIN32 set as for dbg.sh.
+full build, with MWCC_DEBUGGER set. Use --native for Linux GDB/Wibo,
+or set RETROWIN32 for the remote emulator path.
 
 Each function's compile flags are the unit's own (taken from `ninja -t
 commands`), run through GC/1.1 as dbg.sh does.  A `-prefix X.mch` unit gets
@@ -97,6 +98,22 @@ def dump(unit, sym, out, work, version):
     return False
 
 
+def dump_native(unit, sym, out):
+    src, _, _ = unit_flags(unit)
+    if os.path.isdir(out) and os.listdir(out):
+        # Preserve evidence from an incomplete earlier attempt before retrying.
+        os.rename(out, out + ".failed-" + str(time.time_ns()))
+    with open(out + ".log", "w") as log:
+        try:
+            result = subprocess.run(
+                [sys.executable, os.path.join(HERE, "native.py"), src, sym, out],
+                stdout=log, stderr=subprocess.STDOUT, timeout=65)
+        except subprocess.TimeoutExpired:
+            log.write("regsweep: native timeout\n")
+            return False
+    return result.returncode == 0 and os.path.isfile(os.path.join(out, "variables.txt"))
+
+
 ROW = re.compile(r"^([~<>| ])\s*[0-9a-f]* \| (.*?)\s* \| (.*)$")
 REG = re.compile(r"\b[rf]\d+\b")
 
@@ -174,10 +191,14 @@ def main():
     ap.add_argument("outdir")
     ap.add_argument("--search", type=int, default=60)
     ap.add_argument("--version", default="1.1")
+    ap.add_argument("--native", action="store_true",
+                    help="dump through native Linux GDB/Wibo instead of a remote emulator")
     ap.add_argument("--resume", action="store_true",
                     help="skip functions already dumped (re-runs failed dumps)")
     ap.add_argument("--report", action="store_true")
     a = ap.parse_args()
+    if a.native and a.version != "1.1":
+        ap.error("native object decoding supports GC/1.1 only")
     os.makedirs(a.outdir, exist_ok=True)
     work = os.path.join(a.outdir, "work")
     os.makedirs(work, exist_ok=True)
@@ -197,7 +218,7 @@ def main():
             continue
         if a.resume and os.path.exists(f"{base}/variables.txt"):
             continue
-        ok = dump(unit, sym, base, work, a.version)
+        ok = dump_native(unit, sym, base) if a.native else dump(unit, sym, base, work, a.version)
         frame, dl, swaps = diff_stats(unit, sym)
         res = {cls: search(base, unit, sym, cls, a.search, f"{base}.{cls}.txt") if ok else None
                for cls in ("gpr", "fpr")}
