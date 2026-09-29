@@ -308,6 +308,7 @@
     "MoveBG/MapObjManager.cpp",
     "MoveBG/MapObjOption.cpp",
     "MoveBG/MapObjPole.cpp",
+    "MoveBG/MapObjPollution.cpp",
     "MoveBG/MapObjRicco.cpp",
     "MoveBG/MapObjSample.cpp",
     "MoveBG/MapObjTown.cpp",
