@@ -28,7 +28,7 @@ Data: 99.84% byte-identical; the four units that differ were checked symbol by s
 
 ## Known remaining difference
 
-- `TMario::pulling`: see the symbolic-effect pass below.
+- The remaining `TMario::pulling` difference was resolved on 2026-09-29; see the symbolic-effect pass below.
 
 ## Symbolic-effect pass (`tools/expr-diff.py`, 2026-09-28)
 
@@ -71,10 +71,11 @@ Structure only (no behaviour change): `TCardManager::format_` tests for an I/O e
 
 ### Remaining known difference
 
-- `TMario::pulling`: retail's `delta.length()` is `fma(x, x, y*y) + z*z`; ours rounds all three squares (no fusion).
-  At most 1 ulp before the `len < 1.0f` animation test.
-  `length()`, `squared()`, the explicit sum in four association orders and `dot(delta)` all compile to the same unfused code here.
-  The cause is probably how `delta` reaches the sum (it is assigned on two paths), not the sum's spelling.
+- Resolved 2026-09-29: `TMario::pulling` now writes the subtraction through a `Vec&` computational helper, matching `TongueSubTo`'s dataflow.
+  Retail's `fma(x, x, y*y) + z*z` and the animation-rate register are reproduced.
+  Match improved from 98.57321% to 99.95638%; only two subtraction-temporary stack offsets remain.
+  `expr-diff.py --unit Player/MarioSpecial --func pulling__6TMarioFv -v` reports `SAME`.
+  The earlier audit counts above are historical; this closes the one genuine behavior difference they left open.
 
 ### Flagged but equivalent (verdicts)
 

@@ -1253,6 +1253,15 @@ void TMario::setPullingAnm(const JGeometry::TVec3<f32>& delta, f32 animRate)
 		setAnimation(ANIM_HOLD_MOVE_L, animRate);
 }
 
+// Write the difference through Vec so length() rounds y*y and z*z, then
+// fuses x*x into y*y as retail does. TongueSubTo has the same dataflow;
+// TODO: the retail helper's name and owner are unknown.
+static inline void PullingSubTo(Vec& out, const JGeometry::TVec3<f32>& a,
+                                const JGeometry::TVec3<f32>& b)
+{
+	out = a - b;
+}
+
 BOOL TMario::pulling()
 {
 	if (mInput & 0x4) {
@@ -1281,7 +1290,7 @@ BOOL TMario::pulling()
 	mFaceAngle.y    = matan(-mtx[2][2], -mtx[0][2]);
 	mModelFaceAngle = mFaceAngle.y;
 
-	JGeometry::TVec3<f32> pos = mPosition;
+	JGeometry::TVec3<f32> pos = getPosition();
 	s16 backAngle             = mFaceAngle.y + 0x8000;
 	s16 diff                  = backAngle - mIntendedYaw;
 	f32 cosF                  = JMASCos(diff);
@@ -1319,17 +1328,13 @@ BOOL TMario::pulling()
 
 	default:
 		JGeometry::TVec3<f32> delta;
-		// The mixed spelling is the lever pair that reloads mActorType through
-		// one held pointer at retail's frame: two getHeldObject() sites alone
-		// are +8, two isActorType() sites -8, a named held pointer -0x10.
-		// TODO: animRate gets f31 (retail f30, sinF's register; spelling
-		// inert) and length()'s squared() contraction (see wireMove; the
-		// explicit sum, squared()+sqrt and dot(delta) spellings are inert).
+		// TODO: operator- temporaries are 0x14 above retail on both paths
+		// (0x58/0x4c vs 0x44/0x38); other instructions and offsets agree.
 		if (getHeldObject()->isActorType(0x8000006)
 		    || (getHeldObject()->getActorType() == 0x8000008 ? true : false)) {
-			delta = pos - mPrevPosition;
+			PullingSubTo(delta, pos, mPrevPosition);
 		} else {
-			delta = mPosition - mPrevPosition;
+			PullingSubTo(delta, mPosition, mPrevPosition);
 		}
 
 		f32 len = delta.length();
