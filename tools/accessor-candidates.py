@@ -117,7 +117,7 @@ def bodies(src, cls, meth):
     if cls and meth == "execute" and "DEFINE_NERVE(%s," % cls in text:
         pat = re.compile(r"DEFINE_NERVE\(%s,[^)]*\)" % re.escape(cls))
     elif cls:
-        pat = re.compile(r"\b%s\s*::\s*%s\s*\(" % (re.escape(cls), re.escape(meth)))
+        pat = re.compile(r"^[^\n/]*\b%s\s*::\s*%s\s*\(" % (re.escape(cls), re.escape(meth)), re.M)
     else:
         pat = re.compile(r"^[^\n;]*\b%s\s*\(" % re.escape(meth), re.M)
     out = []

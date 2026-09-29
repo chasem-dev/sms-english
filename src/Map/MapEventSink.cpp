@@ -131,18 +131,10 @@ static inline MActor* MapEventSinkActor(const TJointModel* p)
 	return actor;
 }
 
-// Binding level over a raw member read, worth +16 of low region in
-// TMapEventSink::startControl (batch 127).
-static inline int MapEventSinkRaisingBuildingIdx(const TMapEventSink* p)
-{
-	int raisingBuildingIdx = p->mRaisingBuildingIdx;
-	return raisingBuildingIdx;
-}
-
 void TMapEventSink::startControl()
 {
 	unk18 = 2;
-	unk2C = getBuilding(getRaisingBuildingIdx());
+	unk2C = getBuilding(mRaisingBuildingIdx);
 	unk2C->alive();
 	unk30 = getBuilding(getRaisingBuildingIdx())->getJoint();
 
@@ -163,7 +155,7 @@ void TMapEventSink::startControl()
 	unk3C     = dVar4 / iVar3;
 	unk4C     = unk40;
 
-	unk5C[MapEventSinkRaisingBuildingIdx(this)]->setUpTrans(
+	unk5C[mRaisingBuildingIdx]->setUpTrans(
 	    JGeometry::TVec3<f32>(info.mTranslate.x, info.mTranslate.y,
 	                          info.mTranslate.z));
 }
@@ -332,12 +324,6 @@ void TMapEventSinkBianco::finishControl()
 		gpPollution->getLayer(i)->stopDecay();
 }
 
-static inline int MapEventSinkRaisingIdx(const TMapEventSink* p)
-{
-	int i = p->mRaisingBuildingIdx;
-	return i;
-}
-
 // Binder over the bell joint.
 static inline J3DJoint* MapEventSinkBiancoJoint(const TMapEventSinkBianco* p)
 {
@@ -348,7 +334,7 @@ static inline J3DJoint* MapEventSinkBiancoJoint(const TMapEventSinkBianco* p)
 void TMapEventSinkBianco::rising()
 {
 	TMapEventSinkInPollutionReset::rising();
-	if (MapEventSinkRaisingIdx(this) == 0)
+	if (getRaisingBuildingIdx() == 0)
 		TMapObjBase::moveJoint(MapEventSinkBiancoJoint(this), 0.0f, unk3C,
 		                       0.0f);
 }
@@ -374,7 +360,7 @@ bool TMapEventSinkBianco::control()
 
 void TMapEventSinkBianco::startControl()
 {
-	switch (MapEventSinkRaisingIdx(this)) {
+	switch (getRaisingBuildingIdx()) {
 	case 0: {
 		unk40 = 1320;
 		unk44 = 120;

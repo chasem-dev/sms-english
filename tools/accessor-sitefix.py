@@ -96,7 +96,7 @@ def main():
     if cls and meth == "execute" and "DEFINE_NERVE(%s," % cls in orig:
         head = re.compile(r"DEFINE_NERVE\(%s,[^)]*\)" % re.escape(cls))
     elif cls:
-        head = re.compile(r"\b%s\s*::\s*%s\s*\(" % (re.escape(cls), re.escape(meth)))
+        head = re.compile(r"^[^\n/]*\b%s\s*::\s*%s\s*\(" % (re.escape(cls), re.escape(meth)), re.M)
     else:
         head = re.compile(r"^[^\n;]*\b%s\s*\(" % re.escape(meth), re.M)
     m = head.search(orig)

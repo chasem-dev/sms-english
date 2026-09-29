@@ -34,7 +34,11 @@ public:
 
 	static u32 mCleanedDegree;
 
-	int getRaisingBuildingIdx() { return mRaisingBuildingIdx; }
+	int getRaisingBuildingIdx()
+	{
+		int raisingBuildingIdx = mRaisingBuildingIdx;
+		return raisingBuildingIdx;
+	}
 
 public:
 	/* 0x20 */ int mBuildingNum;
