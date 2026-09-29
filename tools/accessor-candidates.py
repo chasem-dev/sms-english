@@ -85,6 +85,9 @@ def accessors():
 
 def parse_sym(sym):
     """Return (class, method) for an MWCC mangled name."""
+    f = re.match(r"^(\w+?)__F", sym)
+    if f:
+        return None, f.group(1)
     m = re.match(r"^(\w+?)__(?:(\d+)(\w+?)|Q(\d)(.*?))(?:C?F|$)", sym)
     if not m:
         return None, sym
@@ -111,7 +114,9 @@ def parse_sym(sym):
 
 def bodies(src, cls, meth):
     text = open(src, errors="replace").read()
-    if cls:
+    if cls and meth == "execute" and "DEFINE_NERVE(%s," % cls in text:
+        pat = re.compile(r"DEFINE_NERVE\(%s,[^)]*\)" % re.escape(cls))
+    elif cls:
         pat = re.compile(r"\b%s\s*::\s*%s\s*\(" % (re.escape(cls), re.escape(meth)))
     else:
         pat = re.compile(r"^[^\n;]*\b%s\s*\(" % re.escape(meth), re.M)
