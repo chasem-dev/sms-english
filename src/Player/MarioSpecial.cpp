@@ -681,6 +681,14 @@ BOOL TMario::taken()
 // `end` fills the hole and lands wireWait/wireHanging's frames (wireSWait
 // and the emitted copy now overshoot by 8/0x18); the temporaries stay high.
 // Retail's own names for the two helper levels are unrecoverable (inlined).
+// c-k16, statement mode (codegen-tells.md c-r24/c-k14): a named class
+// initialiser `TVec3 scaled = <helper>(dir, ratio); *outPos = start +
+// scaled;` brings the emitted copy's frame to 0x150 (with `end`) but puts
+// the body over the four callers' budget (all `bl` it, 54.7-76.0%); without
+// `end` the callers expand it with six extra copy instructions each
+// (forwarder 96.9-98.5, direct helper or `dir * ratio` 90.4-95.0). `*outPos
+// = start; *outPos += <helper>(...)` also pushes it out (74.0 here). So
+// retail did not name the scaled vector.
 // fabricated
 static inline JGeometry::TVec3<f32>
 MarioWireScaledCopy(const JGeometry::TVec3<f32>& dir, f32 ratio)
