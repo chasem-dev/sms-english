@@ -392,7 +392,9 @@ void TKukku::behaveHitTrample()
 // nerve's goal and shooting blocks without the steering, which compiles to
 // the map size; with the steering (updateRotation plus
 // updateLinearVelocity, or doRecoverToCurPathNode) every spelling of the
-// shoot timer measured is 0x20 or more over (c-k16).
+// shoot timer measured is 0x20 or more over (c-k16). The post-decrement
+// test is also a size choice: the nerve's own `if (timer >= 0) timer--; else
+// shotBall();` here is 0x2cc (raw member) or 0x2d0 (getShootTimer()).
 void TKukku::doFlyToCurPathNode()
 {
 	if (isReachedToGoal()) {
@@ -740,6 +742,17 @@ const char** TKukku::getBasNameTable() const { return tori_bastable; }
 // size. Tried (c-k14): the store as a named TVec3 local, through
 // setLinearVelocity, with the speed named first (frame exact here, but
 // RecoverGraph's frame 8 over), and as `TVec3<f32>(calcMomentum(...))`.
+// c-k16: the copy is the cc23 header class (docs/catalog/frame-gaps.md), not
+// a site lever. With JGVec3.hpp's `operator=(const TVec3&)` uncast
+// (`*(Vec*)this = other`) and nothing else changed, this nerve is 99.5%
+// (246 instructions, all in place, frame 0x100 against 0x108),
+// TNerveKukkuFall 97.0 -> 99.8, calcMomentum stays 98.9 and
+// doRecoverToCurPathNode is the map's 0xa0. Declaring calcMomentum as
+// returning `Vec` (the map does not mangle the return type) gives the same
+// inline results but costs calcMomentum its copy constructor's 8 bytes of
+// frame (98.9 -> 98.4), so retail returned a TVec3. Also inert:
+// `mLinearVelocity.set(calcMomentum(...))` (this nerve 96.1, RecoverGraph
+// 96.0).
 DEFINE_NERVE(TNerveKukkuGraphWander, TLiveActor)
 {
 	TKukku* kukku = (TKukku*)spine->getBody();
