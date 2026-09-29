@@ -140,16 +140,15 @@ void TMapCollisionData::addCheckDataToList(int i, int j, int param_3,
 	addAfterPreNode(j, i, list2, list3, param_3);
 }
 
-// TODO: 99.5%. Two residues left.
+// TODO: 99.8%. Two residues left.
 //  - Frame 0x70 against retail's 0xe0: 112 bytes of dead low region below the
 //    single int-to-float conversion pair, which is the only referenced slot on
 //    either side. std::min/max' `const T&` parameters bind nothing here; the
 //    same templates taking their arguments by value are +0x28 and cost three
 //    register pairs, so the carrier is not the parameter form.
-//  - The Z inner min/max load p2.z and p3.z into the opposite registers
-//    (retail f6 = p3.z, f5 = p2.z); the X pair, with the identical spelling,
-//    comes out right, so this is an FPR permutation and not an argument-order
-//    difference (both compare a = p2).
+//  - The Z inner min loads p2.z and p3.z into the opposite registers (retail
+//    f6 = p3.z, f5 = p2.z). The Z inner max takes (p2.z, p3.z) like the X
+//    pair; spelling the inner min the same way is 99.5%.
 bool TMapCollisionData::getGridArea(const TBGCheckData* param_1, int param_2,
                                     int* param_3, int* param_4, int* param_5,
                                     int* param_6)
@@ -162,7 +161,7 @@ bool TMapCollisionData::getGridArea(const TBGCheckData* param_1, int param_2,
 	f32 maxX
 	    = std::max(param_1->mPoint1.x, std::max(param_1->mPoint2.x, param_1->mPoint3.x));
 	f32 maxZ
-	    = std::max(param_1->mPoint1.z, std::max(param_1->mPoint3.z, param_1->mPoint2.z));
+	    = std::max(param_1->mPoint1.z, std::max(param_1->mPoint2.z, param_1->mPoint3.z));
 
 	if (maxX < -mGridExtentX || maxZ < -mGridExtentY || minX > mGridExtentX
 	    || minZ > mGridExtentY)
