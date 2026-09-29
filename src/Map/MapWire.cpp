@@ -192,8 +192,8 @@ bool TMapWire::updateMovePointAtReleased()
 		mMoveTimer -= 2.0f;
 	}
 
-	mHangOrBouncePoint.y = mBounceAmplitude * JMASCos(mMoveTimer * 32768.0f)
-	                       * mBounceRemainingPower;
+	f32 bounceCos = JMASCos(mMoveTimer * 32768.0f);
+	mHangOrBouncePoint.y = bounceCos * mBounceAmplitude * mBounceRemainingPower;
 	return false;
 }
 
@@ -328,14 +328,14 @@ void TMapWire::calcViewAndDBEntry()
 	mEndFittingModel->viewCalc();
 }
 
-// TODO: 99.6%: frame 0xd8 vs ours 0x88, every instruction right: retail's
+// TODO: 99.8%: frame 0xd8 vs ours 0x90, every instruction right: retail's
 // linePoint/defaultPoint pair sits 0x34 higher and the JMASCos fctiwz slot
 // 0x1c further above it. getPointPosDefault spelled as component stores,
 // a named sag or scaleAdd changes code (move 90-92%); declaring newPos,
 // linePoint/defaultPoint or a named y earlier is frame-inert or +8, and
-// computing power first changes code. Needs a structural lead. The JMASCos product
-// lands in f1 in retail, f0 in ours; operand order, a named cos result and a
-// named s16 angle are all inert.
+// computing power first changes code. Needs a structural lead. The JMASCos
+// product's register came from updateMovePointAtReleased naming the cosine
+// and multiplying it first (either alone is inert).
 void TMapWire::move()
 {
 	switch (mState) {
