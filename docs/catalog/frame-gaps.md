@@ -2398,7 +2398,7 @@ MenuDir and MovieDirector `setup` are byte-exact on wt/c-r28 (8de925f5, 49aa812e
   MenuDir and MovieDirector setup exact (census 12023 -> 12025), GCLogoDir setup 0x260 -> 0x270; the TU-local binders MenuDirUnk2C and TGCLogoDirGetGamePad are now the member accessor (byte-identical).
 - The same accessor at the other frame-short pad sites, one site at a time: TGCLogoDir::setup's `mProgSelect->mGamePad = getGamePad()` +8, `direct` +8 (0x50 of 0x78), `direct_nlogo` +0x18, TMenuDirector::direct +0x10, TMovieDirector::direct +0x38 over four sites (every instruction and register unchanged).
   Worse, left raw: the TMenuPlane arguments in MenuDir rsetup (code changes), TMovieDirector's dtor and `decideNextMode` (exact today with the plain `MovieGamePad` fork; the binder adds 8), GCLogoDir's two `mState != 2` tests (inert).
-- GCLogoDir: `new JDrama::TDStageDisp("<DStageDisp>", 0)` (SelectDir's spelling) puts that flag temporary where retail has it (hsearch dbg order 1 -> 0); score-neutral, landed with the pad change.
+- `new JDrama::TDStageDisp("<DStageDisp>", 0)` (SelectDir's spelling) at the other three sites puts that flag temporary where retail has it, in the parse-time block: hsearch dbg order/gap GCLogoDir setup 1/54 -> 0/14, MovieDirector rsetup 1/68 -> 0/14, MenuDir rsetup 2/96 -> 1/52 words; score-neutral, landed (c14ae656).
 
 ### Measured on the way (synthetic director TU, `tools/mwcc-stack` dumps)
 
