@@ -875,6 +875,12 @@ void TBaseNPC::perform(u32 cue, JDrama::TGraphics* graphics)
 	// (getPosition(), getUnk124()) move it but cost instructions, and the
 	// float-by-float `local_4C.set(gpCamera->unk124)` copy retail shows is
 	// worse (96.2) until the scheduling around it is found.
+	// c-k17: retail's copy is the `TVec3(const Vec&)` set() copy (x loaded off
+	// gpCamera, y/z through a kept `&unk124`): `local_4C((const Vec&)
+	// gpCamera->unk124)` reproduces it (96.6, semantic-diff clean) but not the
+	// conversion schedule around it. TLensFlare's CLBCalcNearNinePos
+	// arguments need the same `(const Vec&)` cast on unk124/unk148, so those
+	// two camera members may be plain `Vec`s in retail (Camera.hpp, shared).
 	if (cue & CUE_ENTRY) {
 		offLiveFlag(LIVE_FLAG_UNK1000000);
 		if (NpcSquaredDist(mPosition, gpCamera->unk124) > CLBSquared(mIndividualParams->mAllDLLockDist.get())
