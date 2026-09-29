@@ -77,16 +77,15 @@ void JPABaseEmitter::deleteParticle(JPABaseParticle* particle)
 	deleteBaseParticle(particle, list);
 }
 
-// TODO: instructions exact, frame 0x48 vs retail 0x40 (8 more low region).
-// Either loop shape for both lists, a named object or next in either loop,
-// declaration order and initialised declarations are inert.
+// The base list's first-link accessor gives both loops their JSUPtrLink;
+// each loop then uses the typed link to access its particle.
 void JPABaseEmitter::deleteAllParticle()
 {
 	JSUList<JPABaseParticle>* list;
 	JSULink<JPABaseParticle>* it;
 
 	list = &mParticleList;
-	it   = list->getFirst();
+	it   = static_cast<JSULink<JPABaseParticle>*>(list->getFirstLink());
 	while (it) {
 		JSULink<JPABaseParticle>* next = it->getNext();
 		deleteBaseParticle(it->getObject(), list);
@@ -94,7 +93,7 @@ void JPABaseEmitter::deleteAllParticle()
 	}
 
 	list = &mChildParticleList;
-	it   = list->getFirst();
+	it   = static_cast<JSULink<JPABaseParticle>*>(list->getFirstLink());
 	while (it) {
 		JPABaseParticle* particle = it->getObject();
 		it                        = it->getNext();
