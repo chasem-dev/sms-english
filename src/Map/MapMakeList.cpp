@@ -59,10 +59,11 @@ TBGCheckList* TMapCollisionData::getListRoot(int i, int j, int kind,
 // addCheckDataToGrid reaches these walkers, allocCheckList and addAfterPreNode
 // at depth 2 through the inlined UNUSED addCheckDataToList, so they stay calls
 // there; the out-of-line addCheckDataToList expands them at depth 1.
+// Only the last of addAfterPreNode's three next reads takes getNext()'s word.
 static void addAfterPreNode(int param_1, int param_2, TBGCheckList* param_3,
                             TBGCheckList* param_4, int kind)
 {
-	param_4->setNext(param_3->getNext());
+	param_4->setNext(param_3->mNext);
 	if (kind == TMapCollisionBase::KIND_WARP) {
 		TBGCheckListWarp* casted = static_cast<TBGCheckListWarp*>(param_4);
 		casted->unk10            = param_1;
@@ -70,7 +71,7 @@ static void addAfterPreNode(int param_1, int param_2, TBGCheckList* param_3,
 		casted->setPreNode(param_3);
 	}
 
-	if (param_3->getNext() != nullptr) {
+	if (param_3->mNext != nullptr) {
 		param_3->getNext()->setPreNode(param_4);
 	}
 
@@ -245,9 +246,8 @@ void TMapCollisionData::addCheckDataToGrid(TBGCheckData* param_1, int kind)
 
 void TMapCollisionData::removeCheckListNode(s32, s32) { }
 
-// TODO: instruction-exact, frame 0x48 vs 0x60 (24 low bytes). A getWarpNode
-// fork saturates at +8 here and costs every callee-saved register beyond that;
-// the trial table is at MapCollisionData.hpp's rejected declaration.
+// The first loop reads mNext raw; getPreNode() and getNext() are the list's
+// binder-shaped accessors (research c-r30).
 void TMapCollisionData::updateCheckListNode(s32 param_1, s32 param_2,
                                             s32 param_3)
 {
@@ -260,7 +260,7 @@ void TMapCollisionData::updateCheckListNode(s32 param_1, s32 param_2,
 
 	for (int i = param_1; i < param_1 + param_2; ++i) {
 		TBGCheckListWarp* warp2 = &unk30[i];
-		TBGCheckListWarp* warp3 = (TBGCheckListWarp*)warp2->getNext();
+		TBGCheckListWarp* warp3 = (TBGCheckListWarp*)warp2->mNext;
 		if (l <= warp3 && warp3 < end)
 			warp2->setNext((TBGCheckListWarp*)((char*)warp3 - offset));
 
@@ -281,10 +281,8 @@ void printData(const TBGCheckListWarp*, int) { }
 
 void printList(const TBGCheckList*) { }
 
-// TODO: instruction-exact, frame 0x48 vs 0x70 (40 low bytes). The register
-// residue is fixed (the sentinel store goes through setEntryStart); the
-// remaining low region has no candidate -- see the trial table at
-// MapCollisionData.hpp's rejected getWarpNode.
+// The sentinel store goes through setEntryStart; the low region is the
+// binder-shaped getPreNode()/getNext() reads (research c-r30).
 void TMapCollisionData::removeCheckListData(u16 start, s32 count)
 {
 	TBGCheckListWarp* curr;

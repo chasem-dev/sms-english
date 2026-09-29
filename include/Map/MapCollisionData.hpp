@@ -14,8 +14,12 @@ public:
 
 	virtual void setPreNode(TBGCheckList*) { }
 
-	// fabricated
-	TBGCheckList* getNext() { return mNext; }
+	// fabricated; binder-shaped: MapMakeList's list walkers need its word
+	TBGCheckList* getNext()
+	{
+		TBGCheckList* next = mNext;
+		return next;
+	}
 	const TBGCheckList* getNext() const { return mNext; }
 	void setNext(TBGCheckList* v) { mNext = v; }
 
@@ -205,7 +209,9 @@ public:
 	// would buy +16 rotate every callee-saved register (98.0%, 26 diffs);
 	// `removeCheckListData` (0x48 vs 0x70) reaches 0x58 at best, with or
 	// without unk40 and unk42 forks (64 combinations searched). Both frames
-	// need ~24 bytes from something else.
+	// need ~24 bytes from something else.  (Found in research c-r30: the
+	// binder-shaped TBGCheckList::getNext() and TBGCheckListWarp::getPreNode()
+	// close both.)
 	// TBGCheckListWarp* getWarpNode(int i) { return &unk30[i]; }
 
 public:
