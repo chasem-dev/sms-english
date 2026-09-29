@@ -97,7 +97,7 @@ void TGCLogoDir::setup(JDrama::TDisplay* param_1, TMarioGamePad* param_2)
 	group2d->getChildren().push_back(unk20);
 
 	mProgSelect           = new TProgSelect(0);
-	mProgSelect->mGamePad = mGamePad;
+	mProgSelect->mGamePad = getGamePad();
 	mProgSelect->unkC.on(0xffff);
 	group2d->getChildren().push_back(mProgSelect);
 
@@ -140,7 +140,7 @@ int TGCLogoDir::direct()
 	switch (mOverallState) {
 	case 0:
 		if (direct_nlogo()) {
-			if (mGamePad->isSomethingPushed()) {
+			if (getGamePad()->isSomethingPushed()) {
 				desiredAppState = TApplication::APP_STATE_DONE;
 				break;
 			}
@@ -179,7 +179,7 @@ static inline bool GCLogoCancelProgressive(TGCLogoDir* dir)
 		if (OSGetProgressiveMode() == 1) {
 			dir->mProgSelect->unkC = 0;
 			cancelled              = true;
-		} else if (dir->mGamePad->getButton() & JUTGamePad::B) {
+		} else if (dir->getGamePad()->getButton() & JUTGamePad::B) {
 			dir->unk44 += 1;
 			if (dir->unk44 / SMSGetVSyncTimesPerSec() > 1.0f) {
 				dir->mProgSelect->unkC = 0;

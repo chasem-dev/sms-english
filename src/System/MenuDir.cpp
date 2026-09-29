@@ -39,17 +39,9 @@ TMenuDirector::TMenuDirector()
 	unk50    = false;
 }
 
-// Binding level over a raw member read, worth +8 of low region in
-// TMenuDirector::~TMenuDirector (batch 127).
-static inline TMarioGamePad* MenuDirUnk2C(const TMenuDirector* p)
-{
-	TMarioGamePad* v2C = p->unk2C;
-	return v2C;
-}
-
 TMenuDirector::~TMenuDirector()
 {
-	MenuDirUnk2C(this)->offFlag(0x1);
+	getGamePad()->offFlag(0x1);
 	JKRMemArchive* arc = (JKRMemArchive*)JKRFileLoader::getVolume("title");
 	if (arc)
 		arc->unmountFixed();
@@ -200,7 +192,7 @@ int TMenuDirector::direct()
 	switch (unk18) {
 	case 0:
 		if (unk40->checkFlag(0x1)) {
-			if (!(unk2C->getButton() & JUTGamePad::X)) {
+			if (!(getGamePad()->getButton() & JUTGamePad::X)) {
 				TFlagManager::getInstance()->firstStart();
 				for (u8 i = 0; i < 120; ++i)
 					TFlagManager::getInstance()->setShineFlag(i);

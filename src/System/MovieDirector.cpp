@@ -458,7 +458,7 @@ int TMovieDirector::direct()
 	case STATE_FADE_IN:
 		if (TFlagManager::getInstance()->getBool(gpApplication.getMovie()
 		                                         + 0x10391)
-		    && unk20->checkFrameMeaning(0x61)) {
+		    && getGamePad()->checkFrameMeaning(0x61)) {
 			nextState = STATE_FADE_OUT;
 		} else if (gpApplication.mFader->isFullyFadedIn()) {
 			nextState = STATE_PLAYING;
@@ -468,7 +468,7 @@ int TMovieDirector::direct()
 	case STATE_PLAYING:
 		if (TFlagManager::getInstance()->getBool(gpApplication.getMovie()
 		                                         + 0x10391)
-		    && unk20->checkFrameMeaning(0x61)) {
+		    && getGamePad()->checkFrameMeaning(0x61)) {
 			nextState = STATE_FADE_OUT;
 		} else if (THPPlayerGetState() == 5) {
 			nextState = STATE_FADE_OUT;
@@ -523,7 +523,7 @@ int TMovieDirector::direct()
 		break;
 	}
 
-	if (unk20->isSomethingPushed()
+	if (getGamePad()->isSomethingPushed()
 	    && gpCardManager->getLastStatus() != CARD_RESULT_BUSY
 	    && !unk30.check(0x2)) {
 		unk30.on(0x2);
@@ -554,7 +554,7 @@ int TMovieDirector::direct()
 			break;
 
 		case STATE_FADE_OUT:
-			if (unk20->isSomethingPushed()) {
+			if (getGamePad()->isSomethingPushed()) {
 				gpApplication.mFader->startWipe(4, 1.0f, 0.0f);
 			} else {
 				gpApplication.mFader->startWipe(15, 1.0f, 0.0f);
