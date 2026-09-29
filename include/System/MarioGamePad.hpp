@@ -201,8 +201,11 @@ public:
 	// through it (its receiver binding is a dead word there, c-r28).
 	void setFlag(u16 flag) { mFlags = flag; }
 
-	// fabricated
-	bool isSomethingPushed() const { return mResetFlag.check(1 << mPortNum); }
+	// fabricated. BOOL, not bool: the converted result is one dead forced
+	// load per value-context use, which the director tests carry in retail
+	// (TMovieDirector::direct exact, every other user frame closer, research
+	// c-r29).
+	BOOL isSomethingPushed() const { return mResetFlag.check(1 << mPortNum); }
 
 	static void read();
 	void onNeutralMarioKey();
