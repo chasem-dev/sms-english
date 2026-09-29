@@ -851,11 +851,9 @@ TBossEelTooth::TBossEelTooth(u8 toothType, TBossEel* owner,
     , mDamageCooldown(0)
     , mCanShedTears(true)
 {
-	s32 jointIndex = mOwner->getMActor()
-	                     ->getModel()
-	                     ->getModelData()
-	                     ->getJointName()
-	                     ->getIndex(jointName);
+	JUTNameTab* nameTab
+	    = mOwner->getMActor()->getModel()->getModelData()->getJointName();
+	s32 jointIndex = nameTab->getIndex(jointName);
 	mSharedParts
 	    = new TSharedParts(mOwner, jointIndex, modelData, 0, "<TSharedParts>");
 	MActor* actor = mSharedParts->getMActor();
