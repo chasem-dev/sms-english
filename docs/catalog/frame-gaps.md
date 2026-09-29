@@ -2470,3 +2470,54 @@ The same shape on `TApplication::getFader()` and on further director members, pl
 - The directors' source reached their own members and the application's fader through getters of one binder shape; where the tree read the member raw, the frame is short by one depth-1 word (the named local) plus its forced-load and comma words per site.
   Reads right after the member is assigned (`mProgSelect = new ...; mProgSelect->...`) and reads inside the owning class stay raw.
 - A value-context use of a `bool` accessor is free, but of a `BOOL` accessor costs a word: when a pad or flag test is short one word per site and the test is an `&&` operand, check the accessor's return type before naming the value.
+
+## Research batch c-r30 (2026-09-29): a tree-wide sweep of header accessor shapes
+
+Question: is c-r29's binder shape (`T* get() { T* x = m; return x; }`) or a `BOOL` return a house style for header accessors, so that it could be applied tree-wide?
+Answer: no; both are per-class facts, and the binder shape wins only on a handful of accessors, each owned by one class and read from few units.
+
+### Method
+
+`tools/accessor-candidates.py` lists every one-line header accessor (getters, predicates, and since this batch accessors with parameters) with its caller counts.
+`tools/accessor-sweep.py` rewrites one accessor at a time, builds only the units whose bodies call its name (at most 40, `-j2`), and compares a census against the base.
+A probe with ups and no downs then gets a full tree-wide measurement with `tools/shape-measure.sh` (full build, DOL SHA-1, `ninja changes_all`, census, validate-symbol-order).
+`tools/fold-binder-helpers.py` folds a TU-local binder helper into the header accessor it emulates, and a raw-member respelling tool searches which sites of a function read the member raw.
+A change was kept only when no function dropped anywhere and at least one improved.
+What counts: a census class change (exact/slots/frame/other) or a frame-size move is an up or a down, and so is any objdiff fuzzy drop that `changes_all` reports, even when the census class of that function improved.
+The probe sees only the calling units, so a clean probe is not a result until the full measurement agrees (getTalkMode was clean in the probe and 1 up / 1 down tree-wide).
+
+### What landed (wt/c-r30)
+
+| Accessor | Function | Before | After | Retail |
+| --- | --- | --- | --- | --- |
+| TMarDirector::getTalkingNPC | TMario::readBillboard | 0x30 | 0x38 | 0x70 |
+| TMarDirector::getTalkingNPC | TMarDirector::updateGameMode | 0xd0 | 0xe0 | 0x130 |
+| TBGCheckListWarp::getPreNode, then TBGCheckList::getNext | TMapCollisionData::removeCheckListData | 0x48 | **exact** | 0x70 |
+| TBGCheckListWarp::getPreNode, then TBGCheckList::getNext | TMapCollisionData::updateCheckListNode | 0x48 | **exact** | 0x60 |
+| TCardManager::TCriteria::getWriteCount, then getState | TCardManager::writeBlock_ | 0x58 | **exact** | 0x70 |
+| TCannon::getChorobei | TNerveCannonSearch::execute | 0x170 | 0x190 | 0x198 |
+
+TMapEventSink::getRaisingBuildingIdx, TTinKoopa::getTruckMActor and TOptionSubtitleUnit::getParentPane took the binder shape in place of their TU-local binder helpers at zero census change (no function moved), which removes fabricated helpers.
+getNext and getState landed only with the sites that dropped read raw (MapMakeList's list walkers, getBookmarkInfos_'s read loop): a header binder that gains in one unit and loses in another often means the losing unit read the member raw.
+
+### Results by shape
+
+- Binder shape, 181 accessors probed: 5 clean, 30 inert, 75 only down, 71 mixed.
+- The widely shared accessors lose heavily as binders: TLiveActor::getMActor 17 up / 210 down, TSpineBase getTime 10/179, getBody 14/138, getCurrentNerve 6/135, SMSGetMSound 28/111, SMSGetMarDirector 7/63, THitActor::getActorType 4/53.
+- So retail's binder-shaped accessors are specific classes (the directors, the BG check lists, the card criteria, TCannon), not a JSystem-wide or game-wide style; ups on a widely shared accessor are usually functions whose missing word comes from elsewhere.
+- Bool to `BOOL`, 27 predicates probed: none gained, 18 inert, 9 dropped.
+- A predicate used only as a branch condition is inert under `BOOL`; where it moves, it changes code rather than frames (TMarioGamePad::checkMeaning 3 down, TMarioGamePad's isAHit/isAPressed/isBPressed/isBHit turn TEnemyMario::checkController from exact to other).
+- TMarioGamePad::checkFlag as `BOOL` is inert; TMarioGamePad::isSomethingPushed (c-r29) stays the only `BOOL` pad predicate the binary supports.
+- Accessors with parameters (getObj(i), getGraphNode(i), getJointModel(i), getChild(i), checkFlag(flag), checkLiveFlag(flag), isActorType(t)): none clean; ObjManager getObj(i) is 2 up / 40 down.
+- Folding TU-local binder helpers into their header accessor dropped in 14 of 20 attempts (the item/sound/bombhei/hamukuri holders 16 down, the FLUDD accessor 13, PollutionLayer's children count 8): most of those helpers exist because the other units read the accessor plain.
+- TGraphTracer::getGraph as a binder (const, non-const, or both) is 4/24, 0/4 and 5/20.
+
+### Held back
+
+- TMarDirector::getGamePad(int) as a binder moves updateGameMode 0xe0 -> 0x110, currentStateFinalize 0xd0 -> 0xf8 and changeState 0x148 -> 0x158 (retail 0x130, 0x120, 0x168).
+  With it, EventWatcher's pad helper folds exactly as `SMSGetMarDirector()->getGamePad()->invalidate(frames)`, and evOnNeutralMarioKey stays exact as `gpMarDirector->getGamePad()->onNeutralMarioKey()`; reading `unk18[0]` raw there drops its frame from 0x30 to 0x20, which is direct evidence that retail's accessor binds.
+  It is blocked by TMarDirector::setup2: folding Setup2GamePad keeps the 0x410 frame but places the fader TColor and the JUTRect temporaries 4 bytes low (17 slot markers).
+  Every other setup2 pad read spelled through getGamePad() overshoots to 0x418, the camera's own `setGamePad()` or a setter helper overshoots too, and a raw camera read changes code.
+  changeState's fuzzy score also drops 99.93 -> 99.92 under it, which `changes_all` counts as a regression.
+- GameSequence getScenario as a binder: changeState's frame moves toward retail but its fuzzy score drops 99.93 -> 99.92, the same cost getGamePad shows there, so changeState's frame words and one of its slot offsets are tied.
+- Talk2D2 getTalkMode, MarDirector getStage, getInitialBounds, BossWanwan getRope/getPicket: one down for each up in the full measurement.
