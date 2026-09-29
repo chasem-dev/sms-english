@@ -496,3 +496,12 @@ Not closed: dead copies of the rocket, hauntLeg, chuuhana and gorogoro loops rea
 Refinement of the dead-code rule, measured in gesso: `if (0) {...}` and code after `return` drop *expression statements* but keep *declarations*.
 Their named locals are kept, and so is each initialiser's inline expansion with its bindings and IRO temporaries (`TMsRange<s32> range(0, graph->unk8)` in an `if (0)` loop yields inline objects and six EFORCELOAD temps).
 `if (0) { getObj(0)->m += 5; }` adds nothing; the same statement behind `int c = 0; if (c)` adds 6 words, more than the live statement (4).
+
+
+## Named values between adjacent matrices
+
+GessoBodyCallback's native compiler dump placed `angle` at 0x70..0x74, between the rotation matrix at 0x40..0x70 and the scale matrix at 0x74..0xa4.
+Retail's matrices are adjacent at 0x44..0x74 and 0x74..0xa4.
+Passing the clamp expression directly to the typed X rotation computation moves its binding below the matrices, preserves the 0xb8 frame and produces a byte-exact function with production GC/1.2.5.
+The change comes from the measured local-object order; no additional storage is introduced.
+`tools/mwcc-stack/native.py` makes the debugger's locals and unique-name evidence available through native GDB and Wibo.

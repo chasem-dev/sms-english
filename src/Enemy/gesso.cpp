@@ -30,7 +30,7 @@
 #include <MSound/MSoundBGM.hpp>
 #include <M3DUtil/InfectiousStrings.hpp>
 
-TGesso* gpCurGesso;
+static TGesso* gpCurGesso;
 
 const char* rikuGesso_bastable[] = {
 	nullptr,
@@ -189,14 +189,38 @@ void TGessoManager::requestPolluteModel(JGeometry::TVec3<float>& position,
 	unk60->generatePolluteModel(position, scale);
 }
 
+// The body uses the same whole-matrix view as the shared Z rotation.
+template <typename MatrixStorage>
+static inline void GessoSetRollX(MatrixStorage* storage, f32 angle)
+{
+	Mtx& matrix = MsMtxArray(storage);
+	f32 sin = JMASSin(DEG2SHORTANGLE(angle));
+	f32 cos = JMASCos(DEG2SHORTANGLE(angle));
+
+	matrix[0][0] = 1.0f;
+	matrix[0][1] = 0.0f;
+	matrix[0][2] = 0.0f;
+	matrix[0][3] = 0.0f;
+
+	matrix[1][0] = 0.0f;
+	matrix[1][1] = cos;
+	matrix[1][2] = -sin;
+	matrix[1][3] = 0.0f;
+
+	matrix[2][0] = 0.0f;
+	matrix[2][1] = sin;
+	matrix[2][2] = cos;
+	matrix[2][3] = 0.0f;
+}
+
 static int GessoBodyCallback(J3DNode* param_1, int param_2)
 {
 	if (param_2 == 0) {
 		if (gpCurGesso == nullptr || !gpCurGesso->isUseBodyCallBack())
 			return true;
 
-		J3DJoint* joint = (J3DJoint*)param_1;
-		MtxPtr anmMtx   = gpCurGesso->getModel()->getAnmMtx(joint->getJntNo());
+		u16 jointNo = ((J3DJoint*)param_1)->getJntNo();
+		MtxPtr anmMtx   = gpCurGesso->getModel()->getAnmMtx(jointNo);
 
 		// The ROM zeroes the translation column first and only then reads
 		// the body scale (`stfs f1, 0x80(r1)` three times, then `lfs f2,
@@ -207,7 +231,7 @@ static int GessoBodyCallback(J3DNode* param_1, int param_2)
 		local_44[1][3] = 0.0f;
 		local_44[2][3] = 0.0f;
 
-		f32 scale      = gpCurGesso->getBodyScale();
+		f32 scale      = gpCurGesso->mBodyScale;
 		local_44[0][0] = scale;
 		local_44[0][1] = 0.0f;
 		local_44[0][2] = 0.0f;
@@ -221,43 +245,14 @@ static int GessoBodyCallback(J3DNode* param_1, int param_2)
 		local_44[2][2] = scale;
 
 		f32 maxAngle = gpCurGesso->getSaveParams()->mSLBodyAngMax.get();
-		f32 angle = MsClamp(gpCurGesso->mBodyTrackingAngle - 90.0f, -maxAngle,
-		                    maxAngle);
-
-		f32 s = JMASin(angle);
-		f32 c = JMACos(angle);
-
 		Mtx local_74;
-		local_74[0][0] = 1.0f;
-		local_74[0][1] = 0.0f;
-		local_74[0][2] = 0.0f;
-		local_74[0][3] = 0.0f;
+		GessoSetRollX(
+		    local_74, MsClamp(gpCurGesso->mBodyTrackingAngle - 90.0f,
+		                      -maxAngle, maxAngle));
 
-		local_74[1][0] = 0.0f;
-		local_74[1][1] = c;
-		local_74[1][2] = -s;
-		local_74[1][3] = 0.0f;
-
-		local_74[2][0] = 0.0f;
-		local_74[2][1] = s;
-		local_74[2][2] = c;
-		local_74[2][3] = 0.0f;
-
-		// Park &local_74 in a callee-saved register so both MTXConcat
-		// sites reuse it (retail r30). 91.9 -> 97.5. Residue is 0x10 of
-		// frame (scale mtx 0x10 high) and the 1.0/0.0 preload vs
-		// store-then-reload; named jntNo and .value both moved the rot
-		// mtx off 0x44. Also inert or worse (cc48): both matrices declared
-		// at the top in either order, rotMtx declared first and assigned
-		// later, .value, JMASSin/JMASCos over a named s16, cos before sin.
-		// Also inert (c-mix3): MsMtxSetRotX for the rotation (97.4, same
-		// 0x10), raw mBodyScale (-0x10, 0xb0), .value (-8), both (0xb0).
-		// Also inert (c-ident): the rows written through rotMtx, as Mtx or
-		// TMtx34f, with s/c before or after the pointer (97.4-97.5).
-		MtxPtr rotMtx = local_74;
-		MTXConcat(anmMtx, rotMtx, anmMtx);
+		MTXConcat(anmMtx, local_74, anmMtx);
 		MTXConcat(anmMtx, local_44, anmMtx);
-		MTXConcat(J3DSys::mCurrentMtx, rotMtx, J3DSys::mCurrentMtx);
+		MTXConcat(J3DSys::mCurrentMtx, local_74, J3DSys::mCurrentMtx);
 		MTXConcat(J3DSys::mCurrentMtx, local_44, J3DSys::mCurrentMtx);
 	}
 	return true;

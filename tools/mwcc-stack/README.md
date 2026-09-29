@@ -4,7 +4,29 @@ These tools support frame-gap work.
 A frame gap is a function whose instructions match but whose `stwu r1` frame or `r1` slot offsets differ.
 The model they support is in `docs/catalog/frame-model.md`.
 
-## Setup (once per machine)
+## Native Linux setup
+
+Native GDB can inspect the compiler while Wibo executes its x86 code.
+This needs GDB, the existing non-stripped Wibo, GC/1.1, and the public [cadmic debugger](https://github.com/cadmic/mwcc-debugger).
+It does not need a separate emulator or Rust runtime.
+
+```sh
+export MWCC_DEBUGGER=/path/to/mwcc-debugger/mwcc_debugger.py
+python3 tools/mwcc-stack/native.py src/Enemy/gesso.cpp GessoBodyCallback__FP7J3DNodei /tmp/gesso-dump
+python3 tools/mwcc-stack/iro.py /tmp/gesso-dump
+```
+
+The adapter reads the selected unit's compiler command from Ninja, keeps its optimization flags and include paths, and removes the incompatible precompiled header before using GC/1.1.
+It patches a temporary copy of the external debugger to include `names.txt`, and leaves the original debugger untouched.
+Choose an empty output directory for each dump.
+The debugger stops at the selected function, so its output is inspection evidence rather than a completed build object.
+If ptrace is restricted by the execution sandbox, request the required execution permission.
+
+GessoBodyCallback's native dump took about one second on this machine.
+Its matrices and conversion spill agree with production GC/1.2.5; moving the clamp into the actual rotation computation closed the production function exactly.
+Verify each function with its production compiler before treating a GC/1.1 observation as conclusive.
+
+## Remote emulator setup
 
 ```
 git clone https://github.com/cadmic/mwcc-debugger

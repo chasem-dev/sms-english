@@ -153,7 +153,6 @@ public:
 	/* 0x68 */ TWaterEmitInfo* mExplosionWater;
 };
 
-extern TPopo* gpCurPopo;
 
 DECLARE_NERVE(TNervePopoAttack, TLiveActor)
 DECLARE_NERVE(TNervePopoExplosion, TLiveActor)

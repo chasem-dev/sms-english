@@ -52,7 +52,7 @@ f32 TPopo::mColMinVal      = 0.6f;
 u8 TPopo::mLevelShootSw    = 1;
 u8 TPopo::mExplosionSw     = 0;
 
-TPopo* gpCurPopo;
+static TPopo* gpCurPopo;
 
 // Indexed by BCK animation index, so the holes are real: only slots 0, 5
 // and 6 have a sound table.

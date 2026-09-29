@@ -70,7 +70,7 @@ static int SamboHeadRollCallback(J3DNode*, int);
 u8 THanaSambo::mHeadJntIndex   = 3;
 u8 THanaSambo::mPollenJntIndex = 6;
 u8 TSamboHead::mBodyJntIndex   = 0;
-TSamboHead* gpCurSamboHead;
+static TSamboHead* gpCurSamboHead;
 
 // Emitters scaled the same on both axes, as the die/hit effects are.
 static inline void setEmitterScale(JPABaseEmitter* emitter, f32 x, f32 y,

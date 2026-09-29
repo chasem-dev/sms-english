@@ -315,6 +315,5 @@ public:
 	virtual void createModelData();
 };
 
-extern TSamboHead* gpCurSamboHead;
 
 #endif
