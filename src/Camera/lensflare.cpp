@@ -92,10 +92,14 @@ static inline void LensSetTRS(Mtx mtx, const Vec& t,
                               const JGeometry::TVec3<f32>& r,
                               const JGeometry::TVec3<f32>& s)
 {
-	s16 rx = CLBDegToShortAngle(r.x);
-	s16 ry = CLBDegToShortAngle(r.y);
-	MsMtxSetTRS(mtx, t.x, t.y, t.z, rx * (360.0f / 65536.0f),
-	            ry * (360.0f / 65536.0f), 0.0f, s.x, s.y, s.z);
+	// The three angles are named: that is what makes retail load the 0.0f
+	// and the conversion constants before `s.z`.
+	s16 rx   = CLBDegToShortAngle(r.x);
+	s16 ry   = CLBDegToShortAngle(r.y);
+	f32 degX = rx * (360.0f / 65536.0f);
+	f32 degY = ry * (360.0f / 65536.0f);
+	f32 degZ = 0.0f;
+	MsMtxSetTRS(mtx, t.x, t.y, t.z, degX, degY, degZ, s.x, s.y, s.z);
 }
 
 // perform's cue blocks are inline members (fabricated names): retail lays
@@ -161,8 +165,7 @@ inline void TLensFlare::calcAnim()
 	// position is a plain `Vec` copy (lwz/stw). Left: (a) in move()'s
 	// isInBounds expansion the result/pointer GPRs rotate (retail r4/r5/r3,
 	// ours r3/r4/r5; the f0/f1 swap closed by naming `x`); (b) r3/r4/r5 rotation in
-	// the hidden-count loop; (c) in the MsMtxSetTRS tail retail loads the
-	// 0.0f and conversion constants before `unk18`'s z; (d) the frame is
+	// the hidden-count loop; (c) closed by c-k17's named angles; (d) the frame is
 	// 0xa0 short (0x218 vs 0x2b8): retail's near-nine-pos argument
 	// temporaries and the direction/rotation vectors sit above camEuler,
 	// ours below the J3DGXColorS10, yet spelling those calls in calcAnim()
