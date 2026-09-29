@@ -955,11 +955,9 @@ void TMapObjBase::emitColumnWater()
 		eff->generate(mPosition, mScaling);
 }
 
-// TODO: 95.9%, frame 0x48 vs 0x50. Retail's three fctiwz slots sit at
-// 0x28 (x), 0x38 (y), 0x30 (z) above an unused 0x20; ours are 0x20/0x28/0x30.
-// emitAndRotateScale shows the same x, z, y slot order. Inert: the
-// setRotation(const TVec3&) overload, a TU-local inline taking f32s or the
-// vector, unk16C.set<f32> directly.
+// The angles are converted into named s16 locals before setRotation, as in
+// emitAndRotateScale.
+// TODO: 99.7%, every instruction in place; the fctiwz slots still differ.
 void TMapObjBase::emitAndSRT(s32 param_1, u8 param_2,
                              const JGeometry::TVec3<f32>* param_3,
                              const JGeometry::TVec3<f32>& param_4,
@@ -969,7 +967,10 @@ void TMapObjBase::emitAndSRT(s32 param_1, u8 param_2,
 	    = gpMarioParticleManager->emit(param_1, param_3, param_2, param_3);
 
 	if (emitter) {
-		emitter->setRotation(param_4.x, param_4.y, param_4.z);
+		s16 x = param_4.x;
+		s16 y = param_4.y;
+		s16 z = param_4.z;
+		emitter->setRotation(x, y, z);
 		emitter->setGlobalScale(param_5);
 	}
 }
@@ -981,14 +982,10 @@ void TMapObjBase::emitAndRotateScale(s32 param_1, u8 param_2,
 	    = gpMarioParticleManager->emit(param_1, param_3, param_2, this);
 
 	if (emitter) {
-		// TODO: 96.3%, frame-exact. Retail loads mRotation.z before the
-		// 32768 constant; named component locals drop to 93.6%.
-		// Also tried: a TVec3 temporary or named TVec3 into the
-		// setRotation(const TVec3&) overload (+0x18 / -0x10 frame), raw
-		// mRotation (-0x10), the constant first.
-		emitter->setRotation(getRotation().x / 180.0f * 32768.0f,
-		                     getRotation().y / 180.0f * 32768.0f,
-		                     getRotation().z / 180.0f * 32768.0f);
+		s16 x = getRotation().x / 180.0f * 32768.0f;
+		s16 y = getRotation().y / 180.0f * 32768.0f;
+		s16 z = getRotation().z / 180.0f * 32768.0f;
+		emitter->setRotation(x, y, z);
 		emitter->setGlobalScale(getScaling());
 	}
 }
