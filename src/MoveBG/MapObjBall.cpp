@@ -290,7 +290,10 @@ u32 TMapObjBall::touchWater(THitActor* param_1)
 }
 
 // Reference binding over the physical-parameter chain, used in
-// TMapObjBall::boundByActor (a value copy orders its slots worse).
+// TMapObjBall::boundByActor's kick-up level (a value copy orders its slots
+// worse). c-k15: the two direct tests there read
+// TMapObjData::getPhysicalData() (code-identical); at the kick-up site the
+// accessor, a named `const f32&` over it or the raw chain are all worse.
 static inline f32 MapObjBallMinBoundSpeed(const TMapObjBall* p)
 {
 	const f32& min = p->mMapObjData->mPhysical->unk4->unkC;
@@ -354,9 +357,9 @@ void TMapObjBall::boundByActor(THitActor* param_1)
 
 		if (into >= 0.0f
 		    && abs(JGeometry::TVec3<f32>(mVelocity).x)
-		        > MapObjBallMinBoundSpeed(this)
+		        > mMapObjData->getPhysicalData()->unkC
 		    && abs(JGeometry::TVec3<f32>(mVelocity).z)
-		        > MapObjBallMinBoundSpeed(this)) {
+		        > mMapObjData->getPhysicalData()->unkC) {
 			mVelocity.x = -((1.0f + unk16C) * (away.x * into) - mVelocity.x);
 			mVelocity.y += unk168;
 			mVelocity.z = -((1.0f + unk16C) * (away.z * into) - mVelocity.z);
