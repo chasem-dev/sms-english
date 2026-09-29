@@ -589,10 +589,11 @@ void TRope::constraintTail(const JGeometry::TVec3<f32>& param)
 	collision();
 }
 
-// TODO: 93.6%, frame 0x80 vs 0x88. Retail is `(unkC - unk0) * scale` through
-// a reference-returning `operator*` (JGVec3.hpp header note: 99.80 here);
-// with the by-value header operator the spelling is left as is. Refuted
-// here (k5): named `v` with `*=`/`scale()` (scale inlines, 90.7%).
+// TODO: 93.6%, frame exact with the difference and the scaled step both
+// named. Retail is `(unkC - unk0) * scale` through a reference-returning
+// `operator*` (JGVec3.hpp header note: 99.80 here); with the by-value header
+// operator three stores stay out of place. Refuted here (k5): named `v` with
+// `*=`/`scale()` (scale inlines, 90.7%).
 void TRope::moveHead(const JGeometry::TVec3<f32>& param)
 {
 	for (int i = 0; i < mNumPoints; ++i) {
@@ -602,10 +603,10 @@ void TRope::moveHead(const JGeometry::TVec3<f32>& param)
 	constraintHead(param);
 	for (int i = 0; i < mNumPoints; ++i) {
 		f32 scale               = unk8;
-		JGeometry::TVec3<f32> v;
-		v = mPoints[i].unkC - mPoints[i].unk0;
-		mPoints[i].unk18        = v * scale;
-		mPoints[i].unk0         = mPoints[i].unkC;
+		JGeometry::TVec3<f32> v      = mPoints[i].unkC - mPoints[i].unk0;
+		JGeometry::TVec3<f32> scaled = v * scale;
+		mPoints[i].unk18             = scaled;
+		mPoints[i].unk0              = mPoints[i].unkC;
 	}
 }
 
@@ -620,10 +621,10 @@ void TRope::moveHeadAndTail(const JGeometry::TVec3<f32>& head,
 	constraintTail(tail);
 	for (int i = 0; i < mNumPoints; ++i) {
 		f32 scale               = unk8;
-		JGeometry::TVec3<f32> v;
-		v = mPoints[i].unkC - mPoints[i].unk0;
-		mPoints[i].unk18        = v * scale;
-		mPoints[i].unk0         = mPoints[i].unkC;
+		JGeometry::TVec3<f32> v      = mPoints[i].unkC - mPoints[i].unk0;
+		JGeometry::TVec3<f32> scaled = v * scale;
+		mPoints[i].unk18             = scaled;
+		mPoints[i].unk0              = mPoints[i].unkC;
 	}
 }
 
