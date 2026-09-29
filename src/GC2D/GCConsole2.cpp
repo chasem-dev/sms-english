@@ -1315,14 +1315,15 @@ void TGCConsole2::startDisappearCoin()
 	unk4D = true;
 	unk5A = true;
 
-	// TODO: instructions exact; frame 0xc0 vs 0xd0 (four dead words, every
-	// slot shifts). getInitialBounds() at the offset line changes its code.
+	// TODO: instructions exact; frame 0xc8 vs 0xd0 (two dead words, every
+	// slot shifts). getInitialBounds() at the offset line changes its code;
+	// the above-screen helper at the unk140 offset as well is back at 0xc0.
 	if (unk140->isInterpolatorAtZero())
 		unk140->updatePaneOffset(
 		    40, 0,
 		    -(1 + unk140->getInitialBounds().y2 + unk128->getPane()->getHeight()));
 
-	int offset = -(unk108->mInitialBounds.y2 + 1);
+	int offset = GCConsole2HideAboveScreenY(unk108);
 	unk108->updatePaneOffset(40, 0, offset - unkC8->getPane()->getHeight());
 
 	unk124->setStatus(JPABaseEmitter::STATUS_STOP_EMIT);
