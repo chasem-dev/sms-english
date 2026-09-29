@@ -56,7 +56,8 @@ void TFence::initMapCollisionData()
 
 void TFence::initMapObj()
 {
-	if (strstr(unkF4, "bamboo"))
+	const char* name = unkF4;
+	if (strstr(name, "bamboo"))
 		mIsBamboo = 1;
 
 	TMapObjBase::initMapObj();
@@ -423,16 +424,6 @@ void TFenceWater::control()
 
 void TFenceWater::initMapCollisionData() { TMapObjBase::initMapCollisionData(); }
 
-// TODO: 99.3%, the one difference is `this` saved with `addi r31,r3,0`
-// where retail uses `mr` (the pointer-conversion tell). Inert (cc37):
-// mMessenger typed THitActor* (the push_back's T) with a cast at unk68,
-// `(THitActor*)this`, a reference-returning member fork or a TU-local push
-// helper (both regress), searching the group inline.
-// c-k8 (dumps, every case read so far): the `addi` is made by the post-RA
-// peephole, which rewrites a `mr` as `addi rD,rS,0` when the next
-// instruction in the pre-RA schedule is an integer add (add, addi, lis, mr)
-// and leaves it when the next one is a load, a compare or a call. Ours schedules the .rodata base `lis` right
-// after the `this` copy; retail must have scheduled the `unkF4` load there.
 void TFenceWater::initMapObj()
 {
 	TFence::initMapObj();
