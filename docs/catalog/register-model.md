@@ -278,3 +278,10 @@ Both were read from `dbg.sh` dumps (`frontend-00-ast-initial-code.txt`, `backend
 - `TPollutionManager::pollute(x, y, z, size)` is retail's spelling of `stamp(1, ...)`: it gives the z, y, x load order before `gpPollution` (`TMario::setStatusToJumping`, `TFireWanwan::updatePollute`). Other `stamp()` sites pass `getUnk58()`, so it does not apply there.
 - A default scale argument (`newAndRegisterObj(..., scale = default)`) rather than named `scale(1,1,1)` locals is why retail computes the scale address first (`TCogwheel::initMapObj`).
 - Lead, shared header not changed: `mDirection = WrapRadianF(mDirection)` with `WrapRadianF` naming its result makes `calcNearerDirection` exact and `calcTurnDirection`'s frame exact, but then inlines into `makeRelativeAngle` (99.8 -> 30.4) where retail calls it at all three sites; ties to the open question of why `std::fmodf` never expands in retail.
+
+## Additions (c-k12)
+
+- When `tools/hsearch dbg` shows a named word missing between two named objects, name the value computed there; if the frame then comes up 8 short, header accessors on the same statement or loop each add one bottom word (closed `TRocketManager::initSetEnemies`, the same shape as THauntLeg's).
+- A named local declared early but assigned later is still placed in declaration order (repaired `TMario::slideProcess`'s named block); this corrects the earlier "first reference" note from setupEfbAlpha.
+- Many remaining candidates carry TU-local binders that only make up frame; replacing them with plain accessors costs 8 per binder (an accessor used only as a call receiver is free), so those functions need their real depth structure rather than more levers.
+- `dbg` located the missing/extra word exactly in about 17 of 81 candidates and pointed straight to the fix in 2; hsearch triage (100-150 s) gave 1 exact and 2 leads out of about 20.
