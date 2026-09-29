@@ -953,6 +953,16 @@ void TKoopaJrSubmarine::calcRootMatrix()
 		TPosition3f offset;
 		offset.translation(center);
 
+		// TODO: retail loads centerZ before storing center's two zeros.
+		// JGVec3's cast `operator=` gives that here: it takes `center`'s
+		// address, so the IR optimiser cannot forward the load past the
+		// zero stores. Under an uncast or implicit copy-assignment
+		// (research c-r25, c-k18) the load is forwarded, and this drops
+		// to 96.75. Inert under both (c-k18): `TPosition3f offset(center)`,
+		// `translation(center.x, center.y, center.z)`, a const `center`,
+		// `center = TVec3(0, 0, z)` (93.5), `trans.sub(getPosition(),
+		// center)` (86). Only a cast of `&center` restores it, so nothing
+		// honest takes center's address here.
 		JGeometry::TVec3<f32> trans;
 		trans = center;
 		trans.negate();
@@ -1108,9 +1118,18 @@ static inline void KoopajrCross(JGeometry::TVec3<f32>& dst,
 
 // Shine killers go up and then arc towards Mario; the others aim at a spot
 // on the bathtub's rim.
-// TODO: 96.6%. Frame 0x190 vs 0x178 (low temporaries 0x1c too many), both
-// TQuat4::rotate expansions colour their FPRs differently, and the cross
-// product reloads dir after each store where retail reloads toMario instead.
+// TODO: 98.9%. The frame is 0x150 against retail's 0x178, and the cross
+// product reloads `dir.y` after the `axis.y` store where retail reloads
+// `toMario.x` instead. Research c-k18 found the cause. Retail keeps all of
+// `dir` in registers, so its stores to `axis` are known not to alias the
+// parameter. That means retail's `axis = toMario` does not take `axis`'s
+// address. Both of JGVec3's cast bodies cast `this`, which makes `axis`
+// address-taken. The uncast body is worse still (97.7): it reloads all
+// three `dir` components. Without a user `operator=(const TVec3&)`, the
+// implicit copy is exact through the cross product and keeps the
+// instruction count (99.51); only the frame is left. The spelling of the
+// cross does not matter: KoopajrCross, the body written out, `Vec&`
+// parameters and pointer parameters all score the same.
 void TKoopaJrSubmarine::makeKillerVelocity(TBathtubKiller* killer,
                                            JGeometry::TVec3<f32> dir)
 {

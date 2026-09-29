@@ -2206,3 +2206,55 @@ Symbol order is unchanged in every touched unit.
 - Bodies measured tree-wide with the respellings applied: `*(const Vec*)&other` = the current body; `*&other` and `static_cast<Vec&>(*this) = other` = uncast; `const Vec& o = other; *(Vec*)this = o;` changes the DOL.
   So what separates the two families is the pointer conversion of `other`, not the `&`, and no body gives both retail's elisions and retail's address-taken schedule.
 - Next: a retail-plausible spelling at either koopajr site that takes the local's address through a pointer conversion (a `const Vec*` argument, a `Vec*` conversion) with no extra code, or a third `operator=` body that keeps the conversion but still allows the Kukku/effectObj/MapMakeData elisions.
+
+## Research batch c-k18 (2026-09-29): the koopajr pair wants opposite things from `operator=`
+
+Goal: honest spellings at the two koopajr sites, so that the uncast `operator=` (c-r25) could land with no function going down.
+It cannot land: neither site has an honest fix under the uncast body.
+The header is not changed; this record, the JGVec3 comment and the two koopajr TODOs are the only changes.
+All measurements below use the MWCC debugger dumps (`tools/mwcc-stack/udbg.py`, frontend-00/01 and backend-01/06/07).
+
+### What the dumps show
+
+- The cast body emits `ETYPCON pointer(Vec)` around the source address (`&center`, `&toMario`); the uncast body emits a plain `EOBJREF [x] pointer(Vec)`.
+  Both bodies emit an `ETYPCON` on `this`, and so does `static_cast<Vec&>(*this)`.
+  An object under an `ETYPCON` is address-taken for the IR optimiser.
+- `calcRootMatrix`: under the uncast body, the IR optimiser forwards the `centerZ` load (temporary `@N`) into the `center.z` store.
+  Nothing aliases `center`, so the load then comes after the two zero stores (frontend-01).
+  Under the cast body, `center` is address-taken, so the zero stores might alias the params load and the temporary stays, as in retail.
+  So `calcRootMatrix` needs `center` address-taken.
+- `makeKillerVelocity`: retail keeps all three `dir` components in registers across the stores to `axis`, and reloads `toMario.x` only.
+  Every body that casts `this` makes `axis` address-taken, so its stores kill the `dir` loads.
+  The cast body reloads `dir.y` (98.88) and the uncast one all three (97.71).
+  With no user `operator=(const TVec3&)`, the implicit copy is an untyped aggregate `EASS`, so neither local is address-taken.
+  The cross product is then exact, registers included, the instruction count equals retail's (451), and the function scores 99.51 with only the frame (0x150 against 0x178) left.
+  c-r25's note that the cast body "keeps `toMario` in memory" has it backwards: the cast body is the one that keeps `toMario.x` in a register.
+- So one site needs its source address-taken and the other needs its destination not address-taken.
+  No single body gives both; `Vec& v = *this; v = *(const Vec*)&other;` gives `calcRootMatrix` 98.5 but `makeKillerVelocity` 98.2.
+  Retail's `center` must be address-taken by something other than the assignment, and nothing in the function takes it honestly.
+
+### Site spellings tried under the uncast body (all inert or worse)
+
+- `calcRootMatrix`: `TPosition3f offset(center)` and `translation(center.x, center.y, center.z)` (both 96.75, frame +8); a `const` `center`; `center = TVec3(0, 0, z)` and `TVec3 center = TVec3(0, 0, z)` (both 93.5); `trans.sub(getPosition(), center)` (86.2).
+  Only the forbidden `trans = *(const Vec*)&center` restores 98.46.
+  A single lever-search run (60 s) found only the frame: a `getModel` fork plus a `getSwingAngle` binder reached 97.15, and both are pass-through helpers.
+- `makeKillerVelocity`: `axis.cross(dir, toMario)` (97.2); the cross written out, KoopajrCross with `Vec&` parameters, or with pointer parameters (all 97.71, identical code).
+  `axis.set(toMario)` scalarises `axis` completely (81%).
+  Every operator-free honest copy would be a copy construction into a new local, but retail uses one slot for the cross result and the copy.
+
+### Other `operator=` bodies, measured
+
+- `static_cast<Vec&>(*this) = *(const Vec*)&other;` behaves like the cast body at koopajr (98.46 / 98.88).
+- `Vec::operator=(other)` does not compile: `undefined identifier 'Vec::operator='`.
+- `Vec& v = *this; v = other;`: `makeKillerVelocity` 99.5, but tree-wide the DOL changes, with 385 down and 269 exact lost.
+- The implicit copy (the operator removed), on main 510a99dd without the c-r25 site respellings:
+  - Exact: +2 (`TEffectColumWater::generate`, `TMapCollisionBase::setCheckData`) and -3 (`TBWPicket::moveRequest`, `TMapObjBall::control`, `TBigWatermelon::control`); 26 up, 24 down.
+  - MapObjBall's `matched_data` also drops, to 29%, and the total `matched_data` goes from 99.84 to 99.47.
+  - The enemy.cpp `__as__` stays emitted and 100%.
+  - Ups beyond the uncast family's: `TLimitKoopa::startHipDrop` 91.55 -> 99.88, `TMario::pulling` 98.57 -> 99.96, `TModelWaterManager::move` 96.98 -> 99.77, `TConeBeam::calcVertices` 95.65 -> 98.39, `FeetInvCalc` 96.64 -> 98.33, `TAmiNoko::calcRootMatrix`, `makeKillerVelocity`.
+  - Downs beyond the uncast family's: `execWallCheck_` 99.87 -> 95.60, `calcSlopeAngleX_` 98.39 -> 95.47, `TFireWanwan::bindBody` 98.39 -> 95.71, `TPopo::walkBehavior` 99.81 -> 97.51, `TBossHanachan::init` and `bind` (bind 99.86 -> 96.82), `TRocket::setDeadAnm` 91.71 -> 80.88, `TKumokun::bind` 99.51 -> 97.67, `TBaseNPC::npcMadding` and `execWalk`, `TWarpInCallBack::execute`, and the MapObjBall trio.
+  - With the c-r25 respellings applied it is +3 / -3, 28 up, 21 down.
+  - `TMapObjBall::control` shows why it is no single-body answer either: its `vel = getVelocity(); vel.isZero()` needs `vel` memory-resident (no `fmadds`), which the implicit copy loses.
+- Next: the per-site knob is whether each local is address-taken, not the body.
+  The remaining lead for both koopajr sites is the implicit copy combined with some retail-plausible source for `center`'s address at `calcRootMatrix`.
+  One candidate is a JGPosition3 `translation`/`setTrans` that takes its argument's address; it has not been measured.

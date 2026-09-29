@@ -137,6 +137,19 @@ public:
 	// (the zero before `centerZ`) or keeps its components in registers
 	// across the cross product; retail has the address-taken schedule at
 	// both, and nothing at either site takes the address honestly.
+	// Research c-k18 split the pair. `calcRootMatrix` does need `center`
+	// address-taken. `makeKillerVelocity` needs the opposite: `axis` must
+	// NOT be address-taken, and every body that casts `this` (both of the
+	// above, `static_cast<Vec&>(*this)`) makes it so. Removing this
+	// operator, so that the implicit copy is used, is exact through its
+	// cross product (98.88 -> 99.51). The enemy.cpp `__as__` stays 100%.
+	// Tree-wide on main 510a99dd without the c-r25 site respellings: +2 / -3
+	// exact, 26 up, 24 down. The losses are TBWPicket::moveRequest,
+	// TMapObjBall::control and TBigWatermelon::control; MapObjBall's data
+	// also drops. The ups include TLimitKoopa::startHipDrop
+	// 91.55 -> 99.88, TMario::pulling -> 99.96 and TModelWaterManager::move
+	// -> 99.77. `Vec& v = *this; v = other;` is 99.5 at makeKillerVelocity
+	// but breaks the DOL tree-wide.
 	TVec3& operator=(const TVec3& other)
 	{
 		// NOTE: yes, this has to use lwz/stw and not lfs/stf.
