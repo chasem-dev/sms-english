@@ -166,10 +166,6 @@ bool TMario::askStrongGroundTouch()
 	return isStrong;
 }
 
-// TODO: instruction-exact; retail's frame is 0xa0 against our 0x58 and
-// the body touches no stack slot, so 0x48 of dead inline temporaries is missing.
-// c-k3 debugger reading: ours has 10 dead words (6 F, 1 P, 3 inliner) at
-// 0x14..0x40; a by-value `TVec3 normal` at the fence test changes code (98.6).
 BOOL TMario::jumpingBasic(int statusOnGround, int animation, int processArg)
 {
 	doJumping();
@@ -180,8 +176,8 @@ BOOL TMario::jumpingBasic(int statusOnGround, int animation, int processArg)
 		break;
 
 	case 1: {
-		if (mGroundPlane->mActor != nullptr)
-			((THitActor*)mGroundPlane->mActor)->receiveMessage(this, 0);
+		if (mGroundPlane->getActor() != nullptr)
+			((THitActor*)mGroundPlane->getActor())->receiveMessage(this, 0);
 
 		bool didTrample = false;
 
@@ -191,7 +187,7 @@ BOOL TMario::jumpingBasic(int statusOnGround, int animation, int processArg)
 				return changePlayerStatus(MARIO_STATUS_FOOT_DOWN, 0, 0);
 			}
 			if (checkFlag(MARIO_FLAG_HAS_FLUDD)
-			    && (int)mWaterGun->mCurrentNozzle != 2) {
+			    && (int)getFludd()->getCurrentNozzleIndex() != 2) {
 				mTrembleModelEffect->tremble(mJumpParams.mTremblePower.get(),
 				                             mJumpParams.mTrembleAccele.get(),
 				                             mJumpParams.mTrembleBrake.get(),
@@ -224,7 +220,7 @@ BOOL TMario::jumpingBasic(int statusOnGround, int animation, int processArg)
 	}
 
 	case 2:
-		if (mStatus != MARIO_STATUS_WIRE_ROLL_JUMP
+		if (getStatus() != MARIO_STATUS_WIRE_ROLL_JUMP
 		    && mForwardVel > mDeParams.mClashSpeed.get()) {
 			emitParticle(PARTICLE_MS_DMG_C);
 			changePlayerDropping(MARIO_STATUS_JUMP_SHORT_BACK_DOWN, 0U);
@@ -235,34 +231,34 @@ BOOL TMario::jumpingBasic(int statusOnGround, int animation, int processArg)
 			setPlayerVelocity(0.0f);
 			break;
 		}
-		if (mWallPlane != nullptr) {
-			if (mWallPlane->isNoWallJump()) {
+		if (getWallPlane() != nullptr) {
+			if (getWallPlane()->isNoWallJump()) {
 				changePlayerStatus(MARIO_STATUS_ROCKET_LANDING, 0, 0);
 				setPlayerVelocity(0.0f);
 				break;
 			}
 		}
-		if (mWallPlane != nullptr) {
-			if (mWallPlane->isFence()) {
-				const JGeometry::TVec3<f32>& normal = mWallPlane->getNormal();
+		if (getWallPlane() != nullptr) {
+			if (getWallPlane()->isFence()) {
+				const JGeometry::TVec3<f32>& normal = getWallPlane()->getNormal();
 				mFaceAngle.y    = matan(normal.z, normal.x) + 0x8000;
 				mModelFaceAngle = mFaceAngle.y;
-				if (mStatus == MARIO_STATUS_U_TURN_JUMP)
+				if (getStatus() == MARIO_STATUS_U_TURN_JUMP)
 					mModelFaceAngle -= 0x8000;
 				rumbleStart(0x15, mMotorParams.mMotorWall.get());
 				return changePlayerStatus(MARIO_STATUS_FENCE_JUMP_CATCH, 0, 0);
 			}
 		}
-		if (mForwardVel > 16.0f && mStatus != MARIO_STATUS_ROCKET_LANDING) {
+		if (mForwardVel > 16.0f && getStatus() != MARIO_STATUS_ROCKET_LANDING) {
 			playerRefrection(0);
 			mFaceAngle.y += 0x8000;
-			if (mWallPlane != nullptr) {
+			if (getWallPlane() != nullptr) {
 				changePlayerStatus(MARIO_STATUS_WALL_SLIDE, 0, 0);
 				if (isMario()) {
 					rumbleStart(0x15, mMotorParams.mMotorWall.get());
 					gpCameraShake->startShake((EnumCamShakeMode)1, 1.0f);
 					u32 sfx
-					    = gpMSound->getWallSound(mWallPlane->unk6, mForwardVel);
+					    = gpMSound->getWallSound(getWallPlane()->unk6, mForwardVel);
 					SMSGetMSound()->startSoundActor(sfx, &mPosition, 0, nullptr,
 					                                0, 4);
 				}

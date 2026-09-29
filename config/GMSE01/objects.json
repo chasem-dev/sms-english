@@ -338,6 +338,7 @@
     "Player/MarioCheckCol.cpp",
     "Player/MarioEffect.cpp",
     "Player/MarioInit.cpp",
+    "Player/MarioJump.cpp",
     "Player/MarioPositionObj.cpp",
     "Player/MarioRecord.cpp",
     "Player/MarioSound.cpp",
