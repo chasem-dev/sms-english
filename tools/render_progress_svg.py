@@ -102,7 +102,7 @@ def main():
   <path d="M872 28v18M872 180v18M787 113h18M939 113h18M811 52l13 13M920 161l13 13M933 52l-13 13M824 161l-13 13" stroke="#FFD08B" stroke-opacity=".64" stroke-width="3" stroke-linecap="round"/>
   <text x="54" y="229" fill="#84A7AD" font-size="12" class="mono">MEASURE</text>
   <text x="946" y="229" text-anchor="end" fill="#84A7AD" font-size="12" class="mono">PROGRESS</text>
-  {''.join(bars)}
+{''.join(bars)}
   <g clip-path="url(#bar-clip)" fill="url(#ticks)">
     <rect x="339" y="247" width="520" height="16"/>
     <rect x="339" y="296" width="520" height="16"/>
