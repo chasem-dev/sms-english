@@ -6,17 +6,17 @@ AI has been used extensively to help reconstruct and match the North American ga
 
 ## GMSE01 progress
 
-As of 2026-09-23, the local `GMSE01` build report measures:
+As of 2026-09-29, the local `GMSE01` build report measures:
 
 | Code | Fuzzy match | Perfect match | Fully linked |
 | --- | ---: | ---: | ---: |
-| Game | 99.36% | 64.00% | 16.98% |
-| JSystem | 99.89% | 93.15% | 81.22% |
+| Game | 99.48% | 67.17% | 19.46% |
+| JSystem | 99.90% | 93.91% | 81.22% |
 | SDK | 100.00% | 99.71% | 99.54% |
-| **Total** | **99.48%** | **70.57%** | **31.73%** |
+| **Total** | 99.58% | 73.18% | 33.70% |
 
 Fuzzy match measures approximate code similarity; perfect match counts bytes identical to the original; fully linked counts code built from matching source.
-11,876 of 12,904 functions match exactly, and 527 of 732 object files are linked from source.
+12,014 of 12,904 functions match exactly, and 536 of 732 object files are linked from source.
 The rebuilt `mario.dol` is byte-identical to the original; unfinished objects still use code extracted from the user's own disc.
 These USA figures are measured separately from the Japanese starting point.
 See [current progress and open work](PROGRESS.md) and the [North American build notes](config/GMSE01/README.md).

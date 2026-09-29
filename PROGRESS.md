@@ -7,16 +7,16 @@ Per-batch history through batch 69 is archived in [docs/progress/history.md](doc
 
 ## Current numbers
 
-Measured from `build/GMSE01/report.json` on 2026-09-27.
+Measured from `build/GMSE01/report.json` on 2026-09-29.
 
 | | Fuzzy match | Perfect match | Fully linked | Linked units |
 | --- | ---: | ---: | ---: | ---: |
-| Game | 99.48% | 66.85% | 18.81% | 198 / 385 |
-| JSystem | 99.89% | 93.91% | 81.22% | 186 / 198 |
+| Game | 99.48% | 67.17% | 19.46% | 202 / 385 |
+| JSystem | 99.90% | 93.91% | 81.22% | 186 / 198 |
 | SDK | 100.00% | 99.71% | 99.54% | 148 / 149 |
-| All | 99.57% | 72.94% | 33.18% | 532 / 732 |
+| All | 99.58% | 73.18% | 33.70% | 536 / 732 |
 
-12,002 of 12,904 functions match. The rebuilt DOL remains byte-identical to the original.
+12,014 of 12,904 functions match. The rebuilt DOL remains byte-identical to the original.
 
 ## What recent batches have done
 
@@ -98,14 +98,15 @@ Most remaining differences in these units are frame gaps and per-call-site inlin
 
 ## Still open
 
-- **The branch exists only on this disk.** No fork is configured. This is the outstanding risk and needs a remote from the user.
+- Remotes `fork` and `origin` are configured. New commits from this session remain local; no push was performed.
 - **`System/MarioGamePad` is linked on top of a fakematch**: `updateMeaning` still carries the
   pre-existing `u32 stackAlloc[83]` padding (336 bytes of dead low region over 26 inlined
   expansions). The linked count of 492 includes it; the unit is not honestly closed until the
   padding is replaced by real locals (`docs/catalog/linking.md`, "Links 279").
 - `Camera/CameraInbetween` matches but will not link: `docs/catalog/linking.md`.
 - Units one function from linking (`MSoundBGM`, `MarioAccess`): `docs/catalog/frame-gaps.md`.
-- About 200 nerve bodies, and most enemy and MoveBG methods, are unwritten.
+- 890 functions remain non-exact and 196 units remain unlinked; source counterparts exist throughout the game.
+  Most remaining work is compiler stack layout, register allocation, inline structure and matching data layout.
 - **The `a = b - c` pool residue is the single largest open lever**: all 102 retail
   `bl TVec3::sub` sites are nonmatching, 40 of them at >= 99.3%, for one shared
   slot-placement difference. Research batch 113 in `docs/catalog/frame-gaps.md`

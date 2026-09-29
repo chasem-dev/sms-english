@@ -41,6 +41,10 @@
    loop, or after it) gives 91/29 < 88/28 and retail's colouring. Inert:
    `done = error = 0`, a `for` init, reordered inits, `exit == FALSE`,
    `&data[done]`. */
+/* 2026-09-29 source-structure probes: unsigned error storage adds 8 opcode
+   mismatches; a shared parameter-error return adds 2 operands; combining the
+   count store and return with a comma adds 11 instructions and grows the frame
+   to 0x50. None supplies the needed done-only coalesced web. */
 DSError TRKSuppAccessFile(u32 file_handle, u8* data, size_t* count,
                           DSIOResult* io_result, BOOL need_reply, BOOL read)
 {

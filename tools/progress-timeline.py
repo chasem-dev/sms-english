@@ -36,6 +36,14 @@ def show(commit, path):
 
 def parse_progress(text):
     """Return (game_matched, game_linked, all_matched, all_linked) percents or Nones."""
+    # Current tables put fuzzy similarity before exact and linked code.
+    # Older tables have only the latter two percentages.
+    current = r"^\| {} \| [\d.]+% \| ([\d.]+)% \| ([\d.]+)% \|"
+    g = re.search(current.format("Game"), text, re.M)
+    a = re.search(current.format("All"), text, re.M)
+    if g:
+        return (float(g.group(1)), float(g.group(2)),
+                float(a.group(1)) if a else None, float(a.group(2)) if a else None)
     g = re.search(r"^\| Game \| ([\d.]+)% \| ([\d.]+)% \|", text, re.M)
     a = re.search(r"^\| All \| ([\d.]+)% \| ([\d.]+)% \|", text, re.M)
     if g:
