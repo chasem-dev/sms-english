@@ -264,18 +264,19 @@ void TMapObjPlane::perform(u32 cue, JDrama::TGraphics*)
 	}
 }
 
-// TODO: frame 0x38 short (0x28 vs 0x60) in the low region and the header adds
-// are scheduled differently. Inert: height first, |, reassociated or reversed
-// sums; a little-endian read helper adds only 8 per call. TU-local pixel
-// and pixel-to-height helpers (c-mix1) add 8 each with no instruction change
-// (0x30..0x50 in combination); the map has no symbol for any of them.
+// A little-endian 32-bit field of the height map's BMP header.
+static inline int readLittleEndianInt(const u8* p, int offset)
+{
+	return (p[offset + 3] << 24) + (p[offset + 2] << 16)
+	       + (p[offset + 1] << 8) + p[offset];
+}
+
+// TODO: 99.9%. Frame 0x40 against 0x60, so the low slots sit 0x20 low; the map
+// has no symbol for the header read helper.
 void TMapObjPlane::makeMountain()
 {
-	int width = (unk118[0x15] << 24) + (unk118[0x14] << 16)
-	            + (unk118[0x13] << 8) + unk118[0x12];
-
-	int height = (unk118[0x19] << 24) + (unk118[0x18] << 16)
-	             + (unk118[0x17] << 8) + unk118[0x16];
+	int width  = readLittleEndianInt(unk118, 0x12);
+	int height = readLittleEndianInt(unk118, 0x16);
 
 	for (int z = 0; z < mExtents; z = z + 1) {
 		for (int x = 0; x < mExtents; x = x + 1) {

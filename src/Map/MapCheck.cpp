@@ -177,23 +177,11 @@ int TMapCollisionData::checkWalls(TBGWallCheckRecord* param_1) const
 	return iVar6;
 }
 
-// Edge test shared by the roof and ground lists. The four named corner
-// components give retail's 0x70 roof frame; declaring the z components first
-// gives its FPR pairing.
-// TODO: retail still loads a.x into f31 and evaluates (ax - x) first, and
-// keeps the list entry in r3 (flags in r6/r7); ground's frame is 8 short.
-// Declaring ax before az (either b order) or naming ax - x / az - z costs
-// both roof and ground (97.6/97.7).
-static inline f32 MapCheckEdge(const JGeometry::TVec3<f32>& a,
-                               const JGeometry::TVec3<f32>& b, f32 x, f32 z)
-{
-	f32 az = a.z;
-	f32 ax = a.x;
-	f32 bz = b.z;
-	f32 bx = b.x;
-	return (az - z) * (bx - ax) - (ax - x) * (bz - az);
-}
-
+// The roof and ground lists test the three edges inline, sharing the corner
+// loads between edges (z before x for each corner after the first).
+// TODO: roof 99.0% (frame 0x38 vs 0x70), ground 98.9% (0x38 vs 0x78); only
+// slots differ. A shared edge helper with four named corner reads gives the
+// 0x70 roof frame but loses retail's register pairing (97.6-98.5).
 f32 TMapCollisionData::checkRoofList(f32 x, f32 y, f32 z, u8 param_4,
                                      const TBGCheckList* head,
                                      const TBGCheckData** result)
@@ -205,13 +193,25 @@ f32 TMapCollisionData::checkRoofList(f32 x, f32 y, f32 z, u8 param_4,
 		if (param_4 & 0x4 && data->isWaterThrough())
 			continue;
 
-		if (MapCheckEdge(data->mPoint1, data->mPoint2, x, z) > 1.0f)
+		f32 point1x = data->mPoint1.x;
+		f32 point1z = data->mPoint1.z;
+		f32 point2z = data->mPoint2.z;
+		f32 point2x = data->mPoint2.x;
+		if ((point1z - z) * (point2x - point1x)
+		        - (point1x - x) * (point2z - point1z)
+		    > 1.0f)
 			continue;
 
-		if (MapCheckEdge(data->mPoint2, data->mPoint3, x, z) > 1.0f)
+		f32 point3z = data->mPoint3.z;
+		f32 point3x = data->mPoint3.x;
+		if ((point2z - z) * (point3x - point2x)
+		        - (point2x - x) * (point3z - point2z)
+		    > 1.0f)
 			continue;
 
-		if (MapCheckEdge(data->mPoint3, data->mPoint1, x, z) > 1.0f)
+		if ((point3z - z) * (point1x - point3x)
+		        - (point3x - x) * (point1z - point3z)
+		    > 1.0f)
 			continue;
 
 		f32 tmp = (x * data->mNormal.x) + (z * data->mNormal.z)
@@ -277,13 +277,25 @@ f32 TMapCollisionData::checkGroundList(f32 x, f32 y, f32 z, u8 flags,
 		if ((flags & IGNORE_WATER_SURFACE) && data->isWaterSurface())
 			continue;
 
-		if (MapCheckEdge(data->mPoint1, data->mPoint2, x, z) < -1.0f)
+		f32 point1x = data->mPoint1.x;
+		f32 point1z = data->mPoint1.z;
+		f32 point2z = data->mPoint2.z;
+		f32 point2x = data->mPoint2.x;
+		if ((point1z - z) * (point2x - point1x)
+		        - (point1x - x) * (point2z - point1z)
+		    < -1.0f)
 			continue;
 
-		if (MapCheckEdge(data->mPoint2, data->mPoint3, x, z) < -1.0f)
+		f32 point3z = data->mPoint3.z;
+		f32 point3x = data->mPoint3.x;
+		if ((point2z - z) * (point3x - point2x)
+		        - (point2x - x) * (point3z - point2z)
+		    < -1.0f)
 			continue;
 
-		if (MapCheckEdge(data->mPoint3, data->mPoint1, x, z) < -1.0f)
+		if ((point3z - z) * (point1x - point3x)
+		        - (point3x - x) * (point1z - point3z)
+		    < -1.0f)
 			continue;
 
 		f32 tmp

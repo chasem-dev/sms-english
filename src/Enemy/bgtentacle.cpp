@@ -1366,73 +1366,34 @@ void TBGTentacle::calcAttackGuideAnm()
 	if (mState != 1 && mState != 8 && mState != 10)
 		return;
 
-	JGeometry::TVec3<f32> local_30;
-	local_30 = getFirstNode()->getPosition();
-	// Naming the two components retail keeps in f30/f31 across the two calls
-	// below; see the TODO above MsMtxSetTRS.
-	f32 f31 = local_30.z;
-	f32 f30 = local_30.y;
-
-	JGeometry::TVec3<f32> local_3c;
-	local_3c = unk84;
-	local_3c.x -= local_30.x;
-	local_3c.y -= f30;
-	local_3c.z -= f31;
-	JGeometry::TVec3<f32> local_b4;
-	local_b4 = MsGetRotFromZaxis(local_3c);
+	JGeometry::TVec3<f32> local_30 = getFirstNode()->getPosition();
+	JGeometry::TVec3<f32> local_3c = unk84;
+	local_3c -= local_30;
+	JGeometry::TVec3<f32> local_b4 = MsGetRotFromZaxis(local_3c);
 
 	f32 guideScale;
 	if (mState == 10) {
 		guideScale = 1.0f;
 	} else if (unk80->checkCurBckFromIndex(20)) {
-		guideScale = (1.0f / 1500.0f) * local_3c.length();
+		guideScale = local_3c.length() * (1.0f / 1500.0f);
 	} else {
-		guideScale = (1.0f / 1200.0f) * local_3c.length();
+		guideScale = local_3c.length() * (1.0f / 1200.0f);
 	}
 
 	if (guideScale > 2.0f)
 		guideScale = 2.0f;
 
-	// TODO: 98.9%.  Two residues, both measured in closure batch 90.
-	// (1) Retail loads local_30.z into f31 at the third subtraction above,
-	//     ours hoists it eight instructions earlier; the instruction set is
-	//     identical, only the schedule differs.  Splitting the declaration
-	//     (`f32 f31; ... f31 = local_30.z;`) or declaring it with its
-	//     initialiser at the use site both put the load in retail's place but
-	//     add an `fmr` from the scratch register the load lands in, so they
-	//     are worse (99.3% with an extra instruction).
-	// (2) Frame 0x170 vs 0x150.  The named region is byte-identical (local_30
-	//     0x28 from the top, local_3c 0x3c, local_b4 0x48, then the two Mtx
-	//     as one 0x60 block); the 32 bytes are unreferenced inline-temp pool
-	//     between the MsGetRotFromZaxis out-parameter temporary at 0x9c and
-	//     the first Mtx (retail packs them adjacent at 0xa8, ours starts at
-	//     0xc8).  So we expand one level more than retail somewhere in this
-	//     body: spelling both `local_3c.length()` sites as
-	//     TUtil<f32>::sqrt(local_3c.squared()) removes exactly 8 of the 32
-	//     (4 per expansion), which is the one lever found; the remaining 24
-	//     are unattributed.  `getFirstNode()->mPosition` for the copy cannot
-	//     be tried without making TNode::mPosition public.
-	//     c-e1 (debugger): the 32 bytes are exactly the four branches' dead
-	//     named `s`/`c` slots. MsMtxSetRotZ(local_a8, zangle[mIndex]) per
-	//     branch (or an equivalent TU-local body) drops them but leaves every
-	//     slot 0x10 low (frame 0x140): retail has 4 more bytes per branch in
-	//     the low region. A named s16 angle in the helper is +0x40.
-	// (3) The four zangle tables must stay `static const`: as plain const
-	//     locals MWCC copies each one to the stack (76.4%, +42 instructions).
-	//
-	// Retail keeps local_30's y and z in f30/f31 from the subtraction
-	// above all the way into this call and reloads only .x here. Measured in a
-	// scratch TU with the game flags: MWCC gives a callee-saved FPR only to a
-	// *named* f32 local of the function's own body, never to an aggregate
-	// member read nor to a local of an inlined callee, so the two components
-	// retail preserves were named in the source and .x was not. Declaring z
-	// before y is what puts y in f30 and z in f31 (the reverse order gives
-	// f31/f30). The per-component subtraction above is forced by the same
-	// measurement: with `local_3c -= local_30` the subtrahend loads come back
-	// from the stack instead of feeding f30/f31.
+	// TODO: 99.7%, every instruction in place (declaring the three vectors
+	// with their initialisers keeps local_30.y/.z in f30/f31 without naming
+	// them). Frame 0x170 vs 0x150: the 32 extra bytes are the four branches'
+	// dead named `s`/`c` slots (c-e1, debugger). MsMtxSetRotZ(local_a8,
+	// zangle[mIndex]) per branch drops them but leaves every slot 0x10 low
+	// (frame 0x140); a named s16 angle in the helper is +0x40. The zangle
+	// tables must stay `static const`: as plain const locals MWCC copies each
+	// one to the stack (76.4%).
 	Mtx afStack_78;
-	MsMtxSetTRS(afStack_78, local_30.x, f30, f31, local_b4.x, local_b4.y,
-	            local_b4.z, 1.0f, 1.0f, guideScale);
+	MsMtxSetTRS(afStack_78, local_30.x, local_30.y, local_30.z, local_b4.x,
+	            local_b4.y, local_b4.z, 1.0f, 1.0f, guideScale);
 
 	Mtx local_a8;
 	if (mState == 10) {
