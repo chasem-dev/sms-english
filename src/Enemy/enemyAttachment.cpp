@@ -269,46 +269,27 @@ TEnemyPolluteModel::TEnemyPolluteModel(TLiveActor* param_1, int param_2,
 	unk10 = new TSharedParts(param_1, param_2, param_3, 3);
 }
 
-// Levels over the shared parts' actor, priced in perform's low region: the
-// direct fork at the first site moves `cue` into r31 as in retail, and the
-// one- and two-local binders at the other four make up the 0x38 bytes of
-// dead frame (0x48 -> 0x80).
-static inline MActor* EnemyAttachmentActorF(TEnemyPolluteModel* p)
-{
-	return p->unk10->unk18;
-}
-
-static inline MActor* EnemyAttachmentActor(TEnemyPolluteModel* p)
-{
-	MActor* actor = p->unk10->unk18;
-	return actor;
-}
-
-static inline MActor* EnemyAttachmentActor2(TEnemyPolluteModel* p)
-{
-	TSharedParts* parts = p->unk10;
-	MActor* actor       = parts->unk18;
-	return actor;
-}
-
+// Each site reads the actor through TSharedParts::getMActor(), and the anim
+// test is the no-argument curAnmEndsNext() wrapper (c-k13); together they
+// give the dead frame the old per-site binders made up (0x80).
 void TEnemyPolluteModel::perform(u32 cue, JDrama::TGraphics* graphics)
 {
 	if (!unk5D || unk5C)
 		return;
 
 	if (cue & CUE_CALC_ANIM) {
-		if (EnemyAttachmentActorF(this)->curAnmEndsNext(ANM_TYPE_BCK, nullptr)) {
+		if (unk10->getMActor()->curAnmEndsNext()) {
 			unk5D = false;
 			return;
 		}
 
-		EnemyAttachmentActor(this)->getModel()->setBaseTRMtx(unk14);
-		EnemyAttachmentActor2(this)->getModel()->setBaseScale(unk50);
-		EnemyAttachmentActor2(this)->calcAnm();
+		unk10->getMActor()->getModel()->setBaseTRMtx(unk14);
+		unk10->getMActor()->getModel()->setBaseScale(unk50);
+		unk10->getMActor()->calcAnm();
 	}
 
 	if (cue & CUE_ENTRY)
-		gpPollution->stampModel(EnemyAttachmentActor2(this)->getModel());
+		gpPollution->stampModel(unk10->getMActor()->getModel());
 }
 
 void TEnemyPolluteModel::generate(JGeometry::TVec3<f32>& param_1,
