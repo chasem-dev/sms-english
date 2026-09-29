@@ -1209,9 +1209,11 @@ void TShiningStone::perform(u32 cue, JDrama::TGraphics* graphics)
 	mTop->perform(cue, graphics);
 }
 
-// TODO: frame exact; retail hoists &mtx into r30 before MsMtxSetXYZRPH and
-// reuses it for the loop's copy (mTop's copy recomputes it), one more saved
-// GPR. Inert: Mtx declared first, u32 counter, split mirrorActor, s16 args.
+// TODO: instructions exact; frame 8 long (0xb0 vs 0xa8, mtx at 0x38 vs
+// 0x30). The TPosition3f conversion in the loop hoists &mtx into r30 as
+// retail does, but its inline objects leave two words below mtx; the raw
+// .mMtx in the loop loses the hoist. Inert: Mtx declared first, u32 counter,
+// split mirrorActor, s16 args, raw .mMtx at the other two sites.
 void TShiningStone::load(JSUMemoryInputStream& stream)
 {
 	JDrama::TActor::load(stream);
@@ -1223,7 +1225,7 @@ void TShiningStone::load(JSUMemoryInputStream& stream)
 		"/scene/mapObj/ShiningStoneWhite.bmd",
 	};
 
-	Mtx mtx;
+	TPosition3f mtx;
 	MsMtxSetXYZRPH(mtx, mPosition.x, mPosition.y, mPosition.z, mRotation.x,
 	               mRotation.y, mRotation.z);
 
