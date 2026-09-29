@@ -135,6 +135,9 @@ struct TMapObjData {
 	/* 0x30 */ f32 unk30;
 	/* 0x34 */ u32 unk34; // TODO: these are flags
 	/* 0x38 */ u32 unk38;
+
+	// Invented name (c-k15): the move animation's frame control.
+	J3DFrameCtrl* getMoveFrameCtrl() const { return mMove->unk8; }
 };
 
 class TMapObjBase : public TLiveActor {
