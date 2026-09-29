@@ -57,12 +57,16 @@ def main():
                 compile_args = tokens[executable + 1:]
     if compile_args is None:
         parser.error('could not find this unit\'s compiler command')
-    # GC/1.1 cannot consume a GC/1.2.5 precompiled header. Preserve the
-    # unit's optimization flags and include paths while compiling its source.
-    for option, count in (('-prefix', 2), ('-MMD', 1)):
-        if option in compile_args:
-            index = compile_args.index(option)
-            del compile_args[index:index + count]
+    # Preserve prefix declarations using the textual header. GC/1.1
+    # cannot consume a GC/1.2.5 .mch file; removing the prefix entirely
+    # would leave some units without required declarations.
+    if '-prefix' in compile_args:
+        index = compile_args.index('-prefix') + 1
+        prefix = Path(compile_args[index])
+        if prefix.suffix == '.mch':
+            compile_args[index] = prefix.with_suffix('.pch').as_posix()
+    if '-MMD' in compile_args:
+        compile_args.remove('-MMD')
     compile_args[compile_args.index('-o') + 1] = str(output)
     log = output / 'debugger.log'
     with tempfile.TemporaryDirectory(prefix='mwcc-native-') as temporary:

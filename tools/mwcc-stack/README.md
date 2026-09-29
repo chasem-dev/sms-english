@@ -16,7 +16,7 @@ python3 tools/mwcc-stack/native.py src/Enemy/gesso.cpp GessoBodyCallback__FP7J3D
 python3 tools/mwcc-stack/iro.py /tmp/gesso-dump
 ```
 
-The adapter reads the selected unit's compiler command from Ninja, keeps its optimization flags and include paths, and removes the incompatible precompiled header before using GC/1.1.
+The adapter reads the selected unit's compiler command from Ninja, keeps its optimization flags and include paths, and uses the textual prefix header in place of the incompatible precompiled header before using GC/1.1.
 It patches a temporary copy of the external debugger to include `names.txt`, and leaves the original debugger untouched.
 Choose an empty output directory for each dump.
 The debugger stops at the selected function, so its output is inspection evidence rather than a completed build object.
