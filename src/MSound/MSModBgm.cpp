@@ -17,45 +17,15 @@ JAISound* MSModBgm::modBgm(u8 param_1, u8 param_2)
 		break;
 	}
 
-	// TODO: 96.5%. Retail shares one zero register between the two
-	// statements of each reset: `li r31, 0` (the value that is both
-	// `sound` and the return value) is also the source of the `stb` into
-	// unk0, twice. We materialise 0 into r0 for the byte store and into
-	// r31 for the pointer, so we are two instructions long. Measured with
-	// no effect: swapping the two assignments (both sites), `unk0 = 0`,
-	// `unk0 = sound` after the null assignment, `bool`/`u8`/integer-zero
-	// spellings, and an early `return nullptr`. MWCC always sinks the
-	// pointer assignment below the member store, so the fix has to make
-	// the store's source depend on `sound`.
-	// Closure re-pass (batch 164): the two zeros have to be *one* value
-	// node for retail's `li r31, 0; stb r31` pair, and every route there
-	// is now refuted.  Making the store read the pointer
-	// (`unk0 = sound;` -- legal pointer-to-bool -- and
-	// `unk0 = sound != nullptr;`) is constant-folded straight back to
-	// `li r0, 0`, bit for bit the current output.  Unifying the *types*
-	// of the two zeros is inert too: `u8 unk0` with `unk0 = 0`/`= 1`
-	// gives the identical 65 instructions.  An early `return sound;` or
-	// `return nullptr;` in each reset (with or without the `else`) moves
-	// the zero into r3 and costs a further instruction (93.4%).  An
-	// inline `JAISound* stopMod() { unk0 = false; return nullptr; }`
-	// header helper keeps the split zero *and* buys a dead 8-byte low
-	// region (frame 0x18 -> 0x20), so it is doubly wrong.  Note that
-	// retail's `li r31, 0` is redundant on its own terms -- r31 is
-	// already 0 from `mr. r31, r3` -- which proves MWCC did not know the
-	// value: the zero is materialised for `sound = nullptr` and then
-	// *reused* by the store, i.e. the store was scheduled after it.  Our
-	// scheduler sinks the `li` below the `stb` in every spelling tried,
-	// so the next lead is whatever pins the `li` above the store, not
-	// another spelling of the two statements.
-	// cc30: also inert or worse: `unk0 = sound = nullptr` / `= 0` chains
-	// (90.2%), `sound = (JAISound*)(unk0 = false)`, TU-local reset helpers
-	// (reference out-parameter: split zero kept; `ret`-local returning
-	// helpers: split zero plus +0x10/+0x18 frame), and `u8`/`u32 : 8`
-	// types for unk0.
+	// TODO: 98.1%. The null branch only clears unk0 (the handle is already
+	// null). Retail's `li r31, 0` feeds both `stb`s into unk0; we store from
+	// r0 and set the stop case's null handle after its store. Earlier
+	// passes found every spelling of the stop case's two statements inert
+	// (order swaps, chained assignments, early returns, reset helpers,
+	// u8/bool/bitfield types for unk0).
 	JAISound* sound = MSBgm::getHandle(param_2);
 	if (!sound) {
-		sound = nullptr;
-		unk0  = false;
+		unk0 = false;
 	} else {
 		switch (unk4) {
 		case 0:
