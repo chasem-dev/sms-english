@@ -87,6 +87,20 @@ void CPolarSubCamera::calcInHouseNo_(bool param_1)
 	calcInHouseNoSub_();
 }
 
+// Compare the camera height with the vertical reach of its near/far limits.
+static inline bool CameraAboveGroundRange(const TCameraKindParam* params,
+                                         const JGeometry::TVec3<f32>& position,
+                                         const JGeometry::TVec3<f32>& target)
+{
+	f32 minHeight = params->mDistMin * JMASSin(params->mXAngleMin);
+	f32 maxHeight = params->mDistMax * JMASSin(params->mXAngleMax);
+	f32 distY = position.y;
+	distY -= target.y;
+	if (minHeight > maxHeight)
+		maxHeight = minHeight;
+	return distY > 1.25f * maxHeight;
+}
+
 bool CPolarSubCamera::isNeedGroundCheck_()
 {
 	bool result = true;
@@ -99,30 +113,7 @@ bool CPolarSubCamera::isNeedGroundCheck_()
 	} else if (mMode != CAMERA_MODE_SLIDER
 	           && (isNormalCameraSpecifyMode(mMode)
 	               || isTowerCameraSpecifyMode(mMode))) {
-		// TODO: 99.8%, three volatile-FPR names: retail loads mDistMin into f2
-		// and the sine into f3 (product into f3); ours the other way round.
-		// This split `*=`/`-=` spelling fixed the rest (99.3 -> 99.8). Tried:
-		// sine first with `a = d * a` / `a *= d`, `a = a * s`, by-value
-		// product/sine/mDistMin levels, distY or a declared first, an
-		// NgMax-style helper, `(a > b ? a : b)`, JMASin over the s16, a named
-		// sine, b declared first or split, a params local.
-		// c-k9 (regalloc.py): retail keeps mDistMin (f2) and the product (f3)
-		// in separate webs, so `a` is single-definition
-		// (`f32 a = mDistMin * JMASSin(min);`). That spelling leaves only a
-		// distY/a swap, and the replay closes it when distY is coloured before
-		// a's IRO product temporary @714; distY as a named two-definition web
-		// is always coloured after it. distY single-definition before or
-		// between a and b splits b's `b = a` copy (fmr f4, 96.5%); distY or a
-		// declared first as `f32 distY;` and `a = JMASSin(); a = d * a;` are
-		// 99.6.
-		f32 a = mCurrentParams->mDistMin;
-		a *= JMASSin(mCurrentParams->mXAngleMin);
-		f32 b = mCurrentParams->mDistMax * JMASSin(mCurrentParams->mXAngleMax);
-		f32 distY = mPosition.y;
-		distY -= mTarget.y;
-		if (a > b)
-			b = a;
-		if (distY > 1.25f * b) {
+		if (CameraAboveGroundRange(mCurrentParams, mPosition, mTarget)) {
 			result = false;
 			if (unk278 < 120)
 				unk278 = 120;
