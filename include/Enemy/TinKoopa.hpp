@@ -230,7 +230,11 @@ public:
 	}
 	int getDamageStage() const { return mDamageStage; }
 	int getLap() const { return mLap; }
-	MActor* getTruckMActor() { return mTruckMActor; }
+	MActor* getTruckMActor()
+	{
+		MActor* truckMActor = mTruckMActor;
+		return truckMActor;
+	}
 	TTinKoopaFlame* getFlame() { return mFlame; }
 	TTinKoopaPartsBase* getParts(int i) { return mParts[i]; }
 

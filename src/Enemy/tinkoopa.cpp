@@ -1227,17 +1227,9 @@ void TTinKoopa::checkTinKoopaFirstRocketMessage()
 	}
 }
 
-// Binding level over a raw member read, worth +16 of low region in
-// TTinKoopa::checkTinKoopaFirstFlameMessage (batch 127).
-static inline MActor* TinkoopaTruckMActor(const TTinKoopa* p)
-{
-	MActor* truckMActor = p->mTruckMActor;
-	return truckMActor;
-}
-
 void TTinKoopa::checkTinKoopaFirstFlameMessage()
 {
-	if (!TinkoopaTruckMActor(this))
+	if (!getTruckMActor())
 		return;
 
 	if (mFirstFlameMessageDone)
@@ -1246,7 +1238,7 @@ void TTinKoopa::checkTinKoopaFirstFlameMessage()
 	if (mSpine->getCurrentNerve() != &TNerveTinKoopaWait::theNerve())
 		return;
 
-	J3DFrameCtrl* ctrl = TinkoopaTruckMActor(this)->getFrameCtrl(ANM_TYPE_BCK);
+	J3DFrameCtrl* ctrl = getTruckMActor()->getFrameCtrl(ANM_TYPE_BCK);
 	if (mDamageStage == 0) {
 		if (ctrl->checkPass(2600.0f)) {
 			startTinKoopaMessage(BALLOON_MSG_TINKOOPA_FIRST_FLAME);
