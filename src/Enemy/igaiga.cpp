@@ -782,8 +782,9 @@ void TIgaiga::setDeadAnm()
 	mgr->unk60->generatePolluteModel(mPosition, stamp);
 }
 
-// TODO: the operator* temporary sits at 0x44 (retail 0x38) and the named
-// block 4 bytes low (scale 0x64 vs 0x68); every instruction matches.
+// TODO: the operator* temporary sits at 0x48 (retail 0x38); every
+// instruction and the named block match (the rumble test's getScaling()
+// placed the block).
 void TIgaiga::setMeltAnm()
 {
 	if (checkLiveFlag(LIVE_FLAG_CLIPPED_OUT)) {
@@ -794,7 +795,7 @@ void TIgaiga::setMeltAnm()
 	}
 
 	if (!checkLiveFlag(LIVE_FLAG_CLIPPED_OUT) && SMS_IsMarioTouchGround4cm()) {
-		if (mScaling.x > mBodyScale)
+		if (getScaling().x > mBodyScale)
 			SMSRumbleMgr->start(0x15, 10, (Vec*)&mPosition);
 		else
 			SMSRumbleMgr->start(0x14, 10, (Vec*)&mPosition);
