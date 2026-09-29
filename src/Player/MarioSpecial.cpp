@@ -743,8 +743,9 @@ void TMario::getOnWirePosAngle(JGeometry::TVec3<f32>* outPos, s16* outAngle)
 // y and z first and fuses `x * x` into the first `fadds` as an `fmadds`, which
 // needs x to become available last; ours materialises all three products.
 // Naming `end` lands the 0x68 frame (retail keeps its 12-byte slot between
-// start and dir); the named block still sits 4 low and the operator- temp 8
-// high. Inert: end declared first, dir(end - start), split dir declaration.
+// start and dir) and naming the first bound test's sum places the named
+// block; the operator- temp still sits 8 high (0x20, retail 0x18). Inert: end
+// declared first, dir(end - start), split dir declaration.
 BOOL TMario::wireMove(f32 param_1)
 {
 	JGeometry::TVec3<f32> start = mWireStartPos;
@@ -756,7 +757,8 @@ BOOL TMario::wireMove(f32 param_1)
 	f32 margin                  = 100.0f / len;
 
 	BOOL clean = TRUE;
-	if (mWirePosRatio + delta > 1.0f - margin) {
+	f32 next = mWirePosRatio + delta;
+	if (next > 1.0f - margin) {
 		mWirePosRatio = 1.0f - margin;
 		clean         = FALSE;
 	}
