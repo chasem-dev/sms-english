@@ -164,7 +164,11 @@ inline void TLensFlare::calcAnim()
 	// (products and sums as separate fmuls/fadds, no fmadds); the sun
 	// position is a plain `Vec` copy (lwz/stw). Left: (a) in move()'s
 	// isInBounds expansion the result/pointer GPRs rotate (retail r4/r5/r3,
-	// ours r3/r4/r5; the f0/f1 swap closed by naming `x`); (b) r3/r4/r5 rotation in
+	// ours r3/r4/r5; the f0/f1 swap closed by naming `x`; c-k17 dump: the
+	// `position` pointer is an IRO CSE temporary (@634) created after the two
+	// `&&` value temporaries (@588/@589), and regalloc --search fixes the
+	// rotation by colouring it first, so retail's pointer was an object
+	// created before them); (b) r3/r4/r5 rotation in
 	// the hidden-count loop; (c) closed by c-k17's named angles; (d) the frame is
 	// 0xa0 short (0x218 vs 0x2b8): retail's near-nine-pos argument
 	// temporaries and the direction/rotation vectors sit above camEuler,
