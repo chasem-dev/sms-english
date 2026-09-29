@@ -375,9 +375,19 @@ void TNozzleBase::emitCommon(int param_1, TWaterEmitInfo* param_2)
 	param_2->mHitHeight   = mEmitParams.mHitHeight;
 }
 
-// TODO: frame 0x98 against retail's 0x158 (low region short); retail
+static inline void NozzleUpdateEmissionMeter(TWaterGun* gun, u8 emittedWater)
+{
+	gun->mIsEmitWater = emittedWater;
+	gun->unk1C88 += 10.0f
+	    * ((f32)emittedWater
+	       * (f32)gun->mNozzleList[gun->mCurrentNozzle]
+	                 ->mEmitParams.mDecRate.get()
+	       / gun->mNozzleList[0]->mEmitParams.mAmountMax.get());
+}
+
+// TODO: frame 0xa0 against retail's 0x158 (low region short); retail
 // re-derives the sin/cos table index twice (two `sraw`, no CSE), swaps the
-// emitInfo/pow-reference registers, and depleteWater indexes through `add`.
+// emitInfo/pow-reference registers, and the meter update indexes through `add`.
 // Inert or worse on the register swap (c-wgun): the two references declared
 // before emitCommon (88.0), after mPow.set (94.2, unchanged), no pow reference
 // (90.3), emitInfo named after emitCommon's argument read (92.8).
@@ -741,7 +751,7 @@ void TNozzleTrigger::emit(int param_1)
 		}
 
 		u8 emittedWater = gpModelWaterManager->emitRequest(*emitInfo);
-		mFludd->updateUnk1C88(emittedWater);
+		NozzleUpdateEmissionMeter(mFludd, emittedWater);
 
 		if (emittedWater != 0) {
 			mFludd->depleteWater(emittedWater * mEmitParams.mDecRate.get());
@@ -759,8 +769,7 @@ void TNozzleTrigger::emit(int param_1)
 
 			// TODO: frame 0xd8 against retail's 0x178; retail re-derives the
 			// sin/cos table index twice (two `sraw`, no CSE), holds emitInfo
-			// in r30 and the pow reference in r31, and depleteWater indexes
-			// the nozzle list through `add` rather than `lwzx`.
+			// in r30 and the pow reference in r31.
 			JGeometry::TVec3<f32> const& dirVec = emitInfo->mDir.get();
 			f32 dirScale = -dirVec.x * JMASSin(mFludd->mMario->mFaceAngle.y)
 			               - dirVec.z * JMASCos(mFludd->mMario->mFaceAngle.y);
@@ -1021,7 +1030,7 @@ void TNozzleDeform::emit(int param_1)
 
 		u8 emittedWater = gpModelWaterManager->emitRequest(*emitInfo);
 
-		mFludd->updateUnk1C88(emittedWater);
+		NozzleUpdateEmissionMeter(mFludd, emittedWater);
 
 		if (emittedWater != 0) {
 			mFludd->depleteWater(emittedWater * mEmitParams.mDecRate.get());
@@ -1036,10 +1045,9 @@ void TNozzleDeform::emit(int param_1)
 			f32 reaction
 			    = localUnk378 * (reactionPow - reactionPowMin) + reactionPowMin;
 
-			// TODO: frame 0x110 against retail's 0x1b8 (low region short);
+			// TODO: frame 0xf0 against retail's 0x1b8 (low region short);
 			// retail re-derives the sin/cos table index twice (two `sraw`,
-			// no CSE), holds emitInfo in r30 and the pow reference in r31,
-			// and depleteWater indexes the nozzle list through `add`.
+			// no CSE), holds emitInfo in r30 and the pow reference in r31.
 			JGeometry::TVec3<f32> const& dirVec = emitInfo->mDir.get();
 			f32 dirScale = -dirVec.x * JMASSin(mFludd->mMario->mFaceAngle.y)
 			               - dirVec.z * JMASCos(mFludd->mMario->mFaceAngle.y);
