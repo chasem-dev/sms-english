@@ -432,6 +432,11 @@ static inline f32 MapObjBallXZSpeed(const JGeometry::TVec3<f32>& v)
 // up to 1 ulp in the roll angle. Swapping that helper's arguments or addends,
 // or naming a square, did not reverse the fusion; the plain four-copy sum
 // above does, at the cost of the velocity temporaries' order.
+// c-k15: the four settle/roll tests read TMapObjData::getPhysicalData(); each
+// accessor's receiver binding and forced load land the frame at retail's
+// 0x1c0 (96.1 -> 96.3, 105 -> 59 markers). What is left is the speed: retail
+// makes two velocity copies (x from the first, z from the second) where the
+// four-copy sum makes four; the two-level SqXZ helper is 0x18 short with it.
 void TMapObjBall::calcCurrentMtx()
 {
 	TPosition3f rot;
@@ -439,9 +444,9 @@ void TMapObjBall::calcCurrentMtx()
 
 	// Settle a nearly-stopped ball on flat ground so it does not creep.
 	if (abs(JGeometry::TVec3<f32>(mVelocity).x)
-	    < mMapObjData->mPhysical->unk4->unkC) {
+	    < mMapObjData->getPhysicalData()->unkC) {
 		if (abs(JGeometry::TVec3<f32>(mVelocity).z)
-		        < mMapObjData->mPhysical->unk4->unkC
+		        < mMapObjData->getPhysicalData()->unkC
 		    && mGroundPlane->mNormal.y == 1.0f) {
 			mVelocity.x = 0.0f;
 			mVelocity.z = 0.0f;
@@ -449,9 +454,9 @@ void TMapObjBall::calcCurrentMtx()
 	}
 
 	if (abs(JGeometry::TVec3<f32>(mVelocity).x)
-	        > mMapObjData->mPhysical->unk4->unkC
+	        > mMapObjData->getPhysicalData()->unkC
 	    || abs(JGeometry::TVec3<f32>(mVelocity).z)
-	        > mMapObjData->mPhysical->unk4->unkC) {
+	        > mMapObjData->getPhysicalData()->unkC) {
 		// Roll about the horizontal axis square to the direction of travel,
 		// by the arc length the ball has covered over its own radius.
 		JGeometry::TVec3<f32> axis;
