@@ -57,6 +57,8 @@ class TrialDB:
     CREATE TABLE IF NOT EXISTS trials (
         fn TEXT, unit TEXT, hash TEXT, score TEXT, sig TEXT, moves TEXT, secs REAL, at REAL,
         PRIMARY KEY (fn, hash));
+    CREATE TABLE IF NOT EXISTS dbg2 (
+        fn TEXT, hash TEXT, key TEXT, PRIMARY KEY (fn, hash));
     CREATE TABLE IF NOT EXISTS runs (
         fn TEXT, unit TEXT, status TEXT, base TEXT, best TEXT, builds INTEGER, cached INTEGER,
         secs REAL, moves TEXT, patch TEXT, at REAL);
@@ -78,6 +80,19 @@ class TrialDB:
         with self.lock:
             self.db.execute("INSERT OR IGNORE INTO trials VALUES (?,?,?,?,?,?,?,?)",
                             (fn, unit, h, row, score.sig, moves, secs, time.time()))
+            self.db.commit()
+
+    def get_dbg(self, fn: str, h: str):
+        with self.lock:
+            r = self.db.execute("SELECT key FROM dbg2 WHERE fn=? AND hash=?", (fn, h)).fetchone()
+        if r is None:
+            return False
+        return tuple(int(x) for x in r[0].split(",")) if r[0] else None
+
+    def put_dbg(self, fn: str, h: str, key):
+        with self.lock:
+            self.db.execute("INSERT OR REPLACE INTO dbg2 VALUES (?,?,?)",
+                            (fn, h, ",".join(map(str, key)) if key else ""))
             self.db.commit()
 
     def count(self, fn: str) -> int:
@@ -251,11 +266,41 @@ class State:
     text: str
     score: Score
     moves: List[str] = field(default_factory=list)
+    dbg: Optional[tuple] = None
+
+
+NO_DBG = (10 ** 6,) * 4
+
+
+class RK:
+    """Rank of a state: exactness, instructions and frame first; then the
+    layout distance when both sides have one (dumps are only taken for the
+    best candidates), else the register and slot counts."""
+    __slots__ = ("k", "d")
+
+    def __init__(self, k: tuple, d: Optional[tuple]):
+        self.k, self.d = k, d
+
+    def __lt__(self, o: "RK") -> bool:
+        if self.k[:3] != o.k[:3]:
+            return self.k[:3] < o.k[:3]
+        if self.d is not None and o.d is not None and self.d != o.d:
+            return self.d < o.d
+        return self.k[3:] < o.k[3:]
+
+    def __gt__(self, o: "RK") -> bool:
+        return o < self
+
+    def __eq__(self, o) -> bool:
+        return not (self < o) and not (o < self)
+
+    def __le__(self, o: "RK") -> bool:
+        return not (o < self)
 
 
 class Search:
-    def __init__(self, unit: str, fn: str, jobs: int = 3, work: Optional[str] = None,
-                 db: Optional[TrialDB] = None, log=print, seed: int = 0):
+    def __init__(self, unit: str, fn: str, jobs: int = 2, work: Optional[str] = None,
+                 db: Optional[TrialDB] = None, log=print, seed: int = 0, dbg_k: int = 0):
         self.u = find_unit(unit)
         self.fn = fn
         self.log = log
@@ -275,12 +320,89 @@ class Search:
         # (a helper calling a helper) no longer reads like the original source
         self.max_helpers = 1
         self.base_helpers = len(HELPER_RX.findall(self.base_text))
+        # debugger-guided objective (dbgobj.py): the layout distance of the best
+        # few candidates breaks ties below instructions and frame
+        self.dbg_k = dbg_k
+        self.dbg_share = 0.5
+        self.budget = 900.0
+        self.t_start = time.time()
+        self.dumper = None
+        self.dbgmem: Dict[str, Optional[tuple]] = {}
+        if dbg_k:
+            from . import dbgobj
+            if not dbgobj.available():
+                raise SystemExit("--dbg needs MWCC_DEBUGGER and RETROWIN32 (tools/mwcc-stack/README.md)")
+            self.dumper = dbgobj.Dumper(self.u.name, self.ev.work)
 
     def too_many(self, text: Optional[str]) -> bool:
         return text is None or len(HELPER_RX.findall(text)) - self.base_helpers > self.max_helpers
 
     def close(self):
+        if self.dumper:
+            self.dumper.close()
         self.ev.close()
+
+    # ---- the debugger objective
+    def dbg_of(self, text: str, verbose: bool = False) -> Optional[tuple]:
+        """Layout distance of a variant (None when it cannot be mapped)."""
+        from . import dbgobj
+        from .elfscore import extract
+        h = text_hash(text)
+        if h in self.dbgmem:
+            return self.dbgmem[h]
+        got = self.db.get_dbg(self.fn, h) if self.db and not verbose else False
+        if got is not False:
+            self.dbgmem[h] = got
+            return got
+        key = None
+        obj = os.path.join(self.ev.work, "dbg-%s.o" % h[:12])
+        p, _ = self.ev._compile(text, keep=obj)
+        if p is not None:
+            try:
+                objs = self.dumper.dump(text, self.fn)
+                ours = extract(Elf(obj), self.fn)
+                lay = dbgobj.layout(objs, ours, self.ev.target.funcs[self.fn]) if objs and ours else None
+                if lay is not None and lay.coverage >= 0.8 and self.dumper.last_webs >= 0:
+                    lay.webs = self.dumper.last_webs
+                    lay.key = lay.key[:3] + (lay.webs,)
+                    key = lay.key
+                if verbose and lay is not None:
+                    for r in dbgobj.describe(lay):
+                        self.log("    " + r)
+            finally:
+                os.remove(obj)
+        self.dbgmem[h] = key
+        if self.db:
+            self.db.put_dbg(self.fn, h, key)
+        return key
+
+    def rk(self, st: "State") -> RK:
+        d = st.dbg if st.dbg is not None else self.dbgmem.get(text_hash(st.text))
+        return RK(st.score.key, d)
+
+    def dump_ok(self) -> bool:
+        return self.dumper is not None and self.dumper.secs <= self.dbg_share * (time.time() - self.t_start)
+
+    def dump_top(self, cands: List["State"], k: int, deadline: float, force: bool = False) -> List["State"]:
+        """Dump the k best (by in-process score) candidates with distinct objects.
+        Dumps are slow, so outside the singles they may take at most dbg_share of
+        the time spent so far."""
+        if not self.dumper or k <= 0:
+            return []
+        if not force and not self.dump_ok():
+            return []
+        done, sigs = [], set()
+        for st in sorted(cands, key=lambda s: s.score.key):
+            if len(done) >= k or time.time() > deadline - 30 or (done and not force and not self.dump_ok()):
+                break
+            if done and force and self.dumper.secs > 0.3 * self.budget:
+                break  # a large unit's dumps take a minute or more each
+            if not st.score.ok or st.score.sig in sigs:
+                continue
+            sigs.add(st.score.sig)
+            st.dbg = self.dbg_of(st.text)
+            done.append(st)
+        return done
 
     def moves_of(self, text: str) -> List[M.Move]:
         h = text_hash(text)
@@ -308,7 +430,8 @@ class Search:
         return regressions(self.base_profile, vp, self.fn)
 
     def run(self, budget: float) -> dict:
-        t_start = time.time()
+        t_start = self.t_start = time.time()
+        self.budget = budget
         deadline = t_start + budget
         self.base_profile = None
         self.best_at = (0.0, 0)
@@ -323,16 +446,37 @@ class Search:
             res["status"] = "already-exact"
             return res
         best = State(self.base_text, base, [])
+        if self.dumper:
+            self.log("  base layout (debugger):")
+            best.dbg = self.dbg_of(self.base_text, verbose=True)
+            if best.dbg is None:
+                self.log("    no layout for the base (%s); searching without the debugger" % (
+                    self.dumper.last_error[:200] or "unmapped"))
+                self.dumper.close()
+                self.dumper = None
         states: Dict[str, State] = {base.sig: best}
         rejected_exact = []
+        rk = self.rk
+
+        def note_dbg(dumped: List[State]):
+            """Dumped candidates may now rank above the best and their sig's state."""
+            nonlocal best
+            for st in dumped:
+                cur = states.get(st.score.sig)
+                if cur is None or rk(st) < rk(cur):
+                    states[st.score.sig] = st
+                if rk(st) < rk(best):
+                    if st.score.key[:3] < best.score.key[:3] or (st.dbg or NO_DBG) < (best.dbg or NO_DBG):
+                        self.best_at = (time.time() - t_start, self.ev.builds)
+                    best = st
 
         def consider(text, mv, sc) -> Optional[State]:
             nonlocal best
             if not sc.ok:
                 return None
             st = State(text, sc, mv)
-            if sc.sig not in states or sc.key < states[sc.sig].score.key or \
-                    (sc.key == states[sc.sig].score.key and len(mv) < len(states[sc.sig].moves)):
+            if sc.sig not in states or rk(st) < rk(states[sc.sig]) or \
+                    (rk(st) == rk(states[sc.sig]) and len(mv) < len(states[sc.sig].moves)):
                 states[sc.sig] = st
             if sc.exact:
                 bad = self.honest(text) + self.unit_check(text)
@@ -343,9 +487,9 @@ class Search:
                 best = st
                 self.best_at = (time.time() - t_start, self.ev.builds)
                 return st
-            if sc.key < best.score.key:
+            if rk(st) < rk(best):
                 self.best_at = (time.time() - t_start, self.ev.builds)
-            if sc.key < best.score.key or (sc.key == best.score.key and len(mv) < len(best.moves)):
+            if rk(st) < rk(best) or (rk(st) == rk(best) and len(mv) < len(best.moves)):
                 best = st
             return None
 
@@ -379,10 +523,24 @@ class Search:
         self.log("  singles: %d scored (%d failed to compile), best %s, %.0fs" % (
             len(res1), nfail, best.score.short(), time.time() - t_start))
 
+        text_of = {i: t for t, i in move_of.items()}
+        if self.dumper:
+            cands = [State(t, sc, [mv]) for t, mv, sc in res1
+                     if sc.ok and sc.sig != base.sig and sc.key[:3] <= base.key[:3]]
+            dumped = self.dump_top(cands, self.dbg_k * 2, deadline, force=True)
+            note_dbg(dumped)
+            self.log("  singles layout: %s" % ", ".join(
+                "%s" % (d.dbg,) for d in sorted(dumped, key=rk)) + " (base %s)" % (best.dbg if not dumped else
+                                                                                   states[base.sig].dbg,))
+
+        def srk(i):
+            return rk(State(text_of.get(i, ""), singles[i]))
+
         # ---- 2. beam over useful singles on the base text
+        base_rk = rk(states[base.sig])
         useful = [i for i, s in singles.items() if i >= 0 and s.ok and
-                  (s.key < base.key or (s.sig != base.sig and s.key[:2] <= base.key[:2]))]
-        useful.sort(key=lambda i: singles[i].key)
+                  (s.key < base.key or (s.sig != base.sig and s.key[:2] <= base.key[:2]) or srk(i) < base_rk)]
+        useful.sort(key=srk)
         pool, sigs = [], set()
         for i in useful:
             if singles[i].sig not in sigs:
@@ -417,8 +575,12 @@ class Search:
                     return self._finish(res, best, "exact", t_start, rejected_exact)
                 if sc.ok and sc.sig not in sg:
                     sg.add(sc.sig)
-                    nxt.append((combo_of.get(text, ()), sc))
-            beam_states = [x for x in nxt if x[0]][:6]
+                    nxt.append((combo_of.get(text, ()), State(text, sc, mv.split(" + "))))
+            if self.dumper:
+                note_dbg(self.dump_top([st for _, st in nxt if st.score.key[:3] <= best.score.key[:3]],
+                                       self.dbg_k, beam_deadline))
+            nxt.sort(key=lambda x: rk(x[1]))
+            beam_states = [(c, st.score) for c, st in nxt if c][:6]
             self.log("  beam depth %d: %d combos, best %s" % (depth, len(out), best.score.short()))
 
         # ---- 3. hill-climbing with random restarts and kicks
@@ -427,13 +589,13 @@ class Search:
         stable_of = {}
 
         def rank(pool):
-            return sorted(pool, key=lambda s: (s.score.key, len(s.moves)))
+            return sorted(pool, key=lambda s: (rk(s), len(s.moves)))
 
         while time.time() < deadline and dry < 40:
             open_states = [s for s in rank(states.values()) if text_hash(s.text) not in exhausted
                            and len(s.moves) < self.max_moves]
             r = self.rng.random()
-            builds0 = self.ev.builds
+            seen0 = (len(self.ev.mem), self.dumper.dumps if self.dumper else 0)
             if not open_states or r < 0.25:
                 # kick: two or three random moves at once from a good state
                 srcs = [s for s in rank(states.values()) if len(s.moves) <= self.max_moves - 2][:8]
@@ -491,26 +653,36 @@ class Search:
                     if not sc.ok and text in stable_of:
                         self.fails[stable_of[text]] = self.fails.get(stable_of[text], 0) + 1
                 stable_of.clear()
-                step = None
+                oks = []
                 for text, mv, sc in sorted(out, key=lambda r: r[2].key):
                     if consider(text, mv.split(" + "), sc):
                         return self._finish(res, best, "exact", t_start, rejected_exact)
-                    if step is None and sc.ok:
-                        step = (text, mv, sc)
-                if step and step[2].key < cur.score.key:
-                    cur = State(step[0], step[2], step[1].split(" + "))
+                    if sc.ok:
+                        oks.append(State(text, sc, mv.split(" + ")))
+                if self.dumper and oks and oks[0].score.key[:3] <= cur.score.key[:3]:
+                    if cur.dbg is None and text_hash(cur.text) not in self.dbgmem and self.dump_ok():
+                        cur.dbg = self.dbg_of(cur.text)
+                    note_dbg(self.dump_top([o for o in oks if o.score.key[:3] == oks[0].score.key[:3]],
+                                           1, deadline))
+                step = min(oks, key=rk) if oks else None
+                if step and rk(step) < rk(cur):
+                    cur = step
                     stall = 0
-                elif step and step[2].key == cur.score.key and step[2].sig != cur.score.sig \
+                elif step and rk(step) == rk(cur) and step.score.sig != cur.score.sig \
                         and self.rng.random() < 0.4:
-                    cur = State(step[0], step[2], step[1].split(" + "))
+                    cur = step
                     stall += 1
                 else:
                     stall += 1
-            dry = 0 if self.ev.builds > builds0 else dry + 1
+            # a round is dry when it visits nothing new this run (a variant cached in the
+            # database from an earlier run still counts as new here, and so does a dump)
+            dry = 0 if (len(self.ev.mem), self.dumper.dumps if self.dumper else 0) != seen0 else dry + 1
         if dry >= 40:
             self.log("  climb: neighbourhood exhausted")
         self.log("  climb: %d restarts, %d kicks" % (restarts, kicks))
         status = "improved" if best.score.key < base.key else "no-gain"
+        if status == "no-gain" and self.dumper and rk(best) < rk(states.get(base.sig, best)) and best.text != self.base_text:
+            status = "improved-layout"  # same in-process score, closer layout
         return self._finish(res, best, status, t_start, rejected_exact)
 
     def _finish(self, res, best: State, status, t_start, rejected):
@@ -532,6 +704,10 @@ class Search:
         self.log("  result: %s  %s  (%d builds, %d cached, %.0fs, %.1f variants/min)" % (
             res["status"], best.score.short(), self.ev.builds, self.ev.cached, res["secs"],
             60.0 * self.ev.builds / max(res["secs"], 1)))
+        if self.dumper:
+            res["dbg"] = self.rk(best).d
+            self.log("  layout: best %s, %d dumps in %.0fs" % (
+                self.rk(best).d if self.rk(best).d is not None else "-", self.dumper.dumps, self.dumper.secs))
         if best.moves:
             self.log("  best found at %.0fs, build %d" % self.best_at)
             self.log("  moves: " + " + ".join(best.moves))

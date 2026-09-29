@@ -17,14 +17,15 @@ python3 -m tools.hsearch stats --db DIR/trials.sqlite
 ```
 
 `batch` takes a TSV of `unit<TAB>mangled symbol` rows, is resumable (a function with a recorded run is skipped unless `--rerun`), and stops cleanly before the next function when the `--stop-file` exists.
-Defaults: `--budget 900` seconds per function, `-j 3` parallel compiles, database `$HSEARCH_DB` or `$TMPDIR/hsearch/trials.sqlite`.
-The machine has four cores shared with other agents: keep `-j` at 3 or below.
+Defaults: `--budget 900` seconds per function, `-j 2` parallel compiles, database `$HSEARCH_DB` or `$TMPDIR/hsearch/trials.sqlite`.
+The machine has four cores shared with other agents: keep `-j` at 2 or 3.
 
 ## Files
 
 - `elfscore.py`: the scorer. It parses both ELF objects, extracts the function, masks every relocated field, and compares relocation targets by name (or, for `@NNN` pool symbols and section symbols, by the bytes they point at).
 - `moves.py`: the honest move set. It imports lever-search's generators and keeps a whitelist of them, and adds this package's levers.
 - `search.py`: shadow-root compiles, the trial database and the search.
+- `dbgobj.py`: the debugger-guided layout objective.
 - `__main__.py`: the command line, including the `apply` verification.
 
 ## The score
@@ -92,8 +93,30 @@ Moves are weighted by how often their kind has improved a score in this function
 `trials(fn, unit, hash, score, sig, moves, secs, at)` holds every compiled variant, keyed by the SHA-1 of the whole source text, so a re-run, a resumed batch or a different move order never compiles the same text twice.
 `runs` holds one row per searched function; `results.tsv` in `--out` mirrors it with the patch path and `best_at`, the second at which the final best score was first reached (a measure of whether a longer budget would help).
 
+## The debugger-guided objective
+
+`--dbg K` adds a layout distance from the MWCC debugger (`dbgobj.py`, needs `MWCC_DEBUGGER` and `RETROWIN32` as for `tools/mwcc-stack/dbg.sh`).
+A variant is dumped with GC/1.1 and the unit's own flags, every `r1` access of our compiled function is mapped to the dumped object that holds it, and retail's offset for the same access comes from the aligned retail instruction.
+That names, per object, where retail keeps it, so the order and the gaps retail implies can be compared with ours.
+The distance is lexicographic: objects out of retail's top-down order (the count outside a longest common order), then words missing or extra between consecutive mapped objects (plus above the first and below the last), then objects whose offset differs, then register webs (GPR and FPR) that `tools/mwcc-stack/regalloc.py` finds coloured differently from retail in the same dump.
+It is a tie-breaker below exactness, instruction differences and the frame delta, and above the register and slot counts.
+A dump takes 7-20 s and one debugger runs at a time (the gdb stub's port is fixed), so the search dumps the base, the best 2K singles, the best K combinations of each beam level and at most one climb neighbour per step, and outside the singles dumps may take at most half the time spent.
+Layout distances are cached in the database's `dbg2` table.
+A run whose best has the same in-process score as the base but a closer layout reports `improved-layout`.
+
+`dbg -u UNIT -f SYMBOL [--file VARIANT]` prints the mapping for one text: our objects top-down with their kind (named, inline, argument or the IR optimiser's F/P/S temporaries), retail's offset for each mapped one, and the regions where retail has words we lack or lacks words we have.
+
 ## Applying a winner
 
 `apply PATCH` applies the patch to this checkout, then runs `build/venv/bin/ninja -k 0`, checks the DOL SHA-1, runs `ninja changes_all` and fails on any lowered value, and compares `tools/validate-symbol-order.py` before and after.
 With `--revert` a failed patch is undone.
 Commit only after reviewing the diff for honesty; rename generated helper names first.
+
+## Measured (pilot, 2026-09-28)
+
+Forty instruction-exact functions with register, slot or frame residues, most with long recorded hand searches, at 15 then 8 minutes each and `-j 3`: 172k variants in 6.5 hours (441 per minute; 100 to 1300 per minute depending on the unit's compile time).
+Two exact variants came out and both were refused in review (a value named for one of two identical calls a line apart, and interleaved split declarations); thirteen functions improved, of which two read as honest source (`TBossManta::updateAttractor`: raw `mPosition` at two of three sites, frame and every slot exact; `TEnemyManager::performShared`: `getObjNum()` bound with raw `unk18[i]`, frame exact).
+Seven of the twelve improvements were found within 50 s, both honest ones among them; the later finds were more machine-cut helpers or the two refused exacts, so a bigger budget does not help on these residues.
+Rerunning the same 38 functions with `--dbg 3` at 8 minutes and `-j 2` gave no exact result either: 413 dumps took 59% of 4.3 hours (about 22 s each, over a minute each in `bossgesso` or `GCConsole2`), the layout distance ranked the same improvements, and it found two same-score variants with a closer layout.
+The residues these functions carry are not reachable by the honest move set; a lever the search lacks, not the objective, is the limit.
+

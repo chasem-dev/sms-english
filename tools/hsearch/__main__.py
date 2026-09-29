@@ -30,11 +30,11 @@ def safe_name(fn: str) -> str:
 
 
 def run_one(args, db, unit, fn):
-    s = Search(unit, fn, args.jobs, args.work, db, seed=args.seed)
+    s = Search(unit, fn, args.jobs, args.work, db, seed=args.seed, dbg_k=args.dbg)
     try:
         r = s.run(args.budget)
         patch = ""
-        if r.get("text") and r["status"] in ("exact", "improved"):
+        if r.get("text") and r["status"] in ("exact", "improved", "improved-layout"):
             os.makedirs(args.out, exist_ok=True)
             patch = os.path.join(args.out, safe_name(fn) + (".patch" if r["status"] == "exact" else ".improved.patch"))
             with open(patch, "w", encoding="utf-8") as f:
@@ -111,7 +111,7 @@ def cmd_stats(args):
         by[status] = by.get(status, 0) + 1
         builds += b or 0
         secs += sec or 0
-        if status in ("exact", "improved"):
+        if status in ("exact", "improved", "improved-layout"):
             for m in (mv or "").split(" + "):
                 if m:
                     k = m.split(" ")[0]
@@ -155,6 +155,38 @@ def cmd_try(args):
                     for d in Target(u.target).score_elf(Elf(obj), args.function, detail=True).detail[:60]:
                         print("  " + d)
     finally:
+        ev.close()
+    return 0
+
+
+def cmd_dbg(args):
+    """Show which of our stack objects retail keeps elsewhere (needs the MWCC debugger)."""
+    from . import dbgobj
+    from .search import Evaluator
+    from .elfscore import extract
+    if not dbgobj.available():
+        raise SystemExit("set MWCC_DEBUGGER and RETROWIN32 (see tools/mwcc-stack/README.md)")
+    u = find_unit(args.unit)
+    text = open(args.file or os.path.join(ROOT, u.rel_src), encoding="utf-8", newline="").read()
+    ev = Evaluator(u, args.function, 1, args.work, TrialDB(args.db))
+    d = dbgobj.Dumper(u.name, args.work)
+    try:
+        obj = os.path.join(ev.work, "dbg.o")
+        p, err = ev._compile(text, keep=obj)
+        if p is None:
+            raise SystemExit("compile failed: " + err)
+        objs = d.dump(text, args.function)
+        if objs is None:
+            raise SystemExit("debugger dump failed; see %s/dump.log" % d.work)
+        lay = dbgobj.layout(objs, extract(Elf(obj), args.function), Target(u.target).funcs[args.function])
+        if lay is None:
+            raise SystemExit("instruction counts differ; the layout map needs equal lengths")
+        lay.webs = d.last_webs
+        lay.key = lay.key[:3] + (lay.webs,)
+        print("\n".join(dbgobj.describe(lay)))
+        print("dump %.1fs" % d.secs)
+    finally:
+        d.close()
         ev.close()
     return 0
 
@@ -248,7 +280,10 @@ def main():
 
     def common(p):
         p.add_argument("--budget", type=float, default=900.0, help="seconds per function (default 900)")
-        p.add_argument("-j", "--jobs", type=int, default=3)
+        p.add_argument("-j", "--jobs", type=int, default=2)
+        p.add_argument("--dbg", type=int, default=0, metavar="K",
+                       help="debugger-guided layout objective: dump the K best candidates per level "
+                            "(needs MWCC_DEBUGGER and RETROWIN32; 0 = off)")
         p.add_argument("--db", default=DEFAULT_DB, help="trial database (default %(default)s)")
         p.add_argument("--out", default=os.path.join(tempfile.gettempdir(), "hsearch"),
                        help="patches and results.tsv")
@@ -285,6 +320,14 @@ def main():
     p.add_argument("--db", default=DEFAULT_DB)
     p.add_argument("--work", default=tempfile.gettempdir())
     p.set_defaults(func=cmd_try)
+
+    p = sub.add_parser("dbg", help="map our stack objects to retail's offsets with the MWCC debugger")
+    p.add_argument("-u", "--unit", required=True)
+    p.add_argument("-f", "--function", required=True)
+    p.add_argument("--file", help="a variant of the unit's source (default: the source itself)")
+    p.add_argument("--db", default=DEFAULT_DB)
+    p.add_argument("--work", default=tempfile.gettempdir())
+    p.set_defaults(func=cmd_dbg)
 
     p = sub.add_parser("moves", help="list the honest moves for one function")
     p.add_argument("-u", "--unit", required=True)
