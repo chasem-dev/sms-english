@@ -37,28 +37,29 @@ TLightCommon::TLightCommon(const char* name)
 	mShininess = 50.0f;
 }
 
-// TODO: 97.8%, frame exact since cc37 (the ambient reads go through the raw
-// mAmbColors array; getAmb() is fabricated and costs 0x10 of pool). Left:
-// retail round-trips the FIRST ambient colour through a 4-byte temporary at
-// 0x18(r1) (`stw; lwz; stw 0x29(r30)`), the second stores straight. Tried
-// (cc37): `.get()`, a named GXColor/TColor local, a by-value setter, a
-// by-value GXColor fork, `(GXColor)` cast -- no round trip; an explicit
-// `JUtility::TColor(...)` conversion (bare or inside a TU-local helper)
-// reproduces the round trip instruction-exact but its temporary is a class
-// object that lands at the top of the named block (0x78-0x8c), never at 0x18.
+// The first ambient color uses the explicit GXColor/TColor conversion and
+// assignment; light-array reads below use their actual array inputs.
+// TODO: all instructions, registers and frame now match, but GXGetLightColor's
+// result is at 0x8c rather than 0x80 and the ambient copy at 0x80 rather than
+// 0x18. The remaining difference is placement of those two actual objects.
+static inline void SetAmbientColor(GXColor& destination, const JUtility::TColor& color)
+{
+	destination = JUtility::TColor(color.get());
+}
+
 void TLightCommon::loadAfter()
 {
 	mAmbAry    = (JDrama::TAmbAry*)JDrama::TNameRefGen::search2(
 	    "Ambient Group");
 	mLightAry  = (JDrama::TLightAry*)JDrama::TNameRefGen::search2(
 	    "Light Group");
-	mLightPos  = &mLightAry->getLight(0)->mPosition;
+	mLightPos  = &mLightAry->mLights[0].mPosition;
 	mShininess = 50.0f;
 	for (int i = 0; i < 4; ++i) {
-		unk31[i] = mLightAry->getLight(i + mLightIndex)->getColor();
+		unk31[i] = mLightAry->mLights[i + mLightIndex].getColor();
 		unk44[i] = mLightAry->getLight(i + mLightIndex)->mPosition;
 	}
-	unk29[0] = mAmbAry->mAmbColors[mAmbIndex].getColor();
+	SetAmbientColor(unk29[0], mAmbAry->mAmbColors[mAmbIndex].getColor());
 	unk29[1] = mAmbAry->mAmbColors[mAmbIndex + 1].getColor();
 }
 
