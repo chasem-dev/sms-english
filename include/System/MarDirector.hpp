@@ -179,7 +179,11 @@ public:
 	bool isThing() const { return isTalkModeNow() || unk124 == 4; }
 
 	void* getUnkD4() { return unkD4; }
-	TBaseNPC* getTalkingNPC() { return unkA0; }
+	TBaseNPC* getTalkingNPC()
+	{
+		TBaseNPC* talkingNPC = unkA0;
+		return talkingNPC;
+	}
 
 	int getRestTime()
 	{

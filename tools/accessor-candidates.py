@@ -75,7 +75,7 @@ def accessors():
                 kind = "getter"
             if kind is None:
                 continue
-            line = text.count("\n", 0, m.start()) + 1
+            line = text.count("\n", 0, m.start("name")) + 1
             cls = enclosing_class(text, m.start())
             out.append(dict(name=m.group("name"), ret=ret, expr=expr,
                             kind=kind, file=os.path.relpath(h, ROOT),

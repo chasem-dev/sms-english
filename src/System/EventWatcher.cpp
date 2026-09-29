@@ -247,17 +247,11 @@ static void evIsNearActors(TSpcTypedInterp<TEventWatcher>* interp, u32 arg_num)
 	interp->push(count);
 }
 
-static inline TMarDirector* EventWatcherDirectorForTalkNPC()
-{
-	TMarDirector* marDirector = gpMarDirector;
-	return marDirector;
-}
-
 static void evGetTalkNPC(TSpcTypedInterp<TEventWatcher>* interp, u32 arg_num)
 {
 	interp->verifyArgNum(0, &arg_num);
 
-	TBaseNPC* npc = EventWatcherDirectorForTalkNPC()->getTalkingNPC();
+	TBaseNPC* npc = SMSGetMarDirector()->getTalkingNPC();
 
 	interp->push(!npc ? 0 : (int)npc);
 }
