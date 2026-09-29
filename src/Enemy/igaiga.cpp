@@ -224,8 +224,8 @@ TRollEnemy::TRollEnemy(const char* name)
 	unk1B0     = 1.0f;
 }
 
-// TODO: frame 0x58 short (0x58 vs 0xb0) in the low region, and retail keeps
-// `this` in r31. Inert: Vec point, separate TVec3/Vec locals, an unnamed range.
+// TODO: 99.8%, every instruction in place; frame 0x80 against retail's 0xb0,
+// so the TVec3 slots sit low.
 void TRollEnemy::reset()
 {
 	gpCurRollEnemy = this;
@@ -237,18 +237,18 @@ void TRollEnemy::reset()
 
 	// Start on the first graph node, 10 up, facing the second.
 	JGeometry::TVec3<f32> point;
-	unk124->unk0->unk0[0].getPoint((Vec*)&point);
+	unk124->getGraph()->getFirstGraphNode().getPoint((Vec*)&point);
 	mPosition = point;
 	mPosition.y += 10.0f;
 
-	unk124->unk0->unk0[1].getPoint((Vec*)&point);
-	JGeometry::TVec3<f32> dir(point.x - mPosition.x, 0.0f,
-	                          point.z - mPosition.z);
+	unk124->getGraph()->getGraphNode(1).getPoint((Vec*)&point);
+	JGeometry::TVec3<f32> dir;
+	dir.sub(point, mPosition);
 	mRotation.y = MsWrap(MsGetRotFromZaxisY(dir), 0.0f, 360.0f);
 
-	unk198          = 1.5f * mMarchSpeed;
-	unk19C          = mMarchSpeed;
-	unk1A0          = 0.0f;
+	unk198           = mMarchSpeed * 1.5f;
+	unk19C           = mMarchSpeed;
+	unk1A0           = 0.0f;
 	unk124->mCurrIdx = 0;
 }
 
