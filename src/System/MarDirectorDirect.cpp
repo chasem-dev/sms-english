@@ -847,8 +847,10 @@ void TMarDirector::nextStateInitialize(u8 next_state)
 	}
 }
 
-// TODO: instructions exact; frame 0xc0 vs retail 0x130 (0xa8 before
-// getGamePad() at the pad reads, research c-r29). Body from upstream
+// TODO: instructions exact; frame 0xd0 vs retail 0x130 (0xa8 before
+// getGamePad() at the pad reads and getTalkMode()/getTalkingNPC() at the
+// talk reads, research c-r29; the NPC accessor as openTalkWindow's
+// argument changes code). Body from upstream
 // (its flag accessors fixed the r29/r30 swap, 99.8 -> 99.93), with the ROM's
 // GET_SHINE fanfare, the `1` demo flag and the 0x40 clear kept from ours.
 u8 TMarDirector::updateGameMode()
@@ -970,7 +972,7 @@ u8 TMarDirector::updateGameMode()
 		if (checkFlag(DIRECTOR_FLAG_DEMO_PENDING)) {
 			unk126 = 4;
 		} else {
-			if (unkB0->mTalkMode == 0)
+			if (unkB0->getTalkMode() == 0)
 				unk126 = 0;
 		}
 		break;
@@ -1050,8 +1052,8 @@ u8 TMarDirector::updateGameMode()
 			break;
 
 		case 1:
-			unkA0->onLiveFlag(LIVE_FLAG_UNK40000);
-			unkA0->unkC.off(CUE_MOVE | CUE_CALC_ANIM);
+			getTalkingNPC()->onLiveFlag(LIVE_FLAG_UNK40000);
+			getTalkingNPC()->unkC.off(CUE_MOVE | CUE_CALC_ANIM);
 			getGamePad()->onFlag(TMarioGamePad::PAD_FLAG_0x8);
 			OSStopStopwatch(&unkE8);
 			break;
