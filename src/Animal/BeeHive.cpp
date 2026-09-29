@@ -709,7 +709,8 @@ void TBeeHive::setShakePower(const JGeometry::TVec3<f32>& to_mario)
 
 // Mean position of every bee that is currently out, used as the swarm's
 // "where is it" for the give-up test.
-// TODO: frame 0x50 against retail's 0x68, and retail reloads the boid
+// TODO: 86.1%, frame 0x40 against retail's 0x68 with the per-component sums
+// (the add()/scale() spelling was 85.9% at 0x50). Retail reloads the boid
 // array for every unrolled element as if `center` were address-taken. The
 // old statement-body TVec3 copy constructor gave that (92.9%); with the
 // Vec-base one, inert: `+=`, `add(center, p)`, `*=`, `div(num)`, `zero()`,
@@ -724,13 +725,18 @@ JGeometry::TVec3<f32> TBeeHive::getCenterOfGravity() const
 	if (num == 0)
 		return JGeometry::TVec3<f32>(0.0f, 0.0f, 0.0f);
 
-	JGeometry::TVec3<f32> center;
-	center.set(0.0f, 0.0f, 0.0f);
+	JGeometry::TVec3<f32> center(0.0f, 0.0f, 0.0f);
+	for (int i = 0; i < num; ++i) {
+		const TBoid& boid = unk150->mBoids[i];
+		center.x += boid.mPosition.x;
+		center.y += boid.mPosition.y;
+		center.z += boid.mPosition.z;
+	}
 
-	for (int i = 0; i < num; ++i)
-		center.add(unk150->getBoid(i)->mPosition);
-
-	center.scale(1.0f / num);
+	f32 inv = 1.0f / num;
+	center.x *= inv;
+	center.y *= inv;
+	center.z *= inv;
 	return center;
 }
 
