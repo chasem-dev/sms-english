@@ -65,6 +65,14 @@ static inline int GCConsole2HideOffsetY(const TExPane* pane)
 	return 465 - pane->mInitialBounds.y1;
 }
 
+// fabricated: the pane's "parked above the screen" offset, -(y2 + 1).
+// Written inline, TGCConsole2::startAppearStar colours the two int-to-float
+// conversions of its setPaneOffset calls one register lower than retail.
+static inline int GCConsole2HideAboveScreenY(const TExPane* pane)
+{
+	return -(pane->mInitialBounds.y2 + 1);
+}
+
 // fabricated: the life meter's slide-off offset. Retail negates y2 + 1 and
 // *then* subtracts the gauge height; written as one expression MWCC folds it
 // into -(y2 + height + 1), so the negation lived behind an inline of its own.
@@ -1860,14 +1868,6 @@ void TGCConsole2::startDisappearStar()
 	unk5A = 1;
 }
 
-// TODO: the unk108 updatePaneOffset takes r29/r27 for getCurrentY/X where
-// retail reuses r30/r29; inert: raw mVisible, named pane, explicit setPaneOffset.
-// Frame is 8 over (0x168 vs 0x160): raw `unk160` at any one of the four
-// getUnk160() sites lands 0x160 (two or more undershoot), leaving the register
-// pair above and the JUTPoint(0, 0) temp at 0x11c vs 0x120, but objdiff scores
-// that 99.86 against 99.88 now, so it is not taken. Inert at the exact frame:
-// named `start` point, named coin pane/J2DPane, explicit setPaneOffset or named
-// x/y (both +0x10).
 void TGCConsole2::startAppearStar()
 {
 	if (unk34 || unk140->isInterpolatorAtZero())
@@ -1877,13 +1877,13 @@ void TGCConsole2::startAppearStar()
 
 	if (unk35) {
 		unk140->getPane()->hide();
-		getUnk160()->getPane()->hide();
+		unk160->getPane()->hide();
 		unk144->setStatus(JPABaseEmitter::STATUS_STOP_EMIT);
 		unk164->setStatus(JPABaseEmitter::STATUS_STOP_EMIT);
 		unk35 = 0;
 	}
 
-	unk140->setPaneOffset(40, 0, 0, 0, -(unk140->mInitialBounds.y2 + 1));
+	unk140->setPaneOffset(40, 0, 0, 0, GCConsole2HideAboveScreenY(unk140));
 	unk140->getPane()->show();
 	unk128->setPanePosition(50, cDownTopPoint, cDownMidPoint, cDownMidPoint);
 
@@ -1892,9 +1892,8 @@ void TGCConsole2::startAppearStar()
 	for (int i = 0; i < 3; ++i)
 		unk134[i]->getPane()->hide();
 
-	getUnk160()->setPaneOffset(40, 0, 0, 0,
-	                           -(getUnk160()->mInitialBounds.y2 + 1));
-	getUnk160()->getPane()->show();
+	unk160->setPaneOffset(40, 0, 0, 0, GCConsole2HideAboveScreenY(unk160));
+	unk160->getPane()->show();
 	unk148->setPanePosition(50, cDownTopPoint, cDownMidPoint, cDownMidPoint);
 
 	unk14C->getPane()->hide();
