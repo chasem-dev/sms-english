@@ -126,10 +126,12 @@ void TGCLogoDir::setup(JDrama::TDisplay* param_1, TMarioGamePad* param_2)
 
 TGCLogoDir::~TGCLogoDir() { getGamePad()->offFlag(0x1); }
 
-// TODO: frame 0x48 against 0x78 with every instruction right (low region
-// 0x30 short); getGamePad() at the pad test is +8, a named rect -8.
-// Slot map (c-d11): retail has one parse-time word between the rect (0x58)
-// and colour (0x50) temps and twelve more words created after the colour.
+// TODO: frame exact (research c-r29: getFader(), getProgSelect() and one
+// getNintendo2D() read; the binder at a second TNintendo2D read overshoots
+// by 8, and any single one of the three gives the same layout). Retail has
+// one more word created between the rect and colour temporaries (0x58/0x50)
+// where ours has it as alignment above the rect; named rect or colour
+// locals, TColor(u32) and a `.get()` colour are worse.
 int TGCLogoDir::direct()
 {
 	int desiredAppState = TApplication::APP_STATE_DEFAULT;
@@ -145,8 +147,8 @@ int TGCLogoDir::direct()
 				break;
 			}
 
-			mProgSelect->unkC.on(0xffff);
-			unk20->unk10 = unk30;
+			getProgSelect()->unkC.on(0xffff);
+			getNintendo2D()->unk10 = unk30;
 			unk20->unk14 = JUTRect(254, 201, 404, 271);
 			unk20->unk24 = JUtility::TColor(255, 255, 255, 255);
 			gpApplication.getFader()->startWipe(14, 0.4f, 0.0f);
@@ -174,15 +176,15 @@ static inline bool GCLogoCancelProgressive(TGCLogoDir* dir)
 {
 	bool cancelled = false;
 
-	if ((int)dir->mProgSelect->unkC.mValue != 0 && VIGetTvFormat() == 0
+	if ((int)dir->getProgSelect()->unkC.mValue != 0 && VIGetTvFormat() == 0
 	    && VIGetDTVStatus() == 1) {
 		if (OSGetProgressiveMode() == 1) {
-			dir->mProgSelect->unkC = 0;
+			dir->getProgSelect()->unkC = 0;
 			cancelled              = true;
 		} else if (dir->getGamePad()->getButton() & JUTGamePad::B) {
 			dir->unk44 += 1;
 			if (dir->unk44 / SMSGetVSyncTimesPerSec() > 1.0f) {
-				dir->mProgSelect->unkC = 0;
+				dir->getProgSelect()->unkC = 0;
 				cancelled              = true;
 			}
 		} else {
@@ -193,9 +195,9 @@ static inline bool GCLogoCancelProgressive(TGCLogoDir* dir)
 	return cancelled;
 }
 
-// TODO: 99.4%, the frame 0xa8 short (the TU-wide dead low region noted at
-// direct_dolby) and retail reloads mState after the isSomethingPushed test;
-// a shared state-change helper for the tail is inert or worse.
+// TODO: frame exact with getFader() and getProgSelect() (research c-r29);
+// retail still reloads mState after the isSomethingPushed test (see
+// direct_dolby).
 bool TGCLogoDir::direct_nlogo()
 {
 	bool ended    = false;
@@ -203,7 +205,7 @@ bool TGCLogoDir::direct_nlogo()
 	switch (mState) {
 	case 0:
 		if (gpApplication.getFader()->isFullyFadedIn()) {
-			nextState = (int)mProgSelect->unkC.mValue == 0 ? 3 : 1;
+			nextState = (int)getProgSelect()->unkC.mValue == 0 ? 3 : 1;
 
 			SMSGetMSound()->startSoundSystemSE(MSD_SE_MV_CHAO, 0, nullptr, 0);
 			mLogoShowTimer = 0;
@@ -226,7 +228,7 @@ bool TGCLogoDir::direct_nlogo()
 		break;
 
 	case 3:
-		if (mProgSelect->mHideTextBoxes) {
+		if (getProgSelect()->mHideTextBoxes) {
 			mLogoShowTimer = 0;
 			nextState      = 4;
 		}
@@ -258,15 +260,15 @@ bool TGCLogoDir::direct_nlogo()
 	return ended;
 }
 
-// TODO: 98.6%, frame 0x38 vs retail 0x68, and retail reloads mState after
-// the isSomethingPushed test. direct (+0x30) and direct_nlogo (+0xb0) share
-// the dead low region, so the carrier is TU-wide, not a lever here (k5).
-// c-h18 inert for the mState reload: nested ifs, a state-change helper (by
-// pointer or `int&`), a comparison helper and raw mResetFlag.check.
-// c-k9 debugger: ours has four dead inline words, retail sixteen; the
-// twelve extra words and the reload both point at code in this body that the
-// release build drops (e.g. in the empty `nextState != 2` arm, whose branch
-// survives), which the dead-code rule keeps as objects; not identified.
+// TODO: frame exact with getFader(), getGamePad() and the BOOL
+// isSomethingPushed() (research c-r29); what is left is retail's reload of
+// mState after the isSomethingPushed test, where ours reuses the load from
+// the `!= 2` compare (a frontend CSE temporary). The frame bound leaves no
+// room for a word, so whatever blocks the CSE there adds no object.
+// c-h18 inert for the reload: nested ifs, a state-change helper (by
+// pointer or `int&`), a comparison helper and raw mResetFlag.check; c-r29
+// inert: an inline mState reader at the test or the tail, `mState !=
+// nextState`, a named or `!= false` pad result.
 bool TGCLogoDir::direct_dolby()
 {
 	bool ended    = false;
@@ -291,7 +293,7 @@ bool TGCLogoDir::direct_dolby()
 		break;
 	}
 
-	if (mState != 2 && mGamePad->isSomethingPushed())
+	if (mState != 2 && getGamePad()->isSomethingPushed())
 		nextState = 2;
 
 	if (nextState != mState) {

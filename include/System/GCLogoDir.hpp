@@ -54,6 +54,21 @@ public:
 		return gamePad;
 	}
 
+	// fabricated names, getGamePad()'s shape: each named pointer is a dead
+	// word per site. With getProgSelect() at every read in direct and
+	// direct_nlogo, direct_nlogo's frame is retail's (research c-r29).
+	TProgSelect* getProgSelect()
+	{
+		TProgSelect* progSelect = mProgSelect;
+		return progSelect;
+	}
+
+	TNintendo2D* getNintendo2D()
+	{
+		TNintendo2D* nintendo2D = unk20;
+		return nintendo2D;
+	}
+
 public:
 	/* 0x18 */ int mOverallState;
 	/* 0x1C */ int mState;
