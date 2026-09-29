@@ -180,7 +180,8 @@ BOOL TConductor::isBossDefeated()
 	// `case 2:`, `default: ;`, an empty `case 4:`, an int switch operand,
 	// `case 3:` first (28.8), the hinokuri body after the switch (~29) and
 	// an if/else on map 3 (95.0). The remaining residue is the 4-low
-	// iterator slots.
+	// iterator slots. Dropping `default:` scores 98.8 but sends maps other
+	// than 2 and 3 off the end again, so it is not an option.
 	switch (gpMarDirector->mMap) {
 	case 2:
 	default: {
