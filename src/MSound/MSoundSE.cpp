@@ -30,7 +30,10 @@ void MSRandVol::construct(u32 param)
 
 // TODO: instruction-exact; frame 0x18 vs retail 0x20 (8 bytes of low region,
 // as in MSRandPlay's ctor). Inert: body assignments instead of initialisers,
-// an empty base, an inline dtor, dropping `virtual`.
+// an empty base, an inline dtor, dropping `virtual`. A named `f32 half`
+// for the three 0.5f stores fills the frame (100%), but nothing in the code
+// asks for it and MSRandPlay's ctor has the same gap with no constant to
+// name, so it is not used.
 MSRandVol::MSRandVol(u32 param)
     : mLink(this)
     , unk14(param)
@@ -59,6 +62,8 @@ u32 MSRandVol::getRandomVolume(u32 param_1, u32 param_2) { }
 // named slope locals, parenthesised or pre-masked indices are inert.
 // Also inert (2026-09-23): mAmplitude * amp, named product, `d += 1.0f`,
 // `1.0f + ...`, a pointer to the CSlope entry; named p/c locals cost 3-4 insns.
+// Swapping the two slope shifts gets the scheduling (99.6) but indexes each
+// table with the other field, which retail does not do.
 f32 MSRandVol::getRandVol(u32 param_1)
 {
 	f32 d = JALCalc::getRandom(
