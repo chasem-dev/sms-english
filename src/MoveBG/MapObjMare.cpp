@@ -358,11 +358,13 @@ static inline void CogwheelRotY(JGeometry::TVec3<f32>* v, f32 deg)
 	v->z    = x * s + z * c;
 }
 
-// TODO: 96.8%, frame and every slot exact (no named offsetX/offsetZ, the two
-// getPosition().y reads fill retail's low region). Retail keeps offset.x in
-// f31 and offset.z in f30 (ours swapped) and computes each call's scale
-// address before the rotation address. Inert: x/z read or store order in the
-// helper, named nx/nz, operand order, set(), offset built by set() or stores.
+// Both calls take newAndRegisterObj's default scale, which is why retail
+// computes the scale address first, and both pass the raw mRotation.
+// TODO: 99.7%, every instruction, the frame and every slot exact (no named
+// offsetX/offsetZ, the two getPosition().y reads fill retail's low region).
+// Retail keeps offset.x in f31 and offset.z in f30 (ours swapped). Inert: x/z
+// read or store order in the helper, named nx/nz, operand order, set(),
+// offset built by set() or stores.
 void TCogwheel::initMapObj()
 {
 	TMapObjBase::initMapObj();
@@ -372,9 +374,8 @@ void TCogwheel::initMapObj()
 
 	JGeometry::TVec3<f32> pos(mPosition.x + offset.x, mPosition.y,
 	                          mPosition.z - offset.z);
-	JGeometry::TVec3<f32> scale(1.0f, 1.0f, 1.0f);
 	TCogwheelScale* plate = (TCogwheelScale*)TMapObjBaseManager::newAndRegisterObj(
-	    "cogwheel_plate", pos, mRotation, scale);
+	    "cogwheel_plate", pos, mRotation);
 	mPlate = plate;
 	mPlate->mIsUpper  = true;
 	mPlate->mCogwheel = this;
@@ -383,9 +384,8 @@ void TCogwheel::initMapObj()
 	mPlateRopePos.set(pos.x, getPosition().y, pos.z);
 
 	pos.set(mPosition.x - offset.x, getPosition().y, mPosition.z + offset.z);
-	JGeometry::TVec3<f32> potScale(1.0f, 1.0f, 1.0f);
 	TCogwheelScale* pot = (TCogwheelScale*)TMapObjBaseManager::newAndRegisterObj(
-	    "cogwheel_pot", pos, getRotation(), potScale);
+	    "cogwheel_pot", pos, mRotation);
 	mPot = pot;
 	mPot->mIsUpper  = false;
 	mPot->mCogwheel = this;
