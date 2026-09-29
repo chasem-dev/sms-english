@@ -287,12 +287,14 @@ void TEnemyManager::copyFromShared()
 // `li r5, 0; addi r3, r5, 0`), which the old spelled-out loop with named
 // locals could not give; countLivingEnemy reads the objects one level
 // shallower than getObj() so that it still expands here at depth 2.
-// TODO: every instruction exact; frame 0xf8 against 0xf0. Retail's two
-// TTimeRec colour temporaries sit at 0xbc/0xb8, ours at 0xc4/0xbc: one dead
-// word too many between them (countLivingEnemy's int result object, dead at
-// the `<= 0` test) and one more below the second. A named `aliveNum` and
-// `!(... > 0)` are inert; `getActiveObjNum()` in the loop condition breaks
-// countLivingEnemy.
+// TODO: every instruction and the frame exact (0xf0: the getObjNum() bound
+// with raw unk18[i] in the no-collision loop, hsearch c-k12). Retail's two
+// TTimeRec colour temporaries sit at 0xbc/0xb8, ours at 0xbc/0xb4: the
+// debugger shows countLivingEnemy's int result object (dead at the `<= 0`
+// test) created between them, where retail creates it after the second.
+// A named `aliveNum` and `!(... > 0)` are inert; `getActiveObjNum()` in the
+// loop condition breaks countLivingEnemy, and so does a predicate level
+// around the call (it stops expanding at depth 2: frame 0xc0, 22 missing).
 void TEnemyManager::performShared(u32 param_1, JDrama::TGraphics* param_2)
 {
 	if (unk30 & 1)
@@ -322,8 +324,8 @@ void TEnemyManager::performShared(u32 param_1, JDrama::TGraphics* param_2)
 
 	int num = getActiveObjNum();
 	if (param_1 & CUE_MOVE) {
-		for (int i = num; i < mObjNum; ++i)
-			getObj(i)->onHitFlag(HIT_FLAG_NO_COLLISION);
+		for (int i = num; i < getObjNum(); ++i)
+			unk18[i]->onHitFlag(HIT_FLAG_NO_COLLISION);
 	}
 
 	for (int i = 0; i < num; ++i) {
