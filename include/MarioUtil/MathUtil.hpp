@@ -133,26 +133,9 @@ JGeometry::TVec3<f32> MsGetRotFromZaxis(const JGeometry::TVec3<f32>&);
 JGeometry::TQuat4<f32> SMS_Eular2Quat(const JGeometry::TVec3<f32>&);
 void MsMtxSetRotRPH(MtxPtr mtx, f32 x, f32 y, f32 z);
 
-// Both are weak in the map (MsMtxSetRotX from MapObjPinna.o, MsMtxSetRotY from
-// MapObjFence.o), so they are header inlines. jmaSinTable is an f32*, so every
-// store below would invalidate the cached table pointer: both lookups have to
-// be named up front.
-// The inlined expansions at HauntLegCallback, PopoRollCallback and
-// TItemSlotDrum::generateItem differ from retail by two tells: retail keeps
-// &mtx in a saved register across the following MTXConcat/MTXMultVec, and
-// loads the 0.0f/1.0f literals only after the preceding stores (the stores
-// go through a pointer, as in the weak out-of-line bodies). The one spelling
-// found that reproduces both is a two-level pointer: a non-substitutable
-// argument (`MsMtxSetRotZ((MtxPtr)spin, a)`) plus `MtxPtr m = mtx;` in the
-// body (HauntLegCallback 94.0 -> 100, generateItem 94.5 -> 99.6 with its old
-// 0x10 frame gap, PopoRollCallback 94.9 -> 96.6). Neither half alone moves
-// anything, the copy in this header regresses at least 9 functions,
-// including the weak MsMtxSetRotX/Y bodies (100 -> 99.87), and the cast is
-// a no-op conversion, so neither is landed. Inert: row pointers, `&mtx[0]`,
-// an `Mtx` or `Mtx&` parameter, a forwarding level (loses the sin/cos
-// expansion), a switch on the axis, a guard on `mtx`, and
-// TRotation3f/TPosition3f/TMtx34f locals at the call site (their conversion
-// operator adds 8 bytes of frame).
+// X and Y are weak in the map (MapObjPinna and MapObjFence respectively).
+// Both table reads precede the stores because the destination can alias the
+// sine and cosine tables.
 inline void MsMtxSetRotX(MtxPtr mtx, f32 angle)
 {
 	f32 sin = JMASSin(DEG2SHORTANGLE(angle));
@@ -194,28 +177,32 @@ inline void MsMtxSetRotY(MtxPtr mtx, f32 angle)
 	mtx[2][2] = cos;
 	mtx[2][3] = 0.0f;
 }
-// The third sibling. The map has no MsMtxSetRotZ symbol anywhere, so unlike
-// MsMtxSetRotX and MsMtxSetRotY it happens to be expanded in every TU that
-// uses it; it still belongs beside them rather than in hauntLeg.cpp.
-inline void MsMtxSetRotZ(MtxPtr mtx, f32 angle)
+// View three consecutive rows as one 3x4 matrix, or use the complete matrix
+// object directly. The rotation below shares one implementation for both.
+inline Mtx& MsMtxArray(Mtx* matrix) { return *matrix; }
+inline Mtx& MsMtxArray(MtxPtr rows) { return *(Mtx*)rows; }
+
+template <typename MatrixStorage>
+inline void MsMtxSetRotZ(MatrixStorage* storage, f32 angle)
 {
+	Mtx& matrix = MsMtxArray(storage);
 	f32 sin = JMASSin(DEG2SHORTANGLE(angle));
 	f32 cos = JMASCos(DEG2SHORTANGLE(angle));
 
-	mtx[0][0] = cos;
-	mtx[0][1] = -sin;
-	mtx[0][2] = 0.0f;
-	mtx[0][3] = 0.0f;
+	matrix[0][0] = cos;
+	matrix[0][1] = -sin;
+	matrix[0][2] = 0.0f;
+	matrix[0][3] = 0.0f;
 
-	mtx[1][0] = sin;
-	mtx[1][1] = cos;
-	mtx[1][2] = 0.0f;
-	mtx[1][3] = 0.0f;
+	matrix[1][0] = sin;
+	matrix[1][1] = cos;
+	matrix[1][2] = 0.0f;
+	matrix[1][3] = 0.0f;
 
-	mtx[2][0] = 0.0f;
-	mtx[2][1] = 0.0f;
-	mtx[2][2] = 1.0f;
-	mtx[2][3] = 0.0f;
+	matrix[2][0] = 0.0f;
+	matrix[2][1] = 0.0f;
+	matrix[2][2] = 1.0f;
+	matrix[2][3] = 0.0f;
 }
 
 void MsMtxSetXYZRPH(MtxPtr mtx, f32 x, f32 y, f32 z, s16 r, s16 p, s16 h);

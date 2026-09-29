@@ -544,3 +544,5 @@ Per site unless stated; a "not:" clause is disproved — do not retry it.
 - GC2D: check `new` sizes first — `TOptionSubtitleUnit` exists, `TBalloonControl` does not, `scScenarioNameTable` skips ids 8/9, the title has 18 panes (region-us.md: "`Option`, `ConsoleStr`, `StageUtil`").
 - US debug strings are English (21 stage names, six disc-error messages, `/card/mariobnr.bti`); `HelpActor`'s id base is 0x33 (region-us.md: "Strings and IDs").
 - Application's US disc-error strings are 121/106 bytes, not 124/109: seventeen later strings shift 4 and the next `.rodata` boundary moves 8 (linking.md: "US `.rodata` boundaries").
+
+- A computational by-value subtraction can recover both vector temporary layout and squared-length contraction locally; whole-matrix versus borrowed-row views can recover rotation pointer scheduling. Measure every shared-header consumer (frame-gaps.md: "2026-09-29: computed value and typed matrix views").

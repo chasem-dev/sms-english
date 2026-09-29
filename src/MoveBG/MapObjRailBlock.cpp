@@ -550,20 +550,14 @@ void TRollBlock::calcRootMatrix()
 {
 	J3DModel* model = getModel();
 	MtxPtr mtx      = model->getBaseTRMtx();
-	// TODO: 99.2%, frame and every slot exact; the roll matrix is the header's
-	// MsMtxSetRotZ (the hand-written sin/cos copy was 97.3). Left: retail sets
-	// MTXConcat's r3 with `mr` and r5 with `addi r5, r30, 0`, ours `mr` twice.
-	// `MTXConcat(mtx, roll, mtx)` gives that pair but hoists `addi r4, roll`
-	// above the scale copy (r6 for mScaling.x, 97.3); both getBaseTRMtx() the
-	// same as this. Two getPosition() sites (any two) pay the frame's last 8.
-	// c-k5: `(mtx, roll, model->getBaseTRMtx())`, the accessor twice and
-	// `Mtx roll` declared first all keep two `mr`s (the first two swap r3/r5).
-	MsMtxSetXYZRPH(mtx, mPosition.x, getPosition().y - mYOffset, getPosition().z,
+	// TODO: retail copies mtx into MTXConcat's destination with addi rather
+	// than mr; every other instruction and stack slot matches.
+	MsMtxSetXYZRPH(mtx, mPosition.x, mPosition.y - mYOffset, getPosition().z,
 	               mInitialRotation.x, mInitialRotation.y, mInitialRotation.z);
 	model->setBaseScale(getScaling());
 
 	Mtx roll;
-	MsMtxSetRotZ(roll, unk138);
+	MsMtxSetRotZ(&roll, unk138);
 	MTXConcat(model->getBaseTRMtx(), roll, mtx);
 }
 

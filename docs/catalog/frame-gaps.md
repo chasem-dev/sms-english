@@ -2109,3 +2109,11 @@ Measured with `tools/mwcc-stack/udbg.py` dumps, per-unit scoring and tree-wide `
 - The open question is the same one c-r20 left for `operator-`: retail's by-value operators add exactly one dead word per site below the body locals, and the only way found to make one word (`return (const Vec&)...`) costs float copies.
   V2 plus that one word per site would give landEffect's slot map exactly, so a construct that adds it is worth looking for in the copy constructor or `operator*=` rather than in `operator*` itself.
 - Tongue's `canGo` residue (retail's `sub` operand three words lower than ours) belongs to the `operator-` class, not to `operator*`.
+
+## 2026-09-29: computed value and typed matrix views
+
+`TMario::wireMove` now matches all 312 bytes using a computational `WireDifference` helper: a by-value endpoint is reduced by the start (`return end -= start`). This retains the original 0x68 frame and fused squared-length arithmetic. Changing the shared vector operator to this shape regressed other consumers, so the legitimate local operation is retained.
+
+`MsMtxSetRotZ` now computes through a whole 3x4 `Mtx&`. Normalization overloads accept an actual `Mtx*` or reshape the borrowed `MtxPtr` row view; one templated body writes the twelve entries. This makes HauntLegCallback and TobiPukuRollCallback exact without no-op casts or duplicate rotation bodies. The real reference-view word is balanced by removing Tobi's redundant pointer handle and reading RollBlock's y component directly. RollBlock passes `&roll` and keeps its existing sole `mr`/`addi` difference.
+
+These findings are local source-flow evidence, not a universal frame rule. Combined full build, per-function regression report, symbol order and original DOL hash passed; other vector and X/Y rotation consumers require separate measurements.

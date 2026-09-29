@@ -34,20 +34,6 @@ static THauntLeg* gpCurHauntLeg;
 
 // The leg's own joint callback: while it is haunting, the possessed joint (and
 // the matrix J3D is currently building with) get an extra spin about Z.
-// TODO: 94.0%, frame exact once the angle is read into a named local. Retail
-// keeps &spin in r30 (node in r31) and loads the 0.0f/1.0f literals at their
-// stores. A named MtxPtr gets the register but lands it in r31 (92.5);
-// declaration order of the pointer, the Mtx, the angle and the joint is
-// inert, and spelling MsMtxSetRotZ's body out or reordering the concats loses.
-// TU-local RotZ bodies are inert too (named s16 angle, s16 parameter, cos
-// before sin, JMASin/JMACos, `Mtx` parameter, a named `-sin`, non-inline
-// static, an internal MtxPtr copy). The same two tells, &mtx held in a saved
-// register and literals loaded only after the preceding stores, recur in
-// TItemSlotDrum::generateItem and PopoRollCallback, so the cause is shared
-// by the MsMtxSetRot* expansions rather than local to this callback.
-// Also inert (c-ident): a TMtx34f (with or without identity()) and a named
-// MtxPtr for RotZ and/or the concats, hand-written rows through the pointer
-// (92.6-93.9), and the rotation plus concats as a TU-local helper (62-64).
 static int HauntLegCallback(J3DNode* node, int param)
 {
 	if (param == 0) {

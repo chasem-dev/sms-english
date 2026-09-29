@@ -43,3 +43,9 @@
   Symbolic effects are SAME, all 26 UNUSED symbol sizes now agree, full build and zero regressions pass, and the DOL SHA-1 remains original.
   Aggregate matching and source-linked counts are unchanged because the helper itself is unused in the retail binary.
   A separate MActorAnmData constructor experiment measured 18 legitimate partial/full member-initializer forms; none moved its allocator temporary or frame toward retail, so all were restored.
+
+- 2026-09-29: A typed whole-matrix view closed HauntLegCallback (94.01087% -> 100%, 368 bytes) and TobiPukuRollCallback (96.78832% -> 100%, 548 bytes).
+  MsMtxSetRotZ uses one algorithm with meaningful whole-array versus borrowed-row normalization. Tobi's redundant handle was removed; RollBlock reads y directly and passes &roll.
+  RollBlock preserves its previous 99.24051% score and sole mr/addi operand shape. Full shared-header rebuild shows exactly the two gains and no regressions; symbol order and original DOL SHA-1 pass.
+  Both callback units retain other non-exact functions and cannot yet be source-linked; no manifest entry was added.
+  Combined verified state: All exact 73.21588%, source-linked 33.69769%, 12,017/12,904 exact functions, 536/732 source-linked units.

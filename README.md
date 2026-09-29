@@ -10,13 +10,13 @@ As of 2026-09-29, the local `GMSE01` build report measures:
 
 | Code | Fuzzy match | Perfect match | Fully linked |
 | --- | ---: | ---: | ---: |
-| Game | 99.48% | 67.18% | 19.46% |
+| Game | 99.48% | 67.21% | 19.46% |
 | JSystem | 99.90% | 93.91% | 81.22% |
 | SDK | 100.00% | 99.71% | 99.54% |
-| **Total** | 99.58% | 73.19% | 33.70% |
+| **Total** | 99.58% | 73.22% | 33.70% |
 
 Fuzzy match measures approximate code similarity; perfect match counts bytes identical to the original; fully linked counts code built from matching source.
-12,015 of 12,904 functions match exactly, and 536 of 732 object files are linked from source.
+12,017 of 12,904 functions match exactly, and 536 of 732 object files are linked from source.
 The rebuilt `mario.dol` is byte-identical to the original; unfinished objects still use code extracted from the user's own disc.
 These USA figures are measured separately from the Japanese starting point.
 See [current progress and open work](PROGRESS.md) and the [North American build notes](config/GMSE01/README.md).
