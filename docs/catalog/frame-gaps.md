@@ -2341,3 +2341,36 @@ Only this record and a header comment are committed; the header is unchanged.
 - The split does not follow the source's value category.
   `mStaticHitActor.mPosition = mParticlePositionSOA[i]` and makeKillerVelocity's `axis = toMario` have lvalue sources and still want the non-address-taking copy.
 - Next: look for what retail's address-taking sites share (an inlined callee, a `Vec`-typed accessor that the map does not show) before any further `operator=` round.
+
+## Closure batch c-k20 (2026-09-29): the three-function units, no closure
+
+Twenty units with three non-exact functions each; none closed, nothing landed.
+- **Survey.** `check-relocs.py --mode calls` flags no call-set difference in any of the twenty except NpcNerve's known `getCurGraphIndex`.
+  `find-copied-bodies.py` finds only known pairs (shoot and `setZigParameter`) plus readBillboard and `CLBDistXZ`, which does not apply: the zero guard sits between the differences and the sqrt, and `CLBDistXZ` goes through `MsSqrtf`.
+  Every residue left is frame, slot or register; the per-function TODOs already record the deep searches, so the rest of this entry is new measurements only.
+- **NpcNerve `getCurGraphIndex` (probed with `inline-modes.py --snippet`).** The fabricated `hasOnlyOneNext` chain puts the index accessor at level 3.
+  A named reference, `return cur().oneNext()`, `if (cur().oneNext())` and a `getRailNode()` member call all stay at 3.
+  One `rail()` level (`return cur().getRailNode();`) gives 4, and so does an NPC-level wrapper over the tracer predicate; both together give 5.
+  No mode spelling adds two levels with one construct, so retail's out-of-line pair still needs two invented levels (open, as recorded).
+- **TDStageGroup chain (MenuDir, MovieDirector and GCLogoDir `setup`, the `rsetup`s).** In a scratch TU the frame does not depend on the new-expression's context.
+  `g = new`, a named local, `return new`, `ext(new ...)`, a bare `new T(d);` and a member store all give the same frame, so this is not a site-mode effect.
+  `char*` name parameters at the DSG and list levels are inert, and a dead `const char*` in DSG's body is +8.
+  Retail layout (hsearch `dbg`): one extra word above each of the three `this` bindings (0x3c/0x34/0x2c), and six words under the FrmGXSet `this` where ours has three.
+  Ours numbers @1680, @1682-@1684, @1686 and @1688 between the kept objects and eliminates them; these are the candidates for retail's kept words.
+- **Dead words below conversion buffers.** warpOut keeps 4 more words below its two int-to-float buffers (@1243/@1245), and `TMapObjGeneral::recover` keeps 10 more below its two.
+  Neither function has any later inline object in ours.
+  Remnant spellings for recover's bare `getModel();` (`getModel()->getAnmMtx(0)`, named `mat`, named `model`) are +0/+8/+0x10, never the 0x28.
+- **More layouts read with `dbg`.**
+  - readBillboard: retail has 15 more words below `std::sqrtf`'s volatile and 1 more above `moveDist`.
+  - fruitsboat `init`: 5 more words above the `getCurrentPos` return temporary and 4 fewer below the Mtx.
+  - fruitsboat GraphWander: one of the four depth-1 words above the first pos/rot pair (@1263-@1267) sits below the pair in retail.
+    `!checkLiveFlag` spelled `== false`, raw, or as an empty-then/else arm is inert or worse; so are a named tracer and `getGraphNode(getCurGraphIndex())` for `node`.
+- **shoot: a full reversal.** Retail's four parse-time temporaries (the `operator-` copy, the node copy, the two TMsRanges) are created in exactly the reverse of our order.
+  Moving goal..end into one TU-local helper, with or without the `setZigParameter` call, changes instructions (97.2), so the cause is not one callee.
+  The residue stays in the `operator-` class.
+- **MSoundStruct `startSoundSetDyna`.** The if-statement restart test expands `searchD` at level 2 (expression mode) whether the predicate is a scalar initialiser or `if (!f())`.
+  No statement-mode spelling moves `searchD` to level 3 without one more level.
+- **Inert, recorded so nobody repeats them.**
+  - calcNoticeTargetYrot_: `int`/`u16` ang, `CLBAbs<s16>` over the int or s16 difference, `(int)`/`(s16)` casts on ang. The best is 97.2; retail's `extsh r4, r3` before the subtraction survives all eight.
+  - SelectGrad: six top-left cycle spellings (pre/post-decrement, `+= 6`, ternary, if/else, a named cycle). The regalloc replay there is misaligned: retail r31/r2 appear for volatile webs.
+  - fruitsboat `init`: named tracer (-0x18, instructions change), named graph (inert), named type (+0x10), named position (+8, 6 extra instructions), raw `manager` (instructions change).
