@@ -415,16 +415,10 @@ void TBathtubKiller::perform(u32 cue, JDrama::TGraphics* graphics)
 		if (mTimers[0] <= 0) {
 			BKPushExplosion(this);
 		}
-		if (!gpMap->isInArea(getPosition().x, getPosition().z)) {
-			unk21C = 0;
-			onLiveFlag(LIVE_FLAG_DEAD);
-			stopAnmSound();
-		}
-		if (unk1CC->unk29A != 0) {
-			unk21C = 0;
-			onLiveFlag(LIVE_FLAG_DEAD);
-			stopAnmSound();
-		}
+		if (!gpMap->isInArea(getPosition().x, getPosition().z))
+			killBathtubKiller();
+		if (unk1CC->unk29A != 0)
+			killBathtubKiller();
 	}
 
 	if ((cue & CUE_CALC_ANIM) && !checkLiveFlag(LIVE_FLAG_DEAD)) {
