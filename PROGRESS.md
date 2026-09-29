@@ -27,7 +27,7 @@ The prior monument-turn and wire-riding closures remain exact and source-linked 
 All retained changes pass full production builds, zero function regressions, unchanged symbol diagnostics and the original DOL checksum.
 The four units with unmatched data are JPAEmitter (72 bytes), CardManager (136), ShadowUtil (304) and CameraChange (496).
 Bounded NPC-pointer, cloud-radius, sand-castle camera, random-emitter and BGM reset probes found no safe gain and were restored.
-A tentacle-state helper improves its out-of-line body but regresses seven exact inlined callers and is not retained.
+A tentacle-state helper improves its out-of-line body but regresses eight inlined callers, including five previously exact functions and is not retained.
 
 The selected unit rows below are refreshed from the same measured report as the totals.
 

@@ -415,7 +415,7 @@ Every other function and datum, symbol diagnostic and the original DOL hash are 
 A by-value color setter adds two instructions and a 0xc8 frame; a borrowed setter without raw inputs has a 0xc0 frame.
 Sand-castle whole-camera and borrowed-input operations expand the yaw call and worsen the frame; named signed emitter random moves its frame by eight, and a scoped emitter-info reference changes the loop.
 Complete cloud radius-store operations preserve the same two float-web order; a complete NPC camera-distance operation is refused at inline depth two, and two other actual-input forms move the pointer webs in the wrong order.
-The complete tentacle allowed-state helper makes changeAllTentacleState instruction-identical at frame 0x20 against 0x28, but seven previously exact inlined caller bodies regress; it is rejected.
+The complete tentacle allowed-state helper makes changeAllTentacleState instruction-identical at frame 0x20 against 0x28, but eight inlined caller bodies, including five previously exact functions regress; it is rejected.
 Four units account for all 1,008 unmatched data bytes: JPAEmitter 72, CardManager 136, ShadowUtil 304 and CameraChange 496.
 The JPAEmitter and CameraChange defects include jump tables attached to non-exact functions; they are not standalone data-only fixes.
 Evidence: /tmp/sms-light-color-0929, /tmp/sms-sand-warp-0929, /tmp/sms-emitter-random-0929, /tmp/sms-bgm-reset-0929, /tmp/x-npc-gpr-0929, /tmp/x-cloud-radius-0929 and /tmp/x-gesso-state-0929.
