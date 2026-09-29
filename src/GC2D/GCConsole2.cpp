@@ -1848,19 +1848,12 @@ bool TGCConsole2::startAppearBalloon(u32 messageID, bool autoClose)
 	return true;
 }
 
-// TODO: retail adds unk26A + offset (add r0, r26A, rneg) where we emit the
-// operands swapped; the pauseOut expansion also swaps r25/r26 on the unk160
-// pane. Inert: named/unnamed sum, +=, s16/int casts, raw unk26A, ~y2, -y2-1,
-// a named s16 unk26A local, a TExPane hide-offset helper (+8 frame), and
-// `getUnk26A() - (y2 + 1)` (emits subf). Also inert: a named int unk26A
-// before or after `offset` in either sum order (93%), `getUnk26A() + offset`
-// with offset named, and `getUnk26A() + -(y2 + 1)` unnamed (folds to subf).
 void TGCConsole2::startDisappearStar()
 {
-	int offset = -(getUnk140()->mInitialBounds.y2 + 1);
-	getUnk140()->updatePaneOffset(40, 0, offset + getUnk26A());
-	unk160->updatePaneOffset(40, 0, -(unk160->mInitialBounds.y2 + 1));
-	unk108->updatePaneOffset(40, 0, getUnk26A());
+	unk140->updatePaneOffset(40, 0,
+	                         unk26A + GCConsole2HideAboveScreenY(unk140));
+	unk160->updatePaneOffset(40, 0, GCConsole2HideAboveScreenY(unk160));
+	unk108->updatePaneOffset(40, 0, unk26A);
 
 	unk144->setStatus(JPABaseEmitter::STATUS_STOP_EMIT);
 	unk164->setStatus(JPABaseEmitter::STATUS_STOP_EMIT);
