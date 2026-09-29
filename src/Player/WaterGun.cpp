@@ -268,29 +268,23 @@ static inline TWaterGun* NozzleFludd(const TNozzleBase* p)
 
 static inline TMario* NozzleMario(const TNozzleBase* p)
 {
-	TMario* mario = p->mFludd->mMario;
-	return mario;
-}
-
-static inline TMario* NozzleMario2(const TNozzleBase* p)
-{
-	TMario* mario = NozzleMario(p);
+	TMario* mario = p->mFludd->getMario();
 	return mario;
 }
 
 void TNozzleBase::calcGunAngle(const TMarioControllerWork& work)
 {
 	// volatile u32 unused1[17];
-	if (NozzleMario2(this) == gpMarioAddress
+	if (NozzleMario(this) == gpMarioAddress
 	    && (gpCamera->isLButtonCamera() || gpCamera->isJetCoaster1stCamera())) {
 		unk36E = gpCamera->mCurrentTarget.mPitch;
 		return;
 	}
 
 	s16 angle;
-	if (NozzleMario2(this)->mStatus == MARIO_STATUS_SQUAT) {
+	if (NozzleMario(this)->mStatus == MARIO_STATUS_SQUAT) {
 			angle = unk36E;
-		angle += (s16)(NozzleMario2(this)->mGamePad->mCompSPos[0 * 2 + 1]
+		angle += (s16)(NozzleMario(this)->mGamePad->mCompSPos[0 * 2 + 1]
 		               * mEmitParams.mRButtonMult.get());
 	} else {
 		angle = -mEmitParams.mLAngleBase.get();
@@ -615,7 +609,7 @@ void TNozzleTrigger::movement(const TMarioControllerWork& controllerWork)
 
 		// Very likely an inline
 		bool check;
-		if (NozzleMario(this)->mUpperState == TMario::UPPER_STATE_PUMPING) {
+		if (mFludd->getMario()->mUpperState == TMario::UPPER_STATE_PUMPING) {
 			check = true;
 		} else {
 			check = false;
@@ -643,19 +637,19 @@ void TNozzleTrigger::movement(const TMarioControllerWork& controllerWork)
 
 	bool canSpray = true;
 
-	if (!(NozzleMario(this)->mUpperState == TMario::UPPER_STATE_PUMPING ? true
+	if (!(mFludd->getMario()->mUpperState == TMario::UPPER_STATE_PUMPING ? true
 	                                                                 : false))
 		canSpray = false;
 
-	if (NozzleMario(this)->checkFlag(MARIO_FLAG_IN_ANY_WATER) == true
+	if (mFludd->getMario()->checkFlag(MARIO_FLAG_IN_ANY_WATER) == true
 	    && NozzleFludd(this)->mCurrentWater < mEmitParams.mAmountMax.get())
 		canSpray = false;
 
 	if (canSpray == true) {
 		unk388 += 150.0f * controllerWork.mAnalogR;
 		if (!unk384 && unk385 == TNozzleTrigger::INACTIVE) {
-			if (WaterGunDirector()->unk58 % (int)NozzleMario(this)->unk568 == 0)
-				SMSRumbleMgr->start(20, (int)NozzleMario(this)->unk564,
+			if (WaterGunDirector()->unk58 % (int)mFludd->getMario()->unk568 == 0)
+				SMSRumbleMgr->start(20, (int)mFludd->getMario()->unk564,
 				                    (f32*)nullptr);
 		}
 	}
