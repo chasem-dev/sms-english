@@ -348,14 +348,34 @@ void TBaseNPC::behaveToBeTrampled_()
 	}
 }
 
-// TODO: 99.9%. The burning-branch spray particle is emitted at the hitting
-// object's position (retail's r4 + 0x10). Remaining: the frame is 0x30
-// short and isSunflowerReviving's result takes r29 where retail reuses r28.
-// The low region is all dead (no stack slot used). Inert: getSpine(),
+// The wet reaction proper, one inline level below the nerve gate: at that
+// level isSunflowerReviving's result reuses the nerve web's register (r28),
+// as in retail; spelled in the caller it takes the gate result's r29.
+static inline void NpcGetWetByObject(TBaseNPC* self, EnumHitNpcObjectKind kind)
+{
+	if (!self->isSunflowerReviving()
+	    && (self->isClean() || kind != HIT_NPC_OBJECT_KIND_UNK1)
+	    && (self->mActorType != 0x4000006
+	        || self->unkD0->getCurrentAnmKind() == NPC_ANM_KIND_UNK4
+	        || self->unkD0->getCurrentAnmKind() == NPC_ANM_KIND_UNK6)
+	    && (self->mSpine->getCurrentNerve() != &TNerveNPCTalk::theNerve()
+	        || self->mSpine->getTime() >= 4)) {
+		if (kind == 1)
+			self->onLiveFlag(LIVE_FLAG_UNK4000000);
+		self->mSpine->pushNerve(&TNerveNPCWet::theNerve());
+	}
+}
+
+// TODO: 99.9%, every instruction and register exact. The burning-branch
+// spray particle is emitted at the hitting object's position (retail's
+// r4 + 0x10). Remaining: the frame is 0x30 short, all dead low region (no
+// stack slot used, so hsearch dbg maps nothing). Inert: getSpine(),
 // getActorType() and SMSGetMarDirector() at each single site, the map-size
-// changeNerveToWet_ at the final push, nested-if or early-return
-// isSunflowerReviving bodies; getSpine() in isNerveCanGoToWet is +8 here but
-// costs behaveToBeTrampled_ the same 8.
+// changeNerveToWet_ at the final push; getSpine() in isNerveCanGoToWet is +8
+// here but costs behaveToBeTrampled_ the same 8. getSpine()/getLodAnm() in
+// the wet helper are +8 each (frame-only, not taken). Moving the nerve gate
+// or the checkActionFlag return into the helper stops isNerveCanGoToWet
+// expanding (79%); a bool predicate for the condition is worse (85.6/98.4).
 void TBaseNPC::behaveToHitObject_(THitActor* param_1,
                                   EnumHitNpcObjectKind param_2)
 {
@@ -403,17 +423,7 @@ void TBaseNPC::behaveToHitObject_(THitActor* param_1,
 
 	if (isNerveCanGoToWet() && !checkActionFlag(NPC_ACTION_UNK800)) {
 		if (!isPeachTired()) {
-			if (!isSunflowerReviving()
-			    && (isClean() || param_2 != HIT_NPC_OBJECT_KIND_UNK1)
-			    && (mActorType != 0x4000006
-			        || unkD0->getCurrentAnmKind() == NPC_ANM_KIND_UNK4
-			        || unkD0->getCurrentAnmKind() == NPC_ANM_KIND_UNK6)
-			    && (mSpine->getCurrentNerve() != &TNerveNPCTalk::theNerve()
-			        || mSpine->getTime() >= 4)) {
-				if (param_2 == 1)
-					onLiveFlag(LIVE_FLAG_UNK4000000);
-				mSpine->pushNerve(&TNerveNPCWet::theNerve());
-			}
+			NpcGetWetByObject(this, param_2);
 		}
 	}
 }
