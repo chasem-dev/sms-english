@@ -11,16 +11,16 @@ Measured from `build/GMSE01/report.json` on 2026-09-29.
 
 | | Fuzzy match | Perfect match | Fully linked | Linked units |
 | --- | ---: | ---: | ---: | ---: |
-| Game | 99.50541% | 67.55596% | 19.87077% | 204 / 385 |
+| Game | 99.50788% | 67.58700% | 19.87077% | 204 / 385 |
 | JSystem | 99.89825% | 93.90541% | 81.21971% | 186 / 198 |
 | SDK | 99.99897% | 99.71085% | 99.54403% | 148 / 149 |
-| All | 99.59489% | 73.48982% | 34.02236% | 538 / 732 |
+| All | 99.59685% | 73.51435% | 34.02236% | 538 / 732 |
 
-12,035 of 12,904 functions match. The rebuilt DOL remains byte-identical to the original.
+12,038 of 12,904 functions match. The rebuilt DOL remains byte-identical to the original.
 
 ## What recent batches have done
 
-Native compiler object and register traces closed GessoBodyCallback and TDirectionCalc::sub exactly, and improved SamboHeadRollCallback and TabePuku terrain collision. All retained changes pass full builds, zero function regressions, unchanged symbol diagnostics and the original DOL checksum.
+Actual computation ownership closed the Ferris-wheel control, hidden-object water collision and submarine factory, adding 884 exact code bytes. The 116-byte submarine constructor remains exact. All retained changes pass full builds, zero function regressions, exact unit data, unchanged symbol diagnostics and the original DOL checksum.
 
 The selected unit rows below are refreshed from the same measured report as the totals.
 
@@ -82,14 +82,14 @@ The selected unit rows below are refreshed from the same measured report as the 
 | `MoveBG/MapObjRailBlock` | 99.94% | 44 / 46 |
 | `MoveBG/MapObjDolpic` | 99.99% | 39 / 40 |
 | `MoveBG/MapObjRicco` | 100.00% | 32 / 32 |
-| `MoveBG/MapObjPinna` | 99.96% | 61 / 68 |
+| `MoveBG/MapObjPinna` | 99.96% | 62 / 68 |
 | `MoveBG/MapObjBianco` | 99.45% | 67 / 74 |
 | `MoveBG/MapObjMare` | 98.97% | 59 / 67 |
 | `MoveBG/MapObjCorona` | 99.64% | 42 / 52 |
 | `MoveBG/MapObjBall` | 99.63% | 63 / 72 |
 | `Player/ModelWaterManager` | 98.68% | 17 / 25 |
 | `MarioUtil/ShadowUtil` | 79.77% | 28 / 49 |
-| `Enemy/koopajr` | 98.89% | 71 / 81 |
+| `Enemy/koopajr` | 99.23% | 72 / 81 |
 | `Enemy/wireTrap` | 99.65% | 29 / 35 |
 | `Enemy/hauntLeg` | 99.93% | 25 / 28 |
 | `Enemy/BathtubKiller` | 99.40% | 39 / 45 |

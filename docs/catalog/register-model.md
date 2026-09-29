@@ -293,3 +293,20 @@ TDirectionCalc::sub had two operand differences because the wrapped mDirection l
 The native compiler trace reproduced this interference.
 Keeping the input parameter separate from the actual mutable direction local removes that conflict: production GC/1.2.5 now matches all 160 bytes, including the 0x38 frame.
 The caller results, unit data and symbol diagnostics are unchanged, and the full build retains the original DOL hash.
+
+
+## Used computation ownership and actual input parameters
+
+TFerrisWheel::control matches all 408 bytes when its wheel-specific sound operation takes the actual sound receiver and position as inputs.
+The receiver then shares retail's r30 with the gondola loop offset; a caller-owned receiver local used r29.
+The native register dump reproduces the change, and the production frame remains 0x60.
+
+TMapObjTurn::touchWater matches all 404 bytes when the raised-position computation takes the source position and height offset and computes the actual Y and Z coordinates before storing the position.
+A one-definition Y result gives retail's value-first addition, while two updates keep a different FPR web.
+Using the direct existing MActor accessor in this caller preserves the 0x80 frame and every other instruction.
+
+TKoopaJrSubmarine's real flag update can be written as a used mutable local: read the flags, clear LIVE_FLAG_UNK10 and store them before the second flag update.
+This preserves its exact 116-byte constructor while its 72-byte factory retains the constructor call and becomes exact.
+The one-definition cleared-flags local also restores the call, but adds a dead stack home and regresses the constructor, so it was rejected.
+These results rely on actual computations and used values; no padding, filler statements or additional pass-through binders were added.
+Every unit retains exact data and identical symbol diagnostics; full production builds show no function regressions and retain the original DOL checksum.
