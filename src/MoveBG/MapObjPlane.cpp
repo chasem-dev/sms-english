@@ -189,7 +189,8 @@ void TMapObjPlane::calcNrm(int x, int z)
 	MapObjPlaneNormalize(local_c0);
 
 	JGeometry::TVec3<f32>& nrm = mNormalMap[x + z * mExtents];
-	JGeometry::TVec3<f32> sum = local_9c + local_a8 + local_b4 + local_c0;
+	JGeometry::TVec3<f32> sum;
+	sum = local_9c + local_a8 + local_b4 + local_c0;
 	nrm = sum;
 	nrm.scale(0.25f);
 }

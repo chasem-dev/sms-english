@@ -2182,3 +2182,117 @@ Measured tree-wide with `census.py`/`cmpcensus.py` (about a minute per full rebu
 ### Fresh typed-matrix Pakkun follow-up (2026-09-29, Codex)
 
 Four meaningful matrix storage forms were measured against the real PakkunSeedCallback object. Borrowed rows through MsMtxSetRotZ plus removal of the redundant spinMtx pointer improves 93.23529% to 99.70588%: all 68 retail instructions/registers now agree. Whole-object or retained-handle forms are worse. The remaining twenty stack operands are a 0x90 versus 0xa0 frame and spin matrix at 0x48 versus 0x5c. Other Pakkun functions and all data sections are unchanged; main full build and original DOL hash pass. Pre-existing symbol diagnostics are unchanged. Evidence: /tmp/x-pakkun-0929/results.md.
+## Research batch c-r25 (2026-09-29): the uncast `operator=` migration needs ten site respellings and still loses the koopajr pair
+
+Measured on main 8cce087b: JGVec3.hpp's `operator=(const TVec3&)` changed from `*(Vec*)this = *(Vec*)&other;` to `*(Vec*)this = other;`, full `ninja -k 0`, DOL SHA-1 intact, `ninja changes_all`.
+The weak `__as__` (enemy.cpp, 0x1c, lwz/stw) stays 100% under both bodies and is emitted only there.
+The header change is not landed. wt/c-r25 carries this record, the header comment, and the six respellings that are neutral under the current body (`calcVtx`, `pullTail`, the NPC turn, the hanachan sand check, `calcNrm`, `TTPHitActor::bind`; `changes_all` empty, symbol order unchanged).
+
+### Header alone: +2 / -1 exact, 20 up, 12 down
+
+- Gained exact: `TEffectColumWater::generate`, `TMapCollisionBase::setCheckData`.
+- Up: Kukku GraphWander 97.00 -> 99.53 and Fall 96.99 -> 99.77, `TBWLeash::perform` 98.69 -> 99.08, `TBossEel::collideToMario` 98.34 -> 99.49, `TBossMantaManager::spawn` 98.88 -> 99.95, `TKazekun::doAttackPose` 85.65 -> 91.79, `TYumbo::shotSeeds`, `TTrembleModelEffect::clash`, the two TAnimalBird paths, `TBossGesso::perform`, `TSelectShineManager::perform`, `TModelWaterManager::move` and six smaller.
+- Down: `TBWPicket::moveRequest` 100 -> 98.82, `TTelesa::behaveToWater` 99.92 -> 96.17, `TBWLeashNode::calcMatrix` 99.15 -> 87.03, `TNerveBWJumpToBath` 99.71 -> 98.29, `TBossHanachan::perform` 97.72 -> 97.33, `TKoopaJrSubmarine::calcRootMatrix` 98.46 -> 96.75, `makeKillerVelocity` 98.88 -> 97.71, `TTPHitActor::bind` 96.48 -> 96.39, `TMapObjPlane::calcNrm` 92.77 -> 91.51, `TNerveNPCTurnToMario` 99.87 -> 97.15, `TMBindShadowManager::forceRequest` 99.50 -> 89.45, `calcVtx` 97.23 -> 95.27.
+
+### With the site respellings: +3 / -0 exact, 22 up, 2 down
+
+Each is ordinary source; the first four also read better than what they replace.
+The next five and `pullTail` are neutral under the current (cast) header and are already on the branch; the first four regress under it (forceRequest to 89.45) and go in with the header.
+- `forceRequest`: `TVec3 delta = param_1.mPosition; delta -= gpCamera->getUnk124Vec();` drops the by-value `ShadowUtilRequestPos` helper and is byte-exact (Camera.hpp's comment on `getUnk124Vec` then needs updating).
+- `TTelesa::behaveToWater`: `local_20 = local_20 * fVar1; mVelocity = local_20;`, the spelling the old TODO predicted, is instruction-exact (99.96; the `operator*` copy sits at 0x60, retail 0x38: the c-r21 class).
+- `TBWLeashNode::calcMatrix`: the neighbour points read as `rope->mPoints[index ± 1].unkC` (retail rebuilds their address from `rope`); back to 99.15, instruction-exact, frame 0x80 against 0xe8. Dropping the `points` local too is worse (98.4).
+- `TNerveBWJumpToBath`: no `bath` local (`TVec3 toBath(BW_BATH_POS)`, `boss->mPosition = BW_BATH_POS`); the initialiser's own temporary is the retail copy at 0x10. 99.75, instruction-exact, 8 short.
+- `calcVtx`: `TVec3 oldPos; oldPos = request->mPosition;`.
+- `TBWLeash::pullTail`: `TVec3 before; before = mRope->mPoints[0].unkC;` keeps `TBWPicket::moveRequest` exact. Its copy-initialised form is the map's 0xc4 out of line and wins `TBWLeash::perform` 99.08, but loses moveRequest's `mRope` reload; `mOwner->getLeash()->pullTail(...)` at moveRequest gives the reload (instruction-exact), but no combination of its binders lands both the 0x68 frame and `before` at 0x48 (18 combinations; hsearch dbg: two words too many above or below `before`).
+- `TNerveNPCTurnToMario`: `toMario` assigned, not copy-initialised.
+- `TBossHanachan::perform` (sand check): `delta` assigned, not copy-initialised.
+- `TMapObjPlane::calcNrm`: `sum` assigned, not copy-initialised.
+- `TTPHitActor::bind`: `pos` assigned, not copy-initialised.
+Symbol order is unchanged in every touched unit.
+
+### The two it cannot fix: address-taken locals in koopajr
+
+- `calcRootMatrix`: `trans = center;` under the cast body takes `center`'s address, so the stores that build `center(0, 0, centerZ)` stay behind the `centerZ` load, as in retail; under the uncast body the zero is stored first. Inert: `trans` copy-initialised, `center` built by `set`, a named `centerZ`, raw `.value`, `+=` for `add`.
+- `makeKillerVelocity`: `axis = toMario;` likewise keeps `toMario` in memory through the cross product (retail reloads `toMario.x` after the `axis.y` store); the uncast body keeps it in registers. Inert: `axis.cross`, `cross2`; `axis.set(toMario)` is 81%.
+- Bodies measured tree-wide with the respellings applied: `*(const Vec*)&other` = the current body; `*&other` and `static_cast<Vec&>(*this) = other` = uncast; `const Vec& o = other; *(Vec*)this = o;` changes the DOL.
+  So what separates the two families is the pointer conversion of `other`, not the `&`, and no body gives both retail's elisions and retail's address-taken schedule.
+- Next: a retail-plausible spelling at either koopajr site that takes the local's address through a pointer conversion (a `const Vec*` argument, a `Vec*` conversion) with no extra code, or a third `operator=` body that keeps the conversion but still allows the Kukku/effectObj/MapMakeData elisions.
+
+## Research batch c-k18 (2026-09-29): the koopajr pair wants opposite things from `operator=`
+
+Goal: honest spellings at the two koopajr sites, so that the uncast `operator=` (c-r25) could land with no function going down.
+It cannot land: neither site has an honest fix under the uncast body.
+The header is not changed; this record, the JGVec3 comment and the two koopajr TODOs are the only changes.
+All measurements below use the MWCC debugger dumps (`tools/mwcc-stack/udbg.py`, frontend-00/01 and backend-01/06/07).
+
+### What the dumps show
+
+- The cast body emits `ETYPCON pointer(Vec)` around the source address (`&center`, `&toMario`); the uncast body emits a plain `EOBJREF [x] pointer(Vec)`.
+  Both bodies emit an `ETYPCON` on `this`, and so does `static_cast<Vec&>(*this)`.
+  An object under an `ETYPCON` is address-taken for the IR optimiser.
+- `calcRootMatrix`: under the uncast body, the IR optimiser forwards the `centerZ` load (temporary `@N`) into the `center.z` store.
+  Nothing aliases `center`, so the load then comes after the two zero stores (frontend-01).
+  Under the cast body, `center` is address-taken, so the zero stores might alias the params load and the temporary stays, as in retail.
+  So `calcRootMatrix` needs `center` address-taken.
+- `makeKillerVelocity`: retail keeps all three `dir` components in registers across the stores to `axis`, and reloads `toMario.x` only.
+  Every body that casts `this` makes `axis` address-taken, so its stores kill the `dir` loads.
+  The cast body reloads `dir.y` (98.88) and the uncast one all three (97.71).
+  With no user `operator=(const TVec3&)`, the implicit copy is an untyped aggregate `EASS`, so neither local is address-taken.
+  The cross product is then exact, registers included, the instruction count equals retail's (451), and the function scores 99.51 with only the frame (0x150 against 0x178) left.
+  c-r25's note that the cast body "keeps `toMario` in memory" has it backwards: the cast body is the one that keeps `toMario.x` in a register.
+- So one site needs its source address-taken and the other needs its destination not address-taken.
+  No single body gives both; `Vec& v = *this; v = *(const Vec*)&other;` gives `calcRootMatrix` 98.5 but `makeKillerVelocity` 98.2.
+  Retail's `center` must be address-taken by something other than the assignment, and nothing in the function takes it honestly.
+
+### Site spellings tried under the uncast body (all inert or worse)
+
+- `calcRootMatrix`: `TPosition3f offset(center)` and `translation(center.x, center.y, center.z)` (both 96.75, frame +8); a `const` `center`; `center = TVec3(0, 0, z)` and `TVec3 center = TVec3(0, 0, z)` (both 93.5); `trans.sub(getPosition(), center)` (86.2).
+  Only the forbidden `trans = *(const Vec*)&center` restores 98.46.
+  A single lever-search run (60 s) found only the frame: a `getModel` fork plus a `getSwingAngle` binder reached 97.15, and both are pass-through helpers.
+- `makeKillerVelocity`: `axis.cross(dir, toMario)` (97.2); the cross written out, KoopajrCross with `Vec&` parameters, or with pointer parameters (all 97.71, identical code).
+  `axis.set(toMario)` scalarises `axis` completely (81%).
+  Every operator-free honest copy would be a copy construction into a new local, but retail uses one slot for the cross result and the copy.
+
+### Other `operator=` bodies, measured
+
+- `static_cast<Vec&>(*this) = *(const Vec*)&other;` behaves like the cast body at koopajr (98.46 / 98.88).
+- `Vec::operator=(other)` does not compile: `undefined identifier 'Vec::operator='`.
+- `Vec& v = *this; v = other;`: `makeKillerVelocity` 99.5, but tree-wide the DOL changes, with 385 down and 269 exact lost.
+- The implicit copy (the operator removed), on main 510a99dd without the c-r25 site respellings:
+  - Exact: +2 (`TEffectColumWater::generate`, `TMapCollisionBase::setCheckData`) and -3 (`TBWPicket::moveRequest`, `TMapObjBall::control`, `TBigWatermelon::control`); 26 up, 24 down.
+  - MapObjBall's `matched_data` also drops, to 29%, and the total `matched_data` goes from 99.84 to 99.47.
+  - The enemy.cpp `__as__` stays emitted and 100%.
+  - Ups beyond the uncast family's: `TLimitKoopa::startHipDrop` 91.55 -> 99.88, `TMario::pulling` 98.57 -> 99.96, `TModelWaterManager::move` 96.98 -> 99.77, `TConeBeam::calcVertices` 95.65 -> 98.39, `FeetInvCalc` 96.64 -> 98.33, `TAmiNoko::calcRootMatrix`, `makeKillerVelocity`.
+  - Downs beyond the uncast family's: `execWallCheck_` 99.87 -> 95.60, `calcSlopeAngleX_` 98.39 -> 95.47, `TFireWanwan::bindBody` 98.39 -> 95.71, `TPopo::walkBehavior` 99.81 -> 97.51, `TBossHanachan::init` and `bind` (bind 99.86 -> 96.82), `TRocket::setDeadAnm` 91.71 -> 80.88, `TKumokun::bind` 99.51 -> 97.67, `TBaseNPC::npcMadding` and `execWalk`, `TWarpInCallBack::execute`, and the MapObjBall trio.
+  - With the c-r25 respellings applied it is +3 / -3, 28 up, 21 down.
+  - `TMapObjBall::control` shows why it is no single-body answer either: its `vel = getVelocity(); vel.isZero()` needs `vel` memory-resident (no `fmadds`), which the implicit copy loses.
+- Next: the per-site knob is whether each local is address-taken, not the body.
+  The remaining lead for both koopajr sites is the implicit copy combined with some retail-plausible source for `center`'s address at `calcRootMatrix`.
+  One candidate is a JGPosition3 `translation`/`setTrans` that takes its argument's address; it has not been measured.
+
+## Research batch c-r26 (2026-09-29): the camera's unk124/unk148 are TVec3; the outside `Vec` reads are accessors
+
+Lead (c-k17): `TLensFlare::perform` and `TBaseNPC::perform` copy `CPolarSubCamera::unk124`/`unk148` float by float through `TVec3(const Vec&)`, where a TVec3-typed member gives word copies, so the two members might be plain `Vec`.
+Measured on main 0e88dc3a (12023 exact) with full `ninja -k 0`, `ninja changes_all` and `census.py`.
+
+### Refuted by the camera's own TUs
+
+- Both members as `Vec` does not compile in five TUs: the camera TUs call TVec3 members on them (`set`, `+=`, `==`, `squared` in Item.cpp) and pass `&unk124`/`&unk148` to `TCameraBck::updateDemo(TVec3*, TVec3*, TVec3*, f32*)` (the map's mangling).
+- Retail `updateDemoCamera_` passes `addi r4, r30, 0x124` / `addi r5, r30, 0x148` straight to that `TVec3*` signature, and `calcInHouseNo_` passes `addi r5, r31, 0x124` / `addi r6, r31, 0x148` straight to `CLBCalcNearNinePos`'s `const TVec3&` parameters (no conversion temporaries); `TMirrorCamera::makeMirrorViewMtx` and `TMapObjGrassManager::perform` do the same.
+  A `Vec` member would need a pointer cast at the first and a `TVec3(const Vec&)` temporary at the others.
+- Holding the five non-compiling TUs on TVec3 (a scratch macro) and letting every other TU see `Vec`: 0 up, 6 down, exact 12023 -> 12022.
+  Down: `TMapObjGrassManager::perform` exact -> 99.18 (MapObjGrass unlinks), `calcInHouseNo_` 97.31 -> 91.90, `TMap::update` 99.94 -> 95.91, `TMirrorModelManager::perform` 91.33 -> 80.72, `TBaseNPC::perform` 97.33 -> 93.77, `forceRequest` 99.50 -> 93.84.
+  Honest site fixes (a `const Vec&` for `TMap::update`'s `camPos`, for NpcBase's `at`/`pos`) bring `TMap::update` back to 99.94 and NpcBase to 96.61; the other four take their camera point as a `const TVec3&` argument and cannot be respelled.
+
+### What landed (wt/c-r26, neutral)
+
+- Retail's eight out-of-line `TVec3::set(const Vec&)` calls read camera members only at 0x124 (sunmodel, bosstelesa x2, lensflare) and 0x148 (lensflare), so the outside `Vec` view is a pair of accessors: Camera.hpp gains `getUnk148Vec()` beside the existing `getUnk124Vec()`.
+- `TLensFlare::perform` reads both through them instead of `(const Vec&)` casts: instruction-identical (0 instruction, 15 register, 71 slot mismatches either way), frame 0x220 -> 0x238 against retail 0x2b8 (hsearch dbg: 7 fewer missing words at the bottom, one more between the camera conversions and the pool above them).
+  `SMSGetCamera()->` for the two reads gives 0x240 with the same instructions; not taken, a frame-only binder.
+- `TBaseNPC::perform`: `local_4C = gpCamera->getUnk124Vec()` reproduces retail's float copy, but the whole is 96.6 against 97.33 with the word copy, the same as c-k17's cast; `at`/`pos` through the accessors 96.5; the copy folded into `MsIsInSight`'s argument 96.1.
+  Retail keeps `&unk124` in r5 for y and z and loads `gpCamera` after the `extsh` of the angle; ours loads y off the camera base and hoists the load. Not landed; the TODO records it.
+- `ninja changes_all` empty, DOL SHA-1 intact, symbol order PASS for lensflare and NpcBase.
+
+### Other camera members
+
+- No other `CPolarSubCamera` member is copied float by float outside the camera TUs: the remaining outside reads (`unk13C`, `unk16C`, `unk1EC`, `unk258`, `unk270`, `unk290`, `unk2C8`, `mUp`) are scalars, matrices, pointers or direct `const TVec3&` arguments.

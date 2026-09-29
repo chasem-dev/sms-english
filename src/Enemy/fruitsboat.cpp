@@ -223,6 +223,12 @@ void TFruitsBoat::load(JSUMemoryInputStream& stream)
 // 0xa0 against 0x90: the ROM has 0x14 more above the position temporary.
 // Accessor/raw spellings of the TRS arguments, a named or const-ref
 // position, and indexToPoint() spelled directly all move it the wrong way.
+// c-k13 debugger: above the temporary ours has only getTracer()->reset()'s
+// dead `this` binding; retail has four more words there and five more below
+// setUpUnk8TRS's Mtx. The spline-rail block as a TU-local level (with or
+// without its test) creates the temporary at expansion time but moves it
+// only one word (0xd4), so the four words are depth-1 objects ours lacks
+// before that statement, not a deeper position for the temporary.
 void TFruitsBoat::init(TLiveManager* manager)
 {
 	mManager = manager;

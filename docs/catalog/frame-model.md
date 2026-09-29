@@ -510,3 +510,36 @@ The change comes from the measured local-object order; no additional storage is 
 SamboHeadRollCallback provides a second measured example: passing its three axis projections directly to the vector constructor moves localAxis from 0xa0 to retail's 0xac.
 Production similarity improves from 97.71503% to 97.73575%; the remaining differences concern floating registers and the angle-load schedule.
 The frame and other functions/data are preserved, symbol diagnostics are unchanged, and the full build retains the original DOL hash.
+## Refinements (closure batch c-k13, 2026-09-29)
+
+- **A fabricated binder over `p->a->b` is often a header accessor one hop up.** `p->a->getB()` gives a receiver binding for the loaded `p->a` (a dead word when it is only a load base) plus the accessor's forced-load word, which is what a one-local binder counterfeits; `unk10->getMActor()` (TSharedParts), `unk68->getFludd()` (TMario) and `getGroundPlane()->getNormal().y` each replaced a binder at unchanged code and frame.
+  Where the class has no accessor for the hop, an owner-level one (`TChorobei::getMActor() { return mParts->getMActor(); }`) did the same and closed `TNerveCannonOpen`.
+  A binder over a single member of a simple receiver (`this`, a local) is not this case: its accessor form is 8 short.
+- **A copied member body is a missing call.** A local ternary like `r != 0 ? true : false` that repeats another function of the same TU (here `isTouchedWallsAndMoveXZ`) means retail called that function and it was inlined; calling it in a value context (`!= false`) produced the missing forced-load word (Map `isTouchedOneWall`).
+
+## Refinements (closure batch c-k15, 2026-09-29)
+
+- **`tools/find-copied-bodies.py` finds copied bodies; most are already priced.**
+  It aligns each non-exact function's normalised tokens against every function of its TU, its headers' inline bodies and the TU's UNUSED map functions (member chains collapsed to their last component, parameters as wildcards, named locals split off a copy cost 0.3 per token).
+  It rediscovers c-k13's `isTouchedWallsAndMoveXZ` copy from the pre-c-k13 source and reports 315 hits tree-wide (40 in-TU, 40 UNUSED, 210 header, 25 on our own `static inline` reconstructions, tagged `helper`).
+  About 40 were real copies of a real function; most of those were already recorded as tried, and a call was code-identical in five more (committed as source fidelity: `killBathtubKiller`, `createGunBody`/`setEmitPt`, `calcAnimHands`, TPosition3's direction setters).
+- **A copy that uses a result the callee drops means the callee's return type is wrong.**
+  `TMario::wireRolling` and the two UNUSED hang-down states spelled `changeWireHanging`'s body out because they return the status change; declaring `BOOL changeWireHanging()` with `return changePlayerStatus(...)` keeps it exact at the map's 0x8c and lets them `return changeWireHanging();`, whose `ok` flag shares its zero with the preceding stores (wireRolling 99.63 -> 99.88).
+- **The two-hop rule works when the last hop is a raw member of the loaded pointer.**
+  `this->mMapObjData->mMove->unk8` behind a binder became `mMapObjData->getMoveFrameCtrl()`, and the physical-data binders `mMapObjData->getPhysical()` / `getPhysicalData()` (new plain accessors on `TMapObjData`, invented names): exact at every site.
+  The same accessor at four raw sites of `TMapObjBall::calcCurrentMtx` lands its frame (0x190 -> 0x1c0, 105 -> 59 markers) and moves four more frame-short functions 8 or 0x10 closer without touching an instruction.
+  When the binder's chain already ends in an accessor (`mMarioParts->getMActor()`, `mModel->getModel()`), neither the direct chain nor an owner-level accessor on `this` reaches the binder's words (each 4 to 8 short per site); a binder whose receiver is `this` is not rescued by an owner accessor.
+  A forward-declared element type blocks the accessor (`&mSeqTrackInfo[i]` in JAIData.hpp).
+- **A written-out dot product is a copied `TVec3::dot`, and the call can fix loads the sum cannot.**
+  `TMapObjBall::touchWall`'s two sums (`vel.x * n.x + ...` and the plane distance) as `vel.dot(wall->getNormal())` and `param_1->dot(wall->getNormal()) + wall->getPlaneDistance()` re-read the normal as retail does (98.0 -> 99.8, every instruction and register right, frame 0x30 short); `findNearestWall`'s distance as `mNormal.dot(pos)` moves `TMario::hanging` 0x10 closer.
+  The scanner's header hits over `TVec3::dot`/`add`/`sub` are worth one try each; `add`/`set` copies were code-identical everywhere tried (`TFlyEnemy::calcChaseParam`, `TBPPolDrop::move`, `getOnWirePosAngle`).
+
+## Refinements (closure batch c-k17, 2026-09-29)
+
+- **An inline body's temporaries sit above its own callee locals; a fabricated helper moves them below.** `hsearch dbg` on `TLensFlare::perform` (instruction-exact, frame 0x98 short) showed retail creating, top-down: MsGetRotFromZaxis's return temporary, the sun `Vec -> TVec3` conversion, the two camera conversions (unk148, then unk124: reverse argument order), then calcAnim's callee locals last-declared first (`rot`, `dir`, l/d1/d5, camEuler, the grid, the sun, the matrix).
+  Ours had the temporaries inside TU-local helpers (a grid-only CLBCalcNearNinePos forwarder, a `LensRotTo(Vec, TVec3)` level), so they were created in the depth-2 pass, below every calcAnim local.
+  Writing the eight-argument wrapper call, `dir.sub(l, TVec3(sun))` and `rot = MsGetRotFromZaxis(dir)` in calcAnim itself gives retail's order exactly (dbg order 4 -> 0, gap 350 -> 38 words) at unchanged instructions; the depth the table lookups need (JMASSin/JMASCos out of line) comes from a parked copy of the header wrapper with the near-plane height as its own level, which CPolarSubCamera::calcInHouseNo_ (wrapper at depth 0, lookups expanded) tolerates.
+  calcAnim itself cannot go one level deeper: at depth 2 its body is over the allowance and it is called (45%).
+  Left: 2 words above the return temporary, 2 between the unk124 conversion and `rot` (writing LensSetTRS's angle locals in calcAnim supplies one), 6 below entry()'s colour copy, 28 at the bottom.
+- `TConeBeam::calcVertices`: a coneInPlane-local `TVec3 pos` (copied into the caller's `local_f8`) lands retail's 0x1c8 frame, so retail has one more 12-byte object there, but the origin reloads stay and the extra copy costs 93.9; `dir * t + origin` spellings push `scale`/`add` out of line.
+- `TBaseNPC::perform`: retail copies `local_4C` float by float through a kept `&unk124`, the `TVec3(const Vec&)` copy (`(const Vec&)gpCamera->unk124` reproduces it, 96.6); with lensflare's casts, a lead that `CPolarSubCamera::unk124`/`unk148` are plain `Vec` in retail (Camera.hpp, shared, not changed).

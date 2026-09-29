@@ -354,24 +354,21 @@ bool TMap::isTouchedOneWall(const JGeometry::TVec3<f32>& pos, f32 radius) const
 	return isTouchedOneWall(pos.x, pos.y, pos.z, radius);
 }
 
-// TODO: frame exact but the wall record and the spilled x/z parameters sit
-// 4 bytes low (one 4-byte pool item missing below them). Inert: a named or
-// ternary result, an if/return pair, local copies of x/z; a TU-local
-// forwarding helper costs 14% of match.
 bool TMap::isTouchedOneWall(f32 x, f32 y, f32 z, f32 radius) const
 {
 	return isTouchedOneWallAndMoveXZ(&x, y, &z, radius);
 }
 
+// The wall test is isTouchedWallsAndMoveXZ inlined in a value context
+// (`!= false`): its forced-load word is the dead word retail keeps directly
+// below the record, here and in the inlined copy in isTouchedOneWall (c-k13).
 bool TMap::isTouchedOneWallAndMoveXZ(f32* x, f32 y, f32* z, f32 radius) const
 {
 	TBGWallCheckRecord record(*x, y, *z, radius, 1, 0);
 
-	int r = mCollisionData->checkWalls(&record);
-	if (r != 0 ? true : false) {
-		const JGeometry::TVec3<f32>& center = record.mCenter;
-		*x = center.x;
-		*z = center.z;
+	if (isTouchedWallsAndMoveXZ(&record) != false) {
+		*x = record.mCenter.x;
+		*z = record.mCenter.z;
 		return true;
 	} else {
 		return false;

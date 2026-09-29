@@ -101,6 +101,12 @@ void TConeBeam::drawConeBeamAux(const GXColor& color, bool unk)
 // through outPos = &mVtx[i] (so no address-taken caller local) is still a
 // reload (95.6%, frame unchanged); passing &mVtx[i] with the original body is
 // 94.3%.
+// c-k17: a coneInPlane-local `TVec3 pos = dir; pos.scale(t); pos += origin;
+// *outPos = pos;` with the caller's &local_f8 lands retail's 0x1c8 frame (so
+// retail has one more 12-byte object here) but still reloads origin and adds
+// the pos -> local_f8 copy (93.9%). `*outPos = dir * t + origin` (either
+// operand order, &local_f8 or &mVtx[i]) pushes scale and add out of line
+// (92.8-93.7%); `dir.scale(t); *outPos = dir + origin;` 89.2-90.8%.
 void TConeBeam::calcVertices(int count)
 {
 	JGeometry::TVec3<f32> local_140;

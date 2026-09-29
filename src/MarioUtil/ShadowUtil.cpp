@@ -1407,7 +1407,8 @@ void TMBindShadowManager::calcVtx()
 	for (i = 0; i < mRequestNum; i++) {
 		request = &mRequests[i];
 
-		JGeometry::TVec3<f32> oldPos = request->mPosition;
+		JGeometry::TVec3<f32> oldPos;
+		oldPos = request->mPosition;
 
 		if (request->mShadowType == SHADOW_TYPE_SQUARE) {
 			JGeometry::TVec3<f32> head, foot;

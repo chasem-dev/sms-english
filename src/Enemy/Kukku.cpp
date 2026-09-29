@@ -385,8 +385,16 @@ void TKukku::behaveHitTrample()
 	mSpine->setNext(&TNerveSmallEnemyDie::theNerve());
 }
 
-// UNUSED, 0x2c8 in the map. TODO: fabricated. The GraphWander nerve holds this
-// code inline, and nothing distinguishes a pasted body from a dead helper.
+// UNUSED, 0x2c8 in the map. TODO: fabricated. The GraphWander nerve holds
+// this code inline, and nothing distinguishes a pasted body from a dead
+// helper; calling this from the nerve puts shotBall one level deeper, where
+// it stops expanding (c-k14 measured GraphWander 56.4%). This body is the
+// nerve's goal and shooting blocks without the steering, which compiles to
+// the map size; with the steering (updateRotation plus
+// updateLinearVelocity, or doRecoverToCurPathNode) every spelling of the
+// shoot timer measured is 0x20 or more over (c-k16). The post-decrement
+// test is also a size choice: the nerve's own `if (timer >= 0) timer--; else
+// shotBall();` here is 0x2cc (raw member) or 0x2d0 (getShootTimer()).
 void TKukku::doFlyToCurPathNode()
 {
 	if (isReachedToGoal()) {
@@ -396,14 +404,9 @@ void TKukku::doFlyToCurPathNode()
 	}
 
 	if (isFindOutMario()) {
-		if (getShootTimer() >= 0)
-			mShootTimer--;
-		else
+		if (mShootTimer-- < 0)
 			shotBall();
 	}
-
-	updateRotation();
-	mLinearVelocity = calcMomentum(getSaveParams()->getMarchSpeed());
 }
 
 // Instruction-exact (99.8%); the residual is a 0x18 frame excess against the
@@ -459,81 +462,48 @@ void TKukku::updateRotation()
 	mRotation.z *= bank;
 }
 
-// 96.3%, frame exact at 0x78, all 71 opcodes in place.
+// 98.9%, frame exact at 0x78, all 71 opcodes in place; the residue is the
+// order of the q.x/q.z products inside the expanded rotate (9 markers).
 //
-// Retail *calls* this at every site (`addi r4, r30, 0; addi r3, r1, 0x30; bl
-// calcMomentum`), so by the depth-1 statement budget its body had to carry 15
-// or more counted statements -- and a call to TQuat4<f32>::rotate contributes
-// exactly one, because a callee's own inlined statements are free. Writing
-// rotate's fifteen statements out here (the same expansion, so not one opcode
-// moves) is what lifts the body over the budget, and it is what restores the
-// three `bl`s: TNerveKukkuRecoverGraph::execute 67.7 -> 99.8%,
-// TNerveKukkuGraphWander::execute 92.9 -> 94.5%.
-//
-// The frame ladder measured while landing 0x78, relative to this body:
-//   both TQuat4 temporaries as objects   0x98   (the header's literal body)
-//   q2 scalarised                        0x88
-//   q scalarised                         0x70
-//   both scalarised                      0x70
-//   q an object, vx/vy/vz named          0x80
-//   q an object, vx/vy/vz read in place  0x78   <- retail
-// So retail kept the first temporary as a real TQuat4 and read the vector
-// components straight out of `velocity` instead of naming them, exactly the
-// opposite of the shape JGQuat4.hpp's own rotate() uses.
-//
-// TODO: the residual is volatile-FPR numbering only (52 markers, no opcode or
-// operand-order difference) plus the low region's internal order -- retail
-// parks SMS_Eular2Quat's return slot at 0x38 with 44 bytes of temporaries
-// below it, we park it at 0x1c with 48 bytes split around it. Both totals are
-// 0x78, so no frame lever applies; this is the known-open volatile-FPR class.
-// (96.3 before TVec3's copy constructor became `: Vec(other)`, 95.8 after;
-// inert under it: direct-init or assigned `quat`, `velocity.set(...)`.)
-// 2026-09-27, header rotate(v, rDest) landed: `quat.rotate(velocity,
-// velocity)` as the whole body is 98.9 here (9 markers, q.x/q.z product order)
-// but both nerves then inline it (RecoverGraph 100 -> 76.9); named x/y/z/w
-// copies in any order are what cost the 52 markers.
+// c-k14: the three-statement body is retail's. The fifteen-statement body it
+// replaces was only there to keep calcMomentum out of line in
+// TNerveKukkuRecoverGraph; the statement-mode reading of the two nerves
+// (docs/catalog/codegen-tells.md, c-r24) puts that refusal on a missing
+// level instead (TKukku::updateLinearVelocity): calcMomentum is judged at
+// level 3 in TNerveKukkuGraphWander, where it expands and leaves the TVec4
+// copy, set<f> and rotate as `bl`s one level below, and at level 4 through
+// doRecoverToCurPathNode, where it is called.
 JGeometry::TVec3<f32> TKukku::calcMomentum(f32 speed)
 {
 	JGeometry::TQuat4<f32> quat = SMS_Eular2Quat(mRotation);
 	JGeometry::TVec3<f32> velocity(0.0f, 0.0f, speed);
-
-	f32 w = quat.w;
-	f32 z = quat.z;
-	f32 y = quat.y;
-	f32 x = quat.x;
-
-	// clang-format off
-	JGeometry::TQuat4<f32> q;
-	q.x =  w *  0 + y * velocity.z - z * velocity.y + w * velocity.x;
-	q.y = -x * velocity.z + y *  0 + z * velocity.x + w * velocity.y;
-	q.z =  x * velocity.y - y * velocity.x + z *  0 + w * velocity.z;
-	q.w = -x * velocity.x - y * velocity.y - z * velocity.z + w *  0;
-
-	f32 rx =  q.x *  w + q.y * -z - q.z * -y + q.w * -x;
-	f32 ry = -q.x * -z + q.y *  w + q.z * -x + q.w * -y;
-	f32 rz =  q.x * -y - q.y * -x + q.z *  w + q.w * -z;
-	// clang-format on
-
-	velocity.set(rx, ry, rz);
+	quat.rotate(velocity, velocity);
 	return velocity;
 }
 
-// UNUSED, 0xa0 in the map; TNerveKukkuRecoverGraph inlines it.
+// UNUSED, 0xa0 in the map; TNerveKukkuRecoverGraph inlines it. Ours is
+// 0xb8: the 0x18 over is the extra copy of calcMomentum's return value
+// described at TNerveKukkuGraphWander. With the uncast TVec3 `operator=`
+// (the cc23 header migration, docs/catalog/frame-gaps.md) it is 0xa0.
 void TKukku::doRecoverToCurPathNode()
 {
 	updateRotation();
-	mLinearVelocity = calcMomentum(getSaveParams()->mMarchSpeed.get());
+	updateLinearVelocity();
 }
 
-// UNUSED, 0xd8 in the map. TODO: dead and fabricated. "Habataki" is flapping,
-// and mHabatakiTimer is what the recovery nerves count against.
+// UNUSED, 0xd8 in the map. TODO: fabricated. "Habataki" is flapping, and
+// mHabatakiTimer is what the recovery nerves count against: the gull keeps
+// its heading and flaps forward until the timer runs out. This compiles to
+// the map size with our TVec3 header, whose return copy (see
+// doRecoverToCurPathNode) is 0x18 of it; under the eliding header it is
+// 0xc0, and `changeBck("tori_back")` before the store is then the body that
+// measures 0xd8 (c-k16).
 void TKukku::doHabataki()
 {
 	if (getSaveParams()->getHabatakiTimer() < mSpine->getTime())
 		return;
 
-	decideFlyingAnm();
-	mLinearVelocity = calcMomentum(getSaveParams()->getMarchSpeed());
+	updateLinearVelocity();
 }
 
 // UNUSED, 0x7c in the map.

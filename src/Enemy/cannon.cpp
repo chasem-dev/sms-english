@@ -201,11 +201,12 @@ void TChorobei::checkHit()
 
 BOOL TChorobei::receiveMessage(THitActor*, u32) { return FALSE; }
 
-// UNUSED, 0x70 in the map: the appear animation has run out.
+// UNUSED, 0x70 in the map: the appear animation has run out. Both
+// isUpEnd and isDownEnd read the actor through getMActor() (c-k13).
 bool TChorobei::isUpEnd()
 {
-	if (mParts->getMActor()->curAnmEndsNext()
-	    && mParts->getMActor()->checkCurBckFromIndex(0xC))
+	if (getMActor()->curAnmEndsNext()
+	    && getMActor()->checkCurBckFromIndex(0xC))
 		return true;
 	unk70 = 0.0f;
 	return false;
@@ -214,8 +215,8 @@ bool TChorobei::isUpEnd()
 // UNUSED, 0x70 in the map: the hide animation has run out.
 bool TChorobei::isDownEnd()
 {
-	if (mParts->getMActor()->curAnmEndsNext()
-	    && mParts->getMActor()->checkCurBckFromIndex(0xF)) {
+	if (getMActor()->curAnmEndsNext()
+	    && getMActor()->checkCurBckFromIndex(0xF)) {
 		unk70 = 1.0f;
 		return true;
 	}
@@ -1020,11 +1021,8 @@ static inline TCannon* CannonBody(TSpineBase<TLiveActor>* spine)
 	return cannon;
 }
 
-// TODO: frame 0x58, retail 0x60; every instruction matches. Inert: getChorobei()
-// at either site, `!getTime()` (-8), a named nerve pointer, a named MActor in
-// isUpEnd; re-reading CannonBody(spine) for checkCurAnmEnd lands 0x60 but
-// reloads the body where retail reuses r29. can1: every spelling measured
-// shrinks (raw unk18 in isUpEnd -8/-0x10, `!getTime()` -8); no honest +8.
+// isUpEnd reads the actor through TChorobei::getMActor() at both tests; its
+// mParts binding in this expansion is the word the frame lacked (c-k13).
 DEFINE_NERVE(TNerveCannonOpen, TLiveActor)
 {
 	TCannon* cannon = CannonBody(spine);
@@ -1109,12 +1107,6 @@ DEFINE_NERVE(TNerveCannonSearch, TLiveActor)
 
 // Shoot-local copies of the ForceBombShoot binders. Reusing those would
 // add sites to that already-exact nerve and move its frame.
-static inline MActor* CannonShootMActor(TCannon* p)
-{
-	MActor* actor = p->mChorobei->mParts->getMActor();
-	return actor;
-}
-
 static inline TChorobei* CannonShootChorobei(TCannon* p)
 {
 	TChorobei* chorobei = p->mChorobei;
@@ -1123,7 +1115,7 @@ static inline TChorobei* CannonShootChorobei(TCannon* p)
 
 static inline J3DFrameCtrl* CannonShootFrameCtrl(TCannon* p)
 {
-	J3DFrameCtrl* ctrl = CannonShootMActor(p)->getFrameCtrl(0);
+	J3DFrameCtrl* ctrl = p->mChorobei->getMActor()->getFrameCtrl(0);
 	return ctrl;
 }
 
@@ -1139,14 +1131,14 @@ DEFINE_NERVE(TNerveCannonShoot, TLiveActor)
 	}
 
 	if (cannon->mShootMode) {
-		if (CannonShootMActor(cannon)->checkCurBckFromIndex(0x11)) {
-			if (CannonShootMActor(cannon)->curAnmEndsNext()) {
+		if (cannon->mChorobei->getMActor()->checkCurBckFromIndex(0x11)) {
+			if (cannon->mChorobei->getMActor()->curAnmEndsNext()) {
 				CannonShootChorobei(cannon)->setBckAnm(0x10);
 				cannon->bombSet();
 			}
 			cannon->turnToGoal();
-		} else if (CannonShootMActor(cannon)->checkCurBckFromIndex(0x10)) {
-			if (CannonShootMActor(cannon)->curAnmEndsNext()) {
+		} else if (cannon->mChorobei->getMActor()->checkCurBckFromIndex(0x10)) {
+			if (cannon->mChorobei->getMActor()->curAnmEndsNext()) {
 				spine->pushAfterCurrent(&TNerveCannonSearch::theNerve());
 				return TRUE;
 			}
@@ -1169,12 +1161,6 @@ DEFINE_NERVE(TNerveCannonShoot, TLiveActor)
 	return FALSE;
 }
 
-static inline MActor* CannonFBSMActor(TCannon* p)
-{
-	MActor* actor = p->mChorobei->mParts->getMActor();
-	return actor;
-}
-
 static inline TChorobei* CannonFBSChorobei(TCannon* p)
 {
 	TChorobei* chorobei = p->mChorobei;
@@ -1186,7 +1172,7 @@ static inline TChorobei* CannonFBSChorobei(TCannon* p)
 // the frame controller nested over the actor binder.
 static inline J3DFrameCtrl* CannonFBSFrameCtrl(TCannon* p)
 {
-	J3DFrameCtrl* ctrl = CannonFBSMActor(p)->getFrameCtrl(0);
+	J3DFrameCtrl* ctrl = p->mChorobei->getMActor()->getFrameCtrl(0);
 	return ctrl;
 }
 
@@ -1202,15 +1188,15 @@ DEFINE_NERVE(TNerveCannonForceBombShoot, TLiveActor)
 			return TRUE;
 	}
 
-	if (CannonFBSMActor(cannon)->checkCurBckFromIndex(0x11)) {
-		if (CannonFBSMActor(cannon)->curAnmEndsNext()) {
+	if (cannon->mChorobei->getMActor()->checkCurBckFromIndex(0x11)) {
+		if (cannon->mChorobei->getMActor()->curAnmEndsNext()) {
 			CannonFBSChorobei(cannon)->setBckAnm(0x10);
 			cannon->bombSet();
 		}
 		cannon->turnToGoal();
-	} else if (CannonFBSMActor(cannon)->checkCurBckFromIndex(
+	} else if (cannon->mChorobei->getMActor()->checkCurBckFromIndex(
 	               0x10)) {
-		if (CannonFBSMActor(cannon)->curAnmEndsNext())
+		if (cannon->mChorobei->getMActor()->curAnmEndsNext())
 			return TRUE;
 		if (CannonFBSFrameCtrl(cannon)->checkPass(
 		        38.0f))
@@ -1222,8 +1208,8 @@ DEFINE_NERVE(TNerveCannonForceBombShoot, TLiveActor)
 	return FALSE;
 }
 
-// Binding levels worth +8 each of low region, landing TNerveCannonClose's
-// frame at 0xb8 (the body binder plus the chorobei binder at two sites).
+// Binding level worth +8 of low region at TNerveCannonClose's isDownEnd
+// test (frame 0xb8); the setBckAnm site reads getChorobei() (c-k13).
 static inline TChorobei* CannonCloseChorobei(TCannon* p)
 {
 	TChorobei* chorobei = p->mChorobei;
@@ -1236,7 +1222,7 @@ DEFINE_NERVE(TNerveCannonClose, TLiveActor)
 
 	if (spine->getTime() < 2) {
 		cannon->deadCannon();
-		CannonCloseChorobei(cannon)->setBckAnm(0xF);
+		cannon->getChorobei()->setBckAnm(0xF);
 		cannon->mEffectPos = cannon->mPosition;
 		cannon->mEffectPos.y += 300.0f;
 		gpMarioParticleManager->emitAndBindToPosPtr(0xC9, &cannon->mEffectPos,
@@ -1274,12 +1260,6 @@ DEFINE_NERVE(TNerveCannonClose, TLiveActor)
 	cannon->mFutaCollision->moveMtx(
 	    cannon->getMActor()->getModel()->getAnmMtx(4));
 	return FALSE;
-}
-
-static inline MActor* CannonDamageMActor(TCannon* p)
-{
-	MActor* actor = p->mChorobei->mParts->getMActor();
-	return actor;
 }
 
 static inline TChorobei* CannonDamageChorobei(TCannon* p)
@@ -1326,7 +1306,7 @@ DEFINE_NERVE(TNerveCannonDamage, TLiveActor)
 			else
 				SMSRumbleMgr->start(0x17, (f32*)nullptr);
 
-			MActor* actor = CannonDamageMActor(cannon);
+			MActor* actor = cannon->mChorobei->getMActor();
 			emitter = CannonDamageParticles()->emitAndBindToMtxPtr(
 			    0xC8,
 			    // 0x240 = joint 12 * sizeof(Mtx); 8 was 0x180.
@@ -1364,9 +1344,9 @@ DEFINE_NERVE(TNerveCannonDamage, TLiveActor)
 		cannon->mPosition.y += 10.0f;
 	}
 
-	if (CannonDamageMActor(cannon)->curAnmEndsNext()) {
+	if (cannon->mChorobei->getMActor()->curAnmEndsNext()) {
 		SMS_ResetDamageFogEffect(
-		    CannonDamageMActor(cannon)->getModel()->getModelData());
+		    cannon->mChorobei->getMActor()->getModel()->getModelData());
 		if (cannon->mHitPoints == 0) {
 			spine->pushAfterCurrent(&TNerveCannonDamageDemo::theNerve());
 			return TRUE;

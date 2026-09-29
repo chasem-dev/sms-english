@@ -325,6 +325,8 @@ public:
 
 	// Fabricated (maybe should be indexed?)
 	const JGeometry::TVec3<f32>& getEmitPos0() const { return mEmitPos[0]; }
+	// Invented name: plain accessor for the owner (c-k15).
+	TMario* getMario() const { return mMario; }
 
 public:
 	enum {

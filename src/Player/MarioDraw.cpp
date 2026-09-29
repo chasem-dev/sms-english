@@ -1372,21 +1372,7 @@ void TMario::initModel()
 
 	getM3UModel()->unk8->calc();
 
-	if (mHandModels[0][0] != nullptr) {
-		// Possibly inline since this exact same thing exists in
-		// TMario::calcAnim
-		mHandModels[0][0]->setBaseTRMtx(getM3UModel()->unk8->getAnmMtx(mJointIdHandR));
-		mHandModels[0][1]->setBaseTRMtx(getM3UModel()->unk8->getAnmMtx(mJointIdHandL));
-		mHandModels[1][0]->setBaseTRMtx(getM3UModel()->unk8->getAnmMtx(mJointIdHandR));
-		mHandModels[1][1]->setBaseTRMtx(getM3UModel()->unk8->getAnmMtx(mJointIdHandL));
-		mRHand4ndModel->setBaseTRMtx(getM3UModel()->unk8->getAnmMtx(mJointIdHandR));
-
-		mHandModels[0][0]->calc();
-		mHandModels[0][1]->calc();
-		mHandModels[1][0]->calc();
-		mHandModels[1][1]->calc();
-		mRHand4ndModel->calc();
-	}
+	calcAnimHands();
 
 	mSurfGesso = nullptr;
 	if (gpMarDirector->getCurrentMap() == 58

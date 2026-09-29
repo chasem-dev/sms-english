@@ -951,7 +951,9 @@ void MSound::playTimer(u32 time)
 // outside so it still inlines), startBeeSe via MSStartActor (same bind on
 // MSoundSE::startSoundActor), loadWaveBackword via getBase() + named base
 // + incremental addr.  Still open, instruction-exact and frame-only:
-//   startMarioVoice        0xa0 / 0x78   (-0x28)
+//   startMarioVoice        0xa0 / 0x80   (-0x20; c-k15: the closing id
+//                          read is getMarioVoiceID(), +8; the voice block
+//                          through checkMarioVoicePlaying() breaks the code)
 //   startSoundActorSpecial closed by cc41 (position level + named pos)
 //   exitStage              0x40 / 0x40   (JAICamera temp 4 bytes high;
 //                                         nested fork-in-binder is +8)
@@ -1158,11 +1160,7 @@ u32 MSound::startMarioVoice(u32 param_1, s16 param_2, u8 param_3)
 		}
 	}
 
-	u8 iVar62 = param_3 & 0x2 ? 1 : 0;
-	if (unk8C[iVar62] != nullptr)
-		return unk8C[iVar62]->getID();
-
-	return -1;
+	return getMarioVoiceID(param_3);
 }
 
 u32 MSound::getMarioVoiceID(u8 param_1)

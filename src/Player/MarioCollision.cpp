@@ -313,33 +313,27 @@ void TMario::calcDamagePos(const JGeometry::TVec3<f32>& pos)
 		return;
 	}
 	offset.normalize();
-	mDamagePos = mPosition + MarioCollisionVecScaled(offset, 50.0f);
+	JGeometry::TVec3<f32> scaled = MarioCollisionVecScaled(offset, 50.0f);
+	mDamagePos = mPosition + scaled;
 }
 
-// TODO: 97.4%. Three residues left.
-//  - Frame 0x130 against retail's 0x150 (the knockback vectors all sit 0x20
-//    low), and the first of retail's two `bl TVec3::TVec3(const TVec3&)` copies
-//    is still expanded inline here (six stores at 0x684) while the second one
-//    is called: the `MarioCalcDamagePos` level below is one short at that one
-//    site only.
+// TODO: 98.1%. Three residues left.
+//  - Frame 0x138 against retail's 0x150, and one extra copy: retail feeds the
+//    scaled offset's return slot (0xb8) straight to `add`, where the named
+//    `scaled` in calcDamagePos copies it once more (six instructions).
 //  - `animOffset1`'s materialised bool lands in r0 and is then `mr`ed into
 //    r31, where retail materialises straight into r31.
 //  - `mr r3, r24` against our `addi r3, r24, 0` at the `onYoshi()` call.
-// Batch note on the copy: the two copies are `operator*`'s by-value *parameter*
-// copy (0x94 -> 0x64) and its `return fst;` copy (0x64 -> 0xb8). The parameter
-// copy is constructed in MarioCollisionVecScaled's body and the return copy in
-// operator*'s, i.e. one level deeper, which is why we `bl` the second and
-// expand the first: at damageExec's site the chain is damageExec -> calcDamagePos
-// -> MarioCollisionVecScaled -> operator*, putting them at depths 3 and 4, and
-// only depth 4 is under the copy constructor's cost. Retail refuses both, so
-// the whole chain is one level deeper there -- but the level cannot go inside
-// MarioCollisionVecScaled or operator*, because the out-of-line calcDamagePos
-// (where everything is a level shallower) is already 0x18 *over* retail's
-// frame, not under it. Retail's out-of-line copy also puts 48 bytes between the
-// `sub` target (0x3c) and the isZero copy (0x6c) where we pack them 12 apart
-// (0x74, 0x80), so the two functions disagree about the pool and the level has
-// to come from something inside calcDamagePos that costs nothing when it is
-// emitted out of line.
+// c-k14 (statement-mode model, codegen-tells.md c-r24): both of retail's
+// `bl TVec3::TVec3(const TVec3&)` copies now come out. They are `operator*`'s
+// by-value parameter copy and its return copy; the parameter copy is built
+// with the arguments of the call, so it sits one level deeper only when
+// MarioCollisionVecScaled is reached in statement mode. A class-typed named
+// initialiser (`TVec3 scaled = f(...)`) is statement mode and gives both
+// `bl`s; the old operand spelling (`mPosition + f(...)`) and a `const TVec3&`
+// binding are expression mode and expand the parameter copy. What is left is
+// the named copy itself: retail reached the helper in statement mode without
+// naming its result.
 void TMario::damageExec(THitActor* hittingActor, int damage, int damageAnimType,
                         int waterEmit, f32 knockbackSpeed, int rumbleFrames,
                         f32 pollutionAmount, s16 invincibilityFrames)

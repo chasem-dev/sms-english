@@ -56,6 +56,7 @@ For every function measured so far, 1.1 gives the same frames as our GC/1.2.5 (j
   It takes about 8 s after a full build.
 - `cmpcensus.py BEFORE.tsv AFTER.tsv [N]`: prints the exact counts and the functions that moved up or down between two census runs.
   Use it to price a shared-header lever across the whole tree in about a minute.
+- `inline-modes.py [-v 1.1] [-k FILTER] [--snippet FILE]`: compiles scratch probes with the game flags and prints the inline level a probe callee is judged at in each call context (statement mode versus expression mode, research c-r24 in `docs/catalog/codegen-tells.md`); `--snippet` measures a context you write.
 - `inv.py`: for every source-built function with the same instruction count as retail, counts the stack-object pairs retail orders the reverse of ours (`reversed/total  unit  symbol`).
   A block whose objects are reversed was an inlined callee in retail; see `docs/catalog/frame-model.md`.
 - `ns.py UNIT SYMBOL [-v]`: counts the diff lines that are not pure `r1` offset differences, so register and instruction gains are visible under a frame gap.

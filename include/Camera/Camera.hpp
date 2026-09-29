@@ -129,6 +129,10 @@ public:
 	// camera position with lazy per-component loads and no temporary, which
 	// only the derived type gives.
 	const Vec& getUnk124Vec() const { return unk124; }
+	// Fabricated name, the lookat point's `Vec`-typed sibling of
+	// getUnk124Vec(): TLensFlare's CLBCalcNearNinePos call reads it through
+	// the `TVec3(const Vec&)` conversion (research c-r26).
+	const Vec& getUnk148Vec() const { return unk148; }
 	s16 getUnk258() const { return unk258; }
 	bool isThing() const
 	{
@@ -456,6 +460,19 @@ public:
 	/* 0xE8 */ TTargetCamera mTargetBeforeFixedMode;
 	/* 0x11C */ u32 unk11C;
 	/* 0x120 */ TMarioGamePad* unk120;
+	// Research c-r26: unk124 (position) and unk148 (lookat) are TVec3 in
+	// retail, although the lensflare, sunmodel, bosstelesa and NPC reads copy
+	// them float by float through `TVec3(const Vec&)`. The camera's own TUs
+	// pass both addresses straight to TVec3 parameters (updateDemoCamera_'s
+	// `TCameraBck::updateDemo(TVec3*, TVec3*, ...)`, calcInHouseNo_'s
+	// CLBCalcNearNinePos `const TVec3&`s) and TMirrorCamera and the grass
+	// manager do the same, so the outside `Vec` reads are accessors
+	// (getUnk124Vec, getUnk148Vec). Both members as plain `Vec` (camera TUs
+	// held on TVec3): 0 up, 6 down, exact 12023 -> 12022 (TMapObjGrassManager
+	// ::perform), calcInHouseNo_ 97.31 -> 91.90, TMap::update 99.94 -> 95.91
+	// (99.94 with a `const Vec&` camPos), TMirrorModelManager::perform
+	// 91.33 -> 80.72, TBaseNPC::perform 97.33 -> 93.77 (96.61 with `const
+	// Vec&` at/pos), forceRequest 99.50 -> 93.84.
 	/* 0x124 */ JGeometry::TVec3<f32> unk124;
 	/* 0x130 */ JGeometry::TVec3<f32> unk130;
 	/* 0x13C */ JGeometry::TVec3<f32> unk13C;

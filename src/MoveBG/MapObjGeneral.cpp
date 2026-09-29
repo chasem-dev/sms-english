@@ -135,7 +135,9 @@ void TMapObjGeneral::put()
 // needs no binding (it then becomes a named web, coloured after the rate:
 // y f5, rate f4) or an IRO split temp created before the rate's. Inert or
 // worse: a named y before/after power (raw, getMapObjData() or the
-// TMapObjGeneralGetPhysicalData level), a named TMapObjPhysicalData*.
+// TMapObjGeneralGetPhysicalData level), a named TMapObjPhysicalData*;
+// c-k15: `mMapObjData->getPhysicalData()` at the three reads -0x18,
+// `getMapObjData()->getPhysicalData()` -0x20.
 void TMapObjGeneral::thrown()
 {
 	mPosition.set(SMS_GetMarioPos().x, SMS_GetMarioPos().y, SMS_GetMarioPos().z);
@@ -477,24 +479,16 @@ void TMapObjGeneral::touchWall(JGeometry::TVec3<f32>* param_1,
 	                       mMapObjData->mPhysical->unk4->unk8, &mVelocity);
 }
 
-// TODO: TMapObjBaseData wants a `const TMapObjPhysicalInfo* getPhysical()`
-// accessor; parked here as a TU-local until a header batch adds it.
-static inline const TMapObjPhysicalInfo* MapObjGetPhysical(
-    const TMapObjData* p)
-{
-	return p->mPhysical;
-}
-
 void TMapObjGeneral::checkWallCollision(JGeometry::TVec3<f32>* param_1)
 {
-	param_1->y += MapObjGetPhysical(mMapObjData)->unk4->unk1C;
+	param_1->y += mMapObjData->getPhysical()->unk4->unk1C;
 
 	TBGWallCheckRecord check(*param_1, mBodyRadius, 4,
 	                         mMapObjData->mPhysical->mWallCheckFlags);
 
 	bool touched = gpMap->isTouchedWallsAndMoveXZ(&check);
 
-	param_1->y -= MapObjGetPhysical(mMapObjData)->unk4->unk1C;
+	param_1->y -= mMapObjData->getPhysical()->unk4->unk1C;
 
 	if (touched) {
 		unk138 = check.mResultWalls[0];
@@ -517,32 +511,18 @@ void TMapObjGeneral::checkRoofCollision(JGeometry::TVec3<f32>* param_1)
 		touchRoof(param_1);
 }
 
-static inline TMapObjPhysicalData*
-TMapObjGeneralTouchGroundGetPhysicalData(TMapObjGeneral* p)
-{
-	TMapObjPhysicalData* data = p->mMapObjData->mPhysical->unk4;
-	return data;
-}
-
-static inline const TMapObjPhysicalInfo*
-TMapObjGeneralTouchGroundGetPhysical(TMapObjGeneral* p)
-{
-	const TMapObjPhysicalInfo* physical = p->mMapObjData->mPhysical;
-	return physical;
-}
-
 void TMapObjGeneral::touchGround(JGeometry::TVec3<f32>* param_1)
 {
-	if (TMapObjGeneralTouchGroundGetPhysical(this) ? true : false) {
-		mVelocity.x *= TMapObjGeneralTouchGroundGetPhysicalData(this)->unk10;
-		mVelocity.z *= TMapObjGeneralTouchGroundGetPhysicalData(this)->unk10;
+	if (mMapObjData->getPhysical() ? true : false) {
+		mVelocity.x *= mMapObjData->getPhysicalData()->unk10;
+		mVelocity.z *= mMapObjData->getPhysicalData()->unk10;
 	}
 
 	if ((mMapObjData->mPhysical ? true : false)
 	    && abs(JGeometry::TVec3<f32>(mVelocity).y)
-	           > TMapObjGeneralTouchGroundGetPhysicalData(this)->unkC) {
+	           > mMapObjData->getPhysicalData()->unkC) {
 		param_1->y -= JGeometry::TVec3<f32>(mVelocity).y;
-		mVelocity.y *= -TMapObjGeneralTouchGroundGetPhysicalData(this)->unk4;
+		mVelocity.y *= -mMapObjData->getPhysicalData()->unk4;
 		if (isCoin(this)) {
 			SMSGetMSound()->startSoundActorWithInfo(
 			    MSD_SE_SY_COIN_BOUND, &mPosition, nullptr,
@@ -569,13 +549,6 @@ void TMapObjGeneral::checkGroundCollision(JGeometry::TVec3<f32>* param_1)
 		onLiveFlag(LIVE_FLAG_AIRBORNE);
 }
 
-static inline TMapObjPhysicalData*
-TMapObjGeneralGetPhysicalData(TMapObjGeneral* p)
-{
-	TMapObjPhysicalData* physData = p->mMapObjData->mPhysical->unk4;
-	return physData;
-}
-
 void TMapObjGeneral::calcVelocity()
 {
 	if (checkLiveFlag2(LIVE_FLAG_AIRBORNE)) {
@@ -587,16 +560,16 @@ void TMapObjGeneral::calcVelocity()
 
 	const TMapObjPhysicalInfo* piVar4 = mMapObjData->mPhysical;
 	if (piVar4 ? (u8)1 : (u8)0) {
-		mVelocity.x *= TMapObjGeneralGetPhysicalData(this)->unk18;
-		mVelocity.z *= TMapObjGeneralGetPhysicalData(this)->unk18;
+		mVelocity.x *= mMapObjData->getPhysicalData()->unk18;
+		mVelocity.z *= mMapObjData->getPhysicalData()->unk18;
 
 		mVelocity.x = MsClamp<f32>(mVelocity.x, -mBodyRadius, mBodyRadius);
 		mVelocity.z = MsClamp<f32>(mVelocity.z, -mBodyRadius, mBodyRadius);
 
 		if (mGroundPlane->mNormal.y == 1.0f) {
-			if (abs(mVelocity.x) < TMapObjGeneralGetPhysicalData(this)->unkC)
+			if (abs(mVelocity.x) < mMapObjData->getPhysicalData()->unkC)
 				mVelocity.x = 0.0f;
-			if (abs(mVelocity.z) < TMapObjGeneralGetPhysicalData(this)->unkC)
+			if (abs(mVelocity.z) < mMapObjData->getPhysicalData()->unkC)
 				mVelocity.z = 0.0f;
 		}
 	}
