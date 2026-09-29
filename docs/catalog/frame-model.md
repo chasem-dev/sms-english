@@ -517,3 +517,6 @@ Their named locals are kept, and so is each initialiser's inline expansion with 
   The same accessor at four raw sites of `TMapObjBall::calcCurrentMtx` lands its frame (0x190 -> 0x1c0, 105 -> 59 markers) and moves four more frame-short functions 8 or 0x10 closer without touching an instruction.
   When the binder's chain already ends in an accessor (`mMarioParts->getMActor()`, `mModel->getModel()`), neither the direct chain nor an owner-level accessor on `this` reaches the binder's words (each 4 to 8 short per site); a binder whose receiver is `this` is not rescued by an owner accessor.
   A forward-declared element type blocks the accessor (`&mSeqTrackInfo[i]` in JAIData.hpp).
+- **A written-out dot product is a copied `TVec3::dot`, and the call can fix loads the sum cannot.**
+  `TMapObjBall::touchWall`'s two sums (`vel.x * n.x + ...` and the plane distance) as `vel.dot(wall->getNormal())` and `param_1->dot(wall->getNormal()) + wall->getPlaneDistance()` re-read the normal as retail does (98.0 -> 99.8, every instruction and register right, frame 0x30 short); `findNearestWall`'s distance as `mNormal.dot(pos)` moves `TMario::hanging` 0x10 closer.
+  The scanner's header hits over `TVec3::dot`/`add`/`sub` are worth one try each; `add`/`set` copies were code-identical everywhere tried (`TFlyEnemy::calcChaseParam`, `TBPPolDrop::move`, `getOnWirePosAngle`).
