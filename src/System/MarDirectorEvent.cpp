@@ -204,33 +204,9 @@ void TMarDirector::movement()
 	}
 }
 
-// TODO: 99.7%, instruction-exact since TFlagT::operator= returns void; the
-// frame is 0x40 against retail's 0x50 (`next` 0xc low, the four flag
-// temporaries 4 low). SMSGetApplication()->setMovie(6) is +8 and an identity
-// fork over param_2 the other +8 (100% together, refused as a fabricated level);
-// `curr` declared inside the else arm lands `next` on 0x38 but renumbers
-// r29/r30. Inert or worse: `curr` or a split `cur` declared at the top, an
-// int/u16 copy of param_1, a conversion helper (by reference, pointer or
-// value), direct `mNextArea = next`/`set`, a pointer-returning application
-// accessor, by-value setNextArea/operator=, const-reference set() flag.
-// A reference binder (`TApplication& app = gpApplication; return app;`) at
-// the setNextArea site reaches 0x50 at 99.9 but puts the extra 8 bytes
-// among the flag temporaries (0x28/0x34) rather than retail's hole at
-// 0x30-0x37 under `next`; refused as an alias (decideNextStage: same
-// frame, same misplacement, no gain).
-// c-m25: without the named `cur` (curr.getStage() at each compare) all four
-// flag temporaries sit on retail's 0x2c/0x28/0x24/0x20; `next` is still 8
-// low (0x30) and the frame 0x48: 8 bytes created before the ctor's temps.
-// Inert or worse there: raw `unk4C & 2`, `next` above the guard, `next(0, 0)`,
-// `next = TGameSequence()`, a named switch value.
-// The reference-returning SMSGetApplication(): retail folds the
-// TGameSequence stores onto the &gpApplication base (0x12/0x13/0x14)
-// instead of binding &mNextArea.
-// c-k3 debugger reading: after `next` (0x30) come `curr` and the accessor's
-// result @1062, both register-held, then the ctor's TFlagT temporary @1069
-// (0x2c, as retail). Retail's 8 bytes are two dead objects created between
-// `next` and @1069: `curr` and @1062 homed would fit. A named
-// `TApplication& app` is inert (an alias, no object).
+// Every application access goes through SMSGetApplication(): the two
+// pointer temporaries it leaves (the current area and setMovie) fill
+// retail's frame to 0x50.
 void TMarDirector::setNextStage(u16 param_1, JDrama::TActor* param_2)
 {
 	if (checkUnk4CFlag(0x2))
@@ -247,7 +223,7 @@ void TMarDirector::setNextStage(u16 param_1, JDrama::TActor* param_2)
 
 	SMSGetApplication()->setNextArea(next);
 
-	const TGameSequence& curr = gpApplication.mCurrArea;
+	const TGameSequence& curr = SMSGetApplication()->mCurrArea;
 	if (param_2 != nullptr) {
 		onUnk4CFlag(0x4);
 		unk250 = param_2;
@@ -264,7 +240,7 @@ void TMarDirector::setNextStage(u16 param_1, JDrama::TActor* param_2)
 	switch (next.getStage()) {
 	case 0x37:
 		onUnk4CFlag(0x100);
-		gpApplication.setMovie(6);
+		SMSGetApplication()->setMovie(6);
 		break;
 	}
 }
