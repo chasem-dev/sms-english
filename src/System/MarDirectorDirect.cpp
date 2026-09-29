@@ -503,7 +503,7 @@ void TMarDirector::currentStateFinalize(u8 next_state)
 		JDrama::TNameRefGen::search<JDrama::TViewObj>("Guide")->unkC.on(
 		    CUE_MOVE | CUE_CALC_ANIM | CUE_DRAW);
 
-		gpApplication.mFader->startWipe(unkE4, 0.4f, 0.0f);
+		gpApplication.getFader()->startWipe(unkE4, 0.4f, 0.0f);
 		SMSRumbleMgr->reset();
 		break;
 
@@ -767,7 +767,7 @@ void TMarDirector::nextStateInitialize(u8 next_state)
 			THPPlayerStop();
 	// !!!fallthrough!!!
 	case 9: {
-		gpApplication.mFader->startWipe(unkE4, 0.4f, 0.0f);
+		gpApplication.getFader()->startWipe(unkE4, 0.4f, 0.0f);
 		if (unkE4 == 8)
 			SMSGetMSound()->startSoundSystemSE(MSD_SE_MA_INTO_DOKAN, 0, nullptr,
 			                                   0);
@@ -801,7 +801,7 @@ void TMarDirector::nextStateInitialize(u8 next_state)
 		JDrama::TNameRefGen::search<JDrama::TViewObj>("Guide")->unkC.off(
 		    CUE_MOVE | CUE_CALC_ANIM | CUE_DRAW);
 		SMSGetMSound()->startSoundSystemSE(MSD_SE_SY_WIPE_IN, 0, nullptr, 0);
-		gpApplication.mFader->startWipe(6, 1.0f, 0.0f);
+		gpApplication.getFader()->startWipe(6, 1.0f, 0.0f);
 		unk78->setup(nullptr);
 		unk78->startMoveCursor();
 		break;
@@ -827,16 +827,16 @@ void TMarDirector::nextStateInitialize(u8 next_state)
 		gpMarDirector->mConsole->unk94->startAppearMiss();
 		TFlagManager::smInstance->decFlag(0x20001, 1);
 		unk60 = unk5C;
-		gpApplication.mFader->setColor(JUtility::TColor(0, 0, 0, 0xff));
+		gpApplication.getFader()->setColor(JUtility::TColor(0, 0, 0, 0xff));
 		if (TFlagManager::smInstance->getFlag(0x20001) >= 0) {
 			MSBgm::startBGM(MSD_BGM_MISS);
 			if (checkUnk4EFlag(8))
-				gpApplication.mFader->startWipe(2, 0.0f, 2.0f);
+				gpApplication.getFader()->startWipe(2, 0.0f, 2.0f);
 			else
-				gpApplication.mFader->startWipe(10, 0.0f, 2.2f);
+				gpApplication.getFader()->startWipe(10, 0.0f, 2.2f);
 		} else {
 			MSBgm::startBGM(MSD_BGM_GAMEOVER);
-			gpApplication.mFader->startWipe(0xD, 0.0f, 2.0f);
+			gpApplication.getFader()->startWipe(0xD, 0.0f, 2.0f);
 		}
 		break;
 	}

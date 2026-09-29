@@ -121,7 +121,7 @@ void TGCLogoDir::setup(JDrama::TDisplay* param_1, TMarioGamePad* param_2)
 	screen->assignViewObj(group2d);
 
 	gpApplication.mFader->setColor(JUtility::TColor(0, 0, 0, 0));
-	gpApplication.mFader->startWipe(14, 0.4f, 0.0f);
+	gpApplication.getFader()->startWipe(14, 0.4f, 0.0f);
 }
 
 TGCLogoDir::~TGCLogoDir() { getGamePad()->offFlag(0x1); }
@@ -149,7 +149,7 @@ int TGCLogoDir::direct()
 			unk20->unk10 = unk30;
 			unk20->unk14 = JUTRect(254, 201, 404, 271);
 			unk20->unk24 = JUtility::TColor(255, 255, 255, 255);
-			gpApplication.mFader->startWipe(14, 0.4f, 0.0f);
+			gpApplication.getFader()->startWipe(14, 0.4f, 0.0f);
 			nextState = 1;
 		}
 		break;
@@ -202,7 +202,7 @@ bool TGCLogoDir::direct_nlogo()
 	int nextState = mState;
 	switch (mState) {
 	case 0:
-		if (gpApplication.mFader->isFullyFadedIn()) {
+		if (gpApplication.getFader()->isFullyFadedIn()) {
 			nextState = (int)mProgSelect->unkC.mValue == 0 ? 3 : 1;
 
 			SMSGetMSound()->startSoundSystemSE(MSD_SE_MV_CHAO, 0, nullptr, 0);
@@ -239,7 +239,7 @@ bool TGCLogoDir::direct_nlogo()
 		break;
 
 	case 2:
-		if (gpApplication.mFader->isFullyFadedOut())
+		if (gpApplication.getFader()->isFullyFadedOut())
 			ended = true;
 		break;
 	}
@@ -251,7 +251,7 @@ bool TGCLogoDir::direct_nlogo()
 		if (nextState != 2)
 			(void)nextState; // assert?
 		else
-			gpApplication.mFader->startWipe(15, 0.4f, 0.0f);
+			gpApplication.getFader()->startWipe(15, 0.4f, 0.0f);
 		mState = nextState;
 	}
 
@@ -273,7 +273,7 @@ bool TGCLogoDir::direct_dolby()
 	int nextState = mState;
 	switch (mState) {
 	case 0:
-		if (gpApplication.mFader->isFullyFadedIn()) {
+		if (gpApplication.getFader()->isFullyFadedIn()) {
 			mLogoShowTimer = 0;
 			nextState      = 1;
 		}
@@ -286,7 +286,7 @@ bool TGCLogoDir::direct_dolby()
 		break;
 
 	case 2:
-		if (gpApplication.mFader->isFullyFadedOut())
+		if (gpApplication.getFader()->isFullyFadedOut())
 			ended = true;
 		break;
 	}
@@ -298,7 +298,7 @@ bool TGCLogoDir::direct_dolby()
 		if (nextState != 2)
 			(void)nextState; // assert?
 		else
-			gpApplication.mFader->startWipe(15, 0.4f, 0.0f);
+			gpApplication.getFader()->startWipe(15, 0.4f, 0.0f);
 		mState = nextState;
 	}
 

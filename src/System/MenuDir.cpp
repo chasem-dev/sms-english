@@ -177,7 +177,7 @@ int TMenuDirector::direct()
 			return 0;
 		void* res;
 		OSJoinThread(&gSetupThread, &res);
-		gpApplication.mFader->startFadeinT(0.25f);
+		gpApplication.getFader()->startFadeinT(0.25f);
 		if (!TFlagManager::getInstance()->getBool(0x30007)) {
 			TFlagManager::getInstance()->setBool(true, 0x30007);
 			gpMSound->loadWave(MS_WAVE_DEFAULT);
@@ -329,7 +329,7 @@ int TMenuDirector::direct()
 		if (unk44->checkFlag(0x1)) {
 			setFixedStageValue();
 			unk18 = 2;
-			gpApplication.mFader->startFadeoutT(0.25f);
+			gpApplication.getFader()->startFadeoutT(0.25f);
 			// TODO: instructions match; frame 0x78 vs retail 0x128 (a dead
 			// low region, as MarDirectorDirect::decideNextStage).
 			SMSGetApplication()->setNextArea(TGameSequence(unk48, unk4C));
@@ -342,7 +342,7 @@ int TMenuDirector::direct()
 		break;
 
 	case 2:
-		if (gpApplication.mFader->isFullyFadedOut()
+		if (gpApplication.getFader()->isFullyFadedOut()
 		    && gpMSound->checkWaveOnAram(MS_WAVE_DEFAULT)) {
 			int stage = unk40->unk2C;
 			if (stage == 0x11) {
@@ -356,7 +356,7 @@ int TMenuDirector::direct()
 		break;
 
 	case 3:
-		if (gpApplication.mFader->isFullyFadedOut())
+		if (gpApplication.getFader()->isFullyFadedOut())
 			uVar13 = TApplication::APP_STATE_QUIT;
 		break;
 	}

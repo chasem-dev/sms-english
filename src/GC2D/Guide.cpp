@@ -1000,8 +1000,8 @@ void TGuide::perform(u32 cue, JDrama::TGraphics* graphics)
 	int i;
 	switch (mState) {
 	case STATE_MOVE_CURSOR:
-		if (unkC5 && gpApplication.mFader->isFullyFadedOut()) {
-			gpApplication.mFader->startWipe(5, 1.0f, 0.0f);
+		if (unkC5 && gpApplication.getFader()->isFullyFadedOut()) {
+			gpApplication.getFader()->startWipe(5, 1.0f, 0.0f);
 			mState = STATE_FADE_IN;
 		}
 		{
@@ -1014,7 +1014,7 @@ void TGuide::perform(u32 cue, JDrama::TGraphics* graphics)
 		break;
 
 	case STATE_FADE_IN:
-		if (gpApplication.mFader->isFullyFadedIn()) {
+		if (gpApplication.getFader()->isFullyFadedIn()) {
 			mState      = STATE_SELECT;
 			mOpenPanelB = nullptr;
 			mOpenPanelA = nullptr;
@@ -1054,15 +1054,15 @@ void TGuide::perform(u32 cue, JDrama::TGraphics* graphics)
 		break;
 
 	case STATE_CLOSE:
-		gpApplication.mFader->startWipe(6, 1.0f, 0.0f);
+		gpApplication.getFader()->startWipe(6, 1.0f, 0.0f);
 		mGamePad->offFlag(TMarioGamePad::PAD_FLAG_0x80);
 		gpMSound->startSoundSystemSE(MSD_SE_SY_WIPE_OUT, 0, nullptr, 0);
 		mState = STATE_FADE_OUT;
 		break;
 
 	case STATE_FADE_OUT:
-		if (gpApplication.mFader->isFullyFadedOut()) {
-			gpApplication.mFader->startWipe(5, 1.0f, 0.0f);
+		if (gpApplication.getFader()->isFullyFadedOut()) {
+			gpApplication.getFader()->startWipe(5, 1.0f, 0.0f);
 			if (mOpenPanelA != nullptr
 			    && mOpenPanelA->getPane()->isVisible())
 				mOpenPanelA->getPane()->hide();

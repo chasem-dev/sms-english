@@ -413,11 +413,11 @@ int TMovieDirector::direct()
 			mEndingString->startFadeIn();
 
 		if (gpApplication.getMovie() == 9) {
-			gpApplication.mFader->startWipe(12, 0.0f, 0.0f);
+			gpApplication.getFader()->startWipe(12, 0.0f, 0.0f);
 			unk18 = false;
 		} else {
-			gpApplication.mFader->startWipe(14, 1.0f, 0.0f);
-			gpApplication.mFader->setColor(JUtility::TColor(0, 0, 0, 255));
+			gpApplication.getFader()->startWipe(14, 1.0f, 0.0f);
+			gpApplication.getFader()->setColor(JUtility::TColor(0, 0, 0, 255));
 			THPPlayerPlay();
 		}
 	}
@@ -460,7 +460,7 @@ int TMovieDirector::direct()
 		                                         + 0x10391)
 		    && getGamePad()->checkFrameMeaning(0x61)) {
 			nextState = STATE_FADE_OUT;
-		} else if (gpApplication.mFader->isFullyFadedIn()) {
+		} else if (gpApplication.getFader()->isFullyFadedIn()) {
 			nextState = STATE_PLAYING;
 		}
 		break;
@@ -487,7 +487,7 @@ int TMovieDirector::direct()
 		break;
 
 	case STATE_FADE_OUT:
-		if (gpApplication.mFader->isFullyFadedOut())
+		if (gpApplication.getFader()->isFullyFadedOut())
 			desiredAppState = decideNextMode(&nextState);
 		break;
 
@@ -495,7 +495,7 @@ int TMovieDirector::direct()
 		switch (unk24->getNextState()) {
 		case 0:
 		case 1:
-			gpApplication.mFader->setFadeStatus(
+			gpApplication.getFader()->setFadeStatus(
 			    TSMSFader::FADE_STATUS_FULLY_FADED_OUT);
 			desiredAppState = TApplication::APP_STATE_DONE;
 			break;
@@ -505,12 +505,12 @@ int TMovieDirector::direct()
 	case STATE_SAVE_AND_CONTINUE:
 		switch (unk24->getNextState()) {
 		case 1:
-			gpApplication.mFader->setFadeStatus(
+			gpApplication.getFader()->setFadeStatus(
 			    TSMSFader::FADE_STATUS_FULLY_FADED_OUT);
 			desiredAppState = TApplication::APP_STATE_MOVIE;
 			break;
 		case 0:
-			gpApplication.mFader->setFadeStatus(
+			gpApplication.getFader()->setFadeStatus(
 			    TSMSFader::FADE_STATUS_FULLY_FADED_OUT);
 			if (gpApplication.getMovie() == 19) {
 				gpApplication.setMovie(13);
@@ -539,8 +539,8 @@ int TMovieDirector::direct()
 			THPPlayerStop();
 			unk28->unkC.on(CUE_DRAW | CUE_MOVE);
 			unk2C->unkC.on(CUE_DRAW | CUE_MOVE);
-			gpApplication.mFader->startWipe(14, 0.3f, 0.0f);
-			gpApplication.mFader->setColor(JUtility::TColor(0, 0, 0, 255));
+			gpApplication.getFader()->startWipe(14, 0.3f, 0.0f);
+			gpApplication.getFader()->setColor(JUtility::TColor(0, 0, 0, 255));
 			unk24->init(gpApplication.getMovie() == 17 ? 8 : 0);
 			break;
 
@@ -548,17 +548,17 @@ int TMovieDirector::direct()
 			THPPlayerStop();
 			unk28->unkC.on(CUE_DRAW | CUE_MOVE);
 			unk2C->unkC.on(CUE_DRAW | CUE_MOVE);
-			gpApplication.mFader->startWipe(14, 0.3f, 0.0f);
-			gpApplication.mFader->setColor(JUtility::TColor(0, 0, 0, 255));
+			gpApplication.getFader()->startWipe(14, 0.3f, 0.0f);
+			gpApplication.getFader()->setColor(JUtility::TColor(0, 0, 0, 255));
 			unk24->init(9);
 			break;
 
 		case STATE_FADE_OUT:
 			if (getGamePad()->isSomethingPushed()) {
-				gpApplication.mFader->startWipe(4, 1.0f, 0.0f);
+				gpApplication.getFader()->startWipe(4, 1.0f, 0.0f);
 			} else {
-				gpApplication.mFader->startWipe(15, 1.0f, 0.0f);
-				gpApplication.mFader->setColor(JUtility::TColor(0, 0, 0, 255));
+				gpApplication.getFader()->startWipe(15, 1.0f, 0.0f);
+				gpApplication.getFader()->setColor(JUtility::TColor(0, 0, 0, 255));
 			}
 
 			if (gpApplication.getMovie() == 9) {

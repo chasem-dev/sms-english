@@ -60,7 +60,16 @@ public:
 	void setNextArea(const TGameSequence& next_area) { mNextArea = next_area; }
 	u32 getMovie() const { return mMovie; }
 
-	TSMSFader* getFader() const { return mFader; }
+	// Same shape as TSelectDir::getGamePad(): the named pointer is one dead
+	// word per site. With it at the directors' fader sites every director
+	// frame moves toward retail and none overshoots (TMovieDirector::direct
+	// becomes instruction-exact); a plain or `const&` return is inert
+	// (research c-r29).
+	TSMSFader* getFader() const
+	{
+		TSMSFader* fader = mFader;
+		return fader;
+	}
 	void setMovie(u32 v) { mMovie = v; }
 
 public:
