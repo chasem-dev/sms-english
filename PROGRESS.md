@@ -11,19 +11,20 @@ Measured from `build/GMSE01/report.json` on 2026-09-29.
 
 | | Fuzzy match | Perfect match | Fully linked | Linked units |
 | --- | ---: | ---: | ---: | ---: |
-| Game | 99.51318% | 67.59262% | 19.87077% | 204 / 385 |
+| Game | 99.51395% | 67.64319% | 19.94550% | 205 / 385 |
 | JSystem | 99.89825% | 93.90541% | 81.21971% | 186 / 198 |
 | SDK | 99.99897% | 99.71085% | 99.54403% | 148 / 149 |
-| All | 99.60104% | 73.51879% | 34.02236% | 538 / 732 |
+| All | 99.60165% | 73.55875% | 34.08141% | 539 / 732 |
 
-12,039 of 12,904 functions match. The rebuilt DOL remains byte-identical to the original.
+12,045 of 12,904 functions match. The rebuilt DOL remains byte-identical to the original.
 
 ## What recent batches have done
 
-Named shorter-arc predicates and mutable difference calculations close TDirectionCalc::calcNearerDirection, adding 160 exact code bytes while preserving its callers.
-The nozzle emission meter, cached hip-drop squared speed and Kukku march-momentum operations improve four further functions without increasing the exact count.
-Every retained change passes full builds, zero function regressions, exact unit data and the original DOL checksum.
-Kukku symbol order improves to PASS; other changed-unit symbol diagnostics are unchanged.
+Actual registration, camera-range and sound-emitter operations, plus shared constructor defaults, close 6 further functions and add 1,440 exact code bytes.
+MapObjPollution now matches every function and data byte and is source-linked; its source-linked DOL passes the original checksum.
+The random-volume constructor and profile calculation, random-play constructor and emitter, and camera ground-check predicate are exact.
+All retained changes pass full production builds, zero function regressions and unchanged symbol diagnostics.
+Bounded PerformList, THP audio, ball-flow and wire-point probes found no safe gain and were restored.
 
 The selected unit rows below are refreshed from the same measured report as the totals.
 
@@ -89,6 +90,9 @@ The selected unit rows below are refreshed from the same measured report as the 
 | `MoveBG/MapObjBianco` | 99.45% | 67 / 74 |
 | `MoveBG/MapObjMare` | 98.97% | 59 / 67 |
 | `MoveBG/MapObjCorona` | 99.64% | 42 / 52 |
+| `MoveBG/MapObjPollution` | 100.00% | 12 / 12 |
+| `Camera/CameraBGCheck` | 98.80% | 7 / 10 |
+| `MSound/MSoundSE` | 99.98% | 25 / 30 |
 | `MoveBG/MapObjBall` | 99.63% | 63 / 72 |
 | `Player/ModelWaterManager` | 98.68% | 17 / 25 |
 | `MarioUtil/ShadowUtil` | 79.77% | 28 / 49 |
@@ -109,7 +113,7 @@ Most remaining differences in these units are frame gaps and per-call-site inlin
   padding is replaced by real locals (`docs/catalog/linking.md`, "Links 279").
 - `Camera/CameraInbetween` matches but will not link: `docs/catalog/linking.md`.
 - Units one function from linking (`MSoundBGM`, `MarioAccess`): `docs/catalog/frame-gaps.md`.
-- 865 functions remain non-exact and 194 units remain unlinked; source counterparts exist throughout the game.
+- 859 functions remain non-exact and 193 units remain unlinked; source counterparts exist throughout the game.
   Most remaining work is compiler stack layout, register allocation, inline structure and matching data layout.
 - **The `a = b - c` pool residue is the single largest open lever**: all 102 retail
   `bl TVec3::sub` sites are nonmatching, 40 of them at >= 99.3%, for one shared

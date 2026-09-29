@@ -6,9 +6,9 @@ Keep it current: every orchestrator appends a dated "State" entry below and rewr
 
 ## State 2026-09-29 (session 01a0ed16)
 
-GMSE01 is incomplete: All exact code 73.51879%, source-linked code 34.02236%, 538/732 source-linked units and 12,039/12,904 exact functions. There are 865 non-exact functions, 194 unlinked units and 1,008 unmatched data bytes. Fuzzy similarity (99.60104%) and the identical fallback-linked DOL are separate checks, not completion.
+GMSE01 is incomplete: All exact code 73.55875%, source-linked code 34.08141%, 539/732 source-linked units and 12,045/12,904 exact functions. There are 859 non-exact functions, 193 unlinked units and 1,008 unmatched data bytes. Fuzzy similarity (99.60165%) and the identical fallback-linked DOL are separate checks, not completion.
 
-The stale main checkout was aligned to the port's e4b7dacb, then public fork/main at 9d8055c3 was merged, retaining verified local changes. This added 163 exact functions and eleven source-linked units versus the initial stale checkout. Nine of the exact functions are new local research results: wireMove, HauntLegCallback, TobiPukuRollCallback, GessoBodyCallback, TDirectionCalc::sub, Ferris-wheel control, hidden-object water collision, the submarine factory and calcNearerDirection. The pole-jump helper restoration also preserves both exact callers and all UNUSED sizes.
+The stale main checkout was aligned to the port's e4b7dacb, then public fork/main at 9d8055c3 was merged, retaining verified local changes. This adds 169 exact functions and 12 source-linked units versus the initial stale checkout. 15 exact functions are new local research results. The newest closures are the revival-stamp registration, camera ground-check predicate and four random-volume/play routines; MapObjPollution is also linked from source. The pole-jump helper restoration also preserves both exact callers and all UNUSED sizes.
 
 All locally authored batches pass a full build, zero function-score regressions and original DOL SHA-1 a6782903ef79d4196c8489ecb1b57decb5b3728f. Symbol comparisons across 181 imported units introduce no failures; Pakkun keeps its pre-existing missing weak set<f> and two UNUSED size warnings. Public upstream origin/main has no additional commits beyond this source tree.
 

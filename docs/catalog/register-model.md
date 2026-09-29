@@ -334,3 +334,41 @@ Neither emit is exact, and deform's frame shrinks eight bytes despite the overal
 All four units retain exact data and pass full production builds, zero function regressions and the original DOL checksum.
 Bounded NPC volume and scene-index operation probes found no safe gain and were restored.
 Evidence directories: /tmp/sms-nearer-0929, /tmp/sms-hipdrop-0929, /tmp/x-kukku-call-0929, /tmp/x-nozzle-structure-0929, /tmp/x-npc-volume-0929 and /tmp/x-scene-index-0929.
+
+## Registration and scalar-input closures (2026-09-29)
+
+TMapObjRevivalPollution::loadAfter is now exact: 172 bytes, 43 instructions, frame 0x60.
+RegisterRevivalStamp performs the actual registration and stores its returned stamp index using the counter, polluter, layer index, dimensions, interval and texture inputs.
+The actual helper inputs raise the loop index and receiver webs from degree 25 to 29, giving retail's callee-saved order [i r31, this r30, offset r29, element r28].
+Using getTexWidth for width and getPos().getHeight for height preserves their signed dimension conversion and the original argument order, with the exact frame; the opposite accessor split and one direct dimension read also match.
+Both getPos expressions give 0x70, both texture-dimension accessors give 0x58, and both direct fields give 0x50.
+The out-of-line registerPolluteTex body remains at its mapped 104 bytes and unchanged normalized instructions; all three UNUSED sizes and every symbol diagnostic remain identical/PASS.
+All twelve functions and all 652 data bytes match, and the manifest source-link preserves the original DOL checksum.
+This supersedes the old claim that no legal carrier could break the register-group swap.
+
+MSRandVol's constructor shares the existing 0.5f preset across mAmplitude, mPSlopes[2] and mAmplitudes[1].
+The used mutable default occupies a real four-byte home and restores frame 0x20; all 168 bytes become exact.
+The const form is byte-identical to the old 0x18-frame body, and the unchanged initializer list does not express the shared preset.
+The getRandVol operation takes its actual amplitude, curve slope and plus slope values, calls JALCalc::getRandom once, adds one, and clamps to [0, 2].
+Its amplitude/curve/plus input order restores the curve-index evaluation before the plus-index evaluation and the float assignments: all 124 bytes match at frame 0x8.
+These are used values and actual calculations; no padding, dead input or pass-through binder was added.
+
+CameraAboveGroundRange projects the near/far distance bounds by their elevation sines, selects the greater bound and tests the camera-to-target height difference against 1.25 times that value.
+Owning those actual parameter/vector inputs separates the sine/load/product webs from the mutable caller spelling.
+isNeedGroundCheck_ becomes exact at 364 bytes, 91 instructions and frame 0x30; every other unit function, data and symbol diagnostic is unchanged.
+
+MSRandPlay's constructor shares its empty u16 vector count across capacity and registered entries, with unchanged field stores and initialization values.
+The actual two-field preset restores frame 0x48 and all 160 bytes.
+Its emitter-start operation owns the sound ID, actor identity, translation and sound handle, constructs JAIActor and starts the sound.
+A sound-ID reference and separate identity/translation inputs leave one live-used eliminated constructor input home below the actor; actor moves from 0x18 to retail's 0x14.
+randPlay matches all 452 bytes, 113 instructions and frame 0x40 while every other function/data/symbol remains unchanged.
+
+Fresh no-gain bounds also remain evidence:
+PerformList named iterator-return forms improve its caller but regress exact append bodies, and single-return bindings do not close the caller.
+THP complete-iteration and loop ownership forms leave its global bases ahead of the counter or add differences; native confirms unchanged counter/global interference under the best forms.
+Ball-flow operations with value/reference drag and actual flow inputs retain the two wrong load positions or add differences; scalar first-component inputs add stack shifts without repairing the order.
+The EFB whole-display operation changes an existing clear call to an out-of-line call; filter operations with boolean inputs fold to the same native IR and allocator graph.
+The raw-AA/integer-mask follow-up retains the same six operands and four wrong webs or drops retail normalization instructions; all are restored.
+Wire's named X gives a six-marker caller improvement but regresses release and move; actual field-input computations and named height/Z variants do not close it.
+All rejected probes are restored; these bounded results do not prove impossibility.
+Evidence: /tmp/x-revival-register-0929, /tmp/sms-randvol-0929, /tmp/x-camera-predicate-0929, /tmp/x-randplay-structure-0929, /tmp/sms-perform-list-0929, /tmp/x-thp-counter-0929, /tmp/x-efb-copy-0929, /tmp/sms-flow-0929 and /tmp/sms-wire-point-0929.

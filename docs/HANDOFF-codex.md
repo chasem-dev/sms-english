@@ -75,3 +75,10 @@
   Kukku symbol order improves to PASS; other changed-unit diagnostics are unchanged.
   Current exact code 73.51879%, source-linked 34.02236%, 12,039/12,904 exact functions, 538/732 source-linked units.
   NPC-volume and scene-index probes were restored without gain; the goal remains active with 865 non-exact functions and 194 unlinked units.
+
+- 2026-09-29: Closed 6 further functions (1,440 exact bytes) through actual revival-stamp registration, camera-range and emitter operations and shared constructor defaults.
+  MapObjPollution matches all twelve functions/data and is now linked from source, with the original DOL checksum and identical symbol diagnostics.
+  MSRandVol constructor/profile, MSRandPlay constructor/emitter and camera ground-check predicate are exact; all retained batches pass full builds and zero regressions.
+  PerformList, THP counter, ball-flow and wire-point probes were restored without safe gain; bounded native evidence is recorded in register-model.md.
+  Current exact code 73.55875%, source-linked 34.08141%, 12,045/12,904 exact functions, 539/732 source-linked units.
+  The goal remains active with 859 non-exact functions and 193 unlinked units.
