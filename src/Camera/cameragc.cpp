@@ -131,6 +131,11 @@ CPolarSubCamera::CPolarSubCamera(const char* name)
 	// The stage test is settled: `!stage` rather than `stage == 0` stops
 	// MWCC folding the pair into `cmplwi 1; bgt`, and unsigned `stage`
 	// gives the ROM's `cmplwi`.
+	// c-k13 debugger: the `this` copy is the TPlacement ctor's binding
+	// (depth 3 in the TLookAtCamera chain); retail has one fewer word among
+	// the depth-1 objects above it (the two SMSGetMarDirector() receivers and
+	// the CameragcBck local) and one more created after it. Raw unk2B0 at
+	// startDemo is frame 0x50, raw gpMarDirector at either site 0x48.
 	if (SMSGetMarDirector()->getCurrentMap() == 58 && (!stage || stage == 1)) {
 		unk64 |= CAMERA_FLAG_JET_COASTER_SCENE;
 		unk2B8 = new TCameraJetCoaster;

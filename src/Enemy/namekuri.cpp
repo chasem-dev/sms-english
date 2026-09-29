@@ -622,6 +622,11 @@ void TNameKuri::setWalkAnm() { setBckAnm(7); }
 // in this pool). TNameKuri::init is short by the same 40 bytes.
 // c-h12: iro.py puts retail's temp right after the three depth-1 words (@2302,
 // @2297, @2296); a TU-local stop-moving inline gets 0x4c but `bl`s set<f> (96.7%).
+// c-k13: with no binders (SMSGetMSound() and getMActor()->getModel()->
+// getAnmMtx(2)) both functions are frame 0x40, with the two-argument
+// startSoundActor 0x48: retail's 0x68 is ten words more than the honest
+// spelling, so a missing inline level (a shared emit helper?) is likelier
+// than more binders.
 static inline MActor* NamekuriGetMActor(const TNameKuri* p);
 
 static inline MSound* NameKuriMSound()

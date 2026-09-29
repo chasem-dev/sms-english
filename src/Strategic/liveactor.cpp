@@ -154,6 +154,12 @@ void TLiveActor::initLodAnm(const TLodAnmIndex* param_1, int param_2,
 		unkD0 = new TLodAnm(this, param_1, param_2, param_3);
 }
 
+// TODO (c-k13): TLiveActor::init is instruction-exact at 0x60 only with the
+// two binders below. The header accessors (getActorKeeper(), getManager())
+// or raw members are frame 0x48: the debugger puts all six missing words
+// after initAnmSound's depth-2 objects (retail has twelve words below the
+// MAnmSoundNPC buffer, the honest spelling six), so they are late IRO or
+// deeper-inline words, not the binders' high ECOMMA words.
 static inline TMActorKeeper* LiveactorActorKeeper(const TLiveActor* p)
 {
 	TMActorKeeper* keeper = p->mMActorKeeper;
