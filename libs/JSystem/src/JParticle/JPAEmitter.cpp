@@ -725,7 +725,7 @@ int JPABaseEmitter::calcCreateParticle()
 				eio.mSphereParticlesInCurrentLayer         = 0;
 
 				numToCreate = 2;
-				for (int i = 0; i < getVolumeSubdivision(); ++i) {
+				for (int i = 0; i < mVolumeSubdivision; ++i) {
 					numToCreate += eio.mSphereParticlesInCurrentLayer;
 					eio.mSphereParticlesInCurrentLayer += 4;
 					numToCreate += eio.mSphereParticlesInCurrentLayer;
@@ -737,16 +737,17 @@ int JPABaseEmitter::calcCreateParticle()
 				            / eio.mSphereParticlesInCurrentLayer);
 				// 90 degrees divided by the number of layers
 				eio.mSpherePitchStep
-				    = (s16)(65536 / 4 / getVolumeSubdivision());
+				    = (s16)(65536 / 4 / mVolumeSubdivision);
 			} else if (getVolumeType() == VOLUME_TYPE_CIRCLE
 			           || getVolumeType() == VOLUME_TYPE_LINE) {
-				numToCreate = getVolumeSubdivision();
+				numToCreate = mVolumeSubdivision;
 			}
 		}
 
 		JPAEmitterInfoObj.mEmitCount = (s16)numToCreate;
 
-		if (checkStatus(STATUS_STOP_EMIT))
+		bool stopEmit = checkStatus(STATUS_STOP_EMIT);
+		if (stopEmit)
 			numToCreate = 0;
 
 		if (numToCreate != 0) {
