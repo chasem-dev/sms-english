@@ -22,6 +22,7 @@ These USA figures are measured separately from the Japanese starting point.
 See [current progress and open work](PROGRESS.md) and the [North American build notes](config/GMSE01/README.md).
 
 The [native PC port](https://github.com/chasem-dev/sms-pc-port) uses this fork as its decompilation submodule.
+The dedicated [SMS Launcher](https://github.com/chasem-dev/sms-launcher) guides setup and launching on Windows, macOS, and Linux using your own supported disc image.
 
 ## Versions and assets
 
