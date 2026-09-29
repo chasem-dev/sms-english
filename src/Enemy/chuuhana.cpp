@@ -1088,6 +1088,8 @@ MtxPtr TChuuHana::getEffectMtx()
 
 const char** TChuuHana::getBasNameTable() const { return tyuhana_bastable; }
 
+// c-k13: `hana->getGroundPlane()->getActor()` or the raw chain in place of
+// this binder moves one slot in the calling nerve (not exact).
 static inline const TLiveActor* ChuuHanaGroundActor(TChuuHana* hana)
 {
 	const TLiveActor* actor = hana->mGroundPlane->getActor();
