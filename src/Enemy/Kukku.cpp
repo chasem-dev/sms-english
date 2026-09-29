@@ -763,28 +763,30 @@ void TKukkuManager::createModelData()
 
 const char** TKukku::getBasNameTable() const { return tori_bastable; }
 
-// TODO: 94.5%. The residue is one refusal split that has no lever: retail
-// *inlines* calcMomentum here (and then calls SMS_Eular2Quat, TVec4's copy
-// constructor, TVec3::set<f> and TQuat4::rotate out of line from inside the
-// expansion) while it *calls* calcMomentum from TNerveKukkuRecoverGraph, whose
-// source statement is character-for-character the same. Since a body MWCC
-// inlines at depth 1 is by definition under the allowance, the two sites
-// cannot both be explained by the statement budget; the 15-statement body in
-// calcMomentum() is the side that wins (RecoverGraph 67.7 -> 99.8, this nerve
-// 92.9 -> 94.5), and its cost is that TVec3::set<f> is no longer instantiated
-// in this object -- retail's only two `bl`s to it are here and in dropCoins().
-// Measured: the short body (quat = SMS_Eular2Quat, velocity.set, quat.rotate)
-// gives this nerve retail's 0x108 frame, but MWCC then also inlines TVec4's
-// copy and set<f> here (retail calls both) and RecoverGraph falls to 68.7%.
-// Depth evidence (2026-09-23): the short body reached one level deeper, via
-// `kukku->doRecoverToCurPathNode()` with doRecover reading
-// `getSaveParams()->mMarchSpeed.get()`, gives this nerve all four retail
-// `bl`s in order (97.0%, frame 0x100 vs 0x108); what is left there is an
-// extra copy of calcMomentum's return temporary (retail stores velocity at
-// 0x74 straight into mLinearVelocity). The UNUSED doRecoverToCurPathNode is
-// 0xa0 in the map, which fits exactly that shape (calcMomentum expanded with
-// its callees out of line), not a `bl calcMomentum` (ours 0x68). Still open:
-// RecoverGraph then expands the short body too, where retail calls it.
+// Graph wandering constructs and applies the rotated march vector directly.
+// Keeping the vector as the build operation's real output avoids a return
+// copy and preserves the retail calls to the quaternion copy, vector set,
+// and quaternion rotation. Recovery continues to use calcMomentum().
+// TODO: 99.6%, retail call sequence, 246 instructions, and frame 0x108.
+// Some inline objects occupy different stack slots, and the tracer has
+// cmpwi in place of retail's cmplwi.
+static inline JGeometry::TVec3<f32>&
+KukkuBuildMarchMomentum(const JGeometry::TVec3<f32>& rotation, f32 speed,
+                        JGeometry::TVec3<f32>& velocity)
+{
+	JGeometry::TQuat4<f32> quat = SMS_Eular2Quat(rotation);
+	velocity.set(0.0f, 0.0f, speed);
+	quat.rotate(velocity, velocity);
+	return velocity;
+}
+
+static inline void KukkuApplyMarchMomentum(TKukku* kukku, f32 speed)
+{
+	JGeometry::TVec3<f32> velocity;
+	kukku->mLinearVelocity
+	    = KukkuBuildMarchMomentum(kukku->mRotation, speed, velocity);
+}
+
 DEFINE_NERVE(TNerveKukkuGraphWander, TLiveActor)
 {
 	TKukku* kukku = (TKukku*)spine->getBody();
@@ -810,8 +812,7 @@ DEFINE_NERVE(TNerveKukkuGraphWander, TLiveActor)
 	}
 
 	kukku->updateRotation();
-	kukku->mLinearVelocity
-	    = kukku->calcMomentum(kukku->getSaveParams()->getMarchSpeed());
+	KukkuApplyMarchMomentum(kukku, kukku->getSaveParams()->getMarchSpeed());
 	return FALSE;
 }
 
