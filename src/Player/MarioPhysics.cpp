@@ -338,7 +338,7 @@ BOOL TMario::hangonCheck(const TBGCheckData* wall, const Vec& prev,
 	return true;
 }
 
-static inline bool MarioCanHang(TMario* mario)
+static inline BOOL MarioCanHang(TMario* mario)
 {
 	bool ok = false;
 	if (mario->mHeldObject == nullptr && !mario->onYoshi())
@@ -346,18 +346,12 @@ static inline bool MarioCanHang(TMario* mario)
 	return ok;
 }
 
-// TODO: 99.8%, every instruction exact. Retail tests "can hang" inside the
-// wall `if` condition (`== 1`) and folds the roof check into one `if`, both
-// through the same no-held-object/no-Yoshi test other TMario code spells out
-// (changeWireHanging, wireWaitToHang, hangPole). Left: frame 0x88 vs 0x90;
-// retail's `pos` sits at 0x58 (ours 0x54) with a word above it, i.e. one
-// 4-byte named local declared before `pos` and 4 more low bytes. A member
-// inline in Mario.hpp is the same as the TU-local helper.
-// c-k5 (debugger): retail's pos is 4 high with one word above it, so one
-// named 4-byte local precedes it and one more dead word follows it. Inert: an
-// uninitialised `f32 roofHeight` before pos carrying checkRoofPlane's result
-// (it takes a register), wall1/wall2 declared first; the three codes
-// declared first are worse (97.9).
+// Retail tests "can hang" inside the wall `if` condition (`== 1`, a signed
+// compare, so the helper returns BOOL from its bool flag) and folds the roof
+// check into one `if`, both through the same no-held-object/no-Yoshi test
+// other TMario code spells out (changeWireHanging, wireWaitToHang, hangPole).
+// The hip-drop test reads the status through getStatus(): its forced-load
+// word is the one dead word below `pos` (frame 0x88 -> 0x90).
 int TMario::checkGroundAtJumping(const Vec& target, int param_2)
 {
 	Vec pos             = target;
@@ -388,7 +382,7 @@ int TMario::checkGroundAtJumping(const Vec& target, int param_2)
 		if (mGroundPlane->isMarioThrough())
 			passable = true;
 
-		if (mStatus == MARIO_STATUS_HIP_DROP
+		if (getStatus() == MARIO_STATUS_HIP_DROP
 		    && mGroundPlane->isGroundPoundToPassThrough())
 			passable = true;
 
@@ -445,7 +439,7 @@ int TMario::checkGroundAtJumping(const Vec& target, int param_2)
 	}
 
 	if ((param_2 & 0x1) && wall1Passable == 1 && wall2Passable == 0
-	    && MarioCanHang(this) == true) {
+	    && MarioCanHang(this) == 1) {
 		mWallPlane = wall2;
 		if (hangonCheck(wall2, target, pos))
 			wallCode = 3;
