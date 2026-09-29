@@ -35,7 +35,11 @@ public:
 	}
 
 	// fabricated
-	TBGCheckListWarp* getPreNode() { return unkC; }
+	TBGCheckListWarp* getPreNode()
+	{
+		TBGCheckListWarp* preNode = unkC;
+		return preNode;
+	}
 
 public:
 	/* 0xC */ TBGCheckListWarp* unkC;
