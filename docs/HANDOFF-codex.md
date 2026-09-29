@@ -37,3 +37,9 @@
   Symbolic expression comparison reports SAME. Full build, zero function regressions, original DOL SHA-1 and symbol order passed.
   All exact code is now 73.19047%, Game 67.17712%, with 12,015/12,904 exact functions and 536/732 source-linked units.
   This new local helper succeeded despite previously recorded failed forms of the shared vector operator; historical notes remain hypotheses to check against fresh compiler evidence.
+
+- 2026-09-29: Restored the empty `TMario::barJumpSetting` using the identical retail displacement, yaw flip and wall-jump status tail in barWait and barClimb.
+  Its return type is BOOL; both callers now return the shared helper and remain byte-exact. The helper is exactly the map's 0x8c bytes.
+  Symbolic effects are SAME, all 26 UNUSED symbol sizes now agree, full build and zero regressions pass, and the DOL SHA-1 remains original.
+  Aggregate matching and source-linked counts are unchanged because the helper itself is unused in the retail binary.
+  A separate MActorAnmData constructor experiment measured 18 legitimate partial/full member-initializer forms; none moved its allocator temporary or frame toward retail, so all were restored.

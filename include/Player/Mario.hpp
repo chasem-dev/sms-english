@@ -1003,7 +1003,7 @@ public:
 	BOOL moveMain();
 
 	// Special stuff
-	void barJumpSetting();
+	BOOL barJumpSetting();
 	BOOL barWait();
 	BOOL barClimb();
 	BOOL barHang();

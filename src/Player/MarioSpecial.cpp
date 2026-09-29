@@ -16,7 +16,13 @@
 #include <MSound/MSSetSound.hpp>
 #include <MSound/MSoundBGM.hpp>
 
-void TMario::barJumpSetting() { }
+BOOL TMario::barJumpSetting()
+{
+	mPosition.x -= 200.0f * JMASSin(mFaceAngle.y);
+	mPosition.z -= 200.0f * JMASCos(mFaceAngle.y);
+	mFaceAngle.y += 0x8000;
+	return changePlayerStatus(MARIO_STATUS_WALL_JUMP, 0, false);
+}
 
 BOOL TMario::barWait()
 {
@@ -24,10 +30,7 @@ BOOL TMario::barWait()
 		return changePlayerStatus(MARIO_STATUS_LAND_SAFE_DOWN, 0, false);
 
 	if (mInput & 0x2) {
-		mPosition.x -= 200.0f * JMASSin(mFaceAngle.y);
-		mPosition.z -= 200.0f * JMASCos(mFaceAngle.y);
-		mFaceAngle.y += 0x8000;
-		return changePlayerStatus(MARIO_STATUS_WALL_JUMP, 0, false);
+		return barJumpSetting();
 	}
 
 	mPosition.x = getHolder()->mPosition.x;
@@ -115,10 +118,7 @@ BOOL TMario::barClimb()
 		return changePlayerStatus(MARIO_STATUS_LAND_SAFE_DOWN, 0, false);
 
 	if (mInput & 0x2) {
-		mPosition.x -= 200.0f * JMASSin(mFaceAngle.y);
-		mPosition.z -= 200.0f * JMASCos(mFaceAngle.y);
-		mFaceAngle.y += 0x8000;
-		return changePlayerStatus(MARIO_STATUS_WALL_JUMP, 0, false);
+		return barJumpSetting();
 	}
 
 	mPosition.x = getHolder()->mPosition.x;
