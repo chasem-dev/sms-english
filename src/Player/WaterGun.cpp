@@ -1280,22 +1280,7 @@ void TWaterGun::init()
 	unk1CD0 = 0;
 	unk1CD2 = 0;
 
-	// This is definitely an inlined funciton. Creating a model seems quite
-	// useful
-	// TODO: Check if already exists
-	MActorAnmData* watergunAnmData = new MActorAnmData();
-	watergunAnmData->init("/mario/watergun2/body", nullptr);
-	mFluddModel = new MActor(watergunAnmData);
-
-	void* fluddModelData
-	    = JKRFileLoader::getGlbResource("/mario/watergun2/body/wg_mdl1.bmd");
-	mFluddModel->setModel(
-	    new J3DModel(
-	        J3DModelLoaderDataBase::load(fluddModelData,
-	                                     J3DMLF_MaterialPEFull
-	                                         | (4 << J3DMLF_TevStageNumShift)),
-	        0, 1),
-	    0);
+	createGunBody();
 
 	mFluddModel->getModel()->setBaseTRMtx(
 	    mMario->mModel->getModel()->getAnmMtx(mMario->mJointIdChest));
@@ -1435,22 +1420,13 @@ void TWaterGun::init()
 	unk1D10 = new TMirrorActor("水鉄砲in鏡");
 	unk1D10->init(mFluddModel->mModel, 4);
 
-	// TODO: Definitely an inlined function
-	// Another function does the exact same thing
-	for (int i = 0; i < nozzleBmdData.getEmitterCount(mCurrentNozzle); ++i) {
-		MtxPtr emitMtx = getEmitMtx(i);
-		if (emitMtx != nullptr) {
-			mEmitPos[i].x = emitMtx[0][3];
-			mEmitPos[i].y = emitMtx[1][3];
-			mEmitPos[i].z = emitMtx[2][3];
-		}
-	}
+	setEmitPt();
 }
 
 // Reconstructed from the model-creation block of init(), which is where the
 // "This is definitely an inlined function" comment above it already pointed.
-// Left uncalled so that init()'s codegen is unchanged; whether retail really
-// called it is what the size comparison is for.
+// init() calls it; the expansion is code- and frame-identical to the
+// written-out block (c-k15).
 void TWaterGun::createGunBody()
 {
 	MActorAnmData* watergunAnmData = new MActorAnmData();
@@ -1553,7 +1529,8 @@ MtxPtr TWaterGun::getNozzleMtx()
 // writes mEmitPos. Size-exact at 0xa4 for the loop alone: the
 // `unk380->getModel()->setBaseTRMtx(getModel()->getAnmMtx(unk1CD8))` that
 // precedes it in perform() is a separate 16-instruction step and does not
-// belong here. Left uncalled so that perform()'s codegen is unchanged.
+// belong here. perform() and the end of init() call it (c-k15: init's
+// written-out copy was code-identical).
 void TWaterGun::setEmitPt()
 {
 	for (s32 index = 0;
