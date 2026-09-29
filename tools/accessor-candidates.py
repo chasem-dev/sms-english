@@ -29,7 +29,7 @@ ROOT = os.getcwd()
 
 ACC = re.compile(
     r"(?P<ret>(?:const\s+)?[A-Za-z_][\w:<>,\s]*?[\s\*&]+)"
-    r"(?P<name>[A-Za-z_]\w*)\s*\(\s*\)\s*(?:const\s*)?"
+    r"(?P<name>[A-Za-z_]\w*)\s*\((?P<params>[^()]*)\)\s*(?:const\s*)?"
     r"\{\s*return\s+(?P<expr>[^;{}]+);\s*\}")
 MEMBER = re.compile(r"^&?\s*[A-Za-z_][\w\.\[\]]*(?:->\w+)?$")
 CLASS = re.compile(r"\b(?:class|struct)\s+(\w+)[^;{]*\{")
@@ -76,6 +76,8 @@ def accessors():
             if kind is None:
                 continue
             line = text.count("\n", 0, m.start("name")) + 1
+            if m.group("params").strip() not in ("", "void") and kind == "getter":
+                kind = "getter(args)"
             cls = enclosing_class(text, m.start())
             out.append(dict(name=m.group("name"), ret=ret, expr=expr,
                             kind=kind, file=os.path.relpath(h, ROOT),

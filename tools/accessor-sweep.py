@@ -47,7 +47,7 @@ spec.loader.exec_module(accand)
 
 LINE = re.compile(
     r"^(?P<ind>\s*)(?P<ret>(?:(?:virtual|inline|static)\s+)*(?:const\s+)?[A-Za-z_][\w:<>,\s]*?[\s\*&]+)"
-    r"(?P<name>[A-Za-z_]\w*)\s*\(\s*\)\s*(?P<cv>const\s*)?"
+    r"(?P<name>[A-Za-z_]\w*)\s*\((?P<params>[^()]*)\)\s*(?P<cv>const\s*)?"
     r"\{\s*return\s+(?P<expr>[^;{}]+);\s*\}(?P<tail>.*)$")
 
 
@@ -57,19 +57,20 @@ def rewrite(line, shape):
         return None, None
     ind, ret, name = m.group("ind"), m.group("ret").rstrip(), m.group("name")
     cv = " const" if m.group("cv") else ""
+    params = m.group("params").strip()
     expr = m.group("expr").strip()
     if shape == "bool":
         if not re.search(r"\bbool$", ret):
             return None, None
-        return name, "%s%s %s()%s { return %s; }%s" % (
-            ind, re.sub(r"\bbool$", "BOOL", ret), name, cv, expr, m.group("tail"))
+        return name, "%s%s %s(%s)%s { return %s; }%s" % (
+            ind, re.sub(r"\bbool$", "BOOL", ret), name, params, cv, expr, m.group("tail"))
     local = re.sub(r"\b(virtual|inline|static)\s+", "", ret).strip()
     var = re.sub(r"^(get|is)", "", name) or "value"
     var = var[0].lower() + var[1:]
     if not var.isidentifier() or var == name:
         var = "value"
-    return name, "%s%s %s()%s\n%s{\n%s\t%s %s = %s;\n%s\treturn %s;\n%s}%s" % (
-        ind, ret, name, cv, ind, ind, local, var, expr, ind, var, ind, m.group("tail"))
+    return name, "%s%s %s(%s)%s\n%s{\n%s\t%s %s = %s;\n%s\treturn %s;\n%s}%s" % (
+        ind, ret, name, params, cv, ind, ind, local, var, expr, ind, var, ind, m.group("tail"))
 
 
 _BODIES = None
