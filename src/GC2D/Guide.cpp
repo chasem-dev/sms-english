@@ -267,6 +267,13 @@ void TGuide::resetObjects()
 
 // TODO: retail keeps `remaining` in r5 apart from the clamp's compare temp
 // (r0); ours coalesces them (IRO @ web). Clamp spellings and total types inert.
+// c-k12: retail's `remaining` holds the untruncated difference (subf r5, then
+// clrlwi r0 for the compare and clrlwi r19 at the use), where our plain u8
+// initialisation truncates it into the compare register. A compound
+// `u8 remaining = allShines; remaining -= total;` gives retail's r5 web but
+// truncates allShines instead of total (one instruction moves, 99.6%);
+// `remaining = ...` split from the declaration, `>= 100`, `99 < remaining` and
+// a ternary are inert or worse. hsearch 150 s: no gain.
 void TGuide::resetScore()
 {
 	int etcTotal = 0;

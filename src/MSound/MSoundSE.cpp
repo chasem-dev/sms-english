@@ -216,6 +216,9 @@ MSoundSE::MSoundSE() { }
 // Inert: grp declared at top or unnamed-block, named MSSetSoundMember
 // locals (+0x20), `se` declaration order, explicit JALListGrp/JALListD
 // ctors, grp ctor param types, raw setUnk14 (raw getUnk4 is -0x24).
+// c-k12: `mObj = new MSoundSE;` (retail stores the new result straight to
+// mObj) is frame 0x98 with every other slot 8 low; hsearch on top of it
+// found only machine-cut helpers that restore 0xa0 with this same pair.
 void MSoundSE::construct()
 {
 	MSoundSE* se = new MSoundSE;

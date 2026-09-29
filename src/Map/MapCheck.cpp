@@ -235,6 +235,10 @@ f32 TMapCollisionData::checkRoofList(f32 x, f32 y, f32 z, u8 param_4,
 // TODO: local_4c/local_50 sit at 0x48/0x44 vs retail 0x44/0x40. Inert: raw
 // mGridExtentX at every subset of sites, local_4c declared at the top, a
 // named roof-list pointer; a named `const TBGCheckListRoot&` drops 8 of frame.
+// c-k12 debugger: retail has one more named word above local_4c and one
+// fewer low word below local_50 (a named-block/low-region trade). Inert: a
+// named roof list before local_4c, named `x + extent`/`z + extent` sums; the
+// checkGround shape (named gridRoot, raw extents, a list helper) is -8/-0x10.
 f32 TMapCollisionData::checkRoof(f32 x, f32 y, f32 z, u8 flags,
                                  const TBGCheckData** result) const
 {

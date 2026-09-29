@@ -316,6 +316,11 @@ void TConductor::killEnemiesWithin(const JGeometry::TVec3<f32>& param_1,
 // IRO temp) is coloured after the l/r bindings; retail colours it first
 // (moving it to the front of the order gives f31). TMsRange, named results,
 // `minR += (maxR - minR) * MsRandF()` spellings keep f30.
+// c-k12 debugger: ours has two named words (maxR, theta) between targetPos
+// and data where retail has one, retail one more inline word right below
+// data, and ours one more between getManagerByName's copies (0x70/0x64).
+// Without the radius binders the frame drops to 0xc8-0xd0; `maxR` unnamed is
+// 0xe0 with more slots wrong; hsearch 150 s: only a named MsRandF() (refused).
 void TConductor::genEnemyFromPollution()
 {
 	if (unkFC == 0)
