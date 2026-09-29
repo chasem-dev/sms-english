@@ -14,28 +14,34 @@
 #include <Camera/SunModel.hpp>
 #include <stdio.h>
 
-// fabricated. Retail calls JMASCos, JMASSin and TVec3<f32>::set(const Vec&)
-// out of line from the calc-anim block below, which only happens if the
-// CLBCalcNearNinePos fovy/aspect wrapper sits at inline depth 3: the wrapper
-// then expands fakeTan at depth 4 but leaves the two table lookups at depth 5,
-// and the TVec3 temporaries its arguments need put set() at depth 4 as well.
-// calcAnim() and this helper are the two levels between perform() and the
-// wrapper; their names and split are guesses, since retail inlined both away.
-static inline void CalcLensNearNinePosFromCamera(JGeometry::TVec3<f32>* out_grid,
-                                                S16Vec* out_euler)
+// Parked copy of cameralib.hpp's fovy/aspect CLBCalcNearNinePos wrapper with
+// the near-plane height as a level of its own (fabricated split). Retail calls
+// JMASSin/JMASCos out of line from the calc-anim block, i.e. fakeTan's two
+// table lookups sit at depth 5 there, while CPolarSubCamera::calcInHouseNo_
+// calls the wrapper at depth 0 and expands them; one more level inside the
+// wrapper satisfies both. The call itself is written in calcAnim() with all
+// eight arguments: retail evaluates the camera reads and getFinalAngleZ()
+// before the two `Vec` -> `TVec3` conversions (right to left), and creates the
+// conversion temporaries in calcAnim's own expansion, above its locals.
+static inline f32 LensNearHeight(f32 near_dist, f32 fovy)
 {
-	// Both vectors pass as their `Vec` base so the `const TVec3&` parameters
-	// take the converting constructor: a stack temporary plus the out-of-line
-	// `TVec3::set(const Vec&)` retail calls here (at depth 4), with gpCamera
-	// re-read for each. Binding them to named `const Vec&` locals caches the
-	// two addresses in callee-saved registers instead (-1.4%), and the
-	// TVec3-typed members bind directly with no temporary (-5%).
-	CLBCalcNearNinePos(out_grid, out_euler, (const Vec&)gpCamera->unk124,
-	                   (const Vec&)gpCamera->unk148,
-	                   gpCamera->getFinalAngleZ(), gpCamera->getNear(),
-	                   gpCamera->getFovy(), gpCamera->getAspect());
+	s16 halfFovyShort = CLBDegToShortAngle(0.5f * fovy);
+	return 2.0f * (near_dist * fakeTan(halfFovyShort));
 }
 
+static inline void LensCalcNearNinePos(JGeometry::TVec3<f32>* out_grid,
+                                       S16Vec* out_euler,
+                                       const JGeometry::TVec3<f32>& origin,
+                                       const JGeometry::TVec3<f32>& lookat,
+                                       s16 roll, f32 near_dist, f32 fovy,
+                                       f32 aspect)
+{
+	JGeometry::TVec2<f32> nearSize;
+	nearSize.y = LensNearHeight(near_dist, fovy);
+	nearSize.x = nearSize.y * aspect;
+	CLBCalcNearNinePos(out_grid, out_euler, origin, lookat, roll, near_dist,
+	                   nearSize);
+}
 
 TLensFlare::TLensFlare(const char* name)
     : JDrama::TViewObj(name)
@@ -73,19 +79,6 @@ TLensFlare::TLensFlare(const char* name)
 	                                     J3DMLF_MaterialPEFull
 	                                         | (2 << J3DMLF_TevStageNumShift));
 	unk14 = new J3DModel(unk10, 0, 1);
-}
-
-// The direction's `Vec` to `TVec3` conversion sits at depth 3 from
-// calcAnim(), so its set() is called out of line as in retail.
-static inline JGeometry::TVec3<f32> LensRotTo(const Vec& from,
-                                             const JGeometry::TVec3<f32>& to)
-{
-	JGeometry::TVec3<f32> dir;
-	JGeometry::TVec3<f32> f(from);
-	dir.x = to.x - f.x;
-	dir.y = to.y - f.y;
-	dir.z = to.z - f.z;
-	return MsGetRotFromZaxis(dir);
 }
 
 static inline void LensSetTRS(Mtx mtx, const Vec& t,
@@ -146,7 +139,10 @@ inline void TLensFlare::calcAnim()
 
 	JGeometry::TVec3<f32> near9grid[9];
 	S16Vec camEuler;
-	CalcLensNearNinePosFromCamera(near9grid, &camEuler);
+	LensCalcNearNinePos(near9grid, &camEuler, (const Vec&)gpCamera->unk124,
+	                    (const Vec&)gpCamera->unk148,
+	                    gpCamera->getFinalAngleZ(), gpCamera->getNear(),
+	                    gpCamera->getFovy(), gpCamera->getAspect());
 
 	const JGeometry::TVec2<f32>& sp = gpSunModel->unkF8[0];
 	f32 tx = unk3C * -sp.x;
@@ -168,13 +164,17 @@ inline void TLensFlare::calcAnim()
 	// `position` pointer is an IRO CSE temporary (@634) created after the two
 	// `&&` value temporaries (@588/@589), and regalloc --search fixes the
 	// rotation by colouring it first, so retail's pointer was an object
-	// created before them); (b) r3/r4/r5 rotation in
-	// the hidden-count loop; (c) closed by c-k17's named angles; (d) the frame is
-	// 0xa0 short (0x218 vs 0x2b8): retail's near-nine-pos argument
-	// temporaries and the direction/rotation vectors sit above camEuler,
-	// ours below the J3DGXColorS10, yet spelling those calls in calcAnim()
-	// inlines JMASSin/JMASCos and set().
-	JGeometry::TVec3<f32> rot = LensRotTo(sunWorldPos, l);
+	// created before them); (b) closed; (c) closed by c-k17's named angles;
+	// (d) the frame is 0x98 short (0x220 vs 0x2b8). c-k17 put every mapped
+	// object in retail's order (hsearch dbg: order 0, from 4): the return
+	// temporary, the sun conversion, the two camera conversions, then `rot`,
+	// `dir`, d5/d1/l, camEuler, the grid, the sun, the matrix. Retail still has
+	// 2 more words above the return temporary, 2 between the unk124
+	// conversion and `rot`, 6 between entry()'s colour copy and the 8-byte
+	// object below it, and 28 below everything we map.
+	JGeometry::TVec3<f32> dir;
+	dir.sub(l, JGeometry::TVec3<f32>(sunWorldPos));
+	JGeometry::TVec3<f32> rot = MsGetRotFromZaxis(dir);
 	LensSetTRS(mtx, sunWorldPos, rot, unk18);
 	unk14->setBaseTRMtx(mtx);
 	unk14->calc();
