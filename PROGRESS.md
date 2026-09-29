@@ -11,16 +11,19 @@ Measured from `build/GMSE01/report.json` on 2026-09-29.
 
 | | Fuzzy match | Perfect match | Fully linked | Linked units |
 | --- | ---: | ---: | ---: | ---: |
-| Game | 99.50788% | 67.58700% | 19.87077% | 204 / 385 |
+| Game | 99.51318% | 67.59262% | 19.87077% | 204 / 385 |
 | JSystem | 99.89825% | 93.90541% | 81.21971% | 186 / 198 |
 | SDK | 99.99897% | 99.71085% | 99.54403% | 148 / 149 |
-| All | 99.59685% | 73.51435% | 34.02236% | 538 / 732 |
+| All | 99.60104% | 73.51879% | 34.02236% | 538 / 732 |
 
-12,038 of 12,904 functions match. The rebuilt DOL remains byte-identical to the original.
+12,039 of 12,904 functions match. The rebuilt DOL remains byte-identical to the original.
 
 ## What recent batches have done
 
-Actual computation ownership closed the Ferris-wheel control, hidden-object water collision and submarine factory, adding 884 exact code bytes. The 116-byte submarine constructor remains exact. All retained changes pass full builds, zero function regressions, exact unit data, unchanged symbol diagnostics and the original DOL checksum.
+Named shorter-arc predicates and mutable difference calculations close TDirectionCalc::calcNearerDirection, adding 160 exact code bytes while preserving its callers.
+The nozzle emission meter, cached hip-drop squared speed and Kukku march-momentum operations improve four further functions without increasing the exact count.
+Every retained change passes full builds, zero function regressions, exact unit data and the original DOL checksum.
+Kukku symbol order improves to PASS; other changed-unit symbol diagnostics are unchanged.
 
 The selected unit rows below are refreshed from the same measured report as the totals.
 
@@ -31,13 +34,13 @@ The selected unit rows below are refreshed from the same measured report as the 
 | `Enemy/tinkoopa` | 99.37% | 47 / 54 |
 | `Enemy/elecNokonoko` | 99.98% | 66 / 69 |
 | `Enemy/killer` | 99.87% | 50 / 54 |
-| `Enemy/limitkoopa` | 99.16% | 53 / 58 |
+| `Enemy/limitkoopa` | 99.52% | 53 / 58 |
 | `Enemy/Kazekun` | 98.23% | 38 / 43 |
 | `Animal/Bird` | 98.76% | 45 / 52 |
 | `Animal/BeeHive` | 97.68% | 39 / 49 |
 | `Enemy/limitkoopajr` | 99.93% | 25 / 27 |
 | `Enemy/TabePuku` | 99.46% | 40 / 48 |
-| `Enemy/Kukku` | 98.54% | 31 / 37 |
+| `Enemy/Kukku` | 99.01% | 31 / 37 |
 | `Enemy/bosswanwan` | 99.50% | 62 / 79 |
 | `Enemy/Koopa` | 98.78% | 64 / 79 |
 | `Enemy/pakkun` | 99.54% | 70 / 78 |
@@ -89,7 +92,7 @@ The selected unit rows below are refreshed from the same measured report as the 
 | `MoveBG/MapObjBall` | 99.63% | 63 / 72 |
 | `Player/ModelWaterManager` | 98.68% | 17 / 25 |
 | `MarioUtil/ShadowUtil` | 79.77% | 28 / 49 |
-| `Enemy/koopajr` | 99.23% | 72 / 81 |
+| `Enemy/koopajr` | 99.47% | 73 / 81 |
 | `Enemy/wireTrap` | 99.65% | 29 / 35 |
 | `Enemy/hauntLeg` | 99.93% | 25 / 28 |
 | `Enemy/BathtubKiller` | 99.40% | 39 / 45 |
@@ -106,7 +109,7 @@ Most remaining differences in these units are frame gaps and per-call-site inlin
   padding is replaced by real locals (`docs/catalog/linking.md`, "Links 279").
 - `Camera/CameraInbetween` matches but will not link: `docs/catalog/linking.md`.
 - Units one function from linking (`MSoundBGM`, `MarioAccess`): `docs/catalog/frame-gaps.md`.
-- 871 functions remain non-exact and 194 units remain unlinked; source counterparts exist throughout the game.
+- 865 functions remain non-exact and 194 units remain unlinked; source counterparts exist throughout the game.
   Most remaining work is compiler stack layout, register allocation, inline structure and matching data layout.
 - **The `a = b - c` pool residue is the single largest open lever**: all 102 retail
   `bl TVec3::sub` sites are nonmatching, 40 of them at >= 99.3%, for one shared

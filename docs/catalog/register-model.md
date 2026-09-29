@@ -310,3 +310,27 @@ This preserves its exact 116-byte constructor while its 72-byte factory retains 
 The one-definition cleared-flags local also restores the call, but adds a dead stack home and regresses the constructor, so it was rejected.
 These results rely on actual computations and used values; no padding, filler statements or additional pass-through binders were added.
 Every unit retains exact data and identical symbol diagnostics; full production builds show no function regressions and retain the original DOL checksum.
+
+## Predicate and cached-computation evidence (2026-09-29)
+
+TDirectionCalc::calcNearerDirection now matches all 160 bytes and its 0x38 frame.
+The wrap uses the existing two-stage floating remainder operation, each branch mutates its real difference, and its shorter-arc predicate is a used bool local.
+Native GC/1.1 shows the predicate homes; production GC/1.2.5 proves the exact body and unchanged callers.
+The plain predicate form without the mutable difference calculations also closes the body, but expands into makeRelativeAngle and is rejected.
+This supersedes the earlier open calcNearerDirection lead; it does not settle the general std::fmodf expansion question.
+
+TLimitKoopa::startHipDrop caches squared speed and uses it for both length testing and normalization.
+Actual speed-limit and length-setting operations preserve the retail inv_sqrt call, avoid repeated component squares, and keep its exact caller out of line through the used ground and gravity inputs.
+Naming the maximum-speed predicate restores the 0xb8 frame: 91.55385% becomes 99.91538%, with only eleven stack operands remaining.
+
+Kukku graph wandering builds march momentum into a real destination vector and returns that destination by reference before applying it to mLinearVelocity.
+All four retail calls, 246 instructions and frame 0x108 return; graph recovery and calcMomentum remain unchanged.
+GraphWander improves to 99.597565%; stack slots and a signed comparison remain, and symbol order improves to PASS.
+
+NozzleUpdateEmissionMeter computes the actual emitted-water flag and meter increment from the selected nozzle's decrement rate and capacity.
+Trigger and deform emits regain retail's add plus displaced load in place of an indexed load; the base nozzle retains its better existing spelling.
+Neither emit is exact, and deform's frame shrinks eight bytes despite the overall instruction gain.
+
+All four units retain exact data and pass full production builds, zero function regressions and the original DOL checksum.
+Bounded NPC volume and scene-index operation probes found no safe gain and were restored.
+Evidence directories: /tmp/sms-nearer-0929, /tmp/sms-hipdrop-0929, /tmp/x-kukku-call-0929, /tmp/x-nozzle-structure-0929, /tmp/x-npc-volume-0929 and /tmp/x-scene-index-0929.

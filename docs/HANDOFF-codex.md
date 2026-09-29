@@ -68,3 +68,10 @@
   Both improvements pass full main builds, zero regressions, original DOL hash and unchanged symbol diagnostics.
   Native register sweeps are available through regsweep.py --native; eight fresh small-function traces are in /tmp/sms-compiler-research-0929/register-candidates.
   GC1.1 observations must still be checked with production flags and object bytes; the goal remains incomplete.
+
+- 2026-09-29: Closed calcNearerDirection exactly with used shorter-arc predicates and mutable difference calculations, adding 160 exact code bytes while preserving every caller.
+  Nozzle meter lookup, cached hip-drop squared speed and a reference-output Kukku march calculation improve four further functions; the last two now have every instruction and the retail frame, with stack operands remaining.
+  All retained changes pass full production builds, no function regressions, exact data and the original DOL hash.
+  Kukku symbol order improves to PASS; other changed-unit diagnostics are unchanged.
+  Current exact code 73.51879%, source-linked 34.02236%, 12,039/12,904 exact functions, 538/732 source-linked units.
+  NPC-volume and scene-index probes were restored without gain; the goal remains active with 865 non-exact functions and 194 unlinked units.
