@@ -475,20 +475,30 @@ void TLimitKoopa::bind()
 // TODO: UNUSED (0x20), body not reconstructed.
 void TLimitKoopa::moveStop() { }
 
-// TODO: 91.6%, frame 0xb0 vs 0xb8. Retail calls this from
-// TNerveLimitKoopaHipDropStart::execute, so the body has 15+ statements: the
-// goal is a `diff` plus `goal.add(pos, diff)` pair (retail reloads pos.y/.z
-// after each goal store), and the jump's launch speed and the length are
-// named. Raw mPosition in both is what orders dy after the z loads. Left:
-// retail's normalize() reuses the squared length the `len` test computed (sq
-// stays in f1, `fmr f2, f1` in the zero branch) where we recompute it; inert:
-// sqrt(squared()), sqrt(dot()), setLength(1.0f), setLength(200.0f),
-// normalize(velocity), setLength(v, 1.0f), a named gravity, a named sq. The
-// low region is 8 short; lever-search reaches it only with a fabricated
-// ground-height binder. Also inert (c-lkoopa): sq named and passed to an
-// explicit zero/inv_sqrt body (inv_sqrt then expands where retail calls it,
-// 89-90%), `if (length() > 200)` unnamed, speedY/len declared uninitialised at
-// the top. Retail keeps 8 codeless bytes above velocity (0xac-0xb4).
+static inline void LimitKoopaSetJumpLength(
+    JGeometry::TVec3<f32>& velocity, f32 squaredLength, f32 length)
+{
+	if (squaredLength <= JGeometry::TUtil<f32>::epsilon()) {
+		velocity.zero();
+		return;
+	}
+	velocity.scale(length * JGeometry::TUtil<f32>::inv_sqrt(squaredLength));
+}
+
+static inline void LimitKoopaClampJumpVelocity(
+    JGeometry::TVec3<f32>& velocity, f32 squaredLength, f32 maximum)
+{
+	f32 length = JGeometry::TUtil<f32>::sqrt(squaredLength);
+	bool exceedsMaximum = length > maximum;
+	if (exceedsMaximum) {
+		LimitKoopaSetJumpLength(velocity, squaredLength, 1.0f);
+		velocity.scale(maximum);
+	}
+}
+
+// Cache the squared speed for both the length test and normalization.
+// TODO: the 0xb8 frame and all instructions match; the Mario target is four
+// bytes high and the jump-solver result is eight bytes high.
 void TLimitKoopa::startHipDrop()
 {
 	// One local carries the jump: first the straight-up launch speed, then the
@@ -498,7 +508,8 @@ void TLimitKoopa::startHipDrop()
 	velocity.scale(getParam()->hipDropInitialSpeedY.get());
 
 	JGeometry::TVec3<f32> target(SMS_GetMarioPos());
-	target.y = getGroundHeight();
+	f32 ground = getGroundHeight();
+	target.y = ground;
 
 	JGeometry::TVec3<f32> diff;
 	diff.sub(target, mPosition);
@@ -506,13 +517,10 @@ void TLimitKoopa::startHipDrop()
 	goal.add(mPosition, diff);
 
 	f32 speedY = velocity.y;
-	velocity = calcVelocityToJumpToY(goal, speedY,
-	                                 getParam()->hipDropGravityY.get());
-	f32 len = velocity.length();
-	if (len > 200.0f) {
-		velocity.normalize();
-		velocity.scale(200.0f);
-	}
+	f32 gravity = getParam()->hipDropGravityY.get();
+	velocity = calcVelocityToJumpToY(goal, speedY, gravity);
+	f32 squaredLength = velocity.squared();
+	LimitKoopaClampJumpVelocity(velocity, squaredLength, 200.0f);
 
 	mVelocity.set(velocity);
 }
