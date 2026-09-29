@@ -2374,3 +2374,38 @@ Twenty units with three non-exact functions each; none closed, nothing landed.
   - calcNoticeTargetYrot_: `int`/`u16` ang, `CLBAbs<s16>` over the int or s16 difference, `(int)`/`(s16)` casts on ang. The best is 97.2; retail's `extsh r4, r3` before the subtraction survives all eight.
   - SelectGrad: six top-left cycle spellings (pre/post-decrement, `+= 6`, ternary, if/else, a named cycle). The regalloc replay there is misaligned: retail r31/r2 appear for volatile webs.
   - fruitsboat `init`: named tracer (-0x18, instructions change), named graph (inert), named type (+0x10), named position (+8, 6 extra instructions), raw `manager` (instructions change).
+
+## Research batch c-r28 (2026-09-29): the `new TDStageGroup` chain, one word found
+
+Question: the shared JDrama header shape behind the director `setup` deficits (MenuDir, MovieDirector, GCLogoDir setup 0x40/0x258 against 0x58/0x280; SelectDir rsetup).
+One construct landed (wt/c-r28 8de925f5); two upper words and two bottom words stay open.
+
+### Retail's objects, decoded (MenuDir setup, top-down)
+
+- 0x3c: a temporary created before TDStageGroup's `this` binding (in GCLogoDir it sits in the parse-time block, above the TDStageDisp flag temporary and the TColor one).
+- 0x38 TDStageGroup `this`; 0x34 **X**; 0x30 list `this`; 0x2c **Y**; 0x28 list TViewObj `this`; 0x24 allocator; 0x20 FrmGXSet's TViewObj `this`; 0x14-0x20 twelve bytes created after every binding.
+- X is created at depth 1 *after* TDStageGroup's `this`: in GCLogoDir it sits between that binding and the next `new`'s depth-1 binding (root list), so it is an argument binding of the TDStageGroup expansion, not a list-level object.
+  SelectDir, whose `unk1C` display argument is non-simple, has no such word: its display binding is live in r28 (ours too, `@1124`).
+  So X is the `display` binding, which our simple `param_1` argument never creates.
+- Y is created at depth 2 after the list's `this` and before the depth-3 TViewObj bindings (GCLogoDir: between the stage group's list binding and the root list's TViewObj/allocator), which fits the FrmGXSet's own `display` binding.
+- c-k20's candidates `@1680`, `@1682`-`@1684`, `@1686`, `@1688` are return labels (`L@...`), not eliminated objects.
+
+### Landed: `TFlagT<u16> flag = 0` on TDStageGroup's constructor
+
+- `TDStageGroup(TDisplay*, const char* = "<TDStageGroup>", TFlagT<u16> = 0)`, unused in the body, as JDrama's other creatable objects spell it (TDStageDisp, TEfbCtrlDisp, TEfbCtrlTex).
+  Its temporary is the 0x3c word at all four sites and its per-field IRO copy (2 bytes) is one of the bottom words.
+- Tree-wide: census exact 12023 -> 12023, 4 up / 0 down (MenuDir and MovieDirector setup 0x40 -> 0x48, GCLogoDir setup 0x258 -> 0x260, SelectDir rsetup 0x610 -> 0x618), `ninja changes_all` no change, DOL SHA-1 unchanged, symbol order PASS on the five touched units.
+
+### Measured, not landed (synthetic director TU, `tools/mwcc-stack` dumps)
+
+- Binding order facts: an inline's argument bindings are created left to right (the first argument highest); a result object is created before them; default-argument temporaries of calls inside an inline ctor body are callee temporaries of that ctor (created before its `this`, so above it).
+  A default-argument temporary of `new` on an *inline* ctor is created in source order with the parse-time temporaries; on an *out-of-line* ctor (TDStageDisp) it is created after every parse-time temporary of the function.
+- Forcing a binding for a simple argument: only a reference use does it.
+  `TFrmGXSet(TDisplay* const&)` gives X only; `TDStageGroup(TDisplay* const&)` (or `TDisplay*&`, `const TDisplay* const&`) gives Y only (the FrmGXSet argument becomes a load through the reference); both together give neither.
+  Inert: `const TDisplay*` parameters or member, `TDisplay* const` parameters, a cast at the member init, a body assignment, a call-site cast; a named local copy of `param_1` at the call site adds a named top word instead.
+- `TFlagT<u16> = 0` on the list or FrmGXSet ctor, or the flag passed down by value or by const reference, puts its temporary or copy above TDStageGroup's `this` (a TDStageGroup callee temporary), not at X or Y.
+- The only exact reproduction found: `TFlagT<u32> = 0` on TViewObj *and* TFrmGXSet (callee temporaries in the list and FrmGXSet bodies, three 4-byte IRO copies at the bottom); the map's weak `__ct__Q26JDrama8TViewObjFPCc` (cameragc.cpp, called with one argument from nine units) rules out any second TViewObj parameter.
+- Ruled out by the map's out-of-line frames: a named local in TNameRef's or TViewObj's ctor (their weak copies have 0x18 frames with no dead word; `u16 key = calcKeyCode(name)` is also inert, it takes a register).
+  A class `operator new` would add a word at every `new` of a TNameRef class, and the exact `getNameRef`/`TDStageDisp` sites have none.
+- The FrmGXSet reference plus a by-value setter for `unk10` gives X and one bottom word (0x48 -> 0x50), unnatural and not landed.
+- GCLogoDir: `new JDrama::TDStageDisp("<DStageDisp>", 0)` (SelectDir's spelling) puts that flag temporary where retail has it (hsearch dbg order 1 -> 0, gap 54 -> 14 words) but moves no frame, slot count or census class; not landed.
