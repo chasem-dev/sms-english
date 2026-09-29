@@ -111,11 +111,11 @@ void TTPHitActor::updateObjCollision()
 	             mOwner->getSaveParams()->getSLDamageHeight());
 }
 
-// TODO: 93.0%, frame 0xd0 vs retail 0xe8: retail has 0x24 more low region
+// TODO: 93.6%, frame 0xd0 vs retail 0xe8: retail has 0x24 more low region
 // below pos (0xb4, ours 0x90) and 4 less between pos and quat. `pos -
 // mPosition` lands the frame size but calls sub out of line; `-=`, two-arg
 // sub and raw mHeldObject/getPosition() do not move it (bb29). The rest is
-// float register numbering plus the isHolding() BOOL note below.
+// float register numbering; the holding flag now has the retail BOOL test.
 void TTPHitActor::updateTerrainCollsion()
 {
 	TTabePuku* owner = mOwner;
@@ -129,12 +129,10 @@ void TTPHitActor::updateTerrainCollsion()
 	mCheckRadius = getAttackRadius();
 
 	f32 sink = (2.0f / 3.0f) * height;
-	// TODO: retail materialises this test as a BOOL (li 1 / li 0 / cmpwi),
-	// which means TTakeActor::isHolding() returned BOOL, not bool. Changing
-	// that is a shared-header fix in Strategic/TakeActor.hpp, but TMario's
-	// callers need the bool (BOOL header: 93.0 -> 93.6 here, four Mario
-	// functions lose); a TU-local BOOL helper measures the same 93.6.
-	if (mOwner->isHolding()) {
+	// Retail materialises the held-pointer predicate as a BOOL, then uses
+	// cmpwi. TTakeActor::isHolding() returns bool for its other callers.
+	BOOL holding = mOwner->mHeldObject != nullptr ? TRUE : FALSE;
+	if (holding) {
 		sink += mOwner->getHeldObject()->getDamageHeight();
 		mCheckHeight += mOwner->getHeldObject()->getDamageHeight();
 		mCheckRadius += mOwner->getHeldObject()->getDamageRadius();

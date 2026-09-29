@@ -62,3 +62,9 @@
   A four-form typed-matrix follow-up improved PakkunSeedCallback 93.23529% -> 99.70588% (272 bytes, 68 instructions) by using MsMtxSetRotZ(spin, angle) and removing the redundant spinMtx handle.
   All instructions/registers agree; twenty stack operands remain (frame 0x90 vs 0xa0, matrix 0x48 vs 0x5c). Other functions/data are unchanged. Full main build, zero regressions and original DOL SHA-1 pass; Pakkun symbol diagnostics are identical to baseline.
   All exact code stays 73.47340%, source-linked 34.02236%, 538/732 units and 12,033/12,904 exact functions. Selected PROGRESS.md unit rows now also reflect the current report.
+
+- Native GDB/Wibo inspection closes GessoBodyCallback exactly (+432 bytes, one function); exact code is 73.48538%, with 12,034/12,904 exact functions.
+  Direct Sambo projections restore its axis slot; the local BOOL held-pointer predicate restores TabePuku's retail test without changing shared callers.
+  Both improvements pass full main builds, zero regressions, original DOL hash and unchanged symbol diagnostics.
+  Native register sweeps are available through regsweep.py --native; eight fresh small-function traces are in /tmp/sms-compiler-research-0929/register-candidates.
+  GC1.1 observations must still be checked with production flags and object bytes; the goal remains incomplete.
