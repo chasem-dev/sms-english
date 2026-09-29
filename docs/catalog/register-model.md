@@ -419,3 +419,10 @@ The complete tentacle allowed-state helper makes changeAllTentacleState instruct
 Four units account for all 1,008 unmatched data bytes: JPAEmitter 72, CardManager 136, ShadowUtil 304 and CameraChange 496.
 The JPAEmitter and CameraChange defects include jump tables attached to non-exact functions; they are not standalone data-only fixes.
 Evidence: /tmp/sms-light-color-0929, /tmp/sms-sand-warp-0929, /tmp/sms-emitter-random-0929, /tmp/sms-bgm-reset-0929, /tmp/x-npc-gpr-0929, /tmp/x-cloud-radius-0929 and /tmp/x-gesso-state-0929.
+
+## Particle-list accessor and inline-call boundary (2026-09-29)
+
+JPABaseEmitter::deleteAllParticle has identical 53 instructions to retail but its old `JSUList::getFirst()` typed wrapper made a 0x48 frame against retail 0x40. Calling the real `JSUPtrList::getFirstLink()` base operation at each list start and casting its link to the actual typed link removes one force-loaded home per call. Native compiler traces identify the base and typed wrapper results; production builds now match all 212 bytes and the 0x40 frame. Every other mapped function and datum is unchanged; symbol diagnostics and DOL hash are unchanged. The unit remains open.
+
+A real animation frame-read/write operation at SandCastle::expanded produces both retail getMActor calls and a 244-byte exact body, but the shared helper inlines into three previously exact callers and regresses them. The variant is restored. Complete Manta collision-radius and MapEventSink building-placement operations changed stack frames or preserved the wrong register order without a net gain. These bounds are local to the tested forms.
+Evidence: /tmp/x-jpa-delete-0929/results.md, /tmp/x-sand-frame-0929/RESULT.md, /tmp/sms-manta-radius-0929 and /tmp/sms-sink-placement-0929.

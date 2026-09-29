@@ -12,22 +12,19 @@ Measured from `build/GMSE01/report.json` on 2026-09-29.
 | | Fuzzy match | Perfect match | Fully linked | Linked units |
 | --- | ---: | ---: | ---: | ---: |
 | Game | 99.51451% | 67.65962% | 20.26703% | 207 / 385 |
-| JSystem | 99.89825% | 93.90541% | 81.21971% | 186 / 198 |
+| JSystem | 99.89833% | 93.94745% | 81.21971% | 186 / 198 |
 | SDK | 99.99897% | 99.71085% | 99.54403% | 148 / 149 |
-| All | 99.60209% | 73.57174% | 34.33548% | 541 / 732 |
+| All | 99.60210% | 73.57762% | 34.33548% | 541 / 732 |
 
-12,047 of 12,904 functions match. The rebuilt DOL remains byte-identical to the original.
+12,048 of 12,904 functions match. The rebuilt DOL remains byte-identical to the original.
 
 ## What recent batches have done
 
-The first ambient-color copy in TLightCommon::loadAfter now has the retail instruction sequence, registers and 0xa0 frame.
-Its exact score rises from 97.80808% to 99.959595%; two actual stack objects still occupy four different operands, so the function is not exact.
-Actual color conversion plus two raw light-array inputs produced the improvement without changing other functions or data.
-The prior monument-turn and wire-riding closures remain exact and source-linked in MapObjDolpic and MarioAccess.
-All retained changes pass full production builds, zero function regressions, unchanged symbol diagnostics and the original DOL checksum.
+JPABaseEmitter::deleteAllParticle now matches all 212 bytes and its 0x40 frame. Both particle-list starts use the base first-link accessor and then the typed link; this removes the typed wrapper's extra stack homes without changing an instruction. The exact-function count rises by one, and exact code by 212 bytes. The unit still has other non-exact code and 72 unmatched data bytes, so its source-link status is unchanged.
+The earlier ambient-color reconstruction in TLightCommon::loadAfter remains at 99.959595%, with four stack operands open.
+Full production build, zero function regressions, unchanged JPAEmitter symbol diagnostics and the original DOL checksum pass. The JPAEmitter symbol validator retains its pre-existing missing UNUSED destructor report.
 The four units with unmatched data are JPAEmitter (72 bytes), CardManager (136), ShadowUtil (304) and CameraChange (496).
-Bounded NPC-pointer, cloud-radius, sand-castle camera, random-emitter and BGM reset probes found no safe gain and were restored.
-A tentacle-state helper improves its out-of-line body but regresses eight inlined callers, including five previously exact functions and is not retained.
+A genuine SandCastle frame-read/write operation makes expanded exact alone but regresses three previously exact inlined callers; it was restored. BossManta radius/scale operations and MapEventSink building placement operations were also restored without safe gain.
 
 The selected unit rows below are refreshed from the same measured report as the totals.
 
@@ -119,7 +116,7 @@ Most remaining differences in these units are frame gaps and per-call-site inlin
   padding is replaced by real locals (`docs/catalog/linking.md`, "Links 279").
 - `Camera/CameraInbetween` matches but will not link: `docs/catalog/linking.md`.
 - Units one function from linking (`MSoundBGM`, `MarioParticle`): `docs/catalog/frame-gaps.md`.
-- 857 functions remain non-exact and 191 units remain unlinked; source counterparts exist throughout the game.
+- 856 functions remain non-exact and 191 units remain unlinked; source counterparts exist throughout the game.
   Most remaining work is compiler stack layout, register allocation, inline structure and matching data layout.
 - **The `a = b - c` pool residue is the single largest open lever**: all 102 retail
   `bl TVec3::sub` sites are nonmatching, 40 of them at >= 99.3%, for one shared

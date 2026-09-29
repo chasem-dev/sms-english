@@ -96,3 +96,8 @@
   All 1,008 unmatched data bytes are in four units.
   Current exact code 73.57174%, source-linked 34.33548%, 12,047/12,904 exact functions and 541/732 source-linked units.
   Goal remains active with 857 non-exact functions and 191 unlinked units.
+
+- 2026-09-29: JPABaseEmitter::deleteAllParticle closes exactly at 212 bytes and frame 0x40 by calling the base first-link accessor at both list starts; the typed wrapper had introduced two extra low stack homes.
+  Full build, zero regressions, original DOL SHA-1 and unchanged JPAEmitter symbol diagnostics pass. Exact code is 73.57762%, 12,048/12,904 functions, source-linked 34.33548%, 541/732 units. JPAEmitter is not source-linkable yet.
+  A real SandCastle frame-read/write operation makes expanded exact but regresses three exact inlined callers, so it was rejected. BossManta radius and MapEventSink placement operations found no safe gain.
+  Evidence: /tmp/x-jpa-delete-0929/results.md, /tmp/x-sand-frame-0929/RESULT.md, /tmp/sms-manta-radius-0929 and /tmp/sms-sink-placement-0929.
