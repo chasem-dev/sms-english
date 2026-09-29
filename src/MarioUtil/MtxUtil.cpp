@@ -566,8 +566,10 @@ void TRope::constraintHead(const JGeometry::TVec3<f32>& param)
 	collision();
 }
 
-// TODO: frame 0x18 short (delta sits 0x18 low); the epsilonEquals receiver
-// order sets the r30/r31 split but retail compares cur against prev. Tried
+// Retail tests prev - cur per axis against epsilon and keeps the result as a
+// bool; the header's epsilonEquals (cur - prev, receiver in the other
+// register) and an unnamed condition (83.6) do not give that shape.
+// TODO: instruction-exact; frame 0x18 short (delta sits 0x20 low). Tried
 // (cc50): a loop-body helper either parameter order, sub()/add()/`*=`
 // spellings and swapped declarations; none moves the frame.
 void TRope::constraintTail(const JGeometry::TVec3<f32>& param)
@@ -577,7 +579,16 @@ void TRope::constraintTail(const JGeometry::TVec3<f32>& param)
 		TRopePoint& cur  = mPoints[i];
 		TRopePoint& prev = mPoints[i - 1];
 
-		if (!prev.unkC.epsilonEquals(cur.unkC)) {
+		bool same
+		    = (-JGeometry::TUtil<f32>::epsilon() <= prev.unkC.x - cur.unkC.x
+		       && prev.unkC.x - cur.unkC.x <= JGeometry::TUtil<f32>::epsilon())
+		      && (-JGeometry::TUtil<f32>::epsilon() <= prev.unkC.y - cur.unkC.y
+		          && prev.unkC.y - cur.unkC.y
+		                 <= JGeometry::TUtil<f32>::epsilon())
+		      && (-JGeometry::TUtil<f32>::epsilon() <= prev.unkC.z - cur.unkC.z
+		          && prev.unkC.z - cur.unkC.z
+		                 <= JGeometry::TUtil<f32>::epsilon());
+		if (!same) {
 			JGeometry::TVec3<f32> delta = prev.unkC;
 			delta -= cur.unkC;
 			VECNormalize(&delta, &delta);
