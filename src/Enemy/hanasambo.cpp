@@ -329,7 +329,8 @@ void TSamboFlowerManager::loadAfter()
 
 	mCoinUnitNum = 0;
 	for (int i = 0; i < gpItemManager->mObjNum; ++i) {
-		if (strstr(gpItemManager->getObj(i)->getName(), "コイン（フラワー用）"))
+		TLiveActor* obj = gpItemManager->getObj(i);
+		if (strstr(obj->getName(), "コイン（フラワー用）"))
 			++mCoinUnitNum;
 	}
 
@@ -338,9 +339,10 @@ void TSamboFlowerManager::loadAfter()
 	for (int i = 0; i < mCoinUnitNum; ++i)
 		counts[i] = 0;
 
-	for (int i = 0; i < getObjNum(); ++i) {
+	for (int i = 0; i < mObjNum; ++i) {
 		if (strstr(getObj(i)->getName(), "フラワー（コイン用）")) {
-			int index = ((TSamboFlower*)getObj(i))->mCoinUnitIndex;
+			TSamboFlower* flower = (TSamboFlower*)getObj(i);
+			int index            = flower->mCoinUnitIndex;
 			if (index < mCoinUnitNum)
 				++counts[index];
 		}
