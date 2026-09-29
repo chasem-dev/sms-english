@@ -112,6 +112,14 @@ public:
 	void behaveHitTrample();
 	void doFlyToCurPathNode();
 	JGeometry::TVec3<f32> calcMomentum(f32 speed);
+	// fabricated name. The level is measured: retail reaches calcMomentum
+	// one level below the flying nerves' store, so it expands in
+	// TNerveKukkuGraphWander (level 3) and is called from
+	// TNerveKukkuRecoverGraph through doRecoverToCurPathNode (level 4).
+	void updateLinearVelocity()
+	{
+		mLinearVelocity = calcMomentum(getSaveParams()->mMarchSpeed.get());
+	}
 	void updateRotation();
 	void doRecoverToCurPathNode();
 	void doHabataki();
