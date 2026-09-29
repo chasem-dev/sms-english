@@ -434,6 +434,8 @@ inline void TBaseNPC::initIndividualAnm_()
 // cc32, all keep 569 instructions: a TU-local `unk34[j][i]` accessor at the
 // argument, the test or both (97.8/98.0/97.8), a row-returning accessor then
 // `[i]` (97.6/97.8), `*(initInfo->unk34[j] + i)` at the argument (98.0).
+// A named material name at the eye test and the raw mCurrArea.unk0 for the
+// blue-coin stage together take this from 98.1 to 98.9 (alone: 98.2, 98.0).
 void TBaseNPC::setIndividualDifference_(JSUMemoryInputStream& stream)
 {
 	int iVar15                         = mActorType - 0x4000001;
@@ -485,7 +487,8 @@ void TBaseNPC::setIndividualDifference_(JSUMemoryInputStream& stream)
 		J3DModelData* modelData = model->getModelData();
 		JUTNameTab* matNameTab  = modelData->getMaterialName();
 		for (u16 i = 0, e = modelData->getMaterialNum(); i < e; ++i) {
-			if (strcmp(matNameTab->getName(i), cEyeMaterialName) != 0) {
+			const char* name = matNameTab->getName(i);
+			if (strcmp(name, cEyeMaterialName) != 0) {
 				J3DMaterial* mat = modelData->getMaterialNodePointer(i);
 				J3DShapePacket* shape
 				    = model->getShapePacket(mat->getShape()->getIndex());
@@ -527,12 +530,11 @@ void TBaseNPC::setIndividualDifference_(JSUMemoryInputStream& stream)
 	bool bVar3 = true;
 	if (local_a8 == 2000 || local_a8 == 200
 	    || (local_a8 >= 0 && local_a8 < 50)) {
-		bool bVar5
-		    = local_a8 >= 0 && local_a8 < 50
-		              && TFlagManager::getInstance()->getBlueCoinFlag(
-		                  SMSGetApplication()->mCurrArea.getStage(), local_a8)
-		          ? true
-		          : false;
+		bool bVar5 = local_a8 >= 0 && local_a8 < 50
+		                     && TFlagManager::getInstance()->getBlueCoinFlag(
+		                         gpApplication.mCurrArea.unk0, local_a8)
+		                 ? true
+		                 : false;
 
 		if (bVar4 && bVar5) {
 			bVar3 = false;
