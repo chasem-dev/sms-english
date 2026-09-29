@@ -137,21 +137,12 @@ void TCardManager::TCriteria::setEmpty()
 }
 
 // Retail calls this from copyTo and readBlock_: the single-exit result chain
-// (one assignment and one `else` per arm) is what takes the body over the
-// depth-1 budget; early returns cost the same bytes but three statements less.
-// TODO: 93.9%. Retail joins the newer-sector arm through r0 (`li r0; ...;
-// mr r3, r0`) while the other arms load r3 directly. An enum-typed local in
-// that arm alone gives it exactly (100%, c-h18), but a lone temporary of an
-// invented type in one arm is not plausible source, so it is not used.
+// (one assignment and one `else` per arm) and the two named write counts are
+// what take the body over the depth-1 budget. The newer-sector arm is a
+// ternary, which joins through r0 as retail does; without the named counts
+// it inlines into both callers.
 s32 TCardManager::decideUseSector(TCardManager::TCriteria* criteria)
 {
-	// TODO: retail keeps the last result in r0 and joins with a single
-	// `mr r3, r0`, so `result` did not get the return register there.
-	// Exhausted: early returns, an if/else, a ternary, and declaring the
-	// result before the early returns -- all emit `li r3, 0/1` into r3.
-	// The join is a conversion: early returns plus `? false : true` gives
-	// `li r0; mr` with a `clrlwi` (97.9), `(s16)` an `extsh`; u32, int and an
-	// inline helper returning 0/1 are inert. A same-width conversion is open.
 	s32 result;
 	if (criteria[0].getState() == TCriteria::STATE_EMPTY) {
 		result = CARD_RESULT_WRONGDEVICE;
@@ -162,10 +153,10 @@ s32 TCardManager::decideUseSector(TCardManager::TCriteria* criteria)
 			result = 1;
 	} else if (criteria[1].getState() == TCriteria::STATE_CHECKSUM_BAD) {
 		result = 0;
-	} else if (criteria[0].getWriteCount() >= criteria[1].getWriteCount()) {
-		result = 0;
 	} else {
-		result = 1;
+		u32 count0 = criteria[0].getWriteCount();
+		u32 count1 = criteria[1].getWriteCount();
+		result = count0 >= count1 ? 0 : 1;
 	}
 	return result;
 }
