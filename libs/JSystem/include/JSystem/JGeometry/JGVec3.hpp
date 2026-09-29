@@ -115,6 +115,28 @@ public:
 	// Tongue's weak `__ami__` stops being emitted (-12 exact).
 	TVec3(const TVec3& other) : Vec(other) { }
 
+	// Research c-r25 (2026-09-29): the uncast body `*(Vec*)this = other;`
+	// against this one, exact functions against main 8cce087b. The weak
+	// `__as__` in enemy.cpp stays 100% under both. What decides is the
+	// pointer conversion of `other`: `*(const Vec*)&other` behaves like this
+	// body, while `*&other` and `static_cast<Vec&>(*this) = other` behave
+	// like the uncast one (a named `const Vec&` binding changes the DOL).
+	//   uncast alone                      +2 / -1, 20 up, 12 down
+	//   uncast + ten site respellings     +3 / -0, 22 up, 2 down
+	// The respellings (frame-gaps.md, "Research batch c-r25") are ordinary
+	// source: under the uncast body a copy-initialised local that later
+	// feeds an `operator=` changes shape (an extra temporary in calcVtx and
+	// pullTail, an elided copy in the NPC turn, the hanachan sand check and
+	// calcNrm), and declaring it and then assigning it restores retail's
+	// copies; four sites that were written around this body read naturally
+	// (forceRequest becomes exact). Not landed because of the two it cannot
+	// fix: TKoopaJrSubmarine::calcRootMatrix 98.46 -> 96.75 and
+	// makeKillerVelocity 98.88 -> 97.71. At both, the local this body reads
+	// through a pointer (`center`, `toMario`) loses its address-taken
+	// status, and the scheduler then reorders the stores that build it
+	// (the zero before `centerZ`) or keeps its components in registers
+	// across the cross product; retail has the address-taken schedule at
+	// both, and nothing at either site takes the address honestly.
 	TVec3& operator=(const TVec3& other)
 	{
 		// NOTE: yes, this has to use lwz/stw and not lfs/stf.

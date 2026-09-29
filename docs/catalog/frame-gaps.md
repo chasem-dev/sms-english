@@ -2170,3 +2170,39 @@ Measured tree-wide with `census.py`/`cmpcensus.py` (about a minute per full rebu
 - The `operator-`/`operator*` one-word-per-site class (c-r20, c-r21), the JUTColor 4-versus-8 stride and the JGadget per-site pools are not header shapes any sister project reconstructed differently from ours in a way that helps.
 - `getQuat`'s `fadds` operand order (Kazekun's weak copy, 99.5) survives MKDD's body too.
 - Any later sister lead is most likely to be in the other rotation bodies (`setEular`, `mult33`, the TQuat4 inlines), where declaration order sets the schedule the way it did for `setQuat`; MKDD's versions of those are paired-single or absent.
+
+## Research batch c-r25 (2026-09-29): the uncast `operator=` migration needs ten site respellings and still loses the koopajr pair
+
+Measured on main 8cce087b: JGVec3.hpp's `operator=(const TVec3&)` changed from `*(Vec*)this = *(Vec*)&other;` to `*(Vec*)this = other;`, full `ninja -k 0`, DOL SHA-1 intact, `ninja changes_all`.
+The weak `__as__` (enemy.cpp, 0x1c, lwz/stw) stays 100% under both bodies and is emitted only there.
+Not landed; wt/c-r25 carries only this record and the header comment.
+
+### Header alone: +2 / -1 exact, 20 up, 12 down
+
+- Gained exact: `TEffectColumWater::generate`, `TMapCollisionBase::setCheckData`.
+- Up: Kukku GraphWander 97.00 -> 99.53 and Fall 96.99 -> 99.77, `TBWLeash::perform` 98.69 -> 99.08, `TBossEel::collideToMario` 98.34 -> 99.49, `TBossMantaManager::spawn` 98.88 -> 99.95, `TKazekun::doAttackPose` 85.65 -> 91.79, `TYumbo::shotSeeds`, `TTrembleModelEffect::clash`, the two TAnimalBird paths, `TBossGesso::perform`, `TSelectShineManager::perform`, `TModelWaterManager::move` and six smaller.
+- Down: `TBWPicket::moveRequest` 100 -> 98.82, `TTelesa::behaveToWater` 99.92 -> 96.17, `TBWLeashNode::calcMatrix` 99.15 -> 87.03, `TNerveBWJumpToBath` 99.71 -> 98.29, `TBossHanachan::perform` 97.72 -> 97.33, `TKoopaJrSubmarine::calcRootMatrix` 98.46 -> 96.75, `makeKillerVelocity` 98.88 -> 97.71, `TTPHitActor::bind` 96.48 -> 96.39, `TMapObjPlane::calcNrm` 92.77 -> 91.51, `TNerveNPCTurnToMario` 99.87 -> 97.15, `TMBindShadowManager::forceRequest` 99.50 -> 89.45, `calcVtx` 97.23 -> 95.27.
+
+### With the site respellings: +3 / -0 exact, 22 up, 2 down
+
+Each is ordinary source; the first four also read better than what they replace.
+The next five and `pullTail` are neutral under the current (cast) header, so they can land ahead of the header.
+- `forceRequest`: `TVec3 delta = param_1.mPosition; delta -= gpCamera->getUnk124Vec();` drops the by-value `ShadowUtilRequestPos` helper and is byte-exact (Camera.hpp's comment on `getUnk124Vec` then needs updating).
+- `TTelesa::behaveToWater`: `local_20 = local_20 * fVar1; mVelocity = local_20;`, the spelling the old TODO predicted, is instruction-exact (99.96; the `operator*` copy sits at 0x60, retail 0x38: the c-r21 class).
+- `TBWLeashNode::calcMatrix`: the neighbour points read as `rope->mPoints[index ± 1].unkC` (retail rebuilds their address from `rope`); back to 99.15, instruction-exact, frame 0x80 against 0xe8. Dropping the `points` local too is worse (98.4).
+- `TNerveBWJumpToBath`: no `bath` local (`TVec3 toBath(BW_BATH_POS)`, `boss->mPosition = BW_BATH_POS`); the initialiser's own temporary is the retail copy at 0x10. 99.75, instruction-exact, 8 short.
+- `calcVtx`: `TVec3 oldPos; oldPos = request->mPosition;`.
+- `TBWLeash::pullTail`: `TVec3 before; before = mRope->mPoints[0].unkC;` keeps `TBWPicket::moveRequest` exact. Its copy-initialised form is the map's 0xc4 out of line and wins `TBWLeash::perform` 99.08, but loses moveRequest's `mRope` reload; `mOwner->getLeash()->pullTail(...)` at moveRequest gives the reload (instruction-exact), but no combination of its binders lands both the 0x68 frame and `before` at 0x48 (18 combinations; hsearch dbg: two words too many above or below `before`).
+- `TNerveNPCTurnToMario`: `toMario` assigned, not copy-initialised.
+- `TBossHanachan::perform` (sand check): `delta` assigned, not copy-initialised.
+- `TMapObjPlane::calcNrm`: `sum` assigned, not copy-initialised.
+- `TTPHitActor::bind`: `pos` assigned, not copy-initialised.
+Symbol order is unchanged in every touched unit.
+
+### The two it cannot fix: address-taken locals in koopajr
+
+- `calcRootMatrix`: `trans = center;` under the cast body takes `center`'s address, so the stores that build `center(0, 0, centerZ)` stay behind the `centerZ` load, as in retail; under the uncast body the zero is stored first. Inert: `trans` copy-initialised, `center` built by `set`, a named `centerZ`, raw `.value`, `+=` for `add`.
+- `makeKillerVelocity`: `axis = toMario;` likewise keeps `toMario` in memory through the cross product (retail reloads `toMario.x` after the `axis.y` store); the uncast body keeps it in registers. Inert: `axis.cross`, `cross2`; `axis.set(toMario)` is 81%.
+- Bodies measured tree-wide with the respellings applied: `*(const Vec*)&other` = the current body; `*&other` and `static_cast<Vec&>(*this) = other` = uncast; `const Vec& o = other; *(Vec*)this = o;` changes the DOL.
+  So what separates the two families is the pointer conversion of `other`, not the `&`, and no body gives both retail's elisions and retail's address-taken schedule.
+- Next: a retail-plausible spelling at either koopajr site that takes the local's address through a pointer conversion (a `const Vec*` argument, a `Vec*` conversion) with no extra code, or a third `operator=` body that keeps the conversion but still allows the Kukku/effectObj/MapMakeData elisions.
