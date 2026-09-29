@@ -1592,22 +1592,27 @@ void TMammaMirrorMapOperator::hide(int i)
 	}
 }
 
-// TODO: retail's two lengths are unfused (three fmuls, two fadds) and it
-// schedules camPos.x before the mirror's x; TVec3::length() fuses here.
-// camPos.distance(other) gives exactly retail's unfused sub/mul/add shape but
-// drops the TVec3 slots (frame 0x80 vs 0x98) and moves the sqrt compare:
-// 85.4% for both sites, 91.4% for the joint site only (frame 0x90). Also
-// inert or worse: a copy-and-sub local, operator-, sqrt(dot()), a TU-local
-// named-squares distance helper.
+// TODO: instructions and frame exact; registers only. The mirror difference
+// is taken per component from mMirrorPos[index] (sub() takes the element's
+// address instead of indexing off this) with the mirror number bound before
+// camPos. Left: the three differences take fresh FPRs in retail (f5/f4/f3,
+// ours reuse f4/f3/f1), camPos is r28 against the hidden-flag pointer's r27,
+// and the manager/&unk18 pair is r4/r3. hsearch (5 min) found nothing.
+// Inert or worse: scalar dx/dy/dz (frame 0x80), the TVec3(x, y, z) ctor or
+// set() (y loaded first, frame 0xb0), a named manager, camPos.distance(),
+// operator-, a copy-and-sub local, a TU-local named-squares helper.
 void TMammaMirrorMapOperator::perform(u32 cue, JDrama::TGraphics* graphics)
 {
 	if (!(cue & 2))
 		return;
 
 	if (gpMirrorModelManager->isUnk18Present()) {
+		const int& index = gpMirrorModelManager->getUnk18();
 		const JGeometry::TVec3<f32>& camPos = gpMirrorModelManager->unk24->unk98;
 		JGeometry::TVec3<f32> toMirror;
-		toMirror.sub(camPos, mMirrorPos[gpMirrorModelManager->getUnk18()]);
+		toMirror.x = camPos.x - mMirrorPos[index].x;
+		toMirror.y = camPos.y - mMirrorPos[index].y;
+		toMirror.z = camPos.z - mMirrorPos[index].z;
 		f32 sqX        = toMirror.x * toMirror.x;
 		f32 sqY        = toMirror.y * toMirror.y;
 		f32 sqZ        = toMirror.z * toMirror.z;
