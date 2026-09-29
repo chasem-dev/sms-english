@@ -1110,20 +1110,17 @@ TMapObjMessenger::TMapObjMessenger(const char* name)
 {
 }
 
-// TODO: 99.9%. The MActor binder and a by-value getRotation().x level (the
-// throwObjToFrontFromPoint levers) land the else-branch Mtx, and
-// `throwY = throwY + 200.0f` puts the sum in the literal's FPR as retail;
-// only the fadds operand order is left (retail throwY first). Tried: the
-// literal first, `+=`, the sum in the set() argument or a TU-local adder,
-// declaration order, getPosition() on either component (+8 frame, inert),
-// and calling throwObjToFront itself (inlines, 96.2%).
-// c-r11: that call is retail's: y_offset as an inline parameter is what gives
-// the throwY-first fadds; left there are an obj/this r30/r31 swap, the Mtx 4
-// low and a frame 8 over (0x80 with `if (getMActor())`, which costs the
-// standalone throwObjToFront its 0x90).
 static inline f32 MapObjTurnRotX(const TMapObjBase* obj)
 {
 	return obj->getRotation().x;
+}
+
+static inline void MapObjTurnPlaceHiddenObject(
+    TMapObjBase* obj, const JGeometry::TVec3<f32>& position, f32 yOffset)
+{
+	f32 throwY = position.y + yOffset;
+	f32 throwZ = position.z;
+	obj->mPosition.set(position.x, throwY, throwZ);
 }
 
 u32 TMapObjTurn::touchWater(THitActor*)
@@ -1144,11 +1141,8 @@ u32 TMapObjTurn::touchWater(THitActor*)
 			ySpeed = mAppearYSpeed;
 			speed  = mAppearSpeed;
 			obj->appear();
-			f32 throwY = mPosition.y;
-			f32 throwZ = mPosition.z;
-			throwY = throwY + 200.0f;
-			obj->mPosition.set(mPosition.x, throwY, throwZ);
-			if (MapObjLibMActor(this)) {
+			MapObjTurnPlaceHiddenObject(obj, mPosition, 200.0f);
+			if (getMActor()) {
 				MtxPtr mtx = getModel()->getAnmMtx(0);
 				obj->mVelocity.set(mtx[0][2] * speed,
 				                   mtx[1][2] * speed + ySpeed,
