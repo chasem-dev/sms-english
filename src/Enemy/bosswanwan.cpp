@@ -321,10 +321,13 @@ void TBWLeash::invalidateAllCollision()
 }
 
 // UNUSED, 0xc4 in the map: inlined into TBWPicket::moveRequest and
-// TBWLeash::perform.
+// TBWLeash::perform. `before` is assigned rather than copy-initialised so
+// moveRequest keeps retail's `mRope` reload under the uncast
+// `TVec3::operator=` as well (research c-r25, frame-gaps.md).
 void TBWLeash::pullTail(const JGeometry::TVec3<f32>& where_to)
 {
-	JGeometry::TVec3<f32> before = mRope->mPoints[0].unkC;
+	JGeometry::TVec3<f32> before;
+	before = mRope->mPoints[0].unkC;
 	mRope->constraintTail(where_to);
 	before -= mRope->mPoints[0].unkC;
 	before.negate();

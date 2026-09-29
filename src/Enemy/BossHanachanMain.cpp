@@ -561,7 +561,8 @@ void TBossHanachan::perform(u32 cue, JDrama::TGraphics* graphics)
 					    body->mPosition.z, &body->mGroundPlane);
 					const TLiveActor* sand = body->getSandActor_();
 					if (sand) {
-						JGeometry::TVec3<f32> delta = sand->mPosition - mPosition;
+						JGeometry::TVec3<f32> delta;
+						delta = sand->mPosition - mPosition;
 						JGeometry::TVec3<f32> direction;
 						direction = delta;
 						// Retail fuses x*x into the sum (fmadds), which fp_contract only does

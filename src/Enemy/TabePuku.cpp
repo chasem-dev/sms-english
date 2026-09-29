@@ -160,7 +160,8 @@ void TTPHitActor::updateTerrainCollsion()
 // pos.x loaded for the dots inside scaleAdd where ours reloads them.
 void TTPHitActor::bind()
 {
-	JGeometry::TVec3<f32> pos(mPosition);
+	JGeometry::TVec3<f32> pos;
+	pos = mPosition;
 	pos.add(mVelocity);
 
 	TTabePuku* owner = mOwner;
