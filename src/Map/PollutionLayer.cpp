@@ -216,6 +216,17 @@ void TPollutionLayer::stampModel(J3DModel* model)
 // compiler must not expand, which no statement count can explain. Measured and
 // rejected: an explicitly qualified call (this->TPollutionLayer::appearItem)
 // does not suppress the expansion.
+// c-k19: the map lists `UNUSED sCounter$2393` and `UNUSED init$2394` in
+// PollutionLayer.cpp's .sbss, a guarded function-local static parsed 28
+// names before cleaned's first static (effect_counter$2421). A local
+// `static int` alone is 3 names before the next function here, so retail's
+// appearItem most likely held a counter-driven item spawn of roughly twenty
+// parse-time names whose code the optimiser removed after the inliner had
+// already counted it: over budget, so called, then emptied to a `blr`, with
+// the static left unreferenced. Scratch probes with the game flags confirm
+// the mechanism (`int on = 0; if (on) { static int sCounter = 0; ... }`
+// compiles to `blr` and leaves the static unreferenced); the dead condition
+// itself is not recoverable, so the pragma stays.
 #pragma dont_inline on
 void TPollutionLayer::appearItem(f32, f32, f32) { }
 #pragma dont_inline off
@@ -356,6 +367,11 @@ static inline u8 readBmpPixel(const u8* bmp, int x, int y, int w, int h)
 // every operand order and grouping of the readBmpPixel index, a named row or
 // index inside it, reading the pixel inline in the caller (frame -0x10) --
 // the `add` never moves, so it is allocation-driven, not a spelling.
+// c-k19: hsearch dbg puts all 29 missing words below fullPath. The cVar1
+// test and the pixel loops moved into a `this`-taking inline level supply
+// 0x40 of them (0x168 -> 0x1a8, instructions unchanged) but number the loop
+// webs in reverse (x/y/depth r30/r29/r28 against retail's r26/r27/r30,
+// 98.3%), so retail's level, if any, sits elsewhere.
 void TPollutionLayer::initTexImage(const char* name)
 {
 	char fullPath[256];
