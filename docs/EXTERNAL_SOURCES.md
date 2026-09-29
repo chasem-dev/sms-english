@@ -26,6 +26,7 @@ Most "100%" claims elsewhere are against GMSJ01 and many rely on devices this cl
 - #196 is this fork's own earlier history and was skipped.
 - The rest are either merged in substance at the last upstream sync (`a7a99b4`) or score worse than this tree.
 - Re-check: the open list above, plus any pull request newer than #201.
+- Re-checked 2026-09-29 12:10 UTC with `git ls-remote`: #200 (`482f6b3`), #189 (`e571448`) and #179 (`112600e`) unchanged since c-r23, no pull request past #201.
 
 ## Forks of doldecomp/sms
 
@@ -37,6 +38,7 @@ Most "100%" claims elsewhere are against GMSJ01 and many rely on devices this cl
 - mattsumi (`matching-campaign`), adriadam10 (`main`), TheAzack9 (27 `az-*` branches), gitRasheed (29 `pr/*` branches, mostly merged upstream), KakarottoCake (29 branches, mostly merged upstream): a few small gains or nothing.
 - QbeRoot/sms (https://github.com/QbeRoot/sms) is the archived assembly-era predecessor; nothing to take.
 - Re-check: repeat the search and the fetch, then the sweep, against refs with commits after the last check.
+- Re-checked 2026-09-29 12:10 UTC with `git ls-remote`: every fjooord and mattsumi branch unchanged since c-r23.
 
 ## decomp.me
 

@@ -2,6 +2,7 @@
 
 This fork tracks `doldecomp/sms` (remote `upstream`, https://github.com/doldecomp/sms) through real merges, so the shared history keeps each later sync small.
 The last sync merged `upstream/main` at `a7a99b4` on 2026-09-28 (merge base before it: `9d330f4`).
+The sync after it merged `upstream/main` at `7e788d9` on 2026-09-29 (merge base `a7a99b4`): 11 commits, most restating fixes this fork already had, so all eight conflicted files kept ours and no function changed.
 
 ## How to sync again
 
