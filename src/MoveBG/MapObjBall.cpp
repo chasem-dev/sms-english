@@ -78,7 +78,7 @@ void TMapObjBall::touchWall(JGeometry::TVec3<f32>* param_1,
 			param_1->x += (mBodyRadius - dist) * wall->getNormal().x;
 			param_1->z += (mBodyRadius - dist) * wall->getNormal().z;
 
-			f32 bounce = into * -(1.0f + mMapObjData->mPhysical->unk4->unk8);
+			f32 bounce = into * -(1.0f + mMapObjData->getPhysicalData()->unk8);
 			mVelocity.x += bounce * wall->getNormal().x;
 			mVelocity.z += bounce * wall->getNormal().z;
 
@@ -237,7 +237,7 @@ void TMapObjBall::kicked()
 
 	// A ball kicked straight down would otherwise sit still, so give it a
 	// random nudge in XZ.
-	f32 minSpeed = mMapObjData->mPhysical->unk4->unkC;
+	f32 minSpeed = mMapObjData->getPhysicalData()->unkC;
 	if (abs(mVelocity.x) < minSpeed && abs(mVelocity.z) < minSpeed) {
 		mVelocity.x = 2.0f * MsRandF() - 1.0f;
 		mVelocity.z = 2.0f * MsRandF() - 1.0f;
@@ -1119,7 +1119,7 @@ void TResetFruit::kicked()
 		mVelocity.x += unk170 * SMS_GetMarioSpeedX();
 		mVelocity.z += unk170 * SMS_GetMarioSpeedZ();
 
-		f32 minSpeed = mMapObjData->mPhysical->unk4->unkC;
+		f32 minSpeed = mMapObjData->getPhysicalData()->unkC;
 		if (abs(mVelocity.x) < minSpeed && abs(mVelocity.z) < minSpeed) {
 			mVelocity.x = 2.0f * MsRandF() - 1.0f;
 			mVelocity.z = 2.0f * MsRandF() - 1.0f;
@@ -1620,7 +1620,7 @@ void TBigWatermelon::touchActor(THitActor* param_1)
 
 	// A moving poihana bounces it back up instead.
 	if (param_1->isActorType(0x10000015) && ((TPoiHana*)param_1)->isMoving()) {
-		if (abs(mVelocity.y) < mMapObjData->mPhysical->unk4->unkC) {
+		if (abs(mVelocity.y) < mMapObjData->getPhysicalData()->unkC) {
 			mVelocity.y += 30.0f;
 			mState = STATE_LIVING;
 		}
