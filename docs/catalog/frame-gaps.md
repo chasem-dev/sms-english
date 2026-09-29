@@ -2285,3 +2285,59 @@ Measured on main 0e88dc3a (12023 exact) with full `ninja -k 0`, `ninja changes_a
 ### Other camera members
 
 - No other `CPolarSubCamera` member is copied float by float outside the camera TUs: the remaining outside reads (`unk13C`, `unk16C`, `unk1EC`, `unk258`, `unk270`, `unk290`, `unk2C8`, `mUp`) are scalars, matrices, pointers or direct `const TVec3&` arguments.
+
+## Research batch c-r27 (2026-09-29): the implicit copy assignment cannot land; under it every copy spelling compiles the same
+
+Lead (c-k18): drop JGVec3.hpp's user `operator=(const TVec3&)`, so that the implicit copy assignment is used, and respell the sites that go down.
+Measured on main 58ad859c with full `ninja -k 0`, `ninja changes_all` and the DOL SHA-1 (intact in every run below except the `getVelocity` one).
+Only this record and a header comment are committed; the header is unchanged.
+
+### Tree-wide numbers
+
+- Header alone: +2 / -3 exact, 26 up, 24 down (c-k18's figures, reproduced).
+- Header plus c-r25's four header-dependent respellings (`forceRequest` through `getUnk124Vec()`, `TTelesa::behaveToWater`'s `local_20 = local_20 * f; mVelocity = local_20;`, `TBWLeashNode::calcMatrix` through `rope->mPoints[index ± 1]`, `TNerveBWJumpToBath` without `bath`): **+3 / -3 exact, 28 up, 21 down**.
+  These four behave the same under the implicit copy as under the uncast body: forceRequest exact, behaveToWater 99.96, JumpToBath 99.75, calcMatrix back to 99.15.
+- Exact gained: `TEffectColumWater::generate`, `TMapCollisionBase::setCheckData`, `TMBindShadowManager::forceRequest`.
+  Exact lost: `TBWPicket::moveRequest`, `TMapObjBall::control`, `TBigWatermelon::control`.
+  The enemy.cpp weak `__as__` stays emitted and 100%.
+- Up (28): startHipDrop 91.55 -> 99.88, pulling 98.57 -> 99.96, `TModelWaterManager::move` 96.98 -> 99.77, Kukku GraphWander 97.00 -> 99.53 and Fall 96.99 -> 99.77, `TBossMantaManager::spawn` 98.88 -> 99.95, makeKillerVelocity 98.88 -> 99.51, `TBossEel::collideToMario` 98.34 -> 99.49, `TConeBeam::calcVertices` 95.65 -> 98.39, `FeetInvCalc` 96.64 -> 98.33, `TYumbo::shotSeeds` 96.35 -> 98.35, `TTrembleModelEffect::clash` 94.00 -> 97.28, `TKazekun::doAttackPose` 85.65 -> 91.79 and `flyAroundMario` 98.00 -> 98.38, `TAnimalBird::doLanding` 93.62 -> 97.29 and `doFlyToCurPathNode` 95.35 -> 97.21, `TSelectShineManager::perform` 94.07 -> 95.37, `TBWLeash::perform` 98.69 -> 99.08, `TAmiNoko::calcRootMatrix` 96.19 -> 96.85, `TBossGesso::perform`, `TFireWanwanTailHit::init`, `TSphereLink::moveHead`, `TRope::moveHead`, plus the three exact gains and the three c-r25 sites above.
+- Down (21): `execWallCheck_` 99.87 -> 95.60, `calcSlopeAngleX_` 98.39 -> 95.47, `TFireWanwan::bindBody` 98.39 -> 95.71, moveRequest 100 -> 98.82, `TPopo::walkBehavior` 99.81 -> 97.51, `TBossHanachan::init` 99.95 -> 99.12, `bind` 99.86 -> 96.82 and `perform` 97.72 -> 97.31, `TRocket::setDeadAnm` 91.71 -> 80.88, koopajr `calcRootMatrix` 98.46 -> 96.75, `TKumokun::bind` 99.51 -> 97.67, `TTPHitActor::bind` 96.48 -> 96.39, `TMapObjPlane::calcNrm` 92.77 -> 91.51, `TMapObjBall::control` 100 -> 94.53, `TResetFruit::control` 99.95 -> 99.02, `TBigWatermelon::control` 100 -> 97.73, `npcMadding` 99.87 -> 96.53, `TNerveNPCTurnToMario` 99.87 -> 97.15, `execWalk` 97.82 -> 95.38, `calcVtx` 97.23 -> 95.33, `TWarpInCallBack::execute` 86.30 -> 80.23.
+- MapObjBall's `matched_data` drop (100 -> 29%) is the jump table `@4191` (56 bytes, 67.9%) inside `TResetFruit::control`: its entries move with the function body, so it recovers with that function.
+
+### Why the drops have no site fix
+
+- **Under the implicit copy the spelling knob is gone.** `T a = b;`, `T a(b);` and `T a; a = b;` give byte-identical code at every site tried: `execWallCheck_`'s four posArg/posCam spellings, `npcMadding`'s three copy-chain spellings, and all six c-r25 respellings already on main (reverting commit e849b594 under the implicit copy changes none of the seven functions).
+  So the declare-then-assign and copy-initialise respellings that c-r25 used under the uncast body cannot be used here.
+- **About half the drops are copies retail keeps and the implicit copy forwards away** (our frame short, `<` copy blocks): `calcSlopeAngleX_`, `bindBody`, hanachan `bind`/`perform`, `setDeadAnm` (its dead `dir` copy is deleted outright), `npcMadding`, `TNerveNPCTurnToMario`, `execWalk`, `calcVtx`, `TWarpInCallBack::execute`.
+- **The exact losses need the destination address-taken.** Retail's `vel = getVelocity(); vel.isZero()` keeps three `fmuls` (no `fmadds`), and moveRequest reloads `mRope` after the stores to `before`.
+  Both show that the copied-to local is address-taken in retail.
+  Scratch probes confirm the mechanism: `vel = (const Vec&)getVelocity();` makes `TMapObjBall::control` and `TBigWatermelon::control` exact, and `before = (const Vec&)mRope->mPoints[0].unkC;` makes moveRequest exact.
+  In each probe `operator=(const Vec&)` casts `this`, which makes the destination address-taken.
+  The casts are not honest source, and the header reading behind them is refuted: `TLiveActor::getVelocity()` returning `const Vec&` (with the implicit copy) keeps the two MapObjBall controls exact but changes the DOL and loses 16 exact functions against main, among them moveRequest, `TMapObjGeneral::receiveMessage`, `TLeafBoat::touchActor`, `TNameKuri::moveObject`, `TPakkunSeed::moveObject`, the two smallEnemy jump nerves, `TTobiPuku::hitWater`, `TSamboHead::behaveToWater`, `TEggYoshi::receiveMessage`, `TMapObjElasticCode::control`, `TRailFence::control`, `TMapObjBall::touchGround` and `TResetFruit::hold`.
+- `TMapObjBall::control` alone is exact under the implicit copy with a temporary, `if (!JGeometry::TVec3<f32>(mVelocity).isZero() || ...)`: a temporary is not a local for `fp_contract`.
+  That is the same shape `TResetFruit::perform` already uses.
+  But the statement count drops, so `TResetFruit::control` expands `TMapObjBall::control` (99.95 -> 70.0).
+  In `TBigWatermelon::control` the temporary lands at 0x38, while retail's named `vel` is at 0x68 (99.9).
+- **koopajr `calcRootMatrix`: c-k18's JGPosition3 lead is refuted.** Under the implicit copy, `translation(const Vec&)` and `translation(const Vec*)` both stay at 96.8; the `const Vec*` form goes through TVec3's `operator const Vec*()`, so it takes `&center` with a cast.
+  Neither keeps the `centerZ` load ahead of the zero stores.
+
+### TMario::pulling
+
+- Under the implicit copy, pulling is instruction-exact (321 instructions, `fmadds f2, f3, f3, f2` as in retail).
+  Only the two `operator-` temporaries sit 0x20 higher (0x58/0x64 against 0x38/0x44), so it is behaviour-exact: the 1-ulp fused multiply-add difference the audit flagged comes from the cast `operator=`, which makes `delta` address-taken.
+- Under the current cast body, `delta` copy-initialised from a ternary gets the `fmadds` (the copy constructor does not take the address).
+  But the copy then sits after the join, where retail copies in each arm (95.0 against 98.57).
+  Retail's per-arm copy into a `delta` that is not address-taken is what `operator-`'s return copy into its result slot would give.
+  That needs cc23's by-value `operator-`, so it is part of that migration, not a site lever.
+
+### The two copy behaviours, side by side
+
+- `TLimitKoopa::startHipDrop`: retail copies `calcVelocityToJumpToY`'s result from 0x64 into `velocity` (0xa0) word by word.
+  It then reuses `length()`'s squared sum in `normalize()`, so `velocity` is not address-taken, even though it is an existing local assigned from a temporary.
+  Under the cast body, a new copy-initialised local (80.4) and `velocity.set(...)` (53.5) are both worse.
+- So in retail, some word copies into existing locals and members make the destination address-taken: `MapObjBall`, moveRequest, `setDeadAnm`, the NPC copy chains.
+  Others do not: startHipDrop, pulling, makeKillerVelocity, `mStaticHitActor.mPosition = ...` in `TModelWaterManager::move`.
+  The first group wants the cast body and the second the implicit copy, and neither body, nor any spelling found, gives both.
+- The split does not follow the source's value category.
+  `mStaticHitActor.mPosition = mParticlePositionSOA[i]` and makeKillerVelocity's `axis = toMario` have lvalue sources and still want the non-address-taking copy.
+- Next: look for what retail's address-taking sites share (an inlined callee, a `Vec`-typed accessor that the map does not show) before any further `operator=` round.

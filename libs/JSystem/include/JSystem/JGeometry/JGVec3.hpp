@@ -150,6 +150,13 @@ public:
 	// 91.55 -> 99.88, TMario::pulling -> 99.96 and TModelWaterManager::move
 	// -> 99.77. `Vec& v = *this; v = other;` is 99.5 at makeKillerVelocity
 	// but breaks the DOL tree-wide.
+	// Research c-r27 closed the implicit-copy route: without this operator,
+	// `T a = b;`, `T a(b);` and `T a; a = b;` compile to identical code, so
+	// no site respelling can bring back the copies retail keeps. 21 functions
+	// stay down (+3 / -3 exact with c-r25's four respellings), among them
+	// TMapObjBall::control and TBWPicket::moveRequest, which need their
+	// destination address-taken. Only a `Vec`-typed source gives that, and
+	// it is not honest source. Details: frame-gaps.md, "Research batch c-r27".
 	TVec3& operator=(const TVec3& other)
 	{
 		// NOTE: yes, this has to use lwz/stw and not lfs/stf.
