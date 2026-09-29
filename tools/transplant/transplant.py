@@ -494,6 +494,14 @@ class Job:
                 if not um:
                     break
                 ident = um.group(1)
+                if ident.startswith("PAD_STACK") and ("pad", ident) not in tried:
+                    # stack padding is never ported: score the body without it
+                    tried.add(("pad", ident))
+                    body2 = re.sub(r"^[ \t]*" + re.escape(ident) + r"\b[^;\n]*;[ \t]*\n?", "", body, flags=re.M)
+                    if body2 != body:
+                        body = body2
+                        fixes.append("pad-stripped")
+                        continue
                 body_line0 = text[:s + len(helpers)].count("\n") + 1
                 body_lines = body.count("\n") + 1
                 if not (body_line0 <= line < body_line0 + body_lines):
@@ -579,6 +587,7 @@ def main():
     ap.add_argument("-j", type=int, default=2)
     ap.add_argument("--unit", action="append", default=[])
     ap.add_argument("--fn", default=None, help="only functions whose mangled name contains this")
+    ap.add_argument("--list", default=None, help="only the (unit, mangled name) rows of this TSV")
     ap.add_argument("--rerun", action="store_true")
     ap.add_argument("--max-fixes", type=int, default=12)
     ap.add_argument("--report", default=os.path.join(ROOT, "build", "GMSE01", "report.json"))
@@ -605,6 +614,12 @@ def main():
                 f.write("\t".join(str(x) for x in row) + "\n")
             print("\t".join(str(x) for x in row[:6]), flush=True)
 
+    wanted = set()
+    if args.list:
+        for line in open(args.list):
+            p = line.rstrip("\n").split("\t")
+            if len(p) >= 2:
+                wanted.add((p[0], p[1]))
     print("indexing headers...", flush=True)
     ours = ClassIndex(header_files(ROOT))
     theirs = ClassIndex(header_files(args.other))
@@ -617,6 +632,8 @@ def main():
         fns = [f for f in u.get("functions", []) if f.get("fuzzy_match_percent", 0) < 100]
         if args.fn:
             fns = [f for f in fns if args.fn in f["name"]]
+        if args.list:
+            fns = [f for f in fns if (short, f["name"]) in wanted]
         fns = [f for f in fns if (short, f["name"]) not in done]
         if not fns or name not in od:
             continue
