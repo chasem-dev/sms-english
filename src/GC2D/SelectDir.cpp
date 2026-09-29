@@ -267,58 +267,15 @@ void TSelectDir::changeOrder()
 	unk48->unkC.off(CUE_MOVE | CUE_CALC_ANIM | CUE_DRAW);
 }
 
-// TODO: 99.8%, pure frame gap (0xd0 vs our 0x50, all 177 instructions
-// match). Every referenced stack slot -- the three JUtility::TColor
-// conversion temporaries and their strides -- shifts by the same 0x80, so
-// this is one big dead low-region carrier, not a stride problem (the TColor
-// stride itself matches between the three blocks: 4 then 8 bytes apart on
-// both sides). Not pursued further given JUTColor.hpp's own TODO already
-// rules out touching the TColor ctor.
-//
-// Closure batch 128 measured the carrier ladder instead. The 0x80 is
-// reachable, and the function is a *set* of binding levels, one per inlined
-// receiver expansion, with these measured steps (all zero-instruction):
-//   binding level over `gpApplication.mFader` (6 sites)       +0x38
-//   binding level over `unk20` (7 sites)                      +0x40
-//   the two together                                          +0x78
-//   binding level over `unk18` at both `isSomethingPushed()`   +0x20
-//   the same at one site only                                 +0x10
-//   binding level over `unk40` at the `unk40 == 9` compare     +0x08
-//   `SMSGetMSound()` over `gpMSound`, `SMSGetFlagManager()`
-//   over `TFlagManager::smInstance`, a level over `unk10`      +0
-// fader + menu + the stage compare is exactly 0xd0 and drops the diff from
-// 30 to 21 markers, but does not close it: with the frame exact the
-// `OSJoinThread` out-parameter sits 8 high and all three TColor conversion
-// pairs 12 high, i.e. our pool has 4 bytes between the colour temporaries
-// and `res` that retail does not. Since that is four fabricated TU-local
-// levels for a function that still does not match, none of them is
-// committed; the numbers are the result.
-//
-// Header round 22 turned the parked TU-local into the real
-// `TSelectDir::getGamePad()` binding accessor (the destructor still exact)
-// and re-measured the ladder with it: the steps are strictly additive, so
-// using the accessor at both `isSomethingPushed()` sites gives 0x70, and
-// with TU-local fader and menu levels on top 0xe8 (fader + menu is 0x78 with
-// or without it). No subset containing a gamepad binding reaches 0xd0 --
-// 0x20 + 0x38 + 0x08 = 0x60, 0x20 + 0x40 + 0x08 = 0x68, 0x20 + 0x38 + 0x40
-// = 0x98 -- so retail's `direct()` reads the pad member without a level and
-// only fader + menu + stage lands on 0xd0. The two sites are therefore left
-// as raw member reads and `getGamePad()` is used where its +8 is proved, in
-// the destructor. The remaining unknown is still the 4 bytes between the
-// colour temporaries and `res`.
-// cc32: that 4 is solved and the unknown moved. Fader binder at any five of
-// the six sites (not the first or last), menu binder at all seven and a
-// named `bool pushed = unk18->isSomethingPushed();` for the first pad test
-// (or a `u32` wrapper there) put `res`, all three colour pairs and the
-// OSJoinThread slot at retail's offsets; the frame is then 0xc8, 8 short,
-// i.e. retail's named block holds 8 more bytes *above* `res`. Only a dead
-// `u8` declared before `res` supplies them (exact, but padding, not
-// committed). Inert for it: a named BOOL for OSIsThreadTerminated, `res` or
-// `pushed` hoisted to function scope, a named second pad test, a named or
-// top-declared TColor for the ternary (97-98), a named fader pointer or
-// reference (95-97), a named `&gSetupThread` pointer or reference (99.3).
-// 120-combination sweep over fader/menu site subsets, the stage binder and
-// the pad spelling (raw, named, u32, bool wrapper): none exact.
+// TODO: instruction-exact, frame 0xc8 against 0xd0. The carriers the
+// batch-128/cc32 ladders counterfeited with TU-local levels are accessor
+// levels (research c-r29): the binder-shaped TApplication::getFader() at the
+// fader sites and getSelectMenu() at six of the seven menu reads (all seven
+// overshoot the low region by three words; leaving out the mCloseMenu read
+// or the first mSelectedShine read gives the same layout). Every temporary
+// is then on retail's offset; what is left is two named words, one declared
+// before `res` and one after it. A named BOOL for either pad test or for
+// OSIsThreadTerminated is inert or moves the temporaries.
 int TSelectDir::direct()
 {
 	if (!unk38) {
@@ -331,9 +288,9 @@ int TSelectDir::direct()
 			return TApplication::APP_STATE_GAMEPLAY;
 
 		unk38 = true;
-		unk20->initData(unk40, unk2C, unk28, this);
-		unk20->startMove();
-		unk20->startOpenWindow();
+		getSelectMenu()->initData(unk40, unk2C, unk28, this);
+		getSelectMenu()->startMove();
+		getSelectMenu()->startOpenWindow();
 
 		SMSGetApplication()->getFader()->startWipe(0xe, 0.4f, 0.0f);
 		SMSGetApplication()->getFader()->setColor(
@@ -348,12 +305,12 @@ int TSelectDir::direct()
 	switch (SMSGetApplication()->getFader()->mFadeStatus) {
 	case TSMSFader::FADE_STATUS_FULLY_FADED_IN:
 	case TSMSFader::FADE_STATUS_FADING_IN:
-		if (unk20->unk14B)
+		if (getSelectMenu()->unk14B)
 			return TApplication::APP_STATE_DONE;
 
 		if (unk20->mCloseMenu) {
-			SMSGetApplication()->mNextArea.unk1 = unk20->mSelectedShine;
-			TFlagManager::smInstance->setFlag(0x40003, unk20->mSelectedShine);
+			SMSGetApplication()->mNextArea.unk1 = getSelectMenu()->mSelectedShine;
+			TFlagManager::smInstance->setFlag(0x40003, getSelectMenu()->mSelectedShine);
 			SMSGetApplication()->getFader()->startWipe(0xf, 1.0f, 0.0f);
 			SMSGetApplication()->getFader()->setColor(
 			    JUtility::TColor(0xff, 0xff, 0xff, 0xff));
