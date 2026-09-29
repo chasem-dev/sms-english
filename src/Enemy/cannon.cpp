@@ -1109,12 +1109,6 @@ DEFINE_NERVE(TNerveCannonSearch, TLiveActor)
 
 // Shoot-local copies of the ForceBombShoot binders. Reusing those would
 // add sites to that already-exact nerve and move its frame.
-static inline MActor* CannonShootMActor(TCannon* p)
-{
-	MActor* actor = p->mChorobei->mParts->getMActor();
-	return actor;
-}
-
 static inline TChorobei* CannonShootChorobei(TCannon* p)
 {
 	TChorobei* chorobei = p->mChorobei;
@@ -1123,7 +1117,7 @@ static inline TChorobei* CannonShootChorobei(TCannon* p)
 
 static inline J3DFrameCtrl* CannonShootFrameCtrl(TCannon* p)
 {
-	J3DFrameCtrl* ctrl = CannonShootMActor(p)->getFrameCtrl(0);
+	J3DFrameCtrl* ctrl = p->mChorobei->getMActor()->getFrameCtrl(0);
 	return ctrl;
 }
 
@@ -1139,14 +1133,14 @@ DEFINE_NERVE(TNerveCannonShoot, TLiveActor)
 	}
 
 	if (cannon->mShootMode) {
-		if (CannonShootMActor(cannon)->checkCurBckFromIndex(0x11)) {
-			if (CannonShootMActor(cannon)->curAnmEndsNext()) {
+		if (cannon->mChorobei->getMActor()->checkCurBckFromIndex(0x11)) {
+			if (cannon->mChorobei->getMActor()->curAnmEndsNext()) {
 				CannonShootChorobei(cannon)->setBckAnm(0x10);
 				cannon->bombSet();
 			}
 			cannon->turnToGoal();
-		} else if (CannonShootMActor(cannon)->checkCurBckFromIndex(0x10)) {
-			if (CannonShootMActor(cannon)->curAnmEndsNext()) {
+		} else if (cannon->mChorobei->getMActor()->checkCurBckFromIndex(0x10)) {
+			if (cannon->mChorobei->getMActor()->curAnmEndsNext()) {
 				spine->pushAfterCurrent(&TNerveCannonSearch::theNerve());
 				return TRUE;
 			}
@@ -1169,12 +1163,6 @@ DEFINE_NERVE(TNerveCannonShoot, TLiveActor)
 	return FALSE;
 }
 
-static inline MActor* CannonFBSMActor(TCannon* p)
-{
-	MActor* actor = p->mChorobei->mParts->getMActor();
-	return actor;
-}
-
 static inline TChorobei* CannonFBSChorobei(TCannon* p)
 {
 	TChorobei* chorobei = p->mChorobei;
@@ -1186,7 +1174,7 @@ static inline TChorobei* CannonFBSChorobei(TCannon* p)
 // the frame controller nested over the actor binder.
 static inline J3DFrameCtrl* CannonFBSFrameCtrl(TCannon* p)
 {
-	J3DFrameCtrl* ctrl = CannonFBSMActor(p)->getFrameCtrl(0);
+	J3DFrameCtrl* ctrl = p->mChorobei->getMActor()->getFrameCtrl(0);
 	return ctrl;
 }
 
@@ -1202,15 +1190,15 @@ DEFINE_NERVE(TNerveCannonForceBombShoot, TLiveActor)
 			return TRUE;
 	}
 
-	if (CannonFBSMActor(cannon)->checkCurBckFromIndex(0x11)) {
-		if (CannonFBSMActor(cannon)->curAnmEndsNext()) {
+	if (cannon->mChorobei->getMActor()->checkCurBckFromIndex(0x11)) {
+		if (cannon->mChorobei->getMActor()->curAnmEndsNext()) {
 			CannonFBSChorobei(cannon)->setBckAnm(0x10);
 			cannon->bombSet();
 		}
 		cannon->turnToGoal();
-	} else if (CannonFBSMActor(cannon)->checkCurBckFromIndex(
+	} else if (cannon->mChorobei->getMActor()->checkCurBckFromIndex(
 	               0x10)) {
-		if (CannonFBSMActor(cannon)->curAnmEndsNext())
+		if (cannon->mChorobei->getMActor()->curAnmEndsNext())
 			return TRUE;
 		if (CannonFBSFrameCtrl(cannon)->checkPass(
 		        38.0f))
@@ -1276,12 +1264,6 @@ DEFINE_NERVE(TNerveCannonClose, TLiveActor)
 	return FALSE;
 }
 
-static inline MActor* CannonDamageMActor(TCannon* p)
-{
-	MActor* actor = p->mChorobei->mParts->getMActor();
-	return actor;
-}
-
 static inline TChorobei* CannonDamageChorobei(TCannon* p)
 {
 	TChorobei* chorobei = p->mChorobei;
@@ -1326,7 +1308,7 @@ DEFINE_NERVE(TNerveCannonDamage, TLiveActor)
 			else
 				SMSRumbleMgr->start(0x17, (f32*)nullptr);
 
-			MActor* actor = CannonDamageMActor(cannon);
+			MActor* actor = cannon->mChorobei->getMActor();
 			emitter = CannonDamageParticles()->emitAndBindToMtxPtr(
 			    0xC8,
 			    // 0x240 = joint 12 * sizeof(Mtx); 8 was 0x180.
@@ -1364,9 +1346,9 @@ DEFINE_NERVE(TNerveCannonDamage, TLiveActor)
 		cannon->mPosition.y += 10.0f;
 	}
 
-	if (CannonDamageMActor(cannon)->curAnmEndsNext()) {
+	if (cannon->mChorobei->getMActor()->curAnmEndsNext()) {
 		SMS_ResetDamageFogEffect(
-		    CannonDamageMActor(cannon)->getModel()->getModelData());
+		    cannon->mChorobei->getMActor()->getModel()->getModelData());
 		if (cannon->mHitPoints == 0) {
 			spine->pushAfterCurrent(&TNerveCannonDamageDemo::theNerve());
 			return TRUE;

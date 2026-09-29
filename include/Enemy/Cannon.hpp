@@ -76,6 +76,8 @@ public:
 	void setBckAnm(int);
 	bool isUpEnd();
 	bool isDownEnd();
+	// fabricated name; the nerves read the rider's actor through it (c-k13)
+	MActor* getMActor() { return mParts->getMActor(); }
 
 	/* 0x68 */ TCannon* mCannon;
 	/* 0x6C */ TSharedParts* mParts;
