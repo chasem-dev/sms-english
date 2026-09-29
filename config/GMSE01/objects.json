@@ -301,6 +301,7 @@
     "MoveBG/MapObjAirport.cpp",
     "MoveBG/MapObjBase.cpp",
     "MoveBG/MapObjBlock.cpp",
+    "MoveBG/MapObjDolpic.cpp",
     "MoveBG/MapObjEx.cpp",
     "MoveBG/MapObjFloat.cpp",
     "MoveBG/MapObjGrass.cpp",

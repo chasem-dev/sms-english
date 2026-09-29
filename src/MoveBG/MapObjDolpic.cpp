@@ -83,33 +83,14 @@ void TMonumentShine::hitByWater(THitActor* actor)
 
 	static JGeometry::TVec3<f32> up(0.0f, 1.0f, 0.0f);
 
-	// TODO: 99.7%, every instruction and register exact; the named vectors
-	// sit 4 bytes low (waterDir 0x50/marioDir 0x44/cross 0x38 against
-	// 0x54/0x48/0x3c, frame 0x60 on both), i.e. retail has one more 4-byte
-	// dead object below them.
-	// Closure c-k4 (debugger): with `cross.cross(up, marioDir)` the header's
-	// `_x`/`_y` locals are depth-1 inline objects, coloured before the IR
-	// CSE temporaries of mPosition and waterDir, so they take f4/f5 and
-	// push mPosition.x to f5 (retail f7) and waterDir.y/z to f6/f7 (f5/f6).
-	// Written out component by component, `cross` is scalar-replaced into IR
-	// temporaries coloured last, which is retail's order (98.4 -> 99.7); the
-	// inline's `_z` was the dead word that kept the slots right before.
-	// Inert or worse for the missing word: the header's cross2() or set()
-	// (98.2, the set() bindings are coloured first again), a TU-local
-	// helper in the no-temporaries, one- or two-temporary shapes (99.3-99.4),
-	// the vector built by its constructor (98.2), z first, `cross` declared
-	// second, a named dot, and the accessor levers (getPosition() at either
-	// subtraction 92.3; raw `*gpMarioPos` or `actor->mPosition` are -8).
-	// Older notes: raw `mPosition` at both subtractions shares the loads; the
-	// pair `actor->getPosition()` (+8) with the dot unnamed (-8) lands the
-	// slots; `waterDir.dot(cross)`, `-=`, isZero() and the three-argument
-	// sub() were inert on the colouring.
+	// Write the cross components directly to keep their scalar lifetimes.
 	JGeometry::TVec3<f32> cross;
 	cross.x = up.y * marioDir.z - up.z * marioDir.y;
 	cross.y = up.z * marioDir.x - up.x * marioDir.z;
 	cross.z = up.x * marioDir.y - up.y * marioDir.x;
 
-	if (cross.dot(waterDir) > 0.0f) {
+	bool turnForward = cross.dot(waterDir) > 0.0f;
+	if (turnForward) {
 		unk140 += 0.004f;
 	} else {
 		unk140 -= 0.004f;
