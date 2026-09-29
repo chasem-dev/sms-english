@@ -104,35 +104,23 @@ void TDirectionCalc::normalize() { mDirection = WrapRadian(mDirection); }
 // takes the shorter way round.
 f32 TDirectionCalc::calcNearerDirection(f32 dir)
 {
-	// The wrap is written out rather than routed through WrapRadianF: the five
-	// statements are what keep this function out of line at
-	// TKoopaJrSubmarine::makeRelativeAngle's two call sites (the ROM `bl`s it
-	// there, and WrapRadianF's single statement drops it under the depth-1
-	// budget: makeRelativeAngle 95.02% -> 26.09%). The cost is that std::fmodf
-	// expands here instead of being called (97.33%); the missing level above it
-	// is still unidentified. With WrapRadianF this body is 99.8%, but none of
-	// named or split diff/other locals, per-branch returns or a named wrapped
-	// value lifts it back over the budget (makeRelativeAngle stays ~30%).
-	// The body itself closes (100%, frame 0x38) with WrapRadianF plus one
-	// named helper result (`f32 wrapped = ...; return wrapped;` in either
-	// helper, or `f32 range/offset` named inside WrapDirectionF), but the
-	// auto-inline into makeRelativeAngle counts only this body's own
-	// statements: extra statements inside the helpers leave it inlined (~30%).
-	f32 lo     = 0.0f;
-	f32 hi     = TWO_PI;
-	f32 range  = hi - lo;
-	f32 offset = mDirection - lo;
-	mDirection = lo + std::fmodf(range + offset, range);
+	// Name each shorter-arc predicate before applying its adjustment.
+	// The complete calculation stays out of line in makeRelativeAngle.
+	mDirection = WrapRadianF(mDirection);
 
 	if (dir >= mDirection) {
-		f32 diff  = dir - mDirection;
+		f32 diff = dir;
+		diff -= mDirection;
 		f32 other = TWO_PI - diff;
-		if (other < diff)
+		bool useOther = other < diff;
+		if (useOther)
 			dir -= TWO_PI;
 	} else {
-		f32 diff  = mDirection - dir;
+		f32 diff = mDirection;
+		diff -= dir;
 		f32 other = TWO_PI - diff;
-		if (other < diff)
+		bool useOther = other < diff;
+		if (useOther)
 			dir += TWO_PI;
 	}
 	return dir;
