@@ -503,3 +503,17 @@ Their named locals are kept, and so is each initialiser's inline expansion with 
   Where the class has no accessor for the hop, an owner-level one (`TChorobei::getMActor() { return mParts->getMActor(); }`) did the same and closed `TNerveCannonOpen`.
   A binder over a single member of a simple receiver (`this`, a local) is not this case: its accessor form is 8 short.
 - **A copied member body is a missing call.** A local ternary like `r != 0 ? true : false` that repeats another function of the same TU (here `isTouchedWallsAndMoveXZ`) means retail called that function and it was inlined; calling it in a value context (`!= false`) produced the missing forced-load word (Map `isTouchedOneWall`).
+
+## Refinements (closure batch c-k15, 2026-09-29)
+
+- **`tools/find-copied-bodies.py` finds copied bodies; most are already priced.**
+  It aligns each non-exact function's normalised tokens against every function of its TU, its headers' inline bodies and the TU's UNUSED map functions (member chains collapsed to their last component, parameters as wildcards, named locals split off a copy cost 0.3 per token).
+  It rediscovers c-k13's `isTouchedWallsAndMoveXZ` copy from the pre-c-k13 source and reports 315 hits tree-wide (40 in-TU, 40 UNUSED, 210 header, 25 on our own `static inline` reconstructions, tagged `helper`).
+  About 40 were real copies of a real function; most of those were already recorded as tried, and a call was code-identical in five more (committed as source fidelity: `killBathtubKiller`, `createGunBody`/`setEmitPt`, `calcAnimHands`, TPosition3's direction setters).
+- **A copy that uses a result the callee drops means the callee's return type is wrong.**
+  `TMario::wireRolling` and the two UNUSED hang-down states spelled `changeWireHanging`'s body out because they return the status change; declaring `BOOL changeWireHanging()` with `return changePlayerStatus(...)` keeps it exact at the map's 0x8c and lets them `return changeWireHanging();`, whose `ok` flag shares its zero with the preceding stores (wireRolling 99.63 -> 99.88).
+- **The two-hop rule works when the last hop is a raw member of the loaded pointer.**
+  `this->mMapObjData->mMove->unk8` behind a binder became `mMapObjData->getMoveFrameCtrl()`, and the physical-data binders `mMapObjData->getPhysical()` / `getPhysicalData()` (new plain accessors on `TMapObjData`, invented names): exact at every site.
+  The same accessor at four raw sites of `TMapObjBall::calcCurrentMtx` lands its frame (0x190 -> 0x1c0, 105 -> 59 markers) and moves four more frame-short functions 8 or 0x10 closer without touching an instruction.
+  When the binder's chain already ends in an accessor (`mMarioParts->getMActor()`, `mModel->getModel()`), neither the direct chain nor an owner-level accessor on `this` reaches the binder's words (each 4 to 8 short per site); a binder whose receiver is `this` is not rescued by an owner accessor.
+  A forward-declared element type blocks the accessor (`&mSeqTrackInfo[i]` in JAIData.hpp).
