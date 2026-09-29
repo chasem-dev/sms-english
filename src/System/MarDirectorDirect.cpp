@@ -497,8 +497,8 @@ int TMarDirector::changeState()
 
 void TMarDirector::currentStateFinalize(u8 next_state)
 {
-	// TODO: frame 0xc0 vs retail 0x120 (instruction-exact otherwise; 0x90
-	// before getFader() and getGamePad()->offFlag(), research c-r29).
+	// TODO: frame 0xd0 vs retail 0x120 (instruction-exact otherwise; 0x90
+	// before getFader(), getGamePad()->offFlag() and getStage(), c-r29).
 	// MSMainProc dual-u8 args need scenario-then-stage named locals for RTL.
 	switch (mState) {
 	case STATE_UNK0:
@@ -515,8 +515,8 @@ void TMarDirector::currentStateFinalize(u8 next_state)
 		getGamePad()->offFlag(0x1);
 		gpCamera->endDemoCamera();
 		mConsole->unk94->startOpenWipe();
-		u8 scenario = gpApplication.mCurrArea.unk1;
-		u8 stage    = gpApplication.mCurrArea.unk0;
+		u8 scenario = gpApplication.mCurrArea.getScenario();
+		u8 stage    = gpApplication.mCurrArea.getStage();
 		MSMainProc::endStageEntranceDemo(stage, scenario);
 		break;
 
@@ -529,7 +529,7 @@ void TMarDirector::currentStateFinalize(u8 next_state)
 	case STATE_UNK5:
 		getGamePad()->offFlag(0x1);
 		SMSRumbleMgr->finishPause();
-		if (gpApplication.mCurrArea.unk0 == 1)
+		if (gpApplication.mCurrArea.getStage() == 1)
 			THPPlayerPlay();
 		break;
 
@@ -543,14 +543,14 @@ void TMarDirector::currentStateFinalize(u8 next_state)
 		    CUE_MOVE | CUE_CALC_ANIM | CUE_DRAW);
 
 		SMSSwitch2DArchive("guide", gArBkConsole);
-		if (gpApplication.mCurrArea.unk0 == 1)
+		if (gpApplication.mCurrArea.getStage() == 1)
 			THPPlayerPlay();
 		break;
 
 	case STATE_UNK11:
 		getGamePad()->offFlag(0x1);
 		SMSRumbleMgr->finishPause();
-		if (gpApplication.mCurrArea.unk0 == 1)
+		if (gpApplication.mCurrArea.getStage() == 1)
 			THPPlayerPlay();
 		switch (unk261) {
 		case 3:

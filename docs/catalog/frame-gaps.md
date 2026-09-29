@@ -2428,9 +2428,10 @@ The same shape on `TApplication::getFader()` and on further director members, pl
 | TGCLogoDir::direct_dolby | 0x38 | 0x68, mState reload only | 0x68 |
 | TGCLogoDir::setup | 0x278 | 0x280, slots (JGadget stride) | 0x280 |
 | TSelectDir::direct | 0x58 | 0xc8, every temporary on retail's slot | 0xd0 |
-| TMarDirector::nextStateInitialize | 0x98 | 0xc0 (98.55 -> 99.47) | 0x160 |
-| TMarDirector::changeState | 0x100 | 0x140 | 0x168 |
-| TMarDirector::currentStateFinalize | 0x90 | 0x98 | 0x120 |
+| TMarDirector::nextStateInitialize | 0x98 | 0x130 (98.55 -> 99.47) | 0x160 |
+| TMarDirector::changeState | 0x100, other | 0x148, every register right | 0x168 |
+| TMarDirector::currentStateFinalize | 0x90 | 0xd0 | 0x120 |
+| TMarDirector::updateGameMode | 0xa8 | 0xd0 | 0x130 |
 | TMenuDirector::direct | 0x90 | 0xb8 | 0x128 |
 | TGuide::perform | 0x260 | 0x298 | 0x2b8 |
 
@@ -2448,12 +2449,16 @@ The same shape on `TApplication::getFader()` and on further director members, pl
   getNintendo2D() at one of direct's three TNintendo2D reads closes direct's frame (any one of the three gives the same layout; two overshoot by 8).
   getSelectMenu() at all seven reads of TSelectDir::direct overshoots the low region by three words; at six (without the `mCloseMenu` read or without the first `mSelectedShine` read) every temporary and `res` sit on retail's slots.
 - moveStage then closed under hsearch (ae72c85d): raw `nextArea.unk1` for the two scenario tests (the stores beside them are raw) and `gpMarioOriginal->getFludd()`.
+- TMarDirector's own accessors are plain (the binder shape loses tree-wide, below), but the state functions read raw what retail read through them: `getGamePad()` for every `unk18[0]`/`unk18[i]` (`offFlag` for the `mFlags &= ~f` stores), `getStage()`, `getConsole()`, `getPortNum()`, `getTalkMode()` and `getTalkingNPC()` (18bdbf24, ffec580a).
+  Spelled at every site they move nextStateInitialize 0xc0 -> 0x130, currentStateFinalize 0x98 -> 0xd0, updateGameMode 0xa8 -> 0xd0 and changeState 0x140 -> 0x148 at unchanged instructions; the exceptions change code (`getTalkingNPC()` as openTalkWindow's argument).
+  changeState's r27/r29 swap was its `TConsoleStr* str` declared in the else block: declared at the top it takes retail's registers (hsearch `decl-hoist`).
 
 ### Measured and rejected
 
 - A binder-shaped `TMarDirector::getConsole()`: census 12028 -> 11996 exact (2 up / 34 down, the DOL breaks), so the MarDirector accessors are not this shape; neither is `TApplication::getMovie()` (MovieDirector direct overshoots to 0x2c0, decideNextMode to 0x100).
 - TApplication::proc: `getFader()` at any one of its five `mFader` sites changes code.
-- TMarDirector::currentStateFinalize: every combination of `getGamePad()->offFlag`, `unk18[0]->offFlag`, `mCurrArea.getStage()` and `getConsole()` stays at 0xc8 or below (retail 0x120); a static inline holding the repeated "Group 2D" off / "Guide" on pair is inert.
+- TMarDirector::currentStateFinalize: every combination of `getGamePad()->offFlag`, `unk18[0]->offFlag`, `mCurrArea.getStage()`/`getScenario()` and `getConsole()` reaches at most 0xd0 (retail 0x120); a static inline holding the repeated "Group 2D" off / "Guide" on pair is inert.
+  hsearch (240 s each, after these landed) finds no honest exact for it, changeState, TMarDirector::direct (its best 0x198 frame costs 25 register mismatches) or TMovieDirector::rsetup; their best spellings name single-use BOOL values or cut machine helpers.
 - TMenuDirector::direct: a member binder over `unk40` at all seven reads gives 0x108 at unchanged instructions (retail 0x128), but the remaining words (five depth-1, two among setNextArea's depth-2 objects, one at the bottom) are not supplied by the `unk44`/`unk38` binders (each show/hide site is one depth-1 word plus two bottom words; the checkFlag and setString sites change code) or by any `setNextArea` spelling.
   Not committed: the binder alone moves the frame but not the score.
 - TGCLogoDir's `mState` reload after the pad test (direct_nlogo, direct_dolby): with the frames exact nothing that adds an object can supply it, and an inline mState reader at the test or at the tail, `mState != nextState`, a named or `!= false` pad result and a pad-test helper all leave ours CSE-ing the load.
