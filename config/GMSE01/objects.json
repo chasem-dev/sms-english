@@ -332,6 +332,7 @@
     "NPC/NpcThrow.cpp",
     "NPC/NpcTrample.cpp",
     "OdemuExi2/DebuggerDriver.c",
+    "Player/MarioAccess.cpp",
     "Player/MarioAction.cpp",
     "Player/MarioBlend.cpp",
     "Player/MarioCheckCol.cpp",

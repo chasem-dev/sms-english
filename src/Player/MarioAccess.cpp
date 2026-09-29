@@ -196,72 +196,22 @@ bool SMS_IsMarioTouchGround4cm()
 // wrapper's return type -- cannot be reached from this TU yet.
 void SMS_IsMarioSpeedZero() { gpMarioOriginal->isSpeedZero(); }
 
-// TODO: 93.8%, and the only function keeping MarioAccess.cpp from being
-// source-linked. The original loads mHolder twice -- once into r0 for the null
-// test, once into r3 to dereference -- where MWCC gives us one load reused.
-// The body is otherwise exact: our 17 instructions are the target's 18 minus
-// that second `lwz r3, 0x68(r3)`, and the BOOL->bool tail (clrlwi/neg/subic/
-// subfe/clrlwi, same shape as SMS_IsMarioOnYoshi's) is already right.
-//
-// Rejected spellings (all measured; the last batch in a scratch TU with the
-// real 0x68/0x4c offsets, so the offsets are not the reason):
-//   * short-circuit && on the raw member (93.8%, best, what is below);
-//   * a separate null check then else-if (90.0%);
-//   * assigning the comparison to the result (54.7%);
-//   * casting the holder before the member access (93.8%, identical codegen);
-//   * isTaken() on the left of the && (73.6%: the BOOL ternary materialises a
-//     bool and adds a cmpwi, which the target does not have);
-//   * getHolder() on either side or both, getActorType(), isActorType(),
-//     u32/BOOL/pointer-returning isTaken() spellings, a base-class cast of
-//     gpMarioOriginal, a const base for the test, nested ifs, goto, do/while,
-//     a single-case switch, ||-inverted logic, non-short-circuit &, and a
-//     TU-local helper taking the holder by value or by const& (deferred
-//     definition included, which does not change CSE): every one of these
-//     compiles to the same 17 instructions, i.e. MWCC always CSEs the two
-//     member loads.
-// The only spelling that does reproduce two loads is a reference local or a
-// const-reference accessor (`TTakeActor* const& h = gpMarioOriginal->mHolder`),
-// but MWCC then keeps the *address* and emits `lwzu r0, 0x68(r3)` + `lwz r3,
-// 0(r3)`: right structure, wrong addressing mode. A scan of every .s file in
-// the ROM found 29 sites with this load/test/reload shape, and each of the
-// other 28 is explained by an intervening `bl`, an intervening store to the
-// same member, or index arithmetic (RumbleMgr's `mCtrlMgr[i]` with i folded to
-// 0) -- none of which exists here. Next idea worth trying: something that puts
-// a real call or store between the test and the dereference, i.e. the null test
-// may belong to a *different* inlined helper than the type test.
-// Closure batch 103 tried the documented CSE breakers and none of them works
-// here: a pointer-to-const parameter on a TU-local inline (the
-// AGENT_MATCHING_TIPS "const on an inline's pointer parameter also defeats
-// CSE" lever) applied to the null test, to the type test, and to both; the
-// const member `TTakeActor::isTaken()` on the left of the && (73.6%, the BOOL
-// still materialises *and* the load is still merged); and a `TTakeActor* const&`
-// reference parameter of an inline, which folds the address into the load
-// offset but still merges. Every variant is 17 instructions to retail's 18, so
-// the missing instruction really is a second `lwz 0x68`. Next idea: an
-// intervening *store*, i.e. the type test may live in a helper that also writes
-// a member (nothing in this 18-instruction body can be that store, so more
-// likely the whole predicate lived somewhere else and was inlined here).
-// Closure batch 115 added the batch-110 binding level (a TU-local `static
-// inline TTakeActor* MarioAccessHolder(const TMario*)` binding the fetch, used
-// on both sides of the &&): codegen is byte-identical to the raw spelling, so
-// a binding level is not a CSE breaker either. What is left untried is a
-// spelling in which the two loads are genuinely different memory to MWCC.
-// Batch cc22, all inert or worse: a `TTakeActor**` to the member (19
-// instructions), a `(u32)` null test, a ternary (82.4), two nested ifs with a
-// false default (76.1), and a named `TMario*` receiver (identical).
-// Batch c-link4, all 17 instructions: TU-local levels over the mario
-// pointer for the null test or the type test (`const TMario*`/`TTakeActor*`,
-// getHolder() inside), BOOL-valued `!= nullptr` tests, and `== TRUE` isTaken().
-bool SMS_IsMarioOnWire()
+// Test the nullable holder through its reference, then read the actor type
+// through the rider. Both holder reads belong to this wire-riding predicate.
+static inline bool MarioAccessIsWireRider(const TTakeActor& rider)
 {
+	TTakeActor* const& holder = rider.mHolder;
 	bool ret;
-	if (gpMarioOriginal->mHolder
-	    && gpMarioOriginal->mHolder->mActorType == 0x40000098)
+	if (holder && rider.mHolder->mActorType == 0x40000098)
 		ret = true;
 	else
 		ret = false;
-
 	return !!ret;
+}
+
+bool SMS_IsMarioOnWire()
+{
+	return MarioAccessIsWireRider(*gpMarioOriginal);
 }
 
 bool SMS_IsMarioOpeningDoor()
