@@ -505,3 +505,8 @@ Retail's matrices are adjacent at 0x44..0x74 and 0x74..0xa4.
 Passing the clamp expression directly to the typed X rotation computation moves its binding below the matrices, preserves the 0xb8 frame and produces a byte-exact function with production GC/1.2.5.
 The change comes from the measured local-object order; no additional storage is introduced.
 `tools/mwcc-stack/native.py` makes the debugger's locals and unique-name evidence available through native GDB and Wibo.
+
+
+SamboHeadRollCallback provides a second measured example: passing its three axis projections directly to the vector constructor moves localAxis from 0xa0 to retail's 0xac.
+Production similarity improves from 97.71503% to 97.73575%; the remaining differences concern floating registers and the angle-load schedule.
+The frame and other functions/data are preserved, symbol diagnostics are unchanged, and the full build retains the original DOL hash.

@@ -1091,11 +1091,8 @@ static inline f32 SamboProject(const JGeometry::TVec3<f32>& a,
 
 // Rolls the body joint about the axis perpendicular to the velocity while
 // the head is airborne.
-// TODO: every instruction present; mRollAngle loads early (retail reads it
-// between the colZ length and the column loads), which renumbers the FPRs,
-// and localAxis sits at 0xa0 (retail 0xac).
-// Inert or worse: moving the angle read (six spots), building the columns
-// with set() or member stores. Retail loads colX/colY forward, ours reversed.
+// TODO: matrix and axis slots match. The angle-load schedule and FPRs differ;
+// retail reads mRollAngle among the colZ length and colX/colY loads.
 static int SamboHeadRollCallback(J3DNode* node, int param)
 {
 	if (param == 0) {
@@ -1122,10 +1119,9 @@ static int SamboHeadRollCallback(J3DNode* node, int param)
 		                           anmMtx[2][1]);
 		f32 angle = gpCurSamboHead->mRollAngle;
 
-		f32 pz = SamboProject(axis, colZ);
-		f32 py = SamboProject(axis, colY);
-		f32 px = SamboProject(axis, colX);
-		JGeometry::TVec3<f32> localAxis(px, py, pz);
+		JGeometry::TVec3<f32> localAxis(SamboProject(axis, colX),
+		                                SamboProject(axis, colY),
+		                                SamboProject(axis, colZ));
 
 		MTXRotAxisRad(roll, &localAxis, 0.017453292f * angle);
 		MTXConcat(anmMtx, roll, anmMtx);
