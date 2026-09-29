@@ -524,29 +524,29 @@ void TRailFence::falling()
 	}
 }
 
-// TODO: instruction-exact, frame 0x68 against 0x88. The node read spelled
-// against the raw index lets moveToShortestNext reuse the loaded index as
-// retail does (getCurrent() or getCurGraphIndex() reload it), and the named
-// `dist` gives retail's 8 bytes between `toNode` and the first indexToPoint
-// temporary. Retail then has 7 more words below the second temporary;
-// SMSGetMSound() at the sound sites (+8), squared(), sub() and spelling
-// moveToShortestNext out were inert or broke the code.
+// The node read spelled against the raw index lets moveToShortestNext reuse
+// the loaded index as retail does (getCurrent() or getCurGraphIndex() reload
+// it), and the named `dist` gives retail's 8 bytes between `toNode` and the
+// first indexToPoint temporary. The two sounds use the two-argument
+// startSoundActor and the offset reads getPosition(): together they are
+// retail's dead words below the second temporary (frame 0x68 -> 0x88).
 void TRailFence::goOnRail()
 {
 	if (mTracer->getGraph()) {
 		JGeometry::TVec3<f32> toNode = mTracer->getCurrentPos();
-		toNode.x -= mPosition.x;
-		toNode.y -= mPosition.y;
-		toNode.z -= mPosition.z;
+		toNode.x -= getPosition().x;
+		toNode.y -= getPosition().y;
+		toNode.z -= getPosition().z;
 
 		f32 dist
 		    = toNode.x * toNode.x + toNode.y * toNode.y + toNode.z * toNode.z;
 		if (dist < 50.0f) {
-			TRailNode* node
-			    = mTracer->getGraph()->getGraphNode(mTracer->mCurrIdx).getRailNode();
+			TRailNode* node = mTracer->getGraph()
+			                      ->getGraphNode(mTracer->mCurrIdx)
+			                      .getRailNode();
 			if (node->mConnectionNum == 0 && (node->mFlags & 8)) {
 				gpMSound->startSoundActor(MSD_SE_OBJ_MVING_FENCT_SET,
-				                          &mPosition, 0, nullptr, 0, 4);
+				                          &mPosition);
 				startStateTimer(mWaitTime);
 				startAnim(1);
 				setState(STATE_AT_GOAL);
@@ -557,8 +557,7 @@ void TRailFence::goOnRail()
 			toNode.set(mTracer->getCurrentPos());
 		}
 
-		gpMSound->startSoundActor(MSD_SE_OBJ_MVING_FENCE_MOVE, &mPosition, 0,
-		                          nullptr, 0, 4);
+		gpMSound->startSoundActor(MSD_SE_OBJ_MVING_FENCE_MOVE, &mPosition);
 		VECNormalize(toNode, toNode);
 		toNode.scale(mMoveSpeed);
 		mLinearVelocity.add(toNode);
