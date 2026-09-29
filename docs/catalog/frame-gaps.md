@@ -2410,3 +2410,58 @@ MenuDir and MovieDirector `setup` are byte-exact on wt/c-r28 (8de925f5, 49aa812e
 - A named local in TNameRef's or TViewObj's ctor is ruled out by their weak copies' 0x18 frames (`u16 key = calcKeyCode(name)` is also inert: it takes a register); a class `operator new` would add a word at every exact `new` of a TNameRef class.
 - Not the MarDirector class: the same binder shape on `TMarDirector::getGamePad(int)` is 3 down / 0 up tree-wide and breaks the DOL (`setup2`, `evInvalidatePad`, `evOnNeutralMarioKey`), so its deficits (currentStateFinalize and the rest) keep the plain accessor and stay open.
 - Left open: GCLogoDir setup (two words between the TNintendo2D/TProgSelect push_backs, the JGadget iterator stride, two bottom words), MenuDir/MovieDirector `rsetup` (no TDStageGroup; list/iterator classes).
+
+## Research batch c-r29 (2026-09-29): the director deficits are binder-shaped member accessors and a BOOL pad test
+
+Question: apply c-r28's two mechanisms (default-argument temporaries, later statements' accessor objects landing breadth-first) to the director `direct`/`setup`/state functions.
+Answer: the missing words are the second mechanism, and the accessors that carry them have one shape: `T* get() { T* x = m; return x; }`, the shape c-r28 found for the directors' `getGamePad()`.
+The same shape on `TApplication::getFader()` and on further director members, plus a `BOOL` return on `TMarioGamePad::isSomethingPushed()`, lands most director frames.
+
+### What landed (wt/c-r29)
+
+| Function | Before | After | Retail |
+| --- | --- | --- | --- |
+| TMovieDirector::direct | 0x1f8, other | **exact** | 0x270 |
+| TMarDirector::moveStage | 0x50 | **exact** | 0x70 |
+| TGCLogoDir::direct | 0x50 | 0x78, slots (1 word) | 0x78 |
+| TGCLogoDir::direct_nlogo | 0xa0 | 0x130, mState reload only | 0x130 |
+| TGCLogoDir::direct_dolby | 0x38 | 0x68, mState reload only | 0x68 |
+| TGCLogoDir::setup | 0x278 | 0x280, slots (JGadget stride) | 0x280 |
+| TSelectDir::direct | 0x58 | 0xc8, every temporary on retail's slot | 0xd0 |
+| TMarDirector::nextStateInitialize | 0x98 | 0xc0 (98.55 -> 99.47) | 0x160 |
+| TMarDirector::changeState | 0x100 | 0x140 | 0x168 |
+| TMarDirector::currentStateFinalize | 0x90 | 0x98 | 0x120 |
+| TMenuDirector::direct | 0x90 | 0xb8 | 0x128 |
+| TGuide::perform | 0x260 | 0x298 | 0x2b8 |
+
+- `TApplication::getFader()` is `{ TSMSFader* fader = mFader; return fader; }`, used for `gpApplication.mFader` at the fader sites of every director (d8b7b9f9).
+  Every director frame moves toward retail and none overshoots except GCLogoDir setup's `setColor` site, which stays raw (its `startWipe` takes the accessor).
+  A plain or `const&` return is inert.
+  Inside TApplication's own members `mFader` stays raw: `getFader()` there changes code in `proc` and `initialize`.
+  setupObjects' TU-local `MarDirectorFader()` binder (cc32) was this accessor; it and the `MarDirectorCurrentStage()` fork are now `gpApplication.getFader()` and `mCurrArea.getStage()`, byte-identical (70ec682a).
+- `TMarioGamePad::isSomethingPushed()` returns `BOOL` (60ea6329).
+  Its bool-to-int conversion makes the call a value, so a test like `a && pad->isSomethingPushed()` keeps a dead forced-load word (TApplication::proc's `!` tests moved too, 0x78 -> 0x80).
+  This is what hsearch found as "name the pushed value" in TMovieDirector::direct and what cc32 found as a named `bool pushed` in TSelectDir::direct; it closes TMovieDirector::direct with no site change.
+  Measured against a named-local body, `? true : false`, an if/return body and a raw `(mValue & bit) != 0`: those change code in MovieDirector, SelectDir and TApplication::proc; `BOOL` changes no instruction and only moves frames toward retail, in all five units that call it.
+- `TGCLogoDir::getProgSelect()` and `getNintendo2D()` and `TSelectDir::getSelectMenu()`, same shape, invented names (ace6f0ea, f12bf941).
+  getProgSelect() at every read of direct and direct_nlogo gives direct_nlogo retail's 0x130 exactly; setup, which reads `mProgSelect` right after assigning it, stays raw (the accessor overshoots there).
+  getNintendo2D() at one of direct's three TNintendo2D reads closes direct's frame (any one of the three gives the same layout; two overshoot by 8).
+  getSelectMenu() at all seven reads of TSelectDir::direct overshoots the low region by three words; at six (without the `mCloseMenu` read or without the first `mSelectedShine` read) every temporary and `res` sit on retail's slots.
+- moveStage then closed under hsearch (ae72c85d): raw `nextArea.unk1` for the two scenario tests (the stores beside them are raw) and `gpMarioOriginal->getFludd()`.
+
+### Measured and rejected
+
+- A binder-shaped `TMarDirector::getConsole()`: census 12028 -> 11996 exact (2 up / 34 down, the DOL breaks), so the MarDirector accessors are not this shape; neither is `TApplication::getMovie()` (MovieDirector direct overshoots to 0x2c0, decideNextMode to 0x100).
+- TApplication::proc: `getFader()` at any one of its five `mFader` sites changes code.
+- TMarDirector::currentStateFinalize: every combination of `getGamePad()->offFlag`, `unk18[0]->offFlag`, `mCurrArea.getStage()` and `getConsole()` stays at 0xc8 or below (retail 0x120); a static inline holding the repeated "Group 2D" off / "Guide" on pair is inert.
+- TMenuDirector::direct: a member binder over `unk40` at all seven reads gives 0x108 at unchanged instructions (retail 0x128), but the remaining words (five depth-1, two among setNextArea's depth-2 objects, one at the bottom) are not supplied by the `unk44`/`unk38` binders (each show/hide site is one depth-1 word plus two bottom words; the checkFlag and setString sites change code) or by any `setNextArea` spelling.
+  Not committed: the binder alone moves the frame but not the score.
+- TGCLogoDir's `mState` reload after the pad test (direct_nlogo, direct_dolby): with the frames exact nothing that adds an object can supply it, and an inline mState reader at the test or at the tail, `mState != nextState`, a named or `!= false` pad result and a pad-test helper all leave ours CSE-ing the load.
+- TGCLogoDir::direct's last word (between the rect and colour temporaries): named rect/colour locals, `TColor(u32)`, a `.get()` colour and TNintendo2D setter levels (which change code) are all worse.
+- decideNextScenario: our dump has no dead object at all (the inlined shadow-Mario loop's bool and counter take registers); retail's 6-8 words stay unexplained.
+
+### Reading
+
+- The directors' source reached their own members and the application's fader through getters of one binder shape; where the tree read the member raw, the frame is short by one depth-1 word (the named local) plus its forced-load and comma words per site.
+  Reads right after the member is assigned (`mProgSelect = new ...; mProgSelect->...`) and reads inside the owning class stay raw.
+- A value-context use of a `bool` accessor is free, but of a `BOOL` accessor costs a word: when a pad or flag test is short one word per site and the test is an `&&` operand, check the accessor's return type before naming the value.
