@@ -125,20 +125,20 @@ void MSRandPlay::startSeRandPlay(u32 sound_id, u32 vec_idx)
 	}
 }
 
-// TODO: instruction-exact; frame 0x40 vs retail 0x48, same 8-byte low-region
-// gap as MSRandVol's ctor. Inert: members assigned in the body (all or some).
+// Share the empty-vector count between capacity and registered entries.
 MSRandPlay::MSRandPlay(u32 sound_id, s32 wait_min, s32 wait_max,
                        f32 curve_slope, f32 plus_slope)
     : mLink(this)
-    , mRandPlayVecs(0)
-    , mRandPlayVecMax(0)
-    , mRandPlayVecNum(0)
-    , mSoundID(sound_id)
-    , mWaitMin(wait_min)
-    , mWaitMax(wait_max)
-    , mCurveSlope(curve_slope)
-    , mPlusSlope(plus_slope)
 {
+	u16 initialCount = 0;
+	mRandPlayVecs   = 0;
+	mRandPlayVecMax = initialCount;
+	mRandPlayVecNum = initialCount;
+	mSoundID       = sound_id;
+	mWaitMin       = wait_min;
+	mWaitMax       = wait_max;
+	mCurveSlope    = curve_slope;
+	mPlusSlope     = plus_slope;
 }
 
 // TODO: `actor` sits at 0x18 vs retail 0x14. Inert: fVar3 at function scope
