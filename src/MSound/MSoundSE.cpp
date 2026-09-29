@@ -28,20 +28,16 @@ void MSRandVol::construct(u32 param)
 	smList.append(&p->mLink);
 }
 
-// TODO: instruction-exact; frame 0x18 vs retail 0x20 (8 bytes of low region,
-// as in MSRandPlay's ctor). Inert: body assignments instead of initialisers,
-// an empty base, an inline dtor, dropping `virtual`. A named `f32 half`
-// for the three 0.5f stores fills the frame (100%), but nothing in the code
-// asks for it and MSRandPlay's ctor has the same gap with no constant to
-// name, so it is not used.
+// Share the default amplitude preset with the two profile entries.
 MSRandVol::MSRandVol(u32 param)
     : mLink(this)
     , unk14(param)
-    , mAmplitude(0.5f)
 {
+	f32 amplitude = 0.5f;
+	mAmplitude = amplitude;
 	mPSlopes[0] = 0.0f;
 	mPSlopes[1] = 0.25f;
-	mPSlopes[2] = 0.5f;
+	mPSlopes[2] = amplitude;
 	mPSlopes[3] = 0.75f;
 
 	mCSlopes[0] = 1.0f;
@@ -50,7 +46,7 @@ MSRandVol::MSRandVol(u32 param)
 	mCSlopes[3] = 4.0f;
 
 	mAmplitudes[0] = 0.25f;
-	mAmplitudes[1] = 0.5f;
+	mAmplitudes[1] = amplitude;
 	mAmplitudes[2] = 0.75f;
 	mAmplitudes[3] = 1.0f;
 }
