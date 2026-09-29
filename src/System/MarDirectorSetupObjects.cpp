@@ -38,17 +38,10 @@
 extern void* gpSceneCmnDat;
 extern int gpSceneCmnDatSize;
 
-// Frame levels for decideMarioPosIdx (cc32): the fader binder (+8 at its
-// three sites) and a direct-return stage fork on the switch expression put
-// the three TColor temporaries at retail's 0x34/0x3c/0x44 in a 0x68 frame.
-// Names are fabricated.
-static inline TSMSFader* MarDirectorFader()
-{
-	TSMSFader* fader = gpApplication.mFader;
-	return fader;
-}
-
-static inline u8 MarDirectorCurrentStage() { return gpApplication.mCurrArea.unk0; }
+// Frame levels for decideMarioPosIdx (cc32): the fader accessor (+8 at its
+// three sites; the binder cc32 wrote here is TApplication::getFader(), research
+// c-r29) and a direct-return stage read on the switch expression put the
+// three TColor temporaries at retail's 0x34/0x3c/0x44 in a 0x68 frame.
 
 // Binding `prevArea` first gives the zero constant the higher callee-saved
 // register, as retail (cc32).
@@ -59,10 +52,10 @@ void TMarDirector::decideMarioPosIdx()
 	unkD1 = 0;
 	unkE4 = 1;
 
-	switch (MarDirectorCurrentStage()) {
+	switch (gpApplication.mCurrArea.getStage()) {
 	case 15:
 		unkE4 = 14;
-		MarDirectorFader()->setColor(
+		gpApplication.getFader()->setColor(
 		    JUtility::TColor(0x00, 0x00, 0x00, 0xff));
 		break;
 
@@ -79,7 +72,7 @@ void TMarDirector::decideMarioPosIdx()
 	case 8:
 	case 9: {
 		unkE4 = 14;
-		MarDirectorFader()->setColor(
+		gpApplication.getFader()->setColor(
 		    JUtility::TColor(0xd2, 0xd2, 0xd2, 0xff));
 		unkD1 = 1;
 	} break;
@@ -127,7 +120,7 @@ void TMarDirector::decideMarioPosIdx()
 					unkD0 = 7;
 					unkD1 = 2;
 					unkE4 = 0xe;
-					MarDirectorFader()->setColor(
+					gpApplication.getFader()->setColor(
 					    JUtility::TColor(0x00, 0x00, 0x00, 0xff));
 					break;
 				case 9:
