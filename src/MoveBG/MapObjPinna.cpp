@@ -77,6 +77,15 @@ static inline void MapObjPinnaAdvance(TMapObjBase* p, f32 rate)
 	MapObjPinnaFrameCtrl(p)->setFrame(rate + MapObjPinnaFrameCtrl(p)->getFrame());
 }
 
+// An incoming receiver for this wheel-specific sound operation shares r30
+// with the gondola loop offset, as retail does. A caller-owned MSound local
+// uses r29 instead despite an identical frame and instruction sequence.
+static inline void MapObjPinnaPlayWheelSound(MSound* sound, const Vec* position)
+{
+	sound->startSoundActor(MSD_SE_OBJ_MAHRE_GATE_LIGHT, position, 0,
+	                       &sound->unk80, 0, 4);
+}
+
 void TFerrisWheel::control()
 {
 	TMapObjBase::control();
@@ -91,16 +100,9 @@ void TFerrisWheel::control()
 	}
 
 	if (mAnmRate > SMSGetAnmFrameRate() / 4.0f) {
-		MSound* sound = MapObjPinnaGetMSound();
-		sound->startSoundActor(MSD_SE_OBJ_MAHRE_GATE_LIGHT, &mPosition, 0,
-		                       &sound->unk80, 0, 4);
+		MapObjPinnaPlayWheelSound(MapObjPinnaGetMSound(), &mPosition);
 	}
 
-	// TODO: 99.9%. Retail keeps the gpMSound receiver in r30 (shared with the
-	// gondola loop's offset) where ours takes r29. Tried: SMSGetMSound(),
-	// raw gpMSound and the three-argument startSoundActor overload (all -8),
-	// sound declared at function scope, the gondola loop in a TU-local level
-	// (-8, rotates the loop), getGondolaNum() bound, gondola/mtx reordered.
 	MapObjPinnaAdvance(this, mAnmRate);
 
 	for (int i = 0; i < mGondolaNum; i++) {
