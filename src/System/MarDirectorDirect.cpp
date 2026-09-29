@@ -1092,13 +1092,11 @@ u8 TMarDirector::updateGameMode()
 	return r29;
 }
 
-// TODO: 98.6%, frame 0x48 vs retail 0x70: the three TColor temporaries sit
-// 0x24 higher (a dead low region) and `this` is r31 vs r29. Inert (c-sys1):
-// no nextArea binding, a pointer binding, declaring it first, SMSGetApplication()->
-// TODO: instructions exact; frame 0x50 vs retail 0x70 (the TColor
-// temporaries sit 0x1c lower). Body from upstream, whose accessor levels
-// (SMSGetApplication()->getFader(), getScenario()) fixed the register
-// assignment (98.6 -> 99.9); the nozzle store keeps the ROM's `mr r5, r0`.
+// Body from upstream, whose accessor levels (SMSGetApplication()->getFader(),
+// getStage()) fixed the register assignment; the nozzle store keeps the
+// ROM's `mr r5, r0`. The frame closed with the binder-shaped getFader(), raw
+// `unk1` for the two scenario tests (as the stores beside them) and
+// getFludd() for the nozzle read (research c-r29, hsearch).
 void TMarDirector::moveStage()
 {
 	unkB4 = TApplication::APP_STATE_GAMEPLAY;
@@ -1112,7 +1110,7 @@ void TMarDirector::moveStage()
 
 	TGameSequence& nextArea = SMSGetApplication()->mNextArea;
 
-	if (nextArea.getScenario() == 0xff)
+	if (nextArea.unk1 == 0xff)
 		switch (nextArea.getStage()) {
 		case 1:
 			unkE4         = 2;
@@ -1240,7 +1238,7 @@ void TMarDirector::moveStage()
 			break;
 		}
 
-	if (nextArea.getScenario() != 0xff) {
+	if (nextArea.unk1 != 0xff) {
 		if (unk4C & DIRECTOR_FLAG_MOVIE_PENDING) {
 			unkE4 = 15;
 			SMSGetApplication()->getFader()->setColor(
@@ -1252,7 +1250,7 @@ void TMarDirector::moveStage()
 	}
 
 	if (gpMarioOriginal->checkFlag(MARIO_FLAG_HAS_FLUDD)) {
-		int nozzle      = gpMarioOriginal->mWaterGun->mSecondNozzle;
+		int nozzle      = gpMarioOriginal->getFludd()->mSecondNozzle;
 		s32 savedNozzle = nozzle;
 		if (nozzle == 3)
 			savedNozzle = 4;
