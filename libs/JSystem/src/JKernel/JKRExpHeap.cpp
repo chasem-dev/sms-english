@@ -111,7 +111,7 @@ JKRExpHeap::JKRExpHeap(void* data, u32 size, JKRHeap* parent, bool errorFlag)
 	mCurrentGroupID   = 0xFF;
 	mHead             = static_cast<CMemBlock*>(data);
 	mTail             = mHead;
-	mHead->initiate(nullptr, nullptr, size - 0x10, 0, 0);
+	mHead->initiate(nullptr, nullptr, size - sizeof(CMemBlock), 0, 0);
 	mHeadUsedList = nullptr;
 	mTailUsedList = nullptr;
 }
@@ -477,7 +477,7 @@ void JKRExpHeap::free(void* ptr)
 			block->free(this);
 		}
 	} else {
-		JUT_WARNING_F("free: memblock %x not in heap %x", memblock, this);
+		JUT_WARNING_F2("free: memblock %x not in heap %x", ptr, this);
 	}
 	unlock();
 }
