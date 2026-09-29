@@ -53,24 +53,20 @@ MSRandVol::MSRandVol(u32 param)
 
 u32 MSRandVol::getRandomVolume(u32 param_1, u32 param_2) { }
 
-// TODO: instructions exact but for scheduling; retail computes the CSlope
-// index before the PSlope one (and swaps their registers). Named u32 indices,
-// named slope locals, parenthesised or pre-masked indices are inert.
-// Also inert (2026-09-23): mAmplitude * amp, named product, `d += 1.0f`,
-// `1.0f + ...`, a pointer to the CSlope entry; named p/c locals cost 3-4 insns.
-// Swapping the two slope shifts gets the scheduling (99.6) but indexes each
-// table with the other field, which retail does not do.
-f32 MSRandVol::getRandVol(u32 param_1)
+// Apply the random offset and clamp after reading the three profile inputs.
+static inline f32 MSRandVolumeFromSlopes(f32 amplitude, f32 curveSlope, f32 plusSlope)
 {
-	f32 d = JALCalc::getRandom(
-	            mAmplitudes[param_1 >> MSSeSwBit_RandomVolumeAmplitudeShift & 3]
-	                * mAmplitude,
-	            mCSlopes[param_1 >> MSSeSwBit_RandomVolumeCSlopeShift & 3],
-	            mPSlopes[param_1 >> MSSeSwBit_RandomVolumePSlopeShift & 3])
-	        + 1.0f;
-
+	f32 d = JALCalc::getRandom(amplitude, curveSlope, plusSlope) + 1.0f;
 	f32 x = d < 0.0f ? 0.0f : d;
 	return x > 2.0f ? 2.0f : x;
+}
+
+f32 MSRandVol::getRandVol(u32 param_1)
+{
+	return MSRandVolumeFromSlopes(
+	    mAmplitudes[param_1 >> MSSeSwBit_RandomVolumeAmplitudeShift & 3] * mAmplitude,
+	    mCSlopes[param_1 >> MSSeSwBit_RandomVolumeCSlopeShift & 3],
+	    mPSlopes[param_1 >> MSSeSwBit_RandomVolumePSlopeShift & 3]);
 }
 
 void MSRandPlay::construct(u32 sound_id, s32 wait_min, s32 wait_max,
