@@ -139,8 +139,8 @@ inline void TLensFlare::calcAnim()
 
 	JGeometry::TVec3<f32> near9grid[9];
 	S16Vec camEuler;
-	LensCalcNearNinePos(near9grid, &camEuler, (const Vec&)gpCamera->unk124,
-	                    (const Vec&)gpCamera->unk148,
+	LensCalcNearNinePos(near9grid, &camEuler, gpCamera->getUnk124Vec(),
+	                    gpCamera->getUnk148Vec(),
 	                    gpCamera->getFinalAngleZ(), gpCamera->getNear(),
 	                    gpCamera->getFovy(), gpCamera->getAspect());
 
@@ -165,13 +165,19 @@ inline void TLensFlare::calcAnim()
 	// `&&` value temporaries (@588/@589), and regalloc --search fixes the
 	// rotation by colouring it first, so retail's pointer was an object
 	// created before them); (b) closed; (c) closed by c-k17's named angles;
-	// (d) the frame is 0x98 short (0x220 vs 0x2b8). c-k17 put every mapped
+	// (d) the frame is 0x80 short (0x238 vs 0x2b8). c-k17 put every mapped
 	// object in retail's order (hsearch dbg: order 0, from 4): the return
 	// temporary, the sun conversion, the two camera conversions, then `rot`,
 	// `dir`, d5/d1/l, camEuler, the grid, the sun, the matrix. Retail still has
-	// 2 more words above the return temporary, 2 between the unk124
-	// conversion and `rot`, 6 between entry()'s colour copy and the 8-byte
-	// object below it, and 28 below everything we map.
+	// 3 more words between the two camera conversions and the pool above
+	// them, 2 between the unk124 conversion and `rot`, 6 between entry()'s
+	// colour copy and the 8-byte object below it, and 21 below everything we
+	// map. The camera points are read through Camera.hpp's `Vec`-typed
+	// accessors (research c-r26: the members themselves are TVec3, since the
+	// camera's own TUs pass their addresses straight to `TVec3` parameters);
+	// that is instruction-identical to the old `(const Vec&)` casts and 0x18
+	// closer on frame. `SMSGetCamera()->` for the two reads is 8 closer again
+	// with the same instructions, not taken as a frame-only binder.
 	JGeometry::TVec3<f32> dir;
 	dir.sub(l, JGeometry::TVec3<f32>(sunWorldPos));
 	JGeometry::TVec3<f32> rot = MsGetRotFromZaxis(dir);

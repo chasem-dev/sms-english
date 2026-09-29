@@ -879,8 +879,13 @@ void TBaseNPC::perform(u32 cue, JDrama::TGraphics* graphics)
 	// gpCamera, y/z through a kept `&unk124`): `local_4C((const Vec&)
 	// gpCamera->unk124)` reproduces it (96.6, semantic-diff clean) but not the
 	// conversion schedule around it. TLensFlare's CLBCalcNearNinePos
-	// arguments need the same `(const Vec&)` cast on unk124/unk148, so those
-	// two camera members may be plain `Vec`s in retail (Camera.hpp, shared).
+	// arguments need the same `Vec`-typed reads of unk124/unk148.
+	// c-r26: the members are TVec3 (the camera's own TUs pass their
+	// addresses to `TVec3` parameters; as plain `Vec`s the tree loses 6
+	// functions and gains none), so the `Vec` view is an accessor:
+	// `local_4C = gpCamera->getUnk124Vec()` is the same 96.6 as the cast,
+	// with `at`/`pos` through getUnk148Vec()/getUnk124Vec() 96.5, and the
+	// copy folded into MsIsInSight's argument 96.1.
 	if (cue & CUE_ENTRY) {
 		offLiveFlag(LIVE_FLAG_UNK1000000);
 		if (NpcSquaredDist(mPosition, gpCamera->unk124) > CLBSquared(mIndividualParams->mAllDLLockDist.get())
