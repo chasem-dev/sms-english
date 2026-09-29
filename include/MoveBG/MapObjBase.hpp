@@ -136,7 +136,10 @@ struct TMapObjData {
 	/* 0x34 */ u32 unk34; // TODO: these are flags
 	/* 0x38 */ u32 unk38;
 
-	// Invented name (c-k15): the move animation's frame control.
+	// Invented names (c-k15): the physical parameters and the move
+	// animation's frame control.
+	const TMapObjPhysicalInfo* getPhysical() const { return mPhysical; }
+	TMapObjPhysicalData* getPhysicalData() const { return mPhysical->unk4; }
 	J3DFrameCtrl* getMoveFrameCtrl() const { return mMove->unk8; }
 };
 
