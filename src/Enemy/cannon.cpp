@@ -201,11 +201,12 @@ void TChorobei::checkHit()
 
 BOOL TChorobei::receiveMessage(THitActor*, u32) { return FALSE; }
 
-// UNUSED, 0x70 in the map: the appear animation has run out.
+// UNUSED, 0x70 in the map: the appear animation has run out. Both
+// isUpEnd and isDownEnd read the actor through getMActor() (c-k13).
 bool TChorobei::isUpEnd()
 {
-	if (mParts->getMActor()->curAnmEndsNext()
-	    && mParts->getMActor()->checkCurBckFromIndex(0xC))
+	if (getMActor()->curAnmEndsNext()
+	    && getMActor()->checkCurBckFromIndex(0xC))
 		return true;
 	unk70 = 0.0f;
 	return false;
@@ -214,8 +215,8 @@ bool TChorobei::isUpEnd()
 // UNUSED, 0x70 in the map: the hide animation has run out.
 bool TChorobei::isDownEnd()
 {
-	if (mParts->getMActor()->curAnmEndsNext()
-	    && mParts->getMActor()->checkCurBckFromIndex(0xF)) {
+	if (getMActor()->curAnmEndsNext()
+	    && getMActor()->checkCurBckFromIndex(0xF)) {
 		unk70 = 1.0f;
 		return true;
 	}
@@ -1020,11 +1021,8 @@ static inline TCannon* CannonBody(TSpineBase<TLiveActor>* spine)
 	return cannon;
 }
 
-// TODO: frame 0x58, retail 0x60; every instruction matches. Inert: getChorobei()
-// at either site, `!getTime()` (-8), a named nerve pointer, a named MActor in
-// isUpEnd; re-reading CannonBody(spine) for checkCurAnmEnd lands 0x60 but
-// reloads the body where retail reuses r29. can1: every spelling measured
-// shrinks (raw unk18 in isUpEnd -8/-0x10, `!getTime()` -8); no honest +8.
+// isUpEnd reads the actor through TChorobei::getMActor() at both tests; its
+// mParts binding in this expansion is the word the frame lacked (c-k13).
 DEFINE_NERVE(TNerveCannonOpen, TLiveActor)
 {
 	TCannon* cannon = CannonBody(spine);
@@ -1210,8 +1208,8 @@ DEFINE_NERVE(TNerveCannonForceBombShoot, TLiveActor)
 	return FALSE;
 }
 
-// Binding levels worth +8 each of low region, landing TNerveCannonClose's
-// frame at 0xb8 (the body binder plus the chorobei binder at two sites).
+// Binding level worth +8 of low region at TNerveCannonClose's isDownEnd
+// test (frame 0xb8); the setBckAnm site reads getChorobei() (c-k13).
 static inline TChorobei* CannonCloseChorobei(TCannon* p)
 {
 	TChorobei* chorobei = p->mChorobei;
@@ -1224,7 +1222,7 @@ DEFINE_NERVE(TNerveCannonClose, TLiveActor)
 
 	if (spine->getTime() < 2) {
 		cannon->deadCannon();
-		CannonCloseChorobei(cannon)->setBckAnm(0xF);
+		cannon->getChorobei()->setBckAnm(0xF);
 		cannon->mEffectPos = cannon->mPosition;
 		cannon->mEffectPos.y += 300.0f;
 		gpMarioParticleManager->emitAndBindToPosPtr(0xC9, &cannon->mEffectPos,
