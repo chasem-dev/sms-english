@@ -27,8 +27,12 @@ void TMario::playerRefrection(int param_1)
 // A zero distance resets dx too: retail loads 1.0f into dx's register and
 // copies it to dist, and matan later reads that dx.
 // thresh initialised at its declaration gives retail's entry registers.
-// TODO: instruction-exact; only slots differ: two inline temporaries 8 high,
-// floorY/ground swapped, and the diff sub temporaries 0x20-0x28 high.
+// TODO: instruction-exact; only slots differ (named block exact with ground
+// declared before floorY). hsearch dbg: retail stacks the `diff * step`
+// operand copy (0x5c) over the two sqrt volatiles (0x58/0x54), then the
+// `newPos - mPosition` copy (0x44) and the product (0x34); ours keeps the
+// three TVec3 temporaries together above the volatiles. The by-value
+// operator-/operator* header class (frame-gaps.md c-r20/c-r21).
 void TMario::keepDistance(const JGeometry::TVec3<f32>& target, f32 param_2,
                           f32 param_3)
 {
@@ -74,8 +78,8 @@ void TMario::keepDistance(const JGeometry::TVec3<f32>& target, f32 param_2,
 	newPos.z = target.z + thresh * JMASCos(angle);
 
 	checkWallPlane(&newPos, 60.0f, unk15C);
-	f32 floorY;
 	const TBGCheckData* ground;
+	f32 floorY;
 	checkGroundPlane(newPos.x, newPos.y, newPos.z, &floorY, &ground);
 	if (!ground->isLegal())
 		return;
