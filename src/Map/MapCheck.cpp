@@ -182,6 +182,10 @@ int TMapCollisionData::checkWalls(TBGWallCheckRecord* param_1) const
 // TODO: roof 99.0% (frame 0x38 vs 0x70), ground 98.9% (0x38 vs 0x78); only
 // slots differ. A shared edge helper with four named corner reads gives the
 // 0x70 roof frame but loses retail's register pairing (97.6-98.5).
+// Retail tests the water flag with a signed `cmpwi` hoisted out of the loop:
+// `param_4 &= 0x4` plus `(s32)param_4 != 0` gives roof 99.9 (slots only) but
+// the cast is a no-op conversion, so it is not used; an `int` or `bool`
+// local for the mask is 99.0/93.5.
 f32 TMapCollisionData::checkRoofList(f32 x, f32 y, f32 z, u8 param_4,
                                      const TBGCheckList* head,
                                      const TBGCheckData** result)
