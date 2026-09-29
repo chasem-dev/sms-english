@@ -626,8 +626,7 @@ s32 TCardManager::getBookmarkInfos_()
 		if (result == CARD_RESULT_READY) {
 			if (!mNeedsInit) {
 				for (u32 i = 1; i < ARRAY_COUNT(mSectorCriteria); ++i) {
-					if (mSectorCriteria[i].getState()
-					    != TCriteria::STATE_UNREAD)
+					if (mSectorCriteria[i].mState != TCriteria::STATE_UNREAD)
 						continue;
 
 					TCardSector* sector = (TCardSector*)mSector;
@@ -712,10 +711,8 @@ s32 TCardManager::readOptionBlock_()
 	return result;
 }
 
-// TODO: frame 0x58, retail 0x70 (CARDFileInfo at 0x2c, retail 0x40): every
-// instruction matches. The CardManagerSector binder on the sector read gives
-// +0x10 only; a fork nested in it, a typed binder and a binder per use of
-// sector do not reach +0x18 without moving registers.
+// The criteria reads go through TCriteria's binder-shaped getState() and
+// getWriteCount(); their words were the frame's missing 0x18 (research c-r30).
 s32 TCardManager::writeBlock_(u32 index)
 {
 	s32 crit_idx = index * 2 + 1;

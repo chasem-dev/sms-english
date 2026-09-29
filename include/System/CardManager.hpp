@@ -41,7 +41,11 @@ public:
 		void setEmpty();
 
 		// fabricated
-		TEBlockStat getState() const { return mState; }
+		TEBlockStat getState() const
+		{
+			TEBlockStat state = mState;
+			return state;
+		}
 		u32 getWriteCount() const
 		{
 			u32 writeCount = mWriteCount;
