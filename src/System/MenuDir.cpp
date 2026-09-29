@@ -149,7 +149,7 @@ int TMenuDirector::rsetup()
 		SMSMakeTextBuffer(textBox, 22);
 	}
 
-	JDrama::TDStageDisp* stageDisp = new JDrama::TDStageDisp;
+	JDrama::TDStageDisp* stageDisp = new JDrama::TDStageDisp("<DStageDisp>", 0);
 	unk14->getChildren().push_back(stageDisp);
 
 	JDrama::TRect rect(0, 0, SMSGetTitleRenderWidth(),
