@@ -11,20 +11,20 @@ Measured from `build/GMSE01/report.json` on 2026-09-29.
 
 | | Fuzzy match | Perfect match | Fully linked | Linked units |
 | --- | ---: | ---: | ---: | ---: |
-| Game | 99.51451% | 67.65962% | 20.26703% | 207 / 385 |
+| Game | 99.51777% | 67.69446% | 20.26703% | 207 / 385 |
 | JSystem | 99.89833% | 93.94745% | 81.21971% | 186 / 198 |
 | SDK | 99.99897% | 99.71085% | 99.54403% | 148 / 149 |
-| All | 99.60210% | 73.57762% | 34.33548% | 541 / 732 |
+| All | 99.60468% | 73.60514% | 34.33548% | 541 / 732 |
 
-12,048 of 12,904 functions match. The rebuilt DOL remains byte-identical to the original.
+12,051 of 12,904 functions match. The rebuilt DOL remains byte-identical to the original.
 
 ## What recent batches have done
 
-JPABaseEmitter::deleteAllParticle now matches all 212 bytes and its 0x40 frame. Both particle-list starts use the base first-link accessor and then the typed link; this removes the typed wrapper's extra stack homes without changing an instruction. The exact-function count rises by one, and exact code by 212 bytes. The unit still has other non-exact code and 72 unmatched data bytes, so its source-link status is unchanged.
-The earlier ambient-color reconstruction in TLightCommon::loadAfter remains at 99.959595%, with four stack operands open.
-Full production build, zero function regressions, unchanged JPAEmitter symbol diagnostics and the original DOL checksum pass. The JPAEmitter symbol validator retains its pre-existing missing UNUSED destructor report.
+The verified fork import adds three exact functions and 992 exact code bytes: `TEnemyPolluteModelManager::generatePolluteModel`, `TNerveCannonOpen::execute`, and `TMap::isTouchedOneWall`. Six more functions improve without becoming exact. Source-linked units and matched data are unchanged. The prior JPABaseEmitter particle-deletion closure remains exact at 212 bytes.
+The fork's real `TSharedParts::getMActor()` reads and `TBGCheckData::isIllegalData()` replace per-site binders in EnemyAttachment and close its manager caller. All 53 new fork commits were merged with verified local Kukku, Koopajr and MarioAccess closures preserved at conflicts.
+Full production build, all 12,904 function scores with zero regressions, unchanged symbol diagnostics for 34 changed units and the original DOL checksum pass. The seven symbol-order failures in those units have identical details to the pre-import tree.
 The four units with unmatched data are JPAEmitter (72 bytes), CardManager (136), ShadowUtil (304) and CameraChange (496).
-A genuine SandCastle frame-read/write operation makes expanded exact alone but regresses three previously exact inlined callers; it was restored. BossManta radius/scale operations and MapEventSink building placement operations were also restored without safe gain.
+Fresh Yunbo, DrawSyncManager, smallEnemy, EnemyAttachment and Conductor variants did not improve the report and were restored. The SandCastle exact-body variant still regresses three exact inlined callers and remains rejected.
 
 The selected unit rows below are refreshed from the same measured report as the totals.
 
@@ -41,7 +41,7 @@ The selected unit rows below are refreshed from the same measured report as the 
 | `Animal/BeeHive` | 97.68% | 39 / 49 |
 | `Enemy/limitkoopajr` | 99.93% | 25 / 27 |
 | `Enemy/TabePuku` | 99.46% | 40 / 48 |
-| `Enemy/Kukku` | 99.01% | 31 / 37 |
+| `Enemy/Kukku` | 99.09% | 31 / 37 |
 | `Enemy/bosswanwan` | 99.50% | 62 / 79 |
 | `Enemy/Koopa` | 98.78% | 64 / 79 |
 | `Enemy/pakkun` | 99.54% | 70 / 78 |
@@ -76,7 +76,7 @@ The selected unit rows below are refreshed from the same measured report as the 
 | `Enemy/feetinv` | 97.91% | 24 / 25 |
 | `Enemy/seal` | 100.00% | 18 / 18 |
 | `Enemy/hanasambo` | 99.70% | 88 / 96 |
-| `Enemy/cannon` | 99.75% | 47 / 55 |
+| `Enemy/cannon` | 99.75% | 48 / 55 |
 | `Enemy/popo` | 99.80% | 48 / 54 |
 | `Enemy/tobiPuku` | 99.96% | 116 / 120 |
 | `Enemy/igaiga` | 99.55% | 83 / 95 |
@@ -95,7 +95,7 @@ The selected unit rows below are refreshed from the same measured report as the 
 | `MSound/MSoundSE` | 99.98% | 25 / 30 |
 | `Player/MarioAccess` | 100.00% | 33 / 33 |
 | `MSound/MAnmSound` | 99.92% | 8 / 9 |
-| `MoveBG/MapObjBall` | 99.63% | 63 / 72 |
+| `MoveBG/MapObjBall` | 99.71% | 63 / 72 |
 | `Player/ModelWaterManager` | 98.68% | 17 / 25 |
 | `MarioUtil/LightUtil` | 99.99% | 38 / 40 |
 | `MarioUtil/ShadowUtil` | 79.77% | 28 / 49 |
@@ -112,11 +112,10 @@ Most remaining differences in these units are frame gaps and per-call-site inlin
 - Remotes `fork` and `origin` are configured. New commits from this session remain local; no push was performed.
 - **`System/MarioGamePad` is linked on top of a fakematch**: `updateMeaning` still carries the
   pre-existing `u32 stackAlloc[83]` padding (336 bytes of dead low region over 26 inlined
-  expansions). The linked count of 492 includes it; the unit is not honestly closed until the
+  expansions). The linked count includes it; the unit is not honestly closed until the
   padding is replaced by real locals (`docs/catalog/linking.md`, "Links 279").
-- `Camera/CameraInbetween` matches but will not link: `docs/catalog/linking.md`.
-- Units one function from linking (`MSoundBGM`, `MarioParticle`): `docs/catalog/frame-gaps.md`.
-- 856 functions remain non-exact and 191 units remain unlinked; source counterparts exist throughout the game.
+- `Player/MarioParticle` is one non-exact function from linking: `docs/catalog/frame-gaps.md`.
+- 853 functions remain non-exact and 191 units remain unlinked; source counterparts exist throughout the game.
   Most remaining work is compiler stack layout, register allocation, inline structure and matching data layout.
 - **The `a = b - c` pool residue is the single largest open lever**: all 102 retail
   `bl TVec3::sub` sites are nonmatching, 40 of them at >= 99.3%, for one shared
