@@ -455,14 +455,15 @@ bool TKumokun::checkOnMovingRoof(JGeometry::TVec3<f32>* param_1,
 
 // TODO: registers exact since checkRoofPlane/checkFloorPlane reached their
 // map sizes; slots only: retail's `local_74 - mPosition` temporary sits at
-// 0x14 below the wall record (ours is the parse-time @ temp at 0x58, above
-// the inlined roof/floor objects) and local_74 is 4 higher.
+// 0x14 below the wall record (ours is the parse-time @ temp at 0x5c, above
+// the inlined roof/floor objects), and with getLinearVelocity()'s reference
+// temporary every other object sits a uniform 4 below retail's.
 void TKumokun::bindOnFlying()
 {
 	bool hit = false;
 
 	JGeometry::TVec3<f32> local_74 = mPosition;
-	local_74 += mLinearVelocity;
+	local_74 += getLinearVelocity();
 	local_74 += mVelocity;
 
 	const TBGCheckData* roof = checkRoofPlane(&local_74, mHeadHeight);
