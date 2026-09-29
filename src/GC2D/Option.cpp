@@ -508,23 +508,15 @@ TOptionSubtitleUnit::TOptionSubtitleUnit(J2DScreen* screen)
 	setState(STATE_INACTIVE);
 }
 
-// One binding level over a raw member read, worth +8 of low region.  Exactly
-// one of update()'s three mParentPane reads goes through it: each binder site
-// is +8 and a fork (or a raw read) is +0, so one site lands the frame on the
-// map's 0x1f0.  Which of the three carries it is not observable -- all twelve
-// one-binder arrangements compile to the same 161 instructions (batch 127,
-// remeasured in header round 43).
-static inline TExPane* OptionParentPane(const TOptionSubtitleUnit* p)
-{
-	TExPane* parentPane = p->mParentPane;
-	return parentPane;
-}
-
+// Exactly one of update()'s three parent-pane reads goes through the
+// binder-shaped getParentPane() (+8 of low region, landing the map's 0x1f0);
+// which one is not observable: all three compile the same (batch 127,
+// header round 43, research c-r30).
 void TOptionSubtitleUnit::update()
 {
 	switch (mState) {
 	case STATE_DEACTIVATING:
-		OptionParentPane(this)->update();
+		getParentPane()->update();
 		// fade-out animation is done
 		if (mParentPane->getPane()->getAlpha() == 150)
 			setState(STATE_INACTIVE);

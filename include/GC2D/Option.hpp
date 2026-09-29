@@ -214,7 +214,11 @@ public:
 
 public:
 	// fabricated: header round 20 accessor candidates
-	TExPane* getParentPane() const { return mParentPane; }
+	TExPane* getParentPane() const
+	{
+		TExPane* parentPane = mParentPane;
+		return parentPane;
+	}
 
 	/* 0x0 */ J2DScreen* mScreen;
 	/* 0x4 */ TExPane* mParentPane;
