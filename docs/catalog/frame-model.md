@@ -496,3 +496,10 @@ Not closed: dead copies of the rocket, hauntLeg, chuuhana and gorogoro loops rea
 Refinement of the dead-code rule, measured in gesso: `if (0) {...}` and code after `return` drop *expression statements* but keep *declarations*.
 Their named locals are kept, and so is each initialiser's inline expansion with its bindings and IRO temporaries (`TMsRange<s32> range(0, graph->unk8)` in an `if (0)` loop yields inline objects and six EFORCELOAD temps).
 `if (0) { getObj(0)->m += 5; }` adds nothing; the same statement behind `int c = 0; if (c)` adds 6 words, more than the live statement (4).
+
+## Refinements (closure batch c-k13, 2026-09-29)
+
+- **A fabricated binder over `p->a->b` is often a header accessor one hop up.** `p->a->getB()` gives a receiver binding for the loaded `p->a` (a dead word when it is only a load base) plus the accessor's forced-load word, which is what a one-local binder counterfeits; `unk10->getMActor()` (TSharedParts), `unk68->getFludd()` (TMario) and `getGroundPlane()->getNormal().y` each replaced a binder at unchanged code and frame.
+  Where the class has no accessor for the hop, an owner-level one (`TChorobei::getMActor() { return mParts->getMActor(); }`) did the same and closed `TNerveCannonOpen`.
+  A binder over a single member of a simple receiver (`this`, a local) is not this case: its accessor form is 8 short.
+- **A copied member body is a missing call.** A local ternary like `r != 0 ? true : false` that repeats another function of the same TU (here `isTouchedWallsAndMoveXZ`) means retail called that function and it was inlined; calling it in a value context (`!= false`) produced the missing forced-load word (Map `isTouchedOneWall`).
