@@ -442,8 +442,9 @@ void TCannon::moveObject()
 	if (mStage != 5 && mStage != 9)
 		return;
 
-	if (checkLiveFlag(LIVE_FLAG_CLIPPED_OUT)) {
-		mChorobei->mPosition = getPosition();
+	bool clipped = checkLiveFlag(LIVE_FLAG_CLIPPED_OUT);
+	if (clipped) {
+		mChorobei->mPosition = mPosition;
 	} else {
 		MtxPtr mtx             = getModel()->getAnmMtx(mChorobeiJntIdx);
 		mChorobei->mPosition.x = mtx[0][3];
