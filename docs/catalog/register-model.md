@@ -285,3 +285,11 @@ Both were read from `dbg.sh` dumps (`frontend-00-ast-initial-code.txt`, `backend
 - A named local declared early but assigned later is still placed in declaration order (repaired `TMario::slideProcess`'s named block); this corrects the earlier "first reference" note from setupEfbAlpha.
 - Many remaining candidates carry TU-local binders that only make up frame; replacing them with plain accessors costs 8 per binder (an accessor used only as a call receiver is free), so those functions need their real depth structure rather than more levers.
 - `dbg` located the missing/extra word exactly in about 17 of 81 candidates and pointed straight to the fix in 2; hsearch triage (100-150 s) gave 1 exact and 2 leads out of about 20.
+
+## Additions (c-k19)
+
+- Run `tools/hsearch run --budget 200-240 -j 2` first on a closure target: it found both of c-k19's exact closures within seconds (`getStatus()`; `getPosition()` after the sound calls were fixed by hand); hand work was only needed for the structural half.
+- A signed `cmpwi rX, 1` after `clrlwi` of a bool helper's result means the helper returns BOOL (int) from a bool flag; `bool == true` / `== 1` give `cmplwi` (`TMario::checkGroundAtJumping`).
+- Register swaps between a caller's named web and an inline's result web are fixed by an inline level around the right block (a void block helper or a `bool result` predicate); worked three times in NpcChange/NpcParts. Too high a level stops the callee expanding.
+- An UNUSED function-local static in the map (`name$N` plus `init$N+1`) is evidence of dead code in the function parsed just before the next numbered static; it explains an empty (`blr`) body retail still calls (PollutionLayer `appearItem`, whose `dont_inline` pragma therefore stays until that code is known).
+- The two-argument `startSoundActor` form (+8 each) and `getPosition()` offsets are additive bottom-region levers (`TRailFence::goOnRail` 0x68 -> 0x88, closed).
