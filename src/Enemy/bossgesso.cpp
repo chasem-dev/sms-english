@@ -100,6 +100,9 @@ static const char* getAttackModeStr(int) { return nullptr; }
 // source change there moves them too: naming `TBGTentacle* tentacle` in its
 // loop unfolds the out-of-line body exactly (frame 8 short) but also unfolds
 // every expansion; a member-reading predicate does the same.
+// c-k14: the predicate as a whole condition (`if (isTentacleBusy(t)) continue;`,
+// statement mode) is byte-identical to the `!` operand form in all nine
+// functions, so the fold is not a mode effect.
 // TODO: find the real name; `canTake` and `isAttacking` are the only named
 // TBGTentacle predicates in the map and neither fits.
 static inline BOOL isTentacleBusy(TBGTentacle* tentacle)
@@ -1516,6 +1519,16 @@ void TBossGesso::doAttackRoll()
 // deeper than the copy. Inert or worse (c-h5, 2026-09-27): SMS_DistanceFromMarioVec,
 // a TU-local angle-to-Mario or to-Mario-vector helper in inSight, direct-init,
 // assign-init or `*gpMarioPos` copies, an extra level between inSightAngle and inSight.
+// c-k14 (statement-mode model): the guard reaches inSight's body at level 4 in
+// expression mode (`!inSightAngle(...)`, then `inSight() < ...`), so
+// SMS_GetMarioPos is judged at 4. An angle-to-Mario level inside inSight
+// takes it to 5 and emits the weak SMS_GetMarioPos, but also pushes Mario's
+// copy and `operator-=` to 5 (both then `bl`, moveObject 98.8 -> 97.8).
+// Retail has SMS_GetMarioPos exactly one level below the copy, which is the
+// +1 a class initialiser's argument gets in statement mode: inSight's body is
+// a statement block at level 4 in retail. Every spelling that keeps the
+// comparison (`if (inSight() < ...)`, a named f32, `return inSight() < ...`)
+// is expression mode; `if (inSightAngle(...))` alone changes nothing.
 void TBossGesso::moveObject()
 {
 	TLiveActor::moveObject();

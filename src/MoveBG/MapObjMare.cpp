@@ -564,6 +564,12 @@ void TMapObjGrowTree::updateHeight()
 // retail reaches that site through two more inline levels; a TU-local frame
 // helper (1-3 levels, all or some sites), a named argument and raw mMActor in
 // getGrowHeightFromRate() were inert or worse.
+// c-k14, read by mode: updateHeight's setDamageHeight(...) is a statement-mode
+// call at level 2, so its argument (and the getMActor in it) is judged at 3;
+// retail's `bl` needs 5, two levels more, and nothing in the map (only
+// updateHeight and getGrowHeightFromRate are UNUSED here) supplies them. The
+// 0x68 of extra retail frame is all dead low region, consistent with more
+// accessor levels on the frame reads.
 u32 TMapObjGrowTree::touchWater(THitActor* water)
 {
 	if (water->mPosition.y > mPosition.y + mInitialHeight)

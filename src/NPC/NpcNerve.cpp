@@ -66,6 +66,11 @@ DEFINE_NERVE(TNerveNPCGraphWander, TLiveActor)
 		// the map emits getCurGraphIndex weak out of line *in this TU*.
 		// Inert (2026-09-27): defining hasOnlyOneNext above the two accessors
 		// in TGraphTracer (in-class bodies are not order-sensitive here).
+		// c-k14: binding the node first (`const TGraphNode& n = getCurrent();`
+		// in hasOnlyOneNext, with getCurrent reading getCurGraphIndex()) is
+		// expression mode: no level gained, frame +0x10. Scratch probes of
+		// the chain give the index accessor level 4 for a reference, a
+		// by-value POD copy or a pointer binding alike.
 		// c-k8: this is also why the unit lists getCurGraphIndex at 0%: the
 		// name, the class and the 8-byte body (`lwz r3,4(r3); blr`) are
 		// right, but no site here calls it out of line, so the weak copy the

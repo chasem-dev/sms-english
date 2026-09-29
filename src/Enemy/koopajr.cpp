@@ -118,6 +118,11 @@ f32 TDirectionCalc::calcNearerDirection(f32 dir)
 	// helper, or `f32 range/offset` named inside WrapDirectionF), but the
 	// auto-inline into makeRelativeAngle counts only this body's own
 	// statements: extra statements inside the helpers leave it inlined (~30%).
+	// c-k14: the fmodf call here is an expression-mode operand at level 1,
+	// which no mode or level turns into a `bl`, and its declaration is not the
+	// switch either: in scratch TUs with the game flags a non-inline prototype
+	// before or after the inline definition, an inline prototype, and a plain
+	// non-inline definition (auto-inline) all expand it at level 1.
 	f32 lo     = 0.0f;
 	f32 hi     = TWO_PI;
 	f32 range  = hi - lo;

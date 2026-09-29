@@ -535,6 +535,10 @@ bool TSandCastle::withering()
 // TLiveActor::getMActor() out of line at both of SandBombAddFrame's sites
 // (inline depth 3 here); ours expands it. A binder inside SandBombAddFrame
 // gets both bl's (99.8%) but costs +8 here and +0x18/+0x30 in the other users.
+// c-k14, read by mode: TSandBombBase::expanded (1) -> SandBombAddFrame (2) ->
+// setFrame's argument (4) and the receiver chain (3); retail's two `bl`s need
+// both at 5, while the out-of-line TSandBombBase::expanded expands them. The
+// map has no UNUSED helper here that could be the missing level(s).
 void TSandCastle::expanded()
 {
 	TSandBombBase::expanded();
