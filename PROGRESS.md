@@ -11,16 +11,16 @@ Measured from `build/GMSE01/report.json` on 2026-09-29.
 
 | | Fuzzy match | Perfect match | Fully linked | Linked units |
 | --- | ---: | ---: | ---: | ---: |
-| Game | 99.50% | 67.54% | 19.87% | 204 / 385 |
-| JSystem | 99.90% | 93.91% | 81.22% | 186 / 198 |
-| SDK | 100.00% | 99.71% | 99.54% | 148 / 149 |
-| All | 99.59% | 73.47% | 34.02% | 538 / 732 |
+| Game | 99.50541% | 67.55596% | 19.87077% | 204 / 385 |
+| JSystem | 99.89825% | 93.90541% | 81.21971% | 186 / 198 |
+| SDK | 99.99897% | 99.71085% | 99.54403% | 148 / 149 |
+| All | 99.59489% | 73.48982% | 34.02236% | 538 / 732 |
 
-12,033 of 12,904 functions match. The rebuilt DOL remains byte-identical to the original.
+12,035 of 12,904 functions match. The rebuilt DOL remains byte-identical to the original.
 
 ## What recent batches have done
 
-The latest batch integrated current public GMSE01 work, closed wireMove and two enemy rotation callbacks, restored the shared pole-jump helper, and improved pulling, KillerBodyCallback and PakkunSeedCallback. Historical compiler notes guide experiments; fresh compiler and binary comparisons decide which changes survive.
+Native compiler object and register traces closed GessoBodyCallback and TDirectionCalc::sub exactly, and improved SamboHeadRollCallback and TabePuku terrain collision. All retained changes pass full builds, zero function regressions, unchanged symbol diagnostics and the original DOL checksum.
 
 The selected unit rows below are refreshed from the same measured report as the totals.
 
@@ -36,7 +36,7 @@ The selected unit rows below are refreshed from the same measured report as the 
 | `Animal/Bird` | 98.76% | 45 / 52 |
 | `Animal/BeeHive` | 97.68% | 39 / 49 |
 | `Enemy/limitkoopajr` | 99.93% | 25 / 27 |
-| `Enemy/TabePuku` | 99.45% | 40 / 48 |
+| `Enemy/TabePuku` | 99.46% | 40 / 48 |
 | `Enemy/Kukku` | 98.54% | 31 / 37 |
 | `Enemy/bosswanwan` | 99.50% | 62 / 79 |
 | `Enemy/Koopa` | 98.78% | 64 / 79 |
@@ -89,7 +89,7 @@ The selected unit rows below are refreshed from the same measured report as the 
 | `MoveBG/MapObjBall` | 99.63% | 63 / 72 |
 | `Player/ModelWaterManager` | 98.68% | 17 / 25 |
 | `MarioUtil/ShadowUtil` | 79.77% | 28 / 49 |
-| `Enemy/koopajr` | 98.89% | 70 / 81 |
+| `Enemy/koopajr` | 98.89% | 71 / 81 |
 | `Enemy/wireTrap` | 99.65% | 29 / 35 |
 | `Enemy/hauntLeg` | 99.93% | 25 / 28 |
 | `Enemy/BathtubKiller` | 99.40% | 39 / 45 |

@@ -6,9 +6,9 @@ Keep it current: every orchestrator appends a dated "State" entry below and rewr
 
 ## State 2026-09-29 (session 01a0ed16)
 
-GMSE01 is incomplete: All exact code 73.48538%, source-linked code 34.02236%, 538/732 source-linked units and 12,034/12,904 exact functions. There are 870 non-exact functions, 194 unlinked units and 1,008 unmatched data bytes. Fuzzy similarity (99.59452%) and the identical fallback-linked DOL are separate checks, not completion.
+GMSE01 is incomplete: All exact code 73.48982%, source-linked code 34.02236%, 538/732 source-linked units and 12,035/12,904 exact functions. There are 869 non-exact functions, 194 unlinked units and 1,008 unmatched data bytes. Fuzzy similarity (99.59452%) and the identical fallback-linked DOL are separate checks, not completion.
 
-The stale main checkout was aligned to the port's e4b7dacb, then public fork/main at 9d8055c3 was merged, retaining verified local changes. This added 158 exact functions and eleven source-linked units versus the initial stale checkout. Four of the exact functions are new local research results: wireMove, HauntLegCallback, TobiPukuRollCallback and GessoBodyCallback. The pole-jump helper restoration also preserves both exact callers and all UNUSED sizes.
+The stale main checkout was aligned to the port's e4b7dacb, then public fork/main at 9d8055c3 was merged, retaining verified local changes. This added 159 exact functions and eleven source-linked units versus the initial stale checkout. Five of the exact functions are new local research results: wireMove, HauntLegCallback, TobiPukuRollCallback, GessoBodyCallback and TDirectionCalc::sub. The pole-jump helper restoration also preserves both exact callers and all UNUSED sizes.
 
 All locally authored batches pass a full build, zero function-score regressions and original DOL SHA-1 a6782903ef79d4196c8489ecb1b57decb5b3728f. Symbol comparisons across 181 imported units introduce no failures; Pakkun keeps its pre-existing missing weak set<f> and two UNUSED size warnings. Public upstream origin/main has no additional commits beyond this source tree.
 

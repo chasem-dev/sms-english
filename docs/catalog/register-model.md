@@ -285,3 +285,11 @@ Both were read from `dbg.sh` dumps (`frontend-00-ast-initial-code.txt`, `backend
 - A named local declared early but assigned later is still placed in declaration order (repaired `TMario::slideProcess`'s named block); this corrects the earlier "first reference" note from setupEfbAlpha.
 - Many remaining candidates carry TU-local binders that only make up frame; replacing them with plain accessors costs 8 per binder (an accessor used only as a call receiver is free), so those functions need their real depth structure rather than more levers.
 - `dbg` located the missing/extra word exactly in about 17 of 81 candidates and pointed straight to the fix in 2; hsearch triage (100-150 s) gave 1 exact and 2 leads out of about 20.
+
+
+## Mutable input parameters and early loads
+
+TDirectionCalc::sub had two operand differences because the wrapped mDirection load interfered with the incoming f1 parameter and received f3.
+The native compiler trace reproduced this interference.
+Keeping the input parameter separate from the actual mutable direction local removes that conflict: production GC/1.2.5 now matches all 160 bytes, including the 0x38 frame.
+The caller results, unit data and symbol diagnostics are unchanged, and the full build retains the original DOL hash.

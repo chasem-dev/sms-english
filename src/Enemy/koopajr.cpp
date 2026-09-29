@@ -144,11 +144,11 @@ static inline bool IsLongWayRound(f32 diff) { return TWO_PI - diff < diff; }
 // The distance test is IsLongWayRound: its parameter binding is an inline
 // object, coloured before the IRO temporary of the reloaded mDirection, which
 // gives retail's f2/f3 (a named `diff` is coloured after it).
-// TODO: 99.8%; the wrap's mDirection load takes f3 where retail has f1: our
-// pre-regalloc schedule loads it before the `fmr` that saves dir, so it
-// interferes with the incoming f1.
-f32 TDirectionCalc::sub(f32 dir)
+// Keep the input separate from the direction adjusted onto the shorter arc.
+// The mutable local avoids the incoming parameter's register interference.
+f32 TDirectionCalc::sub(f32 direction)
 {
+	f32 dir = direction;
 	normalize();
 	if (dir >= mDirection) {
 		if (IsLongWayRound(dir - mDirection))
