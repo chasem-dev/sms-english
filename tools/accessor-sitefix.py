@@ -93,7 +93,9 @@ def main():
     src = os.path.join(ROOT, "src", unit + ".cpp")
     orig = open(src).read()
     cls, meth = accand.parse_sym(sym)
-    if cls:
+    if cls and meth == "execute" and "DEFINE_NERVE(%s," % cls in orig:
+        head = re.compile(r"DEFINE_NERVE\(%s,[^)]*\)" % re.escape(cls))
+    elif cls:
         head = re.compile(r"\b%s\s*::\s*%s\s*\(" % (re.escape(cls), re.escape(meth)))
     else:
         head = re.compile(r"^[^\n;]*\b%s\s*\(" % re.escape(meth), re.M)

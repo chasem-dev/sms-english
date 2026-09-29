@@ -122,7 +122,11 @@ public:
 	void updateAttachPos();
 
 	// fabricated
-	TChorobei* getChorobei() const { return mChorobei; }
+	TChorobei* getChorobei() const
+	{
+		TChorobei* chorobei = mChorobei;
+		return chorobei;
+	}
 	void hitHead(TBombHei*);
 	void bombScaleUp();
 	void bombShoot();
