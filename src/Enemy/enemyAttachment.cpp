@@ -242,25 +242,14 @@ void TEnemyPolluteModelManager::perform(u32 cue, JDrama::TGraphics* graphics)
 		unk18[i]->perform(cue, graphics);
 }
 
-// Binding level worth +8 of low region, landing
-// TEnemyPolluteModelManager::generatePolluteModel's frame at 0x98 (batch
-// 124).
-static inline bool EnemyAttachmentCheckFlag(const TBGCheckData* p, u32 i)
-{
-	bool flag = p->checkFlag(i);
-	return flag;
-}
-
 // The ground check lives in `generate` (c-k5): an inlined callee's locals are
 // created last-declared first, which is the only way retail's `check` (0x3c)
 // sits directly below `generate`'s matrix (0x40), and with the check there
 // the out-of-line `generate` is exactly the map's UNUSED 0x178.
-// TODO: every instruction and the frame match; `check` and the matrix sit 4
-// low (0x38/0x3c), so retail creates one more dead word after `check`.
-// Without the flag binder (`check->isIllegalData()`, `checkFlag()`, either
-// with `isWaterSurface()`) the frame is 0x90 and generate stays 0x178;
-// `SMS_IsWaterSurface()` drops generate to 0x140, `!isLegal()` adds six
-// instructions, and a named `model` receiver in the caller is inert.
+// c-k13: the shared parts' actor is read through `getMActor()`; that
+// accessor's receiver binding and the header `isIllegalData()` give the three
+// dead words retail has below `check` (the fabricated checkFlag binder made
+// up only two of them).
 void TEnemyPolluteModelManager::generatePolluteModel(
     JGeometry::TVec3<f32>& param_1, JGeometry::TVec3<f32>& param_2)
 {
@@ -327,8 +316,7 @@ void TEnemyPolluteModel::generate(JGeometry::TVec3<f32>& param_1,
 {
 	const TBGCheckData* check;
 	gpMap->checkGround(param_1, &check);
-	if (EnemyAttachmentCheckFlag(check, BG_CHECK_FLAG_ILLEGAL)
-	    || check->isWaterSurface())
+	if (check->isIllegalData() || check->isWaterSurface())
 		return;
 
 	unk44 = param_1;
@@ -337,7 +325,7 @@ void TEnemyPolluteModel::generate(JGeometry::TVec3<f32>& param_1,
 	TPosition3f TStack_58;
 	TStack_58.translation(param_1.x, param_1.y, param_1.z);
 	unk14.translation(param_1.x, param_1.y, param_1.z);
-	unk10->unk18->getModel()->setBaseTRMtx(TStack_58);
+	unk10->getMActor()->getModel()->setBaseTRMtx(TStack_58);
 	unk5D = true;
 	unk5C = false;
 	setAnm();
