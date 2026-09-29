@@ -1031,7 +1031,7 @@ public:
 	BOOL wireSWait();
 	BOOL wireWaitToSWaitL();
 	BOOL wireWaitToSWaitR();
-	void changeWireHanging();
+	BOOL changeWireHanging();
 	BOOL wireWaitToHang();
 	BOOL wireSWaitToHang();
 	BOOL wireReturn();
