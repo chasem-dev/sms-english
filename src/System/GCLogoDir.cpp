@@ -76,9 +76,9 @@ TGCLogoDir::TGCLogoDir()
 
 void TGCLogoDir::setup(JDrama::TDisplay* param_1, TMarioGamePad* param_2)
 {
-	unk14            = new JDrama::TDStageGroup(param_1);
-	mGamePad         = param_2;
-	mGamePad->mFlags = 1;
+	unk14    = new JDrama::TDStageGroup(param_1);
+	mGamePad = param_2;
+	getGamePad()->setFlag(1);
 
 	JDrama::TViewObjPtrListT<JDrama::TViewObj>* rootViewObjs
 	    = new JDrama::TViewObjPtrListT<JDrama::TViewObj>("root View Objs");
@@ -101,7 +101,7 @@ void TGCLogoDir::setup(JDrama::TDisplay* param_1, TMarioGamePad* param_2)
 	mProgSelect->unkC.on(0xffff);
 	group2d->getChildren().push_back(mProgSelect);
 
-	JDrama::TDStageDisp* stageDisp = new JDrama::TDStageDisp;
+	JDrama::TDStageDisp* stageDisp = new JDrama::TDStageDisp("<DStageDisp>", 0);
 	unk14->getChildren().push_back(stageDisp);
 	JDrama::TRect logoRendArea(0, 0, SMSGetGCLogoRenderWidth(),
 	                           SMSGetGCLogoRenderHeight());
@@ -124,16 +124,10 @@ void TGCLogoDir::setup(JDrama::TDisplay* param_1, TMarioGamePad* param_2)
 	gpApplication.mFader->startWipe(14, 0.4f, 0.0f);
 }
 
-static inline TMarioGamePad* TGCLogoDirGetGamePad(TGCLogoDir* p)
-{
-	TMarioGamePad* pad = p->mGamePad;
-	return pad;
-}
-
-TGCLogoDir::~TGCLogoDir() { TGCLogoDirGetGamePad(this)->offFlag(0x1); }
+TGCLogoDir::~TGCLogoDir() { getGamePad()->offFlag(0x1); }
 
 // TODO: frame 0x48 against 0x78 with every instruction right (low region
-// 0x30 short); TGCLogoDirGetGamePad at the pad test is +8, a named rect -8.
+// 0x30 short); getGamePad() at the pad test is +8, a named rect -8.
 // Slot map (c-d11): retail has one parse-time word between the rect (0x58)
 // and colour (0x50) temps and twelve more words created after the colour.
 int TGCLogoDir::direct()

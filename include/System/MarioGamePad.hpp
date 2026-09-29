@@ -197,6 +197,9 @@ public:
 	inline bool checkFlag(u32 flag) { return (mFlags & flag) != 0; }
 	void onFlag(u32 flag) { mFlags |= flag; }
 	void offFlag(u32 flag) { mFlags &= ~flag; }
+	// fabricated name; the directors' setups assign the whole flag word
+	// through it (its receiver binding is a dead word there, c-r28).
+	void setFlag(u16 flag) { mFlags = flag; }
 
 	// fabricated
 	bool isSomethingPushed() const { return mResetFlag.check(1 << mPortNum); }

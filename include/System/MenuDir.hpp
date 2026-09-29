@@ -21,6 +21,15 @@ public:
 	int direct();
 	void setFixedStageValue();
 
+	// Same shape as TSelectDir::getGamePad(): the named pointer is the
+	// dead depth-2 word setup's `getGamePad()->setFlag(1)` leaves in retail
+	// (research c-r28).
+	TMarioGamePad* getGamePad()
+	{
+		TMarioGamePad* gamePad = unk2C;
+		return gamePad;
+	}
+
 public:
 	/* 0x18 */ u8 unk18;
 	/* 0x1C */ void* unk1C;

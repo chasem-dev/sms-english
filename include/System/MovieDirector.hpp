@@ -59,6 +59,15 @@ public:
 
 	static const char* getStreamMovieName(u32);
 
+	// Same shape as TSelectDir::getGamePad(): the named pointer is the
+	// dead depth-2 word setup's `getGamePad()->setFlag(1)` leaves in retail
+	// (research c-r28).
+	TMarioGamePad* getGamePad()
+	{
+		TMarioGamePad* gamePad = unk20;
+		return gamePad;
+	}
+
 public:
 	enum {
 		STATE_FADE_IN           = 0,

@@ -172,16 +172,11 @@ void* TMovieDirector::setupThreadFunc(void* self)
 extern OSThread gSetupThread;
 extern u8* gpSetupThreadStack;
 
-// TODO: frame 0x40 against retail 0x58, instruction-exact. A name-and-
-// return pad binder over param_2 plus an SMSRumbleMgr binder (or a display
-// fork) lands the frame and every slot but one: the TDStageGroup ctor's
-// TViewObjPtrListT temporary stays 4 low (0x2c against 0x30). Tried (cc41):
-// named group, factory fork, thread-address binder, stack forks (change code).
 void TMovieDirector::setup(JDrama::TDisplay* param_1, TMarioGamePad* param_2)
 {
-	unk14         = new JDrama::TDStageGroup(param_1);
-	unk20         = param_2;
-	unk20->mFlags = 1;
+	unk14 = new JDrama::TDStageGroup(param_1);
+	unk20 = param_2;
+	getGamePad()->setFlag(1);
 
 	SMSRumbleMgr->reset();
 

@@ -45,6 +45,15 @@ public:
 	bool direct_nlogo();
 	bool direct_dolby();
 
+	// Same shape as TSelectDir::getGamePad(): the named pointer is the
+	// dead depth-2 word setup's `getGamePad()->setFlag(1)` leaves in retail
+	// (research c-r28).
+	TMarioGamePad* getGamePad()
+	{
+		TMarioGamePad* gamePad = mGamePad;
+		return gamePad;
+	}
+
 public:
 	/* 0x18 */ int mOverallState;
 	/* 0x1C */ int mState;

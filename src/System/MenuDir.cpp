@@ -66,12 +66,9 @@ extern u8* gpSetupThreadStack;
 
 void TMenuDirector::setup(JDrama::TDisplay* param_1, TMarioGamePad* param_2)
 {
-	// TODO: 99.8%, instruction-exact; frame 0x40 vs retail 0x58. A caller-side
-	// 0x18 unused local lands the frame size but leaves the inlined
-	// TDStageGroup temps 0xc low — residue is inside the inlined ctor block.
-	unk14         = new JDrama::TDStageGroup(param_1);
-	unk2C         = param_2;
-	unk2C->mFlags = 1;
+	unk14 = new JDrama::TDStageGroup(param_1);
+	unk2C = param_2;
+	getGamePad()->setFlag(1);
 	OSCreateThread(&gSetupThread, &setupThreadFunc, this,
 	               gpSetupThreadStack + 0x10000, 0x10000, 0x11, 0);
 	OSResumeThread(&gSetupThread);
