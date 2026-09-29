@@ -372,3 +372,33 @@ The raw-AA/integer-mask follow-up retains the same six operands and four wrong w
 Wire's named X gives a six-marker caller improvement but regresses release and move; actual field-input computations and named height/Z variants do not close it.
 All rejected probes are restored; these bounded results do not prove impossibility.
 Evidence: /tmp/x-revival-register-0929, /tmp/sms-randvol-0929, /tmp/x-camera-predicate-0929, /tmp/x-randplay-structure-0929, /tmp/sms-perform-list-0929, /tmp/x-thp-counter-0929, /tmp/x-efb-copy-0929, /tmp/sms-flow-0929 and /tmp/sms-wire-point-0929.
+
+## Decision and position-distance ownership (2026-09-29)
+
+TMonumentShine::hitByWater is exact at 396 bytes, 99 instructions and frame 0x60.
+Its used turnForward boolean owns the existing cross.dot(waterDir) > 0 decision.
+The four-byte native decision home at 0x38 restores waterDir at 0x54, Mario direction at 0x48 and cross at 0x3c without altering any operation or float assignment.
+An actual shared mutable turn impulse also matches; the const form leaves all 27 stack-offset markers unchanged.
+MapObjDolpic now matches all forty functions and all 3,700 data bytes and passes its source-linked original-DOL check.
+
+SMS_IsMarioOnWire is exact at 72 bytes and eighteen instructions.
+MarioAccessIsWireRider owns the full holder/type predicate on a borrowed TTakeActor; a const pointer reference reads the holder for the null check, and the receiver member supplies the actor-type check.
+Native frontend preserves those two real memory-load expressions, then copy propagation merges their receiver registers while retaining both holder loads as retail does.
+Returning the holder from a pass-through helper was not required or used.
+All thirty-three charged functions and 56 data bytes match, and the unit source-links with the original DOL checksum.
+Five pre-existing UNUSED body-size warnings remain unchanged: GetMarioWork, IsMarioSpeedZero, IsMarioNoCap, IsStatusHipDropOrHipDropEnd and IsMarioStatusHipDropEnd.
+
+MAnmSound NPC distance is computed by an actual PositionDistance operation over the borrowed position/reference vectors.
+Its named square-root result restores the random-conversion stack operand at 0x44; a direct expression return instead moves it to 0x40.
+The actor-to-distance pass-through wrapper was removed; the complete calculation owns its real inputs and result at the observed inline depth.
+NPC improves from 99.50000 to 99.73333 percent at 600 bytes, 150 instructions and frame 0x90.
+All float-register, instruction and stack operands now match; eight integer-register operands still swap translation and Mario webs.
+Other functions/data and all symbol diagnostics are unchanged.
+
+Fresh bounds refine the remaining leads without claiming impossibility:
+MActorData's shared used empty count gives frame 0x18 instead of 0x10, but its home remains above the allocator at 0xc rather than moving that allocator to retail's 0x14; the score is unchanged.
+Tree leaf allocation with a borrowed count retains the same three integer-register differences; value count and complete collision initialization introduce more differences.
+matan's mutable negative magnitude and both borrowed atan inputs retain its five float-register markers; a borrowed denominator alone changes the frame and adds markers.
+MarioParticle's safe by-value scale/copy/output-reference operation has six actual vectors, but changes the frontend inline depth: the sequential form expands all three scale calls, and chaining returned references expands the third one.
+Neither warp form improves the baseline; all probes are restored with full builds and the original checksum.
+Evidence: /tmp/sms-monument-turn-0929, /tmp/x-mario-wire-0929, /tmp/x-npc-attenuation-0929, /tmp/sms-animation-defaults-0929, /tmp/sms-tree-leaves-0929, /tmp/sms-atan-inputs-0929 and /tmp/x-warp-scale-0929.

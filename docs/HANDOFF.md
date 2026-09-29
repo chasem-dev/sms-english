@@ -6,9 +6,9 @@ Keep it current: every orchestrator appends a dated "State" entry below and rewr
 
 ## State 2026-09-29 (session 01a0ed16)
 
-GMSE01 is incomplete: All exact code 73.55875%, source-linked code 34.08141%, 539/732 source-linked units and 12,045/12,904 exact functions. There are 859 non-exact functions, 193 unlinked units and 1,008 unmatched data bytes. Fuzzy similarity (99.60165%) and the identical fallback-linked DOL are separate checks, not completion.
+GMSE01 is incomplete: All exact code 73.57174%, source-linked code 34.33548%, 541/732 source-linked units and 12,047/12,904 exact functions. There are 857 non-exact functions, 191 unlinked units and 1,008 unmatched data bytes. Fuzzy similarity (99.60184%) and the identical fallback-linked DOL are separate checks, not completion.
 
-The stale main checkout was aligned to the port's e4b7dacb, then public fork/main at 9d8055c3 was merged, retaining verified local changes. This adds 169 exact functions and 12 source-linked units versus the initial stale checkout. 15 exact functions are new local research results. The newest closures are the revival-stamp registration, camera ground-check predicate and four random-volume/play routines; MapObjPollution is also linked from source. The pole-jump helper restoration also preserves both exact callers and all UNUSED sizes.
+The stale main checkout was aligned to the port's e4b7dacb, then public fork/main at 9d8055c3 was merged, retaining verified local changes. This adds 171 exact functions and 14 source-linked units versus the initial stale checkout. 17 exact functions are new local research results. The newest closures are the monument-turn and wire-riding predicates; MapObjDolpic and MarioAccess are also linked from source. NPC distance ownership restores all float-register/stack operands but leaves eight integer-register operands. The pole-jump helper restoration also preserves both exact callers and all UNUSED sizes.
 
 All locally authored batches pass a full build, zero function-score regressions and original DOL SHA-1 a6782903ef79d4196c8489ecb1b57decb5b3728f. Symbol comparisons across 181 imported units introduce no failures; Pakkun keeps its pre-existing missing weak set<f> and two UNUSED size warnings. Public upstream origin/main has no additional commits beyond this source tree.
 

@@ -11,20 +11,21 @@ Measured from `build/GMSE01/report.json` on 2026-09-29.
 
 | | Fuzzy match | Perfect match | Fully linked | Linked units |
 | --- | ---: | ---: | ---: | ---: |
-| Game | 99.51395% | 67.64319% | 19.94550% | 205 / 385 |
+| Game | 99.51420% | 67.65962% | 20.26703% | 207 / 385 |
 | JSystem | 99.89825% | 93.90541% | 81.21971% | 186 / 198 |
 | SDK | 99.99897% | 99.71085% | 99.54403% | 148 / 149 |
-| All | 99.60165% | 73.55875% | 34.08141% | 539 / 732 |
+| All | 99.60184% | 73.57174% | 34.33548% | 541 / 732 |
 
-12,045 of 12,904 functions match. The rebuilt DOL remains byte-identical to the original.
+12,047 of 12,904 functions match. The rebuilt DOL remains byte-identical to the original.
 
 ## What recent batches have done
 
-Actual registration, camera-range and sound-emitter operations, plus shared constructor defaults, close 6 further functions and add 1,440 exact code bytes.
-MapObjPollution now matches every function and data byte and is source-linked; its source-linked DOL passes the original checksum.
-The random-volume constructor and profile calculation, random-play constructor and emitter, and camera ground-check predicate are exact.
-All retained changes pass full production builds, zero function regressions and unchanged symbol diagnostics.
-Bounded PerformList, THP audio, ball-flow and wire-point probes found no safe gain and were restored.
+Actual monument-turn and wire-riding predicates close two further functions and add 468 exact code bytes.
+MapObjDolpic and MarioAccess now match all charged code and data and are source-linked, adding 9,156 source-linked code bytes.
+The NPC position-distance computation improves its remaining function from 99.50000% to 99.73333%, preserving all retail float-register and stack operands; eight integer-register operands remain.
+All retained changes pass full production builds, zero function regressions, unchanged symbol diagnostics and the original DOL checksum.
+MarioAccess retains five pre-existing UNUSED body-size warnings; the scored/source-linked match does not establish reconstruction of those discarded bodies.
+Bounded animation-constructor, tree-leaf, atan-input and warp-scale probes found no safe retained gain and were restored.
 
 The selected unit rows below are refreshed from the same measured report as the totals.
 
@@ -84,7 +85,7 @@ The selected unit rows below are refreshed from the same measured report as the 
 | `MoveBG/MapObjMamma` | 99.60% | 93 / 103 |
 | `MoveBG/MapObjMonte` | 99.96% | 48 / 54 |
 | `MoveBG/MapObjRailBlock` | 99.94% | 44 / 46 |
-| `MoveBG/MapObjDolpic` | 99.99% | 39 / 40 |
+| `MoveBG/MapObjDolpic` | 100.00% | 40 / 40 |
 | `MoveBG/MapObjRicco` | 100.00% | 32 / 32 |
 | `MoveBG/MapObjPinna` | 99.96% | 62 / 68 |
 | `MoveBG/MapObjBianco` | 99.45% | 67 / 74 |
@@ -93,6 +94,8 @@ The selected unit rows below are refreshed from the same measured report as the 
 | `MoveBG/MapObjPollution` | 100.00% | 12 / 12 |
 | `Camera/CameraBGCheck` | 98.80% | 7 / 10 |
 | `MSound/MSoundSE` | 99.98% | 25 / 30 |
+| `Player/MarioAccess` | 100.00% | 33 / 33 |
+| `MSound/MAnmSound` | 99.92% | 8 / 9 |
 | `MoveBG/MapObjBall` | 99.63% | 63 / 72 |
 | `Player/ModelWaterManager` | 98.68% | 17 / 25 |
 | `MarioUtil/ShadowUtil` | 79.77% | 28 / 49 |
@@ -112,8 +115,8 @@ Most remaining differences in these units are frame gaps and per-call-site inlin
   expansions). The linked count of 492 includes it; the unit is not honestly closed until the
   padding is replaced by real locals (`docs/catalog/linking.md`, "Links 279").
 - `Camera/CameraInbetween` matches but will not link: `docs/catalog/linking.md`.
-- Units one function from linking (`MSoundBGM`, `MarioAccess`): `docs/catalog/frame-gaps.md`.
-- 859 functions remain non-exact and 193 units remain unlinked; source counterparts exist throughout the game.
+- Units one function from linking (`MSoundBGM`, `MarioParticle`): `docs/catalog/frame-gaps.md`.
+- 857 functions remain non-exact and 191 units remain unlinked; source counterparts exist throughout the game.
   Most remaining work is compiler stack layout, register allocation, inline structure and matching data layout.
 - **The `a = b - c` pool residue is the single largest open lever**: all 102 retail
   `bl TVec3::sub` sites are nonmatching, 40 of them at >= 99.3%, for one shared
