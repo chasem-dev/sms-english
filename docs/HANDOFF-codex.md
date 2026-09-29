@@ -89,3 +89,10 @@
   Animation constructor, tree leaf, atan and safe warp-scale probes are restored without retained gain; native evidence is recorded in register-model.md.
   Current exact code 73.57174%, source-linked 34.33548%, 12,047/12,904 exact functions, 541/732 source-linked units.
   The goal remains active with 857 non-exact functions and 191 unlinked units.
+
+- 2026-09-29: LightUtil ambient-copy reconstruction restores all 99 instructions and the 0xa0 frame; 97.80808 -> 99.959595 fuzzy with four stack operands still open.
+  No function-count or source-link gain this round.
+  Native evidence explains the remaining color-object placement; cloud, NPC, gesso and random-emitter probes were restored without safe gain.
+  All 1,008 unmatched data bytes are in four units.
+  Current exact code 73.57174%, source-linked 34.33548%, 12,047/12,904 exact functions and 541/732 source-linked units.
+  Goal remains active with 857 non-exact functions and 191 unlinked units.

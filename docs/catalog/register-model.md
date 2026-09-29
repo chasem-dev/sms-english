@@ -402,3 +402,20 @@ matan's mutable negative magnitude and both borrowed atan inputs retain its five
 MarioParticle's safe by-value scale/copy/output-reference operation has six actual vectors, but changes the frontend inline depth: the sequential form expands all three scale calls, and chaining returned references expands the third one.
 Neither warp form improves the baseline; all probes are restored with full builds and the original checksum.
 Evidence: /tmp/sms-monument-turn-0929, /tmp/x-mario-wire-0929, /tmp/x-npc-attenuation-0929, /tmp/sms-animation-defaults-0929, /tmp/sms-tree-leaves-0929, /tmp/sms-atan-inputs-0929 and /tmp/x-warp-scale-0929.
+
+## Ambient color storage and rejected follow-ups (2026-09-29)
+
+TLightCommon::loadAfter converts the first ambient TColor through its GXColor value before storing it.
+The real store operation borrows the color and writes the destination.
+Raw mLights array inputs at the first light-position read and light-color read remove the temporary block introduced by the color conversion; the third raw array input overcorrects the frame.
+All 99 instructions and the 0xa0 frame now match.
+The light-color result at 0x8c rather than retail 0x80 and the ambient copy at 0x80 rather than 0x18 leave four stack operands and 99.959595% fuzzy match.
+Native shows the conversion's class result in the upper named region, while retail's ambient copy uses a low word; further work needs the actual type/copy shape rather than an unrelated dead local.
+Every other function and datum, symbol diagnostic and the original DOL hash are unchanged.
+A by-value color setter adds two instructions and a 0xc8 frame; a borrowed setter without raw inputs has a 0xc0 frame.
+Sand-castle whole-camera and borrowed-input operations expand the yaw call and worsen the frame; named signed emitter random moves its frame by eight, and a scoped emitter-info reference changes the loop.
+Complete cloud radius-store operations preserve the same two float-web order; a complete NPC camera-distance operation is refused at inline depth two, and two other actual-input forms move the pointer webs in the wrong order.
+The complete tentacle allowed-state helper makes changeAllTentacleState instruction-identical at frame 0x20 against 0x28, but seven previously exact inlined caller bodies regress; it is rejected.
+Four units account for all 1,008 unmatched data bytes: JPAEmitter 72, CardManager 136, ShadowUtil 304 and CameraChange 496.
+The JPAEmitter and CameraChange defects include jump tables attached to non-exact functions; they are not standalone data-only fixes.
+Evidence: /tmp/sms-light-color-0929, /tmp/sms-sand-warp-0929, /tmp/sms-emitter-random-0929, /tmp/sms-bgm-reset-0929, /tmp/x-npc-gpr-0929, /tmp/x-cloud-radius-0929 and /tmp/x-gesso-state-0929.

@@ -11,21 +11,23 @@ Measured from `build/GMSE01/report.json` on 2026-09-29.
 
 | | Fuzzy match | Perfect match | Fully linked | Linked units |
 | --- | ---: | ---: | ---: | ---: |
-| Game | 99.51420% | 67.65962% | 20.26703% | 207 / 385 |
+| Game | 99.51451% | 67.65962% | 20.26703% | 207 / 385 |
 | JSystem | 99.89825% | 93.90541% | 81.21971% | 186 / 198 |
 | SDK | 99.99897% | 99.71085% | 99.54403% | 148 / 149 |
-| All | 99.60184% | 73.57174% | 34.33548% | 541 / 732 |
+| All | 99.60209% | 73.57174% | 34.33548% | 541 / 732 |
 
 12,047 of 12,904 functions match. The rebuilt DOL remains byte-identical to the original.
 
 ## What recent batches have done
 
-Actual monument-turn and wire-riding predicates close two further functions and add 468 exact code bytes.
-MapObjDolpic and MarioAccess now match all charged code and data and are source-linked, adding 9,156 source-linked code bytes.
-The NPC position-distance computation improves its remaining function from 99.50000% to 99.73333%, preserving all retail float-register and stack operands; eight integer-register operands remain.
+The first ambient-color copy in TLightCommon::loadAfter now has the retail instruction sequence, registers and 0xa0 frame.
+Its exact score rises from 97.80808% to 99.959595%; two actual stack objects still occupy four different operands, so the function is not exact.
+Actual color conversion plus two raw light-array inputs produced the improvement without changing other functions or data.
+The prior monument-turn and wire-riding closures remain exact and source-linked in MapObjDolpic and MarioAccess.
 All retained changes pass full production builds, zero function regressions, unchanged symbol diagnostics and the original DOL checksum.
-MarioAccess retains five pre-existing UNUSED body-size warnings; the scored/source-linked match does not establish reconstruction of those discarded bodies.
-Bounded animation-constructor, tree-leaf, atan-input and warp-scale probes found no safe retained gain and were restored.
+The four units with unmatched data are JPAEmitter (72 bytes), CardManager (136), ShadowUtil (304) and CameraChange (496).
+Bounded NPC-pointer, cloud-radius, sand-castle camera, random-emitter and BGM reset probes found no safe gain and were restored.
+A tentacle-state helper improves its out-of-line body but regresses seven exact inlined callers and is not retained.
 
 The selected unit rows below are refreshed from the same measured report as the totals.
 
@@ -98,6 +100,7 @@ The selected unit rows below are refreshed from the same measured report as the 
 | `MSound/MAnmSound` | 99.92% | 8 / 9 |
 | `MoveBG/MapObjBall` | 99.63% | 63 / 72 |
 | `Player/ModelWaterManager` | 98.68% | 17 / 25 |
+| `MarioUtil/LightUtil` | 99.99% | 38 / 40 |
 | `MarioUtil/ShadowUtil` | 79.77% | 28 / 49 |
 | `Enemy/koopajr` | 99.47% | 73 / 81 |
 | `Enemy/wireTrap` | 99.65% | 29 / 35 |

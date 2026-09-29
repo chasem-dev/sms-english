@@ -6,7 +6,7 @@ Keep it current: every orchestrator appends a dated "State" entry below and rewr
 
 ## State 2026-09-29 (session 01a0ed16)
 
-GMSE01 is incomplete: All exact code 73.57174%, source-linked code 34.33548%, 541/732 source-linked units and 12,047/12,904 exact functions. There are 857 non-exact functions, 191 unlinked units and 1,008 unmatched data bytes. Fuzzy similarity (99.60184%) and the identical fallback-linked DOL are separate checks, not completion.
+GMSE01 is incomplete: All exact code 73.57174%, source-linked code 34.33548%, 541/732 source-linked units and 12,047/12,904 exact functions. There are 857 non-exact functions, 191 unlinked units and 1,008 unmatched data bytes. Fuzzy similarity (99.60209%) and the identical fallback-linked DOL are separate checks, not completion.
 
 The stale main checkout was aligned to the port's e4b7dacb, then public fork/main at 9d8055c3 was merged, retaining verified local changes. This adds 171 exact functions and 14 source-linked units versus the initial stale checkout. 17 exact functions are new local research results. The newest closures are the monument-turn and wire-riding predicates; MapObjDolpic and MarioAccess are also linked from source. NPC distance ownership restores all float-register/stack operands but leaves eight integer-register operands. The pole-jump helper restoration also preserves both exact callers and all UNUSED sizes.
 
