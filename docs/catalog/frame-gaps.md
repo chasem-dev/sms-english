@@ -2178,3 +2178,7 @@ Measured tree-wide with `census.py`/`cmpcensus.py` (about a minute per full rebu
 - The `operator-`/`operator*` one-word-per-site class (c-r20, c-r21), the JUTColor 4-versus-8 stride and the JGadget per-site pools are not header shapes any sister project reconstructed differently from ours in a way that helps.
 - `getQuat`'s `fadds` operand order (Kazekun's weak copy, 99.5) survives MKDD's body too.
 - Any later sister lead is most likely to be in the other rotation bodies (`setEular`, `mult33`, the TQuat4 inlines), where declaration order sets the schedule the way it did for `setQuat`; MKDD's versions of those are paired-single or absent.
+
+### Fresh typed-matrix Pakkun follow-up (2026-09-29, Codex)
+
+Four meaningful matrix storage forms were measured against the real PakkunSeedCallback object. Borrowed rows through MsMtxSetRotZ plus removal of the redundant spinMtx pointer improves 93.23529% to 99.70588%: all 68 retail instructions/registers now agree. Whole-object or retained-handle forms are worse. The remaining twenty stack operands are a 0x90 versus 0xa0 frame and spin matrix at 0x48 versus 0x5c. Other Pakkun functions and all data sections are unchanged; main full build and original DOL hash pass. Pre-existing symbol diagnostics are unchanged. Evidence: /tmp/x-pakkun-0929/results.md.

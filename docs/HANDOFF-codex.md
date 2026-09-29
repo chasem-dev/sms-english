@@ -57,3 +57,8 @@
   Combined full build, zero regressions, original DOL SHA-1 and baseline/current symbol checks passed.
   Measured state: All exact 73.47340%, source-linked 34.02236%, 12,033/12,904 exact functions, 538/732 source-linked units.
   Port patch/include/source paths are being adapted to this library layout; no behavior workaround is used in the port.
+
+- 2026-09-29: Fresh TRKSuppAccessFile hsearch ran for 120 seconds with two jobs: 4,793 builds, six cache hits, 4,784 persisted unique variants, 308 restarts and 55 kicks. No candidate improved the twelve register operands; source and main stayed unchanged. This bounded result does not rule out other source forms. Results: /tmp/x-sdk-hsearch-0929/out/results.tsv.
+  A four-form typed-matrix follow-up improved PakkunSeedCallback 93.23529% -> 99.70588% (272 bytes, 68 instructions) by using MsMtxSetRotZ(spin, angle) and removing the redundant spinMtx handle.
+  All instructions/registers agree; twenty stack operands remain (frame 0x90 vs 0xa0, matrix 0x48 vs 0x5c). Other functions/data are unchanged. Full main build, zero regressions and original DOL SHA-1 pass; Pakkun symbol diagnostics are identical to baseline.
+  All exact code stays 73.47340%, source-linked 34.02236%, 538/732 units and 12,033/12,904 exact functions. Selected PROGRESS.md unit rows now also reflect the current report.

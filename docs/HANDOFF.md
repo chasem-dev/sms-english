@@ -4,6 +4,18 @@ Written 2026-09-18 by the session that ran batches 92 to 181.
 Read this before `docs/ORCHESTRATION.md`; it is the judgement that document does not carry.
 Keep it current: every orchestrator appends a dated "State" entry below and rewrites the advice when it stops being true.
 
+## State 2026-09-29 (session 01a0ed16)
+
+GMSE01 is incomplete: All exact code 73.47340%, source-linked code 34.02236%, 538/732 source-linked units and 12,033/12,904 exact functions. There are 871 non-exact functions, 194 unlinked units and 1,008 unmatched data bytes. Fuzzy similarity (99.59452%) and the identical fallback-linked DOL are separate checks, not completion.
+
+The stale main checkout was aligned to the port's e4b7dacb, then public fork/main at 9d8055c3 was merged, retaining verified local changes. This added 157 exact functions and eleven source-linked units versus the initial stale checkout. Three of the exact functions are new local research results: wireMove, HauntLegCallback and TobiPukuRollCallback. The pole-jump helper restoration also preserves both exact callers and all UNUSED sizes.
+
+All locally authored batches pass a full build, zero function-score regressions and original DOL SHA-1 a6782903ef79d4196c8489ecb1b57decb5b3728f. Symbol comparisons across 181 imported units introduce no failures; Pakkun keeps its pre-existing missing weak set<f> and two UNUSED size warnings. Public upstream origin/main has no additional commits beyond this source tree.
+
+A fresh 120-second TRKSuppAccessFile search tested 4,793 builds (4,784 unique persisted variants); none improved its twelve register-operand differences. This finite search does not establish impossibility. Results: /tmp/x-sdk-hsearch-0929/out/results.tsv. New evidence-supported matrix forms subsequently improved PakkunSeedCallback from 93.23529% to 99.70588% without touching the shared header.
+
+The PC port now follows libs/<library>/{include,src}; its strict patch validation covers 193 patches and 204 targets. Both host architectures compile. The port's tools/decomp_status.py generates exact/source-linked metrics and the remaining function queue from the verified report.
+
 ## Known fakematch debt (flagged 2026-09-27, not yet removed)
 
 Agents this session found pre-existing constructs that break the no-fakematch rules; removing them may drop currently-exact functions, so they are listed for a deliberate cleanup pass rather than removed piecemeal:
@@ -20,11 +32,9 @@ c-k8 showed that an empty `if (x != nullptr) {}` after a call survives to regist
 Writing those tests as empty bodies is currently on the rejected (fakematch) list.
 If the owner accepts them as the faithful rendering of compiled-out logging (perhaps via a named no-op macro), MapObjInit (`initMActor` 87.1 -> 98.6, `makeMActors` 98.65 -> 99.8) and the existing effectObj/coasterkiller/NpcCollision empty-if debts become legitimate; until then they stay parked.
 
-## Parked for an owner decision (2026-09-28, c-r21)
+## Rotation matrix research resolved (2026-09-29)
 
-Branch `wt/c-r21` commit `d28e1a4` writes `MsMtxSetRotZ`'s body through `f32* m = (f32*)mtx;` (+2 exact: HauntLegCallback, TobiPukuRollCallback; KillerBodyCallback 96.9 -> 99.7 and PakkunSeedCallback 93.2 -> 99.7 instruction-exact) but needs a unit-local plain copy `RollBlockRotZ` to keep TRollBlock::calcRootMatrix at 99.2.
-Not landed: the flat-pointer cast reads as the kind of cast CLAUDE.md forbids, and the per-site duplicate encodes a split nobody has explained (callbacks and loops want the cast body, straight-line members the plain one).
-Land it only if the owner accepts the cast, or once the per-site split is explained (see frame-gaps.md "Research batch c-r21").
+The old c-r21 flat-pointer cast and duplicate RollBlock implementation were superseded by a typed matrix view in MathUtil.hpp. One real rotation algorithm accepts a whole Mtx or borrowed rows, preserving RollBlock while closing HauntLegCallback and TobiPukuRollCallback. KillerBodyCallback and PakkunSeedCallback now match instructions and registers, with only frame/stack operands remaining. Full shared-header rebuild and subsequent callback batches preserve every existing function score and the original DOL hash. No owner decision is needed for this implementation.
 
 ## Fakematch cleanup c-f1 (2026-09-28)
 

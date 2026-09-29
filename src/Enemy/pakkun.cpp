@@ -86,15 +86,8 @@ static int PakkunRootCallback(J3DNode* node, int param);
 static int PakkunRootCallback2(J3DNode* node, int param);
 
 // The seed spins about its own axis while it flies.
-// TODO: 8 bytes of frame short, and the 0.0f/1.0f the matrix is filled with
-// are hoisted above the sine table lookups instead of loaded at their first
-// use. MsSin/MsCos, swapping the sine and cosine locals and naming the model
-// all leave it unchanged. So do the sibling spellings: tobiPuku/hauntLeg's
-// `MsMtxSetRotZ(spinMtx, angle)` (frame 0x90, same hoist; tobiPuku carries
-// the identical hoist TODO) and hanasambo's shared `s16 angle` with
-// JMASSin/JMASCos (0x90). Retail's Mtx is at 0x5c, ours 0x4c.
-// Also inert (c-ident): the rows or MsMtxSetRotZ through a named MtxPtr with
-// the concats on the array or the pointer, as Mtx or TMtx34f (88.7-93.2).
+// TODO: instructions and registers match; frame is 0x90 versus retail 0xa0.
+// The spin matrix is at 0x48 versus 0x5c; only stack operands differ.
 static int PakkunSeedCallback(J3DNode* node, int param)
 {
 	if (param == 0) {
@@ -106,26 +99,11 @@ static int PakkunSeedCallback(J3DNode* node, int param)
 		J3DJoint* joint = (J3DJoint*)node;
 		MtxPtr anmMtx   = gpCurPakkunSeed->getMActor()->getModel()->getAnmMtx(
 		    joint->getJntNo());
-		f32 s = JMASin(gpCurPakkunSeed->mSpinAngle);
-		f32 c = JMACos(gpCurPakkunSeed->mSpinAngle);
-
 		Mtx spin;
-		spin[0][0] = c;
-		spin[0][1] = -s;
-		spin[0][2] = 0.0f;
-		spin[0][3] = 0.0f;
-		spin[1][0] = s;
-		spin[1][1] = c;
-		spin[1][2] = 0.0f;
-		spin[1][3] = 0.0f;
-		spin[2][0] = 0.0f;
-		spin[2][1] = 0.0f;
-		spin[2][2] = 1.0f;
-		spin[2][3] = 0.0f;
+		MsMtxSetRotZ(spin, gpCurPakkunSeed->mSpinAngle);
 
-		MtxPtr spinMtx = spin;
-		MTXConcat(anmMtx, spinMtx, anmMtx);
-		MTXConcat(J3DSys::mCurrentMtx, spinMtx, J3DSys::mCurrentMtx);
+		MTXConcat(anmMtx, spin, anmMtx);
+		MTXConcat(J3DSys::mCurrentMtx, spin, J3DSys::mCurrentMtx);
 	}
 	return 1;
 }
