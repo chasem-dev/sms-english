@@ -31,3 +31,9 @@
   Symbolic comparison reports SAME; the remaining fourteen markers are two operator- temporary offsets (+0x14), a known shared-header allocation class.
   Full build, zero new function regressions, exact DOL SHA-1 and symbol order passed before landing.
   Aggregate exact-code, data and source-linked percentages did not change from this fuzzy/behavioral fix.
+
+- 2026-09-29: A fresh value-flow experiment closed `Player/MarioSpecial::wireMove`, 99.78205% -> 100.0% (312 bytes, 78 instructions).
+  `WireDifference` performs the subtraction on its real by-value endpoint and returns that value; the retail temporary layout and fused squared-length arithmetic now match.
+  Symbolic expression comparison reports SAME. Full build, zero function regressions, original DOL SHA-1 and symbol order passed.
+  All exact code is now 73.19047%, Game 67.17712%, with 12,015/12,904 exact functions and 536/732 source-linked units.
+  This new local helper succeeded despite previously recorded failed forms of the shared vector operator; historical notes remain hypotheses to check against fresh compiler evidence.

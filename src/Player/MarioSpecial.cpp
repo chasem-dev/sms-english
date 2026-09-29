@@ -722,24 +722,21 @@ void TMario::getOnWirePosAngle(JGeometry::TVec3<f32>* outPos, s16* outAngle)
 	*outAngle = matan(dir.z, dir.x);
 }
 
-// Retail calls this out of line from all four wire nerves, so the body has to
-// cost at least 15 statements at depth one: splitting length() into its
-// squared() and sqrt() halves is the fifteenth (a separate `f32 limit = 1.0f -
-// margin;` also reaches 15 but reverses the compare's two operands, 94.1
-// against this shape's 97.1, and spelling the subtraction as `dir = mWireEndPos;
-// dir.sub(start);` scores 53.9). Before this, wireWait/wireRolling/wireHanging
-// expanded the whole body inline and sat at 69.2/68.7/58.5.
-// TODO: the one instruction left is the squared() contraction -- retail loads
-// y and z first and fuses `x * x` into the first `fadds` as an `fmadds`, which
-// needs x to become available last; ours materialises all three products.
-// Naming `end` lands the 0x68 frame (retail keeps its 12-byte slot between
-// start and dir); the named block still sits 4 low and the operator- temp 8
-// high. Inert: end declared first, dir(end - start), split dir declaration.
+// Compute the wire direction as a value so its components retain the
+// retail squared-length contraction and subtraction temporary layout.
+static inline JGeometry::TVec3<f32>
+WireDifference(JGeometry::TVec3<f32> end, const JGeometry::TVec3<f32>& start)
+{
+	return end -= start;
+}
+
+// The separate square and root retain the map-defined out-of-line routine
+// called by all four wire states.
 BOOL TMario::wireMove(f32 param_1)
 {
 	JGeometry::TVec3<f32> start = mWireStartPos;
 	JGeometry::TVec3<f32> end   = mWireEndPos;
-	JGeometry::TVec3<f32> dir   = end - start;
+	JGeometry::TVec3<f32> dir   = WireDifference(end, start);
 	f32 lenSq                   = dir.squared();
 	f32 len                     = JGeometry::TUtil<f32>::sqrt(lenSq);
 	f32 delta                   = param_1 / len;
