@@ -1764,3 +1764,43 @@ A definition wrapped in a type conversion node (`ETYPCON`, which any explicit ca
 So the tell needs both a pointer object and a cast-wrapped address: a caller-named `MtxPtr p = (MtxPtr)spin;` gives it (every instruction of `HauntLegCallback` right) but, being a cluster-0 local, takes r31 where retail's inline object shares r30 (97.4%); only an inline-owned pointer (`MtxPtr m = mtx;` in the body with a cast argument, or a body-modified parameter with a cast argument) gives retail's registers, and neither is landable (the copy changes the weak `MsMtxSetRotX/Y` bodies, and the cast is a no-op).
 Inert, all substituted or propagated: `&spin[0]`, `spin + 0`, `&spin[0][0]` cast, a `Mtx&` or `Mtx` parameter, row pointers in the body, `f32 spin[12]`, `Vec spin[4]`, `TMtx34f`/`TRotation3f`/`TPosition3f` locals (their conversion binds an `@` temporary but inlines to a bare address, and shifts the matrix by 4).
 Open lead: a real construct that yields an inline-owned pointer defined through a conversion (a callee returning a cast pointer, or a base-class `this` adjustment that is not folded).
+
+## Research batch c-r24: per-site inline decisions
+
+The per-site class ("the same callee, the same depth, inlined at one site and called at another") is not a budget, order or repeat effect: MWCC expands a call in one of two modes, and the mode decides how deep everything under that call is judged.
+Measured with the game flags on GC/1.2.5 (GC/1.1 gives the same numbers); `tools/mwcc-stack/inline-modes.py` re-runs every probe below in about three seconds.
+
+**Statement mode.** A call that is the root of a statement is expanded as a block of statements: the whole expression statement (`f(a);`, `x = f(a);` when `=` is a class `operator=`), the operand of `return`, the whole condition of `if`/`while`/`do`/`switch`, each operand of a comma statement, the receiver of a root member call (`g()->f(1);`).
+Its argument expressions are bound inside that block, so every call in them is judged one level deeper than the call itself, and the callee's own statements stay statements, so their root calls are statement mode too.
+**Expression mode.** A call anywhere else (an operand of `+`, `<` or `!`, the right side of a scalar `=`, a scalar initialiser, an argument of an out-of-line call, a ternary, a cast) is expanded as an expression: its arguments stay at the call's own level, and its body is folded into the expression, so no call inside that body is a root any more.
+In both modes the callee's body is one level below the call, and the allowance per level is the known 14 / 9 / 6 / 2 / never.
+
+Measured (the level at which a probe callee P is judged, from its refusal point):
+
+| site | P's level |
+| --- | --- |
+| `setI(P(x));`, `id(P(x));`, `return id(P(x));`, `if (id(P(x)))`, `while (…)`, `switch (…)`, `setI(1), setI(P(x));`, `Hp(x)->set(1);` | 2 |
+| `g = id(P(x));`, `int t = id(P(x));`, `ext(id(P(x)));`, `if (id(P(x)) < 3)`, `!id(P(x));`, `(void)(id(P(x)));`, `for (…; i < id(P(x)); …)` | 1 |
+| `gv = V(P(x));` (root `operator=`, then a temporary built in its argument binding) | 3 |
+| `W1(x);` with `W1` = `{ setI(P(x)); }` | 3 (root inside a root body) |
+| `Ci(x);` with `Ci` = `{ V l; l = V(P(x)); return l.x; }` | 4 |
+| `g = Ci(x);`, the same `Ci` | 2 (value call: `Ci`'s statements lose their roots) |
+
+This reconciles two catalog entries that looked contradictory: depth sweep 106's "an inlined call's argument costs one level" is statement mode (assignments through `operator=`, named class copies, setters), and batch 190's "an inlined one-liner's argument is not an inline level" is expression mode (`norm(gid(...))`, a scalar init).
+It also replaces two loop rules: the c-tp2 `TBossGesso::lenFromToeToMario` site is refused because `MSound::startSoundActorWithInfo` is an inline wrapper called at statement level, which puts its argument at level 2 (the loop body is over the level-2 allowance), not because the callee has a loop; a loop callee passed straight to an out-of-line call expands (scratch probe, plain and `inline`).
+The c-k7 rule stands only for conditionally evaluated operands: a loop callee in a ternary arm stays a `bl`; one in `x = 1 + f()`, `ext(f())`, `x = f() * 2 + f()` or `if (f())` expands.
+
+**Refuted as the per-site mechanism, all at levels 1 to 4:** a cumulative per-caller budget (200 expansions of a callee at its level limit, at levels 2, 3 and 4, all expand), site order within the caller (`HWW` and `WWH` split identically), the statement count of the wrappers along the path (0 to 13 filler statements in the level-1 and level-2 wrappers move nothing), the argument kind (local, constant, arithmetic, member read, accessor call, external call: all identical), and the return type of the argument (reference, pointer, scalar, by-value class).
+Batch 251's "at level 2 the first `theNerve()` guard expands and later ones call" did not reproduce in a scratch TU (three guards, one or two wrapper levels: all expand or all call); its sites differ in mode, not in order.
+
+**Reading a real site.** Count levels from the emitted function: +1 for each inlined body entered, +1 more for the arguments of a statement-mode call, and nothing for the arguments of an expression-mode call.
+Stop at the first expression-mode call on the path: nothing inside its body is statement mode, whatever it looks like in the source.
+To measure instead of count, swap the callee at the site for a TU-local `static` copy whose body is `k` copies of `(void)0;` plus the original return (the return is free): the smallest refused `k` minus one is the allowance, hence the level.
+`TBossGesso::moveObject`'s guard `SMS_GetMarioPos` measures level 4 this way (refused from 3), because `inSightAngle` and `inSight` are value calls (`!inSightAngle(...)`, `inSight() < ...`) and so fold into one expression; retail's `bl` needs level 5, so retail reaches `inSight`'s body in statement mode or one level deeper, and `local_90 = SMS_GetMarioPos();` alone cannot supply it there (measured identical to the direct initialisation).
+
+**Applied to the c-tp2 blocked set.**
+- `TKukku::calcMomentum`: with the three-statement body (retail's 0x11c out of line, 98.9%) retail's call sets need `calcMomentum` at level 3 in `TNerveKukkuGraphWander` (its `TQuat4` copy, `set<f>` and `rotate` all `bl`) and at level 4 in `TNerveKukkuRecoverGraph` (via `doRecoverToCurPathNode`), one level deeper than `mLinearVelocity = calcMomentum(...)` gives at both.
+  `mLinearVelocity = JGeometry::TVec3<f32>(calcMomentum(...))` at both sites reproduces every retail call decision in both nerves (check-relocs clean except `TParamT<f>::get`, which the extra level also pushes out) but leaves RecoverGraph 100 -> 89.7 (frame 0x68 against 0x58) and GraphWander 94.5 -> 96.2, and the temporary is not a plausible source; not landed.
+  The spelling that adds exactly one level at the store without a temporary is the open item.
+- `std::fmodf`: not a mode effect. `calcNearerDirection`'s `mDirection = lo + std::fmodf(...)` is an expression-mode call at level 1, which no mode or level makes a `bl`; retail never expands the body anywhere, so the refusal belongs to its declaration (open, see `math.h`).
+- Lead for the other per-site entries (`SMS_getShineID` in `TSelectMenu::perform`, the Koopa flame blocks, the `theNerve` guards): re-read each site by mode before assuming a repeat effect; batch 190's "same TU, source and depth" comparison of `initData` did not separate statement-mode from value-mode sites.
