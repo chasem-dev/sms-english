@@ -42,7 +42,11 @@ public:
 
 		// fabricated
 		TEBlockStat getState() const { return mState; }
-		u32 getWriteCount() const { return mWriteCount; }
+		u32 getWriteCount() const
+		{
+			u32 writeCount = mWriteCount;
+			return writeCount;
+		}
 		void* getPreviewBytes() { return mPreviewBytes; }
 
 		/* 0x0 */ TEBlockStat mState;
