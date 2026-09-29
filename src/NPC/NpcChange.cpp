@@ -486,14 +486,79 @@ static inline bool isInSameCameraCubeAtHead(const JGeometry::TVec3<f32>& pos)
 	return SMS_IsInSameCameraCube(head);
 }
 
-// TODO: 99.6%. Remaining: 0x48 frame, isNerveCanGoToSink ranking and the
-// sunflower result's `mr r27, r30` (merged early returns, `if (!sink) return`
-// inert). The camera-cube test is an `||` gate (a canTalk flag costs an extra
-// `li r3, 1`); bVar5 declared at the top (before bVar4) fixes the r29/r30
-// ranking of the two flags.
+static inline bool NpcIsTalkAccepted(TBaseNPC* self)
+{
+	bool result = false;
+	if (self->checkLiveFlag(LIVE_FLAG_UNK40000)) {
+		result = true;
+	} else if (self->mTalkForbidCount == 0 && !self->isJellyFishMare()
+	           && !gpCamera->isTalkCameraInbetween() && self->mHolder == nullptr
+	           && !self->checkLiveFlag(
+	               LIVE_FLAG_DEAD | LIVE_FLAG_HIDDEN | LIVE_FLAG_CLIPPED_OUT
+	               | LIVE_FLAG_UNK200 | TBaseNPC::LIVE_FLAG_DONT_TALK
+	               | TBaseNPC::LIVE_FLAG_SINK_BOTTOM | LIVE_FLAG_UNK400000)
+	           && !self->checkActionFlag(TBaseNPC::NPC_ACTION_BURNING)
+	           && self->isClean()) {
+
+		if (!self->isSunflowerReviving() && self->isNerveCanGoToTalk()
+		    && (self->mActorType != 0x4000006
+		        || self->unkD0->getCurrentAnmKind() == NPC_ANM_KIND_UNK4)
+		    && !SMS_IsMarioOpeningDoor()) {
+			if (gpMarDirector->mMap != 7
+			    || isInSameCameraCubeAtHead(self->mPosition)) {
+				f32 fVar2;
+				f32 fVar1;
+				if (self->mThrowCtrl != nullptr) {
+					fVar2 = TBaseNPC::mPtrSaveNormal->mSLThrowTalkAcceptDist
+					            .get();
+					fVar1 = TBaseNPC::mPtrSaveNormal->mSLThrowTalkAcceptHeight
+					            .get();
+				} else {
+					if (self->mActorType == 0x400001A) {
+						fVar2 = TBaseNPC::mPtrSaveNormal->mSLSunflowerLTalkDist
+						            .get();
+					} else {
+						fVar2 = TBaseNPC::mPtrSaveNormal->mTalkAcceptDist.get();
+					}
+					fVar1 = TBaseNPC::mPtrSaveNormal->mTalkAcceptHeight.get();
+				}
+
+				f32 fVar3;
+				if ((self->checkActionFlag(TBaseNPC::NPC_ACTION_UNK400
+				                           | TBaseNPC::NPC_ACTION_UNK1))
+				    || self->isSunflower() || self->mActorType == 0x400001D) {
+					fVar3 = TBaseNPC::mPtrSaveNormal->mSLSitTalkAcceptDegree
+					            .get();
+				} else {
+					fVar3 = TBaseNPC::mPtrSaveNormal->mTalkAcceptDegree.get();
+				}
+
+				if (abs(SMS_GetMarioPos().y - self->mPosition.y) < fVar1
+				    && self->isInSight(SMS_GetMarioPos(), fVar2, fVar3, -1.0f)
+				    && MsIsInSight(SMS_GetMarioPos(),
+				                   SHORTANGLE2DEG(*gpMarioAngleY),
+				                   self->mPosition, fVar2,
+				                   TBaseNPC::mPtrSaveNormal
+				                       ->mSLMarioTalkAcceptDegree.get(),
+				                   0.0f))
+					result = true;
+			}
+		}
+	}
+
+	return result;
+}
+
+// TODO: 99.8%, every instruction exact. The talk-acceptance test is a bool
+// predicate level (retail's sunflower result starts as `mr r27, r30`, a copy
+// of this level's `result` zero, the c-k9 shared-zero tell), with its two
+// distances declared height-last so fVar2 takes f31. Remaining: the frame is
+// 0x48 short (hsearch dbg: one word between the int-to-float temporary and
+// the head copy, 17 below the head copy), and the inlined isNerveCanGoToSink's
+// nerve takes r27 where retail has r30. getSpine()/getPosition() at every
+// site reach 0x110 but rerank 23 registers.
 void TBaseNPC::changeNerveProc_()
 {
-	bool bVar5;
 	bool bVar4                                = false;
 	const TNerveBase<TLiveActor>* latestNerve = mSpine->getLatestNerve();
 	if (latestNerve == &TNerveNPCTalk::theNerve()) {
@@ -501,59 +566,7 @@ void TBaseNPC::changeNerveProc_()
 		onLiveFlag(LIVE_FLAG_UNK20000);
 		offLiveFlag(LIVE_FLAG_UNK40000);
 	} else {
-		bVar5 = false;
-		if (checkLiveFlag(LIVE_FLAG_UNK40000)) {
-			bVar5 = true;
-		} else if (mTalkForbidCount == 0 && !isJellyFishMare()
-		           && !gpCamera->isTalkCameraInbetween() && mHolder == nullptr
-		           && !checkLiveFlag(
-		               LIVE_FLAG_DEAD | LIVE_FLAG_HIDDEN | LIVE_FLAG_CLIPPED_OUT
-		               | LIVE_FLAG_UNK200 | LIVE_FLAG_DONT_TALK
-		               | LIVE_FLAG_SINK_BOTTOM | LIVE_FLAG_UNK400000)
-		           && !checkActionFlag(NPC_ACTION_BURNING) && isClean()) {
-
-			if (!isSunflowerReviving() && isNerveCanGoToTalk()
-			    && (mActorType != 0x4000006
-			        || unkD0->getCurrentAnmKind() == NPC_ANM_KIND_UNK4)
-			    && !SMS_IsMarioOpeningDoor()) {
-				if (gpMarDirector->mMap != 7
-				    || isInSameCameraCubeAtHead(mPosition)) {
-					f32 fVar1;
-					f32 fVar2;
-					if (mThrowCtrl != nullptr) {
-						fVar2 = mPtrSaveNormal->mSLThrowTalkAcceptDist.get();
-						fVar1 = mPtrSaveNormal->mSLThrowTalkAcceptHeight.get();
-					} else {
-						if (mActorType == 0x400001A) {
-							fVar2 = mPtrSaveNormal->mSLSunflowerLTalkDist
-							            .get();
-						} else {
-							fVar2 = mPtrSaveNormal->mTalkAcceptDist.get();
-						}
-						fVar1 = mPtrSaveNormal->mTalkAcceptHeight.get();
-					}
-
-					f32 fVar3;
-					if ((checkActionFlag(NPC_ACTION_UNK400 | NPC_ACTION_UNK1))
-					    || isSunflower() || mActorType == 0x400001D) {
-						fVar3 = mPtrSaveNormal->mSLSitTalkAcceptDegree.get();
-					} else {
-						fVar3 = mPtrSaveNormal->mTalkAcceptDegree.get();
-					}
-
-					if (abs(SMS_GetMarioPos().y - mPosition.y) < fVar1
-					    && isInSight(SMS_GetMarioPos(), fVar2, fVar3, -1.0f)
-					    && MsIsInSight(
-					        SMS_GetMarioPos(), SHORTANGLE2DEG(*gpMarioAngleY),
-					        mPosition, fVar2,
-					        mPtrSaveNormal->mSLMarioTalkAcceptDegree.get(),
-					        0.0f))
-						bVar5 = true;
-				}
-			}
-		}
-
-		if (bVar5) {
+		if (NpcIsTalkAccepted(this)) {
 			onLiveFlag(LIVE_FLAG_UNK20000);
 			if (checkLiveFlag(LIVE_FLAG_UNK40000)) {
 				bVar4 = true;
