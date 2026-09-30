@@ -224,11 +224,12 @@ void TBathtubGrip::startBreak(int animation, int delay, f32 speed)
 	startAnim(animation);
 }
 
-// TODO: 98.9%. The count arms read their params through raw `.value` (each
-// `.get()` reserved a reference temporary and reordered the loads). Left:
-// retail's frame is 0x150 against our 0x30 with no stack use in the body (a
-// dead aggregate from some inlined callee), and the inlined trample()'s
-// &trampleRelease pointer (see the TODO on trample()).
+// TODO: 98.9%. The count arms read their params as hipdrop() does,
+// getUnk16C()->x.get() (`.get()` on the raw unk16C reorders the loads; with
+// the accessor it does not, c-hs6). Left: retail's frame is 0x150 against
+// our 0x118 with no stack use in the body (a dead aggregate from some
+// inlined callee), and the inlined trample()'s &trampleRelease pointer (see
+// the TODO on trample()).
 BOOL TBathtubGrip::receiveMessage(THitActor* sender, u32 message)
 {
 	switch (message) {
@@ -237,7 +238,7 @@ BOOL TBathtubGrip::receiveMessage(THitActor* sender, u32 message)
 			return false;
 		if (!unk249)
 			return false;
-		unk138[0].set(*gpMarioPos);
+		unk138[0].set(SMS_GetMarioPos());
 		if (gpMSound->gateCheck(MSD_SE_OBJ_SUPERBLOCK_BREAK))
 			MSoundSESystem::MSoundSE::startSoundActor(
 			    MSD_SE_OBJ_SUPERBLOCK_BREAK, &unk138[0], 0, nullptr, 0, 4);
@@ -251,24 +252,24 @@ BOOL TBathtubGrip::receiveMessage(THitActor* sender, u32 message)
 		f32 speed;
 		switch (count) {
 		case 1:
-			delay = mBathtub->unk16C->breakCount0.value;
-			speed = mBathtub->unk16C->animSpeed1.value;
+			delay = mBathtub->getUnk16C()->breakCount0.get();
+			speed = mBathtub->getUnk16C()->animSpeed1.get();
 			break;
 		case 2:
-			delay = mBathtub->unk16C->breakCount1.value;
-			speed = mBathtub->unk16C->animSpeed2.value;
+			delay = mBathtub->getUnk16C()->breakCount1.get();
+			speed = mBathtub->getUnk16C()->animSpeed2.get();
 			break;
 		case 3:
-			delay = mBathtub->unk16C->breakCount2.value;
-			speed = mBathtub->unk16C->animSpeed3.value;
+			delay = mBathtub->getUnk16C()->breakCount2.get();
+			speed = mBathtub->getUnk16C()->animSpeed3.get();
 			break;
 		case 4:
-			delay = mBathtub->unk16C->breakCount3.value;
-			speed = mBathtub->unk16C->animSpeed4.value;
+			delay = mBathtub->getUnk16C()->breakCount3.get();
+			speed = mBathtub->getUnk16C()->animSpeed4.get();
 			break;
 		default:
-			delay = mBathtub->unk16C->breakCount0.value;
-			speed = mBathtub->unk16C->animSpeed0.value;
+			delay = mBathtub->getUnk16C()->breakCount0.get();
+			speed = mBathtub->getUnk16C()->animSpeed0.get();
 			break;
 		}
 		startBreak(count, delay, speed);
