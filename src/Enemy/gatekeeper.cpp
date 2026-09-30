@@ -1121,11 +1121,11 @@ DEFINE_NERVE(TNerveBGKDie, TLiveActor)
 	}
 
 	if (spine->getTime() == 0x154) {
-		SMSGetParticleManagerBound()->emitAndBindToMtxPtr(
+		gpMarioParticleManager->emitAndBindToMtxPtr(
 		    GATEKEEPER_JPA_MS_GKPA_KEMURI, self->getModel()->getAnmMtx(0), 2,
 		    nullptr);
 		SMSGetMSound()->startSoundActor(MSD_SE_DM_OSEN_DISAPPEAR,
-		                                &self->mPosition, 0, nullptr, 0, 4);
+		                                &self->mPosition);
 		self->rumblePad();
 	}
 
