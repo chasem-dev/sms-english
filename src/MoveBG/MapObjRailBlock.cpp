@@ -411,8 +411,9 @@ void TRailBlock::calcRootMatrix()
 	model->setBaseScale(mScaling);
 }
 
-// TODO: every instruction matches; frame 0x160 vs retail 0x1b0 (the angle
-// wraps are MsWrap, +8 over hand-written loops). Retail has 7 more words
+// TODO: every instruction matches; frame 0x170 vs retail 0x1b0 (the angle
+// wraps are MsWrap, +8 over hand-written loops; getTracer() at all four
+// tracer reads, as in readRailFlag, +0x10, c-hs6). Retail has 7 more words
 // between `point` (0x110) and resetStep's indexToPoint temporary (0xd8, ours
 // 0x10 apart) and 12 more below its copy (0xcc). TVec3 ctor/set() for the
 // columns: worse.
@@ -424,7 +425,7 @@ void TRailBlock::control()
 
 	if (!calcRecycle() && !checkRailFlag(2)) {
 		if (moveToNextNode(getUnk144())) {
-			TGraphTracer* tracer = unk138;
+			TGraphTracer* tracer = getTracer();
 			TGraphWeb* web       = tracer->getGraph();
 
 			if (web->getGraphNode(tracer->getCurGraphIndex())
@@ -435,9 +436,9 @@ void TRailBlock::control()
 				unk148 = 2;
 			}
 
-			unk138->moveToShortestNext();
+			getTracer()->moveToShortestNext();
 
-			u32 speed = unk138->getCurrent().getRailNode()->mSpeed;
+			u32 speed = getTracer()->getCurrent().getRailNode()->mSpeed;
 			if (speed != 0xffff)
 				unk144 = 0.01f * speed;
 
@@ -486,7 +487,7 @@ void TRailBlock::control()
 			}
 
 			JGeometry::TVec3<f32> point;
-			TGraphNode& node = web->getGraphNode(unk138->getCurGraphIndex());
+			TGraphNode& node = web->getGraphNode(getTracer()->getCurGraphIndex());
 			node.getPoint(point);
 
 			f32 frames = VECDistance(&mPosition, &point) / unk144;
