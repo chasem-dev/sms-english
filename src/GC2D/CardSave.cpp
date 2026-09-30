@@ -647,14 +647,14 @@ s8 TCardSave::waitForChoice(TEProgress param_1, TEProgress param_2, s8 param_3)
 		break;
 
 	case 2: {
-		s8 old    = unk2E9;
+		s8 old    = getUnk2E9();
 		u32 input = unk270->mEnabledFrameMeaning;
 
 		if (input & 0x20) {
 			if (unk44 != nullptr)
 				gpEmitterManager4D2->forceDeleteEmitter(unk44);
 
-			if (unk2E9 == 0) {
+			if (getUnk2E9() == 0) {
 				gpMSound->startSoundSystemSE(0x481CU, 0, nullptr, 0);
 			} else {
 				gpMSound->startSoundSystemSE(0x481DU, 0, nullptr, 0);
@@ -689,7 +689,7 @@ s8 TCardSave::waitForChoice(TEProgress param_1, TEProgress param_2, s8 param_3)
 
 		TExPane* selectedPane;
 		JUTRect selectedRect;
-		if (unk2E9 == 0) {
+		if (getUnk2E9() == 0) {
 			selectedPane = unkFC;
 			selectedRect = unk104;
 		} else {
@@ -734,7 +734,7 @@ s8 TCardSave::waitForChoice(TEProgress param_1, TEProgress param_2, s8 param_3)
 		if (unk2FC > 80)
 			unk2FC = 0;
 
-		if (old != unk2E9) {
+		if (old != getUnk2E9()) {
 			if (!unk18 && unk44 != nullptr)
 				gpEmitterManager4D2->forceDeleteEmitter(unk44);
 
@@ -748,7 +748,7 @@ s8 TCardSave::waitForChoice(TEProgress param_1, TEProgress param_2, s8 param_3)
 			unkFC->update();
 			unk100->update();
 
-			if (unk2E9 == 0) {
+			if (getUnk2E9() == 0) {
 				((J2DPicture*)unkFC->getPane())
 				    ->setWhite(JUtility::TColor(0, 0xFF, 0, 0xFF));
 				((J2DPicture*)unk100->getPane())
@@ -771,8 +771,8 @@ s8 TCardSave::waitForChoice(TEProgress param_1, TEProgress param_2, s8 param_3)
 		break;
 
 	case 5:
-		unk310 = unk2E9 == 0 ? param_1 : param_2;
-		result = unk2E9;
+		unk310 = getUnk2E9() == 0 ? param_1 : param_2;
+		result = getUnk2E9();
 		break;
 	}
 
