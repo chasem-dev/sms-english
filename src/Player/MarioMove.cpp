@@ -447,7 +447,8 @@ void TMario::setPlayerJumpSpeed(f32 speed_mult, f32 force)
 	mVel.y = (mForwardVel * speed_mult) + force;
 }
 
-// TODO: the frame is 0x48 short (0x190 against retail's 0x1d8), and retail
+// TODO: the frame is exact (0x1d8) with getGroundPlane(), getActor() and
+// getCurrentNozzleIndex() at every read (0x190 before); retail
 // reloads mSinkTimer for the `-=` in the sinking block; `a = a - x`, a named
 // decrement and swapped factors were inert.
 // Also inert: setPlayerVelocity() for the four slide-velocity blocks (+8
@@ -469,16 +470,17 @@ u32 TMario::setStatusToJumping(u32 status, u32 arg)
 		setPlayerJumpSpeed(0.25f, 42.0f);
 		mForwardVel *= 0.8f;
 
-		if (!mGroundPlane->isIllegalData()) {
-			if (mGroundPlane->isThing2()) {
-				mVel.y     = 0.01f * mGroundPlane->getActiveJumpPower();
+		if (!getGroundPlane()->isIllegalData()) {
+			if (getGroundPlane()->isThing2()) {
+				mVel.y     = 0.01f * getGroundPlane()->getActiveJumpPower();
 				nextStatus = MARIO_STATUS_FORCE_JUMP;
 				break;
-			} else if (mGroundPlane->isThing3()) {
+			} else if (getGroundPlane()->isThing3()) {
 				mVel.y += -unkBC + getGroundJumpPower();
 
-				if (mGroundPlane->mActor != nullptr)
-					((THitActor*)mGroundPlane->mActor)->receiveMessage(this, 0);
+				if (getGroundPlane()->getActor() != nullptr)
+					((THitActor*)getGroundPlane()->getActor())
+					    ->receiveMessage(this, 0);
 
 				startVoice(MSD_SE_MV24_JUMP_SPECIAL_01);
 				nextStatus = MARIO_STATUS_FORCE_JUMP;
@@ -603,13 +605,13 @@ u32 TMario::setStatusToJumping(u32 status, u32 arg)
 
 	case MARIO_STATUS_ROCKET: {
 		if (mWaterGun != nullptr) {
-			if ((int)mWaterGun->mCurrentNozzle == TWaterGun::Rocket) {
+			if ((int)mWaterGun->getCurrentNozzleIndex() == TWaterGun::Rocket) {
 				startVoice(MSD_SE_MV24_JUMP_SPECIAL_01);
 				rocketEffectStart();
 			}
-			if ((int)mWaterGun->mCurrentNozzle == TWaterGun::Turbo)
+			if ((int)mWaterGun->getCurrentNozzleIndex() == TWaterGun::Turbo)
 				startVoice(MSD_SE_MV15_EXERT_INST_01);
-			if ((int)mWaterGun->mCurrentNozzle == TWaterGun::Hover)
+			if ((int)mWaterGun->getCurrentNozzleIndex() == TWaterGun::Hover)
 				startVoice(MSD_SE_MV21_JUMP_SMALL_01);
 			setPlayerJumpSpeed(0.0f, 10.0f);
 		}
