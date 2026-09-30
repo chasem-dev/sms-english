@@ -244,15 +244,16 @@ static inline void LimitKoopaJrTurnBody(TLimitKoopaJr* koopaJr,
 	            koopaJr->getSaveParams()->mSLRotationSpeed.get()));
 }
 
+// TODO: every instruction matches; the frame is 0x110 against retail 0x118
+// (0x100 before c-hs7 passed calcTargetDirection().get() straight in, as
+// canRun does).
 void TLimitKoopaJr::moveRun()
 {
 	f32 angleVelocity
 	    = 0.017453294f * getSaveParams()->mSLRoundAngleVelocity.get();
 
-	TDirectionCalc target = calcTargetDirection();
-
-	TDirectionCalc next(
-	    mRoundDirection.calcTurnDirection(target.get(), angleVelocity));
+	TDirectionCalc next(mRoundDirection.calcTurnDirection(
+	    calcTargetDirection().get(), angleVelocity));
 	f32 turn                   = next.sub(mRoundDirection.mDirection);
 	mRoundDirection.mDirection = next.get();
 
