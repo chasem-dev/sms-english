@@ -218,17 +218,20 @@ static void initStageCommon()
 	}
 }
 
-// TODO: every instruction matches; the frame is 0x18 short (0x58 vs 0x70).
-// The director accessor bought 0x20; naming the warp objects and restoring
-// the UNUSED per-area helpers are inert.
+// TODO: every instruction matches; the frame is 0x10 short (0x60 vs 0x70).
+// The director accessor bought 0x20 and the named stage and map 8 more;
+// naming the warp objects and restoring the UNUSED per-area helpers are
+// inert, and one named director is 13 instructions off.
 static void initStage()
 {
-	if (SMSGetMarDirector()->getCurrentStage() > 9)
+	u8 stage = SMSGetMarDirector()->getCurrentStage();
+	if (stage > 9)
 		return;
 
 	initStageCommon();
 
-	switch (SMSGetMarDirector()->getCurrentMap()) {
+	u8 map = SMSGetMarDirector()->getCurrentMap();
+	switch (map) {
 	case 1:
 		initDolpic();
 		break;
