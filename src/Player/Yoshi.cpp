@@ -851,12 +851,11 @@ void TYoshi::thinkHoldOut()
 			mFlutterState = 1;
 		break;
 	case 1:
-		SMSGetParticleManagerBound()->emitAndBindToMtxPtr(
+		gpMarioParticleManager->emitAndBindToMtxPtr(
 		    0x119, mActor->getModel()->getAnmMtx(unkF6), 1, this);
 		if (mMario->getVel().y < 0.0f
 		    && 0.0f <= mFlutterAcceleration + mMario->getVel().y)
-			YoshiGetMSound()->startSoundActor(MSD_SE_YV_FUNBARI, &mTranslation, 0,
-			                                nullptr, 0, 4);
+			YoshiGetMSound()->startSoundActor(MSD_SE_YV_FUNBARI, &mTranslation);
 		if (mFlutterTimer != 0) {
 			mFlutterTimer -= 1;
 			mMario->mVel.y += mFlutterAcceleration;
