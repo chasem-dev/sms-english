@@ -85,4 +85,13 @@ public:
 // site.
 inline TMap* SMSGetMap() { return gpMap; }
 
+// Fabricated: the map bound to a named local before it is returned, +8 of
+// low region per expansion over SMSGetMap. Formerly parked TU-locally in six
+// units.
+inline TMap* SMSGetMapBound()
+{
+	TMap* map = gpMap;
+	return map;
+}
+
 #endif

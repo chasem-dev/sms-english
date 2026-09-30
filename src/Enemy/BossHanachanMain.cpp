@@ -276,14 +276,6 @@ void TBossHanachan::execBodyCalcAnim_()
 
 void TBossHanachan::kill() { }
 
-// Binding level over a raw member read, worth +16 of low region in
-// TBossHanachan::bind (batch 127).
-static inline TMap* BossHanachanMainGetMap()
-{
-	TMap* map = gpMap;
-	return map;
-}
-
 // The named scale loads the sphere link's factor before mRotation.z, as
 // retail does.
 // TODO: every instruction matches; the three vector temporaries at the end
@@ -310,7 +302,7 @@ void TBossHanachan::bind()
 	mCollisionPosition.x += offsetX;
 	mCollisionPosition.z += offsetZ;
 	JGeometry::TVec3<f32> beforeCollision = mCollisionPosition;
-	mGroundHeight = BossHanachanMainGetMap()->checkGroundIgnoreWaterSurface(mCollisionPosition.x,
+	mGroundHeight = SMSGetMapBound()->checkGroundIgnoreWaterSurface(mCollisionPosition.x,
 	    mCollisionPosition.y + mHeadHeight, mCollisionPosition.z, &mGroundPlane);
 	mGroundHeight += 1.0f;
 	if (mCollisionPosition.y <= 0.05f + mGroundHeight) {
@@ -322,7 +314,7 @@ void TBossHanachan::bind()
 	} else {
 		onLiveFlag(LIVE_FLAG_AIRBORNE);
 	}
-	BossHanachanMainGetMap()->isTouchedOneWallAndMoveXZ(&mCollisionPosition.x,
+	SMSGetMapBound()->isTouchedOneWallAndMoveXZ(&mCollisionPosition.x,
 	    mCollisionPosition.y + mHeadHeight, &mCollisionPosition.z, mBodyRadius);
 	JGeometry::TVec3<f32> correction = mCollisionPosition - beforeCollision;
 	JGeometry::TVec3<f32> displacement;

@@ -2371,12 +2371,6 @@ void TMario::checkYoshiGetOff()
 		getOffYoshi(false);
 }
 
-static inline TMap* MarioMoveGetMap()
-{
-	TMap* map = gpMap;
-	return map;
-}
-
 // TODO: record and the sqrt temporary sit 4 and 8 bytes low, and both head
 // offsets multiply front-first; operand swaps, named radius and inlined angle were inert.
 void TMario::thinkYoshiHeadCollision()
@@ -2395,7 +2389,7 @@ void TMario::thinkYoshiHeadCollision()
 	                          mYoshiParams.mHeadRadius.get(), 4, 0);
 	f32 z = headPos.z;
 
-	if (MarioMoveGetMap()->isTouchedWallsAndMoveXZ(&record) == true) {
+	if (SMSGetMapBound()->isTouchedWallsAndMoveXZ(&record) == true) {
 		f32 dx = record.mCenter.x - headPos.x;
 		f32 dz = record.mCenter.z - z;
 		f32 f4 = std::sqrtf(dx * dx + dz * dz);

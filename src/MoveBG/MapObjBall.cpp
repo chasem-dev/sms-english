@@ -809,13 +809,6 @@ u32 TResetFruit::mFruitWaitTimeToAppear = 360;
 // UNUSED in the map; the value is not recoverable from the binary.
 GXColorS10 TResetFruit::mRottenColor    = { 0, 0, 0, 0 };
 
-// Binding levels used to size TResetFruit::checkGroundCollision's low region.
-static inline TMap* ResetFruitGetMap()
-{
-	TMap* map = gpMap;
-	return map;
-}
-
 void TResetFruit::checkGroundCollision(JGeometry::TVec3<f32>* param_1)
 {
 	u8 map = SMSGetMarDirectorBound()->mMap;
@@ -826,7 +819,7 @@ void TResetFruit::checkGroundCollision(JGeometry::TVec3<f32>* param_1)
 
 	if (map == 4) {
 		// Probe from well above so a fruit cannot fall through the deck.
-		mGroundHeight = ResetFruitGetMap()->checkGround(param_1->x, 200.0f + param_1->y,
+		mGroundHeight = SMSGetMapBound()->checkGround(param_1->x, 200.0f + param_1->y,
 		                                   param_1->z, &mGroundPlane);
 		mGroundHeight += 1.0f;
 		if (param_1->y <= mGroundHeight) {
@@ -837,11 +830,11 @@ void TResetFruit::checkGroundCollision(JGeometry::TVec3<f32>* param_1)
 		return;
 	}
 
-	mGroundHeight = ResetFruitGetMap()->checkGround(param_1->x, param_1->y + mHeadHeight,
+	mGroundHeight = SMSGetMapBound()->checkGround(param_1->x, param_1->y + mHeadHeight,
 	                                   param_1->z, &mGroundPlane);
 
 	if (getGroundPlane()->isMapObjThrough()) {
-		mGroundHeight = ResetFruitGetMap()->checkGroundExactY(
+		mGroundHeight = SMSGetMapBound()->checkGroundExactY(
 		    param_1->x, mGroundHeight - 200.0f, param_1->z, &mGroundPlane);
 	}
 

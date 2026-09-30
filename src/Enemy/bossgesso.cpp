@@ -1261,12 +1261,6 @@ static inline JGeometry::TVec3<f32> BossgessoMarioEarPos()
 	return earPos;
 }
 
-static inline TMap* BossgessoGetMap()
-{
-	TMap* map = gpMap;
-	return map;
-}
-
 static inline J3DModel* BossgessoGetModel(const TBossGesso* p)
 {
 	J3DModel* model = p->getModel();
@@ -2011,7 +2005,7 @@ DEFINE_NERVE(TNerveBGBeakDamage, TLiveActor)
 		JGeometry::TVec3<f32> local_28;
 		self->getJointTransByIndex(47, &local_28);
 		const TBGCheckData* data;
-		local_28.y = BossgessoGetMap()->checkGround(local_28.x, local_28.y + 500.0f,
+		local_28.y = SMSGetMapBound()->checkGround(local_28.x, local_28.y + 500.0f,
 		                                local_28.z, &data);
 
 		SMSGetParticleManagerBound()->emit(BGESO_JPA_MS_BOGE_HITDOWN, &local_28, 0,

@@ -1055,12 +1055,6 @@ void TFluff::kill()
 
 static inline TMap* MapObjMonteMapRaw() { return gpMap; }
 
-static inline TMap* MapObjMonteMap()
-{
-	TMap* map = gpMap;
-	return map;
-}
-
 static inline TMap* MapObjMonteMapNested()
 {
 	TMap* map = MapObjMonteMapRaw();
@@ -1093,7 +1087,7 @@ void TFluff::control()
 		        || mPosition.y < -1000.0f))
 			kill();
 
-		if (MapObjMonteMap()->isTouchedOneWall(mPosition.x, mPosition.y,
+		if (SMSGetMapBound()->isTouchedOneWall(mPosition.x, mPosition.y,
 		                                      mPosition.z, 100.0f))
 			kill();
 
