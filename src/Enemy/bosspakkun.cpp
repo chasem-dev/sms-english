@@ -834,15 +834,17 @@ TBossPakkun::TBossPakkun(const char* name)
 	mBinder = new TWalker;
 }
 
+// TODO: instruction-exact; frame 0x1c8 against retail 0x210 (0x198 before
+// the manager, spine, map and tracer were read through their accessors).
 void TBossPakkun::init(TLiveManager* manager)
 {
 	mManager = manager;
-	mManager->manageActor(this);
+	getManager()->manageActor(this);
 
-	mMActorKeeper = new TMActorKeeper(mManager, 7);
+	mMActorKeeper = new TMActorKeeper(getManager(), 7);
 	mMActor       = mMActorKeeper->createMActor("bosspaku_model.bmd", 0);
 
-	if (!((TBossPakkunManager*)mManager)->mIsLightVersion) {
+	if (!((TBossPakkunManager*)getManager())->mIsLightVersion) {
 		mEndMActor = mMActorKeeper->createMActor("bosspaku_end.bmd", 0);
 		mEndMActor->setBckFromIndex(BOSSPAKU_BCK_DOWN_START);
 		mEndMActor->setBrkFromIndex(0);
@@ -854,7 +856,7 @@ void TBossPakkun::init(TLiveManager* manager)
 	initHitActor(0x800000F, 1, 0x80000000, 80.0f, 300.0f, 80.0f, 300.0f);
 	offHitFlag(HIT_FLAG_NO_COLLISION);
 
-	if (!((TBossPakkunManager*)mManager)->mIsLightVersion) {
+	if (!((TBossPakkunManager*)getManager())->mIsLightVersion) {
 		mHeadHit = new TBPHeadHit(this, "ボスパックン頭部");
 		mNavel   = new TBPNavel(this, "ボスパックンへそ");
 		group->getChildren().push_back(mHeadHit);
@@ -870,14 +872,14 @@ void TBossPakkun::init(TLiveManager* manager)
 		getMActor()->calc();
 	}
 
-	if (((TBossPakkunManager*)mManager)->mIsLightVersion) {
-		mSpine->initWith(&TNerveBPWaitL::theNerve());
-	} else if (gpMarDirector->mMap == 0x37) {
-		mSpine->initWith(&TNerveBPFall::theNerve());
+	if (((TBossPakkunManager*)getManager())->mIsLightVersion) {
+		getSpine()->initWith(&TNerveBPWaitL::theNerve());
+	} else if (gpMarDirector->getCurrentMap() == 0x37) {
+		getSpine()->initWith(&TNerveBPFall::theNerve());
 	} else if (gpMarDirector->unk7D == 4) {
-		mSpine->initWith(&TNerveBPSleep::theNerve());
+		getSpine()->initWith(&TNerveBPSleep::theNerve());
 	} else {
-		mSpine->initWith(&TNerveBPWait::theNerve());
+		getSpine()->initWith(&TNerveBPWait::theNerve());
 	}
 
 	mPolDrop      = new TBPPolDrop(this, "<TBPPolDrop>");
@@ -895,7 +897,7 @@ void TBossPakkun::init(TLiveManager* manager)
 		SMS_ChangeTextureAll(mPolDrop->mBallMActor->getModel()->getModelData(),
 		                     "M_dummy", *rak);
 
-	if (!((TBossPakkunManager*)mManager)->mIsLightVersion) {
+	if (!((TBossPakkunManager*)getManager())->mIsLightVersion) {
 		mVomit = new TBPVomit(this, "<TBPVomit>");
 		MActor* white
 		    = mMActorKeeper->createMActor("bosspakuPollut_white.bmd", 0);
@@ -915,9 +917,9 @@ void TBossPakkun::init(TLiveManager* manager)
 	onLiveFlag(LIVE_FLAG_UNK400);
 	mScaledBodyRadius = 400.0f;
 
-	unk124->setGraph(gpConductor->getGraphByName("bosspakkun"));
-	if (unk124->getGraph()) {
-		unk124->reset();
+	getTracer()->setGraph(gpConductor->getGraphByName("bosspakkun"));
+	if (getTracer()->getGraph()) {
+		getTracer()->reset();
 		goToShortestNextGraphNode();
 	}
 
