@@ -7,15 +7,6 @@
 
 class TLiveActor;
 
-// Every degree wrap in the Koopa units goes through MathUtil.hpp's
-// WrapDirectionF with l = -180, r = 180; this level and that one are what
-// make MWCC call the weak 0x5c std::fmodf copy the map records for Koopa.cpp
-// (and its unreferenced duplicate in limitkoopa.cpp) instead of expanding it.
-static inline f32 KoopaWrapDegrees(f32 angle)
-{
-	return WrapDirectionF(angle, -180.0f, 180.0f);
-}
-
 // The nerve singletons in this unit are not the DEFINE_NERVE shape: the map
 // mangles their statics as nerve$localstatic0$theNerve__..., which is what
 // MWCC emits for a static inside an *inline* function, so theNerve() was
@@ -73,7 +64,7 @@ public:
 	{
 		TKoopa* koopa = (TKoopa*)spine->getBody();
 		if (KoopaTurn(koopa,
-		               KoopaWrapDegrees(koopa->mTargetDir - koopa->mRotation.y), false))
+		               WrapDegreesF(koopa->mTargetDir - koopa->mRotation.y), false))
 			return FALSE;
 		return TRUE;
 	}
@@ -91,7 +82,7 @@ public:
 	{
 		TKoopa* koopa = (TKoopa*)spine->getBody();
 		if (KoopaTurn(koopa,
-		               KoopaWrapDegrees(koopa->mTargetDir - koopa->mRotation.y), true))
+		               WrapDegreesF(koopa->mTargetDir - koopa->mRotation.y), true))
 			return FALSE;
 		return TRUE;
 	}

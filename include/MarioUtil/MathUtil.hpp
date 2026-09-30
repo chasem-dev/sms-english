@@ -310,13 +310,19 @@ inline f32 MsAngleWrap(f32 angle) { return MsWrap(angle, 0.0f, 360.0f); }
 // Fabricated name, but the ROM's shape: wraps t into [l, r) as
 // `l + std::fmodf((r - l) + (t - l), r - l)`. Every caller reaches it through
 // one more inline level that fixes the range (koopajr's WrapRadianF,
-// wireTrap's WrapAngleF, BathtubPeach's WrapDegreesF, MapObjCorona's
-// WrapAngleDiffF, KoopaNerve.hpp's KoopaWrapDegrees); those two levels above
-// std::fmodf are what make MWCC call the weak 0x5c copy instead of expanding
-// it.
+// wireTrap's WrapAngleF, MapObjCorona's WrapAngleDiffF, WrapDegreesF below);
+// those two levels above std::fmodf are what make MWCC call the weak 0x5c
+// copy instead of expanding it.
 inline f32 WrapDirectionF(f32 t, f32 l, f32 r)
 {
 	return l + std::fmodf((r - l) + (t - l), r - l);
+}
+
+// Fabricated name: WrapDirectionF over [-180, 180), the level every degree
+// wrap in the Koopa units and BathtubPeach goes through.
+inline f32 WrapDegreesF(f32 angle)
+{
+	return WrapDirectionF(angle, -180.0f, 180.0f);
 }
 
 // Fabricated name: the JGeometry::TUtil<f32>::mod twin of WrapDirectionF, for

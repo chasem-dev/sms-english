@@ -83,11 +83,6 @@ public:
 	}
 };
 
-static inline f32 WrapDegreesF(f32 angle)
-{
-	return WrapDirectionF(angle, -180.0f, 180.0f);
-}
-
 // Paddles around the rim of the bathtub so as to stay `angle` degrees away
 // from Mario, always facing him.
 //

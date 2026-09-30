@@ -72,7 +72,7 @@ int KoopaNeckCallBack(J3DNode*, int);
 // the wrap in turnBody uses JGeometry::TUtil<f32>::mod instead of std::fmodf,
 // so the two cannot share a helper (same split as TDirectionCalc in
 // koopajr.cpp).
-#define KOOPA_WRAP_DEGREES(angle) KoopaWrapDegrees(angle)
+#define KOOPA_WRAP_DEGREES(angle) WrapDegreesF(angle)
 
 // ---------------------------------------------------------------------------
 // Nerves
