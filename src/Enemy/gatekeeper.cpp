@@ -247,7 +247,7 @@ void TBGKMtxCalc::calc(u16 param_1)
 		MtxPtr mtx = mOwner->getMActor()->getModel()->getAnmMtx(param_1);
 		JGeometry::TVec3<f32> diff;
 		Mtx rot;
-		if (!SMSGetMarDirectorBound()->isDemoModeNow()) {
+		if (!gpMarDirector->isDemoModeNow()) {
 			if (!SMSGetMarDirectorBound()->isTalkModeNow()
 			    && (mOwner->getMActor()->checkCurBckFromIndex(0xB)
 			        || mOwner->getMActor()->checkCurBckFromIndex(0x12)
@@ -255,7 +255,7 @@ void TBGKMtxCalc::calc(u16 param_1)
 			        || mOwner->getMActor()->checkCurBckFromIndex(0x10)
 			        || mOwner->getMActor()->checkCurBckFromIndex(0xC))) {
 				diff = SMS_GetMarioPos();
-				diff -= mOwner->mPosition;
+				diff -= mOwner->getPosition();
 
 				f32 yaw2 = MsGetRotFromZaxisY(diff);
 				f32 cur2 = mOwner->mRotation.y + mOwner->getUnk180();
