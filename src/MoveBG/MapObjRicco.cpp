@@ -48,7 +48,7 @@ void TCraneRotY::control()
 	switch (mState) {
 	case STATE_TURNING_UP:
 		mRotation.y += mRotSpeed;
-		if (mRotation.y > mBaseRotY + mRotYMax) {
+		if (getRotation().y > mBaseRotY + mRotYMax) {
 			mStateTimer = mWaitTime;
 			mState       = STATE_WAIT_AT_END;
 		}
@@ -61,7 +61,7 @@ void TCraneRotY::control()
 
 	case STATE_TURNING_DOWN:
 		mRotation.y -= mRotSpeed;
-		if (mRotation.y < mBaseRotY + mRotYMin) {
+		if (getRotation().y < mBaseRotY + mRotYMin) {
 			mStateTimer = mWaitTime;
 			mState       = STATE_WAIT_AT_START;
 		}
@@ -75,7 +75,7 @@ void TCraneRotY::control()
 
 	if (MapObjRiccoIsState(this, STATE_TURNING_UP)
 	    || MapObjRiccoIsState(this, STATE_TURNING_DOWN))
-		SMSGetMSoundBound()->startSoundActor(mSoundId, &mPosition);
+		SMSGetMSound()->startSoundActor(mSoundId, &mPosition);
 }
 
 void TCraneRotY::load(JSUMemoryInputStream& stream)
