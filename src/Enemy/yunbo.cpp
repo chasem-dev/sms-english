@@ -585,7 +585,7 @@ DEFINE_NERVE(TNerveYumboAppearing, TLiveActor)
 	if (spine->getTime() == 0) {
 		yumbo->changeToYumbo();
 		yumbo->setBckAnm(10);
-		SMSGetParticleManagerBound()->emit(PARTICLE_MS_SMB_AP_ROCK,
+		gpMarioParticleManager->emit(PARTICLE_MS_SMB_AP_ROCK,
 		                             &yumbo->mPosition, 0, nullptr);
 		gpMarioParticleManager->emit(PARTICLE_MS_SMB_AP_SMOKE,
 		                             &yumbo->mPosition, 0, nullptr);
@@ -593,8 +593,8 @@ DEFINE_NERVE(TNerveYumboAppearing, TLiveActor)
 
 	// TODO: see TNerveYumboDancing -- lookatMario() spelled out so that
 	// MsGetRotFromZaxisY still expands inline.
-	JGeometry::TVec3<f32> toMario = *gpMarioPos;
-	toMario.sub(yumbo->mPosition);
+	JGeometry::TVec3<f32> toMario = SMS_GetMarioPos();
+	toMario.sub(yumbo->getPosition());
 	f32 yaw            = MsGetRotFromZaxisY(toMario);
 	yumbo->mRotation.y = yaw;
 
