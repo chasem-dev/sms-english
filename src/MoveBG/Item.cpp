@@ -619,19 +619,29 @@ void TShine::movingDown()
 	mState      = STATE_UNKF;
 }
 
-// TODO: every instruction matches; frame 0xa8 against 0xf8. Retail has the
-// GXColor temporary at 0xdc and appearWithDemo's TFlagT at 0xa0 (0x3c apart,
-// ours 0xc): about 0x30 of named block and 0x34 of pool are missing. Tried
-// 2026-09-22: MSound binder/raw-global forks over any subset of the six
-// startSoundActor sites (pool rungs to frame 0xd8, the 0xc gap never moves),
-// and `trans`/`mtx`/`model` declared at function top (inert).
-// c-m24: retail has only two words above the GXColor (ours: the four named
-// locals); unnamed color/model/trans or a TVec3(x, y, z) all shrink the frame.
-// c-k1 (debugger): a named `GXColor color = {...}` (by value) gives retail's
-// two words above it (model, mtx), frame 0xa0; retail then still has 9 more
-// words between the colour and the TFlagT and 14 more below the flag, which
-// no local spelling here supplies (gpMSound, &getPosition() at the sound
-// sites, a TVec3 temporary for trans: all shrink or add instructions).
+// The light block of the idle state is one inline level (c-k23): as its own
+// body the model, matrix, colour and translation become inline objects, which
+// puts the GXColor temporary with retail's six words above it.
+static inline void ShineSetEffectLight(TShine* shine)
+{
+	J3DModel* model      = shine->getMActor()->getModel();
+	MtxPtr mtx           = model->getAnmMtx(2);
+	const GXColor& color = (GXColor) { 0xff, 0xff, 0xff, 0xff };
+	JGeometry::TVec3<f32> trans;
+	trans.x = mtx[0][3];
+	trans.y = mtx[1][3];
+	trans.z = mtx[2][3];
+	gpLightManager->setEffectLightColor(color);
+	gpLightManager->setEffectLightPos(trans);
+}
+
+// TODO: every instruction matches; frame 0xe8 against 0xf8 (was 0xa8 before
+// c-k23's light level, the six short sounds and getInitialPosition()). The
+// debugger puts retail's GXColor temporary at 0xdc and appearWithDemo's TFlagT
+// at 0xa0; ours are 0xcc and 0x9c, so 3 words are missing between them and 1
+// below the flag. Inert or worse on top: SMSGetCamera() at the demo test
+// (slots move, frame kept), `mPosition = SMS_GetMarioPos()`, raw
+// `mState == 0x10`, raw `mStateTimer > 0`, getModel() in the light level.
 void TShine::control()
 {
 	if (!isState(0x10))
@@ -645,18 +655,9 @@ void TShine::control()
 	switch (mState) {
 	case STATE_NORMAL: {
 		mRotation.y += unk16C;
-		SMSGetMSound()->startSoundActor(MSD_SE_SHINE_EXIST, &mPosition, 0,
-		                                nullptr, 0, 4);
+		SMSGetMSound()->startSoundActor(MSD_SE_SHINE_EXIST, &mPosition);
 
-		J3DModel* model      = getMActor()->getModel();
-		MtxPtr mtx           = model->getAnmMtx(2);
-		const GXColor& color = (GXColor) { 0xff, 0xff, 0xff, 0xff };
-		JGeometry::TVec3<f32> trans;
-		trans.x = mtx[0][3];
-		trans.y = mtx[1][3];
-		trans.z = mtx[2][3];
-		gpLightManager->setEffectLightColor(color);
-		gpLightManager->setEffectLightPos(trans);
+		ShineSetEffectLight(this);
 	} break;
 
 	case STATE_UNKB:
@@ -668,31 +669,27 @@ void TShine::control()
 		break;
 
 	case STATE_MOVING_UP:
-		SMSGetMSound()->startSoundActor(MSD_SE_SHINE_EXIST, &mPosition, 0,
-		                                nullptr, 0, 4);
+		SMSGetMSound()->startSoundActor(MSD_SE_SHINE_EXIST, &mPosition);
 		movingUp();
 		break;
 
 	case STATE_MOVING_DOWN:
-		SMSGetMSound()->startSoundActor(MSD_SE_SHINE_EXIST, &mPosition, 0,
-		                                nullptr, 0, 4);
+		SMSGetMSound()->startSoundActor(MSD_SE_SHINE_EXIST, &mPosition);
 		movingDown();
 		break;
 
 	case STATE_MOVING_CIRCLE:
-		SMSGetMSound()->startSoundActor(MSD_SE_SHINE_EXIST, &mPosition, 0,
-		                                nullptr, 0, 4);
+		SMSGetMSound()->startSoundActor(MSD_SE_SHINE_EXIST, &mPosition);
 		movingCircle();
 		break;
 
 	case STATE_UNKF: {
-		SMSGetMSound()->startSoundActor(MSD_SE_SHINE_EXIST, &mPosition, 0,
-		                                nullptr, 0, 4);
-		if (mPosition.y > mInitialPosition.y) {
+		SMSGetMSound()->startSoundActor(MSD_SE_SHINE_EXIST, &mPosition);
+		if (mPosition.y > getInitialPosition().y) {
 			mPosition.y += unk188;
 			unk188 *= mSpeedDownRate;
 		} else {
-			mPosition.y = mInitialPosition.y;
+			mPosition.y = getInitialPosition().y;
 		}
 		if (unk16C > 2.0f)
 			unk16C -= 0.1f;
@@ -714,8 +711,7 @@ void TShine::control()
 		mRotation.y += unk16C;
 		// Huh? Result discarded?
 		MsWrap(mRotation.y, 0.0f, 360.0f);
-		SMSGetMSound()->startSoundActor(MSD_SE_SHINE_EXIST, &mPosition, 0,
-		                                nullptr, 0, 4);
+		SMSGetMSound()->startSoundActor(MSD_SE_SHINE_EXIST, &mPosition);
 		break;
 
 	case STATE_UNK12: {
