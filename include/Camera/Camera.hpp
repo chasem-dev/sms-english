@@ -581,4 +581,13 @@ extern CPolarSubCamera* gpCamera;
 // frame it completes with instructions already identical).
 inline CPolarSubCamera* SMSGetCamera() { return gpCamera; }
 
+// Fabricated: the camera bound to a named local before it is returned, +8 of
+// low region per expansion over SMSGetCamera. Formerly parked TU-locally in
+// three units.
+inline CPolarSubCamera* SMSGetCameraBound()
+{
+	CPolarSubCamera* camera = gpCamera;
+	return camera;
+}
+
 #endif

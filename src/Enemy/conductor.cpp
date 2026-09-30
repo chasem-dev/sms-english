@@ -41,12 +41,6 @@ static inline TAreaCylinderManager* conductorAppearArea(TConductor* c)
 	return area;
 }
 
-static inline CPolarSubCamera* conductorCamera()
-{
-	CPolarSubCamera* camera = gpCamera;
-	return camera;
-}
-
 static inline TSpineEnemy* conductorFirstObj(TObjManager* mgr)
 {
 	return (TSpineEnemy*)mgr->getObj(0);
@@ -390,7 +384,7 @@ void TConductor::clipAloneActors(JDrama::TGraphics* param_1)
 	JGadget::TList<TLiveActor*>::iterator it = unk30.begin(), e = unk30.end();
 
 	SetViewFrustumClipCheckPerspective(
-	    conductorCamera()->getFovy(), gpCamera->getAspect(),
+	    SMSGetCameraBound()->getFovy(), gpCamera->getAspect(),
 	    param_1->getNearPlane(), unk84.getEnemyFarClip());
 
 	for (; it != e; ++it) {

@@ -160,14 +160,6 @@ BOOL TMario::moveRequest(const JGeometry::TVec3<f32>& pos)
 
 // Binding level over a raw member read, worth +16 of low region in
 // TMario::warpRequest (batch 127).
-static inline CPolarSubCamera* MarioMoveGetCamera()
-{
-	CPolarSubCamera* camera = gpCamera;
-	return camera;
-}
-
-// Binding level over a raw member read, worth +16 of low region in
-// TMario::warpRequest (batch 127).
 static inline TMarioGamePad* MarioMoveGamePad(const TMario* p)
 {
 	TMarioGamePad* gamePad = p->mGamePad;
@@ -180,7 +172,7 @@ void TMario::warpRequest(const JGeometry::TVec3<f32>& pos, f32 angle)
 	moveRequest(pos);
 	mFaceAngle.y    = (s16)DEG2SHORTANGLE(angle);
 	mModelFaceAngle = mFaceAngle.y;
-	MarioMoveGetCamera()->addMoveCameraAndMario(offset);
+	SMSGetCameraBound()->addMoveCameraAndMario(offset);
 	if (SMSGetMarDirector()->mMap != 7)
 		MarioMoveGamePad(this)->onNeutralMarioKey();
 	changePlayerStatus(MARIO_STATUS_WAIT, 0, 1);
@@ -2556,7 +2548,7 @@ void TMario::playerControl(JDrama::TGraphics* param_1)
 		changePlayerStatus(MARIO_STATUS_READ_BILLBOARD, 0, false);
 
 	if (gpMarioOriginal == this) {
-		if (MarioMoveGetCamera()->isLButtonCamera()
+		if (SMSGetCameraBound()->isLButtonCamera()
 		    && !((getStatus() & MARIO_STATUS_TYPE_AND_ID_MASK)
 		             >= (MARIO_STATUS_HANGING & MARIO_STATUS_TYPE_AND_ID_MASK)
 		         && (MARIO_STATUS_HANG_JUMPING & MARIO_STATUS_TYPE_AND_ID_MASK)

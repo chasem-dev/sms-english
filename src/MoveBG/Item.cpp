@@ -485,12 +485,6 @@ static inline J3DModel* TShineCalcModel(const TShine* p)
 	return model;
 }
 
-static inline CPolarSubCamera* TShineCalcCamera()
-{
-	CPolarSubCamera* camera = gpCamera;
-	return camera;
-}
-
 void TShine::calc()
 {
 	MtxPtr mtxPos = TShineCalcModel(this)->getAnmMtx(2);
@@ -510,7 +504,7 @@ void TShine::calc()
 		    PARTICLE_MS_SHINE_BOW, mtxPos, 1, this);
 	}
 
-	f32 dist2 = TShineCalcCamera()->unk124.squared(getPosition());
+	f32 dist2 = SMSGetCameraBound()->unk124.squared(getPosition());
 	f32 dist  = JGeometry::TUtil<f32>::sqrt(dist2);
 
 	s16 promiLife;
