@@ -192,8 +192,8 @@ public:
 	/* 0x94 */ f32 mHeight;
 };
 
-// The wrap in TKoopa::turnBody, the TUtil<f32>::mod twin of KoopaNerve.hpp's
-// KoopaWrapDirection: this level is what makes the Turn nerves `bl` the weak
+// The wrap in TKoopa::turnBody, the TUtil<f32>::mod twin of MathUtil.hpp's
+// WrapDirectionF: this level is what makes the Turn nerves `bl` the weak
 // mod copy the map records for Koopa.cpp instead of expanding it.
 static inline f32 KoopaModDirection(f32 t, f32 l, f32 r)
 {

@@ -69,14 +69,6 @@ static inline f32 WrapRadian(f32 t)
 	return wrapped;
 }
 
-// The same pair over std::fmodf: calcNearerDirection and calcTurnDirection
-// wrap with it where normalize() uses TUtil<f32>::mod, so the two families
-// cannot share one helper.
-static inline f32 WrapDirectionF(f32 t, f32 l, f32 r)
-{
-	return l + std::fmodf((r - l) + (t - l), r - l);
-}
-
 static inline f32 WrapRadianF(f32 t)
 {
 	return WrapDirectionF(t, 0.0f, TWO_PI);

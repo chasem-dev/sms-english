@@ -307,6 +307,18 @@ inline f32 MsAngleDiff(f32 alpha, f32 beta)
 // fabricated
 inline f32 MsAngleWrap(f32 angle) { return MsWrap(angle, 0.0f, 360.0f); }
 
+// Fabricated name, but the ROM's shape: wraps t into [l, r) as
+// `l + std::fmodf((r - l) + (t - l), r - l)`. Every caller reaches it through
+// one more inline level that fixes the range (koopajr's WrapRadianF,
+// wireTrap's WrapAngleF, BathtubPeach's WrapDegreesF, MapObjCorona's
+// WrapAngleDiffF, KoopaNerve.hpp's KoopaWrapDegrees); those two levels above
+// std::fmodf are what make MWCC call the weak 0x5c copy instead of expanding
+// it.
+inline f32 WrapDirectionF(f32 t, f32 l, f32 r)
+{
+	return l + std::fmodf((r - l) + (t - l), r - l);
+}
+
 /**
  * @brief Checks whether the point \p target is within the line of sight of
  * an \p eye looking in direction \p sight, given a sight cone \p angle and

@@ -39,16 +39,6 @@ const GXColorS10 cBlueColor = { 15, 20, 210, 0 };
 void SMSReportVec(const char* name, const JGeometry::TVec3<f32>& v) { }
 } // namespace
 
-// Fabricated, but the ROM's shape: the wrap computes
-// `l + std::fmodf((r - l) + (t - l), r - l)`, and two inline levels above
-// std::fmodf are what make MWCC emit the weak 0x5c copy the map records for
-// this TU instead of expanding it. Same pair as koopajr.cpp's WrapDirectionF
-// / WrapRadianF, in degrees.
-static inline f32 WrapDirectionF(f32 t, f32 l, f32 r)
-{
-	return l + std::fmodf((r - l) + (t - l), r - l);
-}
-
 static inline f32 WrapAngleF(f32 t) { return WrapDirectionF(t, 0.0f, 360.0f); }
 
 static inline const JGeometry::TVec3<f32>&

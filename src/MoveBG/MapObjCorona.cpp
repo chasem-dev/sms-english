@@ -15,6 +15,7 @@
 #include <JSystem/JUtility/JUTNameTab.hpp>
 #include <M3DUtil/MActor.hpp>
 #include <Map/MapCollisionEntry.hpp>
+#include <MarioUtil/MathUtil.hpp>
 #include <MarioUtil/RumbleMgr.hpp>
 #include <MSound/MSound.hpp>
 #include <MSound/MSoundSE.hpp>
@@ -289,25 +290,18 @@ Mtx* TBathtubGrip::getRootJointMtx() const
 	return (Mtx*)getModel()->getBaseTRMtx();
 }
 
-// TODO: JGeometry::TMatrix34<T>::concat(a, b) in JGMatrix34.hpp has its
-// indices transposed (a known open header item), so the correct body is
-// parked here, as this batch may not edit that header. Once concat is fixed
-// this becomes dst.concat(a, b).
-// Fabricated, but the ROM's shape: every angle comparison in this TU computes
-// `l + std::fmodf((r - l) + (t - l), r - l)` with l = -180, r = 180, and the
-// two inline levels above std::fmodf are what make MWCC call the weak 0x5c
-// copy the map records for this TU instead of expanding it. Same pair as
-// koopajr.cpp's WrapDirectionF / WrapRadianF.
-static inline f32 WrapDirectionF(f32 t, f32 l, f32 r)
-{
-	return l + std::fmodf((r - l) + (t - l), r - l);
-}
-
+// Every angle comparison in this TU wraps with WrapDirectionF (MathUtil.hpp)
+// over [-180, 180); that level and this one are the two above std::fmodf
+// that make MWCC call the weak 0x5c copy instead of expanding it.
 static inline f32 WrapAngleDiffF(f32 a, f32 b)
 {
 	return WrapDirectionF(a - b, -180.0f, 180.0f);
 }
 
+// TODO: JGeometry::TMatrix34<T>::concat(a, b) in JGMatrix34.hpp has its
+// indices transposed (a known open header item), so the correct body is
+// parked here, as this batch may not edit that header. Once concat is fixed
+// this becomes dst.concat(a, b).
 static inline void ConcatMtx34(TSMtx34f& dst, const TSMtx34f& a,
     const TSMtx34f& b)
 {

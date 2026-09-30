@@ -2,24 +2,18 @@
 #define ENEMY_KOOPANERVE_HPP
 
 #include <Enemy/Koopa.hpp>
+#include <MarioUtil/MathUtil.hpp>
 #include <Strategic/Nerve.hpp>
 
 class TLiveActor;
 
-// Fabricated, but the ROM's shape: every degree wrap in the Koopa units
-// computes `l + std::fmodf((r - l) + (t - l), r - l)` with l = -180,
-// r = 180, and the two inline levels above std::fmodf are what make MWCC call
-// the weak 0x5c copy the map records for Koopa.cpp (and its unreferenced
-// duplicate in limitkoopa.cpp) instead of expanding it. Same pair as
-// koopajr.cpp's WrapDirectionF / WrapRadianF, in degrees.
-static inline f32 KoopaWrapDirection(f32 t, f32 l, f32 r)
-{
-	return l + std::fmodf((r - l) + (t - l), r - l);
-}
-
+// Every degree wrap in the Koopa units goes through MathUtil.hpp's
+// WrapDirectionF with l = -180, r = 180; this level and that one are what
+// make MWCC call the weak 0x5c std::fmodf copy the map records for Koopa.cpp
+// (and its unreferenced duplicate in limitkoopa.cpp) instead of expanding it.
 static inline f32 KoopaWrapDegrees(f32 angle)
 {
-	return KoopaWrapDirection(angle, -180.0f, 180.0f);
+	return WrapDirectionF(angle, -180.0f, 180.0f);
 }
 
 // The nerve singletons in this unit are not the DEFINE_NERVE shape: the map

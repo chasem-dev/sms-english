@@ -83,16 +83,6 @@ public:
 	}
 };
 
-// Fabricated, but the ROM's shape: every degree wrap in this TU computes
-// `l + std::fmodf((r - l) + (t - l), r - l)` with l = -180, r = 180, and the
-// two inline levels above std::fmodf are what make MWCC call the weak 0x5c
-// copy the map records for this TU instead of expanding it. Same pair as
-// koopajr.cpp's WrapDirectionF / WrapRadianF, in degrees.
-static inline f32 WrapDirectionF(f32 t, f32 l, f32 r)
-{
-	return l + std::fmodf((r - l) + (t - l), r - l);
-}
-
 static inline f32 WrapDegreesF(f32 angle)
 {
 	return WrapDirectionF(angle, -180.0f, 180.0f);
