@@ -1181,13 +1181,12 @@ TMuddyBoat::TMuddyBoat(const char* name)
 
 void TMareFall::calc()
 {
-	gpMSound->startSoundActor(MSD_SE_GE_FALL, &mPosition, 0, nullptr, 0, 4);
-	gpMSound->startSoundActor(MSD_SE_GE_FALL_UPPER, &fall_upper_pos, 0,
-	                          nullptr, 0, 4);
+	gpMSound->startSoundActor(MSD_SE_GE_FALL, &mPosition);
+	gpMSound->startSoundActor(MSD_SE_GE_FALL_UPPER, &fall_upper_pos);
 
 	// TODO: Particles.hpp has no names for these two; they are
-	SMSGetParticleManagerBound()->emit(MAPOBJ_MAREFALLSPLASH, &mPosition, 1, this);
-	SMSGetParticleManagerBound()->emit(MAPOBJ_MAREFALLSMOKE, &mPosition, 1, this);
+	gpMarioParticleManager->emit(MAPOBJ_MAREFALLSPLASH, &mPosition, 1, this);
+	gpMarioParticleManager->emit(MAPOBJ_MAREFALLSMOKE, &mPosition, 1, this);
 }
 
 void TMareFall::load(JSUMemoryInputStream& stream)
