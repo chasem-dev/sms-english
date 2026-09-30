@@ -823,9 +823,9 @@ void TYoshi::doEat(u32 param_1)
 	if (bVar1 == TRUE) {
 		mType = r31;
 		unkC  = unk8;
-		SMSGetParticleManagerBound()->emitAndBindToPosPtr(0x3E, &unk108, 0, this);
+		gpMarioParticleManager->emitAndBindToPosPtr(0x3E, &unk108, 0, this);
 		SMSGetMSound()->startSoundActor(MSD_SE_YO_TONGUE_GOKKUN,
-		                                &mTongue->mTipPos, 0, nullptr, 0, 4);
+		                                &mTongue->mTipPos);
 	}
 }
 
