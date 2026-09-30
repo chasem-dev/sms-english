@@ -2521,3 +2521,36 @@ getNext and getState landed only with the sites that dropped read raw (MapMakeLi
   changeState's fuzzy score also drops 99.93 -> 99.92 under it, which `changes_all` counts as a regression.
 - GameSequence getScenario as a binder: changeState's frame moves toward retail but its fuzzy score drops 99.93 -> 99.92, the same cost getGamePad shows there, so changeState's frame words and one of its slot offsets are tied.
 - Talk2D2 getTalkMode, MarDirector getStage, getInitialBounds, BossWanwan getRope/getPicket: one down for each up in the full measurement.
+
+## Research batch c-sh1 (2026-09-30): one shared definition per duplicated TU-local helper
+
+Question: the TU-local helpers that worktree agents parked for want of shared-header access include the same computation spelled in several units; which of them can share one header definition without a regression?
+Method: group the 1341 `static inline` helpers under src/ and libs/*/src by body (names, parameters and local names normalised), put one definition in the owning header, delete the copies, and measure the full tree (objects, census, `ninja changes_all`, DOL SHA-1, validate-symbol-order of every unit whose object changed).
+A spelling was kept only where every site it replaced stayed byte-identical or improved.
+
+### Promoted (one definition, every copy of that spelling removed)
+
+- MathUtil.hpp `WrapDirectionF` (fmodf wrap: koopajr, wireTrap, BathtubPeach, MapObjCorona, KoopaNerve.hpp) and `WrapDegreesF` (BathtubPeach, the Koopa units): byte-identical.
+- MathUtil.hpp `WrapDirection` (TUtil mod wrap with the named result): koopajr's copy plus Koopa.hpp's unnamed `KoopaModDirection`; the named result moves both Koopa Turn nerves' frames 0x10 toward retail (0x148 -> 0x158 and 0x150 -> 0x160, retail 0x1a0/0x1a8).
+- MathUtil.hpp `fromPolar`: bossgesso, bgtentacle, bosswanwan's and fruitsboat's `MsGetVecFromRotY`, and bosspakkun's `BosspakkunFromPolar(s16)` called with the degree angle; all byte-identical.
+- MathUtil.hpp `MsDistance` (named copy, in-place sub, length): walkerEnemy, fireWanwan, riccohook.
+- Enemy.hpp's existing `TSpineEnemy::calcDist` replaces AnimalNerve's identical `calcDist`.
+- MathUtil.hpp `MsAngleBetween` (Mamma, Koopa), `MsSquaredDistXZ` (NpcWalkTurn, BossHanachanMain), `MsSquaredDist` (NpcBase, CameraNotice; getNoticeActor_ 97.08 -> 97.13).
+- MSound.hpp `MSGetEarPos` (MSoundSE, MSoundMainSide); MSHandle.hpp `MSGetSeCategory` (the three `get_thing` copies; MSoundSE loses a stray local symbol).
+- CubeManagerBase.hpp `TCubeManagerBase::getCube` (the begin()-depth lookup of bosseel and MSoundMainSide); PathNode.hpp `TPathNode::getPointRaw` (ten units' raw getPoint copies).
+- Global binders `T* x = gGlobal; return x;` as `...Bound` accessors beside the plain one: director (21 copies), MSound (29), particle manager (21), map (6), camera shake (6), camera (3), item manager (3), flag manager (4), player (4), rumble manager (3), water manager (4), Mario position (4); three direct-return director copies became SMSGetMarDirector().
+- Every promotion above is byte-identical except where noted; a header inline built from a template constructor (MsSquaredDistXZ) or a new class member (getPointRaw) renumbers local `@`/`$` labels in every includer, which changes no code, no symbol order and not the DOL.
+
+### Not unified (the sites need different spellings)
+
+- setCenteredSize: no single body serves CardLoad, CardSave, ConsoleStr and Guide.
+- With every site routed to the header, each body drops 8 to 12 exact functions: the header's two named bounds, `Wr` (width raw, height named), `WHh`, `Ww` and upstream's all-raw `Rr` differ only in frame, by 8 bytes per named or accessor-read bound.
+- waitForStart is frame-exact (98.09 -> 98.34) only with `Rr` at all four of its sites; the other 24 mixes of the five spellings (open pair, close pair) leave it 8 to 0x40 long, and `Rr` at CardLoad's other close sites costs three exact functions.
+- CardLoad now holds `Wr` and `Rr` (its unused `WHh` and `Ww` copies are gone); CardSave keeps `WHh` and `Wr`.
+- fromPolar: fireWanwan's Fly nerve wants the named result (97.57 -> 96.47 on the shared body), tamaNoko's walkBehavior the named angle (exact -> frame 0x10 short), and polarXZ in enemy/riccohook/walkerEnemy the named cosine and sine (8 bytes of frame at two sites); the shared body with the named angle costs five functions.
+- WrapAngleDiffF (MapObjCorona) spelled as `WrapDegreesF(a - b)` drops getNearGrip from exact: the subtraction belongs inside the level.
+- Copy-and-subtract distances: TSpineEnemy::calcDist's by-value copy costs walkerEnemy, fireWanwan and riccohook 8 bytes each and emario's perform 98.18 -> 73.48, so MsDistance and EMarioCalcDist stay separate.
+- Squared distances: enemyMario's one-expression sum, CameraMultiPlayer's unnamed products and MapObjSirena's reused dz each lose exact functions on MsSquaredDist.
+- getCubeInfo's `(*unk14)[i]` and getCube's `begin()[i]` cannot share a body: either one at the other's sites costs CubeManagerBase or MSStageCubeFade (and the begin() weak copy).
+- Binders over the header accessor (`MSound* x = SMSGetMSound(); return x;`, 25 copies; the director, flag manager and getCurrentMap families too) are 8 bytes smaller at every site as the raw-global binder (32 functions drop), so they are a separate family and stay TU-local.
+- Binders over member accessors (getCurrentMap, getHeldObject, getModel, getConsole, checkFlag) were not folded; c-r30 already showed their header accessors cannot take the binder shape.
