@@ -1838,6 +1838,10 @@ void TEnemyMario::drawHPMeter(MtxPtr viewMtx)
 	GXEnd();
 }
 
+// TODO: frame 0x1a8 against retail's 0x1b8, register and slot residue.
+// hsearch lands the frame only by stacking a machine extract of the
+// calcAnm/animSound/joint-copy block with a named checkFlag(MARIO_FLAG_UNK4);
+// no UNUSED in the map has that block's size (0x90).
 void TEnemyMario::perform(u32 cue, JDrama::TGraphics* graphics)
 {
 	MActor* emarioActor   = nullptr;
@@ -1860,14 +1864,14 @@ void TEnemyMario::perform(u32 cue, JDrama::TGraphics* graphics)
 			hitWater(this);
 		}
 
-		if (mStatus != MARIO_STATUS_RUN || mFreezeTimer == 0) {
+		if (getStatus() != MARIO_STATUS_RUN || mFreezeTimer == 0) {
 			playerControl(graphics);
 			setPositions();
 		}
 	}
 
 	if (cue & CUE_MOVE) {
-		if (mStatus != MARIO_STATUS_RUN || mFreezeTimer == 0) {
+		if (getStatus() != MARIO_STATUS_RUN || mFreezeTimer == 0) {
 			calcAnim(CUE_CALC_ANIM, graphics);
 			animSound();
 		}
