@@ -2646,8 +2646,8 @@ DEFINE_NERVE(TNerveBossEelDie, TLiveActor)
 		}
 	}
 
-	if (eel->mMActor->checkCurBckFromIndex(3)) {
-		if (eel->mMActor->getFrameCtrl(ANM_TYPE_BCK)->checkPass(650.0f))
+	if (eel->getMActor()->checkCurBckFromIndex(3)) {
+		if (eel->getMActor()->getFrameCtrl(ANM_TYPE_BCK)->checkPass(650.0f))
 			eel->mHeartCoin->getMActor()->setBckFromIndex(8);
 
 		if (eel->checkCurAnmEnd(0)) {
@@ -2660,11 +2660,13 @@ DEFINE_NERVE(TNerveBossEelDie, TLiveActor)
 			JGeometry::TVec3<f32> marioPosition = *gpMarioPos;
 			eel->generateBubble(marioPosition);
 
-			s32 jointIndex = eel->mMActor->getModel()
+			s32 jointIndex = eel->getMActor()
+			                     ->getModel()
 			                     ->getModelData()
 			                     ->getJointName()
 			                     ->getIndex("ha7");
-			MtxPtr shineMtx = eel->mMActor->getModel()->getAnmMtx(jointIndex);
+			MtxPtr shineMtx
+			    = eel->getMActor()->getModel()->getAnmMtx(jointIndex);
 			gpItemManager->makeShineAppearWithDemo(
 			    "シャイン（ボス用）", "めおとウナギシャインカメラ",
 			    shineMtx[0][3], shineMtx[1][3], shineMtx[2][3]);
