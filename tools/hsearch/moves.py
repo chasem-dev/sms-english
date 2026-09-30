@@ -183,9 +183,48 @@ class HGen(LS.Gen):
         base = re.sub(r"^m(?=[A-Z])", "", member).lower()
         return acc.lower() in ("get" + base, "is" + base)
 
+    # levers that respell a value in place: parallel identical statements must agree
+    SPELLING = {"acc->raw", "raw->acc", "null-test", "name-call", "name-read", "name-conv", "cond-zero",
+                "commute", "sound-short", "set-assign", "vec-set", "compound", "split-sum",
+                "accumulate", "merge-assign", "conv-raw", "int-type"}
+
+    @staticmethod
+    def _norm(s: str) -> str:
+        return re.sub(r"\s+", " ", s).strip()
+
+    def _twin_untouched(self, eds) -> bool:
+        """Does an edited line (or run of lines) have an identical twin anywhere in
+        the function that this move leaves alone?  Three identical `if (a->isVisible())`
+        blocks cannot be spelled two ways, however far apart they are."""
+        import bisect
+        if not hasattr(self, "_ls"):
+            self._ls = [0] + [m.end() for m in re.finditer("\n", self.text)]
+        ls = self._ls
+        f0, f1 = self.toks[self.bo].e, self.toks[self.bc].s
+        lf0, lf1 = bisect.bisect_right(ls, f0) - 1, bisect.bisect_right(ls, f1) - 1
+        def line_end(i):
+            return ls[i + 1] if i + 1 < len(ls) else len(self.text)
+        for s, e, _ in eds:
+            if e <= s:
+                continue
+            a, b = bisect.bisect_right(ls, s) - 1, bisect.bisect_right(ls, max(s, e - 1)) - 1
+            key = self._norm(self.text[ls[a]:line_end(b)])
+            if len(key) < 3:
+                continue
+            n = b - a
+            for i in range(lf0 + 1, lf1 - n):
+                if i == a or self._norm(self.text[ls[i]:line_end(i + n)]) != key:
+                    continue
+                lo, hi = ls[i], line_end(i + n)
+                if not any(lo <= s2 < hi for s2, e2, _ in eds if e2 > s2):
+                    return True
+        return False
+
     def _plausible(self, c) -> bool:
         t = self.toks
         eds = [e for e in c.edits if e[0] >= self.toks[self.bo].s]  # helpers go above the function
+        if c.lever in self.SPELLING and self._twin_untouched(eds):
+            return False
         if c.lever in ("acc->raw", "raw->acc"):
             # a flipped site next to a site still spelled the other way
             # (`unk18.x; unk18.y; getUnk18().z`) is not how anyone writes it
