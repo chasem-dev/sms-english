@@ -332,8 +332,9 @@ TBiancoGateKeeper::TBiancoGateKeeper(const char* name)
 	mRumblePower = 0.0f;
 }
 
-// TODO: frame 0x178 vs retail 0x1c8 and `this` reloaded into r28 where
-// retail uses r30 after the keeper ctor.  Every instruction else matches;
+// TODO: frame 0x190 vs retail 0x1c8.  c-hs7: getName() in both strcmp tests
+// (MapObjBianco's spelling) and getMActor() at every read put `this` back in
+// r30 and took the frame from 0x178.  Every instruction else matches;
 // the slots are the three push_back pools (this body plus the pasted
 // TBGKObstacle/TGKHitObj ctors), per-site object counts between depth
 // groups (not a header property):
@@ -356,11 +357,11 @@ void TBiancoGateKeeper::init(TLiveManager* manager)
 	mMActorKeeper = new TMActorKeeper(mManager, 3);
 	mMActor       = mMActorKeeper->createMActor("gene_pakkun_model1.bmd", 3);
 
-	if (strcmp(mName, "ゲートキーパー（リコ）") == 0) {
+	if (strcmp(getName(), "ゲートキーパー（リコ）") == 0) {
 		mVariant = VARIANT_RICO_GATEKEEPER;
 		if (!TFlagManager::smInstance->getBool(0x50001))
 			onLiveFlag(LIVE_FLAG_DEAD);
-	} else if (strcmp(mName, "ゲートキーパー（マンマ）") == 0) {
+	} else if (strcmp(getName(), "ゲートキーパー（マンマ）") == 0) {
 		mVariant = VARIANT_MAMMA_GATEKEEPER;
 		if (!TFlagManager::smInstance->getBool(0x50002))
 			onLiveFlag(LIVE_FLAG_DEAD);
@@ -393,14 +394,14 @@ void TBiancoGateKeeper::init(TLiveManager* manager)
 
 	mSpine->initWith(&TNerveBGKSleep::theNerve());
 
-	J3DModel* model = mMActor->getModel();
+	J3DModel* model = getMActor()->getModel();
 	if (model->getSkinDeform() == NULL)
 		model->setSkinDeform(new J3DSkinDeform, (J3DDeformAttachFlag)1);
 
 	unk178 = new TBGKMtxCalc(this);
-	mMActor->setCalcForBck(unk178);
+	getMActor()->setCalcForBck(unk178);
 	mHitPoints = 3;
-	mMActor->offMakeDL();
+	getMActor()->offMakeDL();
 
 	MActorAnmData* anmData = mMActorKeeper->getMActorAnmData();
 	mMultiBtk              = new TMultiBtk(2, getModel()->getModelData());
@@ -412,7 +413,7 @@ void TBiancoGateKeeper::init(TLiveManager* manager)
 	ResTIMG* tex = (ResTIMG*)JKRFileLoader::getGlbResource(
 	    "/scene/map/pollution/H_ma_rak.bti");
 	if (tex != NULL)
-		SMS_ChangeTextureAll(mMActor->getModel()->getModelData(),
+		SMS_ChangeTextureAll(getMActor()->getModel()->getModelData(),
 		                     "Q_kepper_dummy_128IA4", *tex);
 
 	initAnmSound();
@@ -420,7 +421,7 @@ void TBiancoGateKeeper::init(TLiveManager* manager)
 
 	mHead = new TGKHitObj(this, 0xA, "頭ヒット");
 
-	mMActor->calc();
+	getMActor()->calc();
 	if (mStampModel != NULL)
 		mStampModel->calc();
 
