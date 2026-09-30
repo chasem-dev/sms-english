@@ -675,15 +675,6 @@ namespace {
 // quat and twist; every slot then sits 4 below retail's for the f14 save)
 // but scores 0.01 lower until the f14 save is gone. `getFlameDirRate() * 2pi` also multiplies with the
 // operands swapped (inert when respelled, as are yaw/angle respellings).
-static inline f32 KoopaAngleBetween(const JGeometry::TVec3<f32>& a,
-                                     const JGeometry::TVec3<f32>& b)
-{
-	JGeometry::TVec3<f32> c;
-	c.cross(a, b);
-	f32 len = c.length();
-	return atan2f(len, a.dot(b));
-}
-
 int KoopaNeckCallBack(J3DNode* node, int flag)
 {
 	if (flag != 0)
@@ -737,7 +728,7 @@ int KoopaNeckCallBack(J3DNode* node, int flag)
 	quat.normalize();
 
 	if (!koopa->isFlaming()) {
-		f32 angle = fabsf(KoopaAngleBetween(flat, focus));
+		f32 angle = fabsf(MsAngleBetween(flat, focus));
 		if (focus.dot(up) < 0.0f)
 			angle = -angle;
 

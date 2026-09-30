@@ -336,6 +336,19 @@ inline f32 MsDistance(const JGeometry::TVec3<f32>& a,
 	return diff.length();
 }
 
+// Fabricated name: the unsigned angle in radians between two vectors,
+// atan2(|a x b|, a . b). The length is its own inline level, which is what
+// makes the ROM call TUtil<f32>::sqrt out of line in TLeanMirror::release and
+// the Koopa neck callback. The map has no symbol for it.
+inline f32 MsAngleBetween(const JGeometry::TVec3<f32>& a,
+                          const JGeometry::TVec3<f32>& b)
+{
+	JGeometry::TVec3<f32> c;
+	c.cross(a, b);
+	f32 len = c.length();
+	return atan2f(len, a.dot(b));
+}
+
 // fabricated
 inline f32 MsAngleWrap(f32 angle) { return MsWrap(angle, 0.0f, 360.0f); }
 

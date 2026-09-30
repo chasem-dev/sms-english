@@ -786,18 +786,9 @@ void TLeanMirror::calcCurrentMtx(Mtx mtx)
 	concatOnlyRotFromLeft(rot, mtx, mtx);
 }
 
-// The angle between two vectors: atan2(|a x b|, a . b). Retail calls
-// TUtil<f32>::sqrt out of line here, so the length sits one inline level
-// below release(). TODO: the helper's real name and owner are unknown.
-static inline f32 LeanMirrorAngle(const JGeometry::TVec3<f32>& a,
-                                  const JGeometry::TVec3<f32>& b)
-{
-	JGeometry::TVec3<f32> c;
-	c.cross(a, b);
-	f32 len = c.length();
-	return atan2f(len, a.dot(b));
-}
-
+// release() measures the tilt with MathUtil.hpp's MsAngleBetween: retail
+// calls TUtil<f32>::sqrt out of line here, so the length sits one inline
+// level below release().
 // TODO: frame is 0x28 short (the low region below the demo-camera flags),
 // r30/r31 hold this and the rodata base swapped, and the cross products'
 // volatile registers are swapped (the TQuat4::setRotate cross family). A
@@ -811,7 +802,7 @@ void TLeanMirror::release()
 	f32 z = mtx[2][1];
 	JGeometry::TVec3<f32> up(x, y, z);
 	mRotAxis.cross(up, mToStone);
-	mRotSpeed = fabsf(LeanMirrorAngle(up, mToStone)) / mGoTargetTime;
+	mRotSpeed = fabsf(MsAngleBetween(up, mToStone)) / mGoTargetTime;
 	mStateTimer = mGoTargetTime;
 	mState      = STATE_GO_TARGET;
 	offMapObjFlag(MAP_OBJ_FLAG_UNK2);
