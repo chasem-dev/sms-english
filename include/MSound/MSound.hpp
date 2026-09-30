@@ -333,4 +333,14 @@ extern MSound* gpMSound;
 // real
 inline MSound* SMSGetMSound() { return gpMSound; }
 
+// Fabricated name: a position raised to ear height, the probe the sound cube
+// lookups take (MSoundSE, MSMainProc). The copy it returns is the inline
+// temporary retail keeps below each probe vector.
+inline Vec MSGetEarPos(const Vec& p)
+{
+	Vec v = p;
+	v.y += 75.0f;
+	return v;
+}
+
 #endif // MSOUND_HPP

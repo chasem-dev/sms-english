@@ -72,13 +72,6 @@ bool MSMainProc::getGateKeeperBGMStopFlag()
 // inline temporary of MSMainProc::getMonteVillageActorArea, not a named slot.
 static inline u8 MSoundMainSideUnkCD(const MSound* p) { return p->unkCD; }
 
-static inline Vec MSGetEarPos(const Vec& p)
-{
-	Vec v = p;
-	v.y += 75.0f;
-	return v;
-}
-
 int MSMainProc::getMonteVillageActorArea(const Vec& param_1)
 {
 	int result = 4;

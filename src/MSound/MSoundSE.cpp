@@ -597,16 +597,6 @@ void MSoundSE::startSoundActorWithInfo(u32 id, const Vec* position,
 	}
 }
 
-// The same ear-height helper MSoundMainSide.cpp spells for
-// MSMainProc::getMonteVillageActorArea: the copy it returns is the inline
-// temporary retail keeps below each probe vector.
-static inline Vec MSGetEarPos(const Vec& p)
-{
-	Vec v = p;
-	v.y += 75.0f;
-	return v;
-}
-
 // Direct-return level over the camera's position pointer.
 static inline const Vec* MSoundSECameraPos(const MSound* p, int i)
 {
