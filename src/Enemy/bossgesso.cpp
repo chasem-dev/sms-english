@@ -1911,7 +1911,7 @@ DEFINE_NERVE(TNerveBGEyeDamage, TLiveActor)
 		return true;
 	}
 
-	SMSGetParticleManagerBound()->emitAndBindToMtxPtr(
+	gpMarioParticleManager->emitAndBindToMtxPtr(
 	    BGESO_JPA_MS_BOGE_NAMIDA, BossgessoGetModel(self)->getAnmMtx(7), 1,
 	    self);
 	SMSGetParticleManagerBound()->emitAndBindToMtxPtr(
@@ -1921,7 +1921,7 @@ DEFINE_NERVE(TNerveBGEyeDamage, TLiveActor)
 	if (self->unk1AE == 0) {
 		self->unk1AE = 0x78;
 		SMSGetMSound()->startSoundActor(MSD_SE_BS_GESO_WATER_HIT,
-		                                &self->mPosition, 0, nullptr, 0, 4);
+		                                &self->mPosition);
 	}
 
 	if (self->unk190.color.a != 0) {
