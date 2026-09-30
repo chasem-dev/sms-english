@@ -2702,3 +2702,35 @@ Answer: two functions closed and one unit linked; two more close only with share
 - TBossHanachanPartsBase::considerSetAnm_: the debugger maps only the conversion temporary and wants ten dead words below it; hsearch reaches 0xf8 (getRotation().z plus a named getActorType), so the TODO's four-expansion lead stands.
 - TRKSuppAccessFile: the loop as a `for` with `done += length` as its increment and a `u8 replyIOResult` are inert (12 marks).
 - MarioCap, CameraDemo, enemyAttachment, wireBinder, NpcCollision, keepDistance and getPosInWire are the `a = b - c`/`a = b + c` operator temporary order; PerformList and MirrorActor the JGadget iterator stride; MarioReceiveMsg a named-block hole of Mtx/TVec3/TVec2 size; none was retried.
+
+## Closure batch c-k24 (2026-09-30): the two-function tier
+
+Question: which of 21 units one or two functions short of 100% close with c-k21 to c-k23's constructs?
+Answer: one function closed (TSelectDir::direct); no unit reached 100%, because every other target is a recorded deep residue or a known-open class.
+
+### What landed (wt/c-k24)
+
+- TSelectDir::direct: the two named words the TODO placed around `res` are an `int ret = TApplication::APP_STATE_DEFAULT;` declared first and returned at the end (MenuDir's direct has the same result local), and the fader status named for the `switch`.
+  Either alone leaves the frame at 0xc8 (the first word lands in alignment slack); together they give 0xd0 and every slot.
+  With `ret` declared after the first block instead, two slot markers remain.
+  SelectDir still cannot link: rsetup is the JGadget pool-word class.
+
+### Measured and rejected
+
+- TLimitKoopaJr: c-m28's configuration (calcTargetDirection returning `f32`, SMS_GetMarioPos() in it, a named `limit` in canRun) makes the Run nerve exact again, and getPosition() at any two of moveWait's three `mPosition` reads then lands the Wait nerve's frame (0xb0) with 6 slot marks, all TurnBody's target and copy 4 high.
+  The debugger's id order places the one missing word as a depth-2 object created between canRun's calcTargetDirection objects and TurnBody's copy; getPosition's words land below the TurnBody objects instead.
+  All 64 mixes of getPosition()/SMS_GetMarioPos() over moveWait's three lines peak at 6; a named speed or turn result in TurnBody, `target.get()`, `.value` for the rotation speed, copy-initialised or assigned targets, a named canRun bool and a `const TVec3&` Mario position are inert or change code.
+  TurnBody taking the vector by value with `dir.normalize()` inside (both callers passing `toMario`/`forward` directly) is byte-identical to the fabricated LimitKoopaJrNormalize forwarder plus by-reference TurnBody, so the forwarder can go; not landed because the unit does not close.
+  moveRun stays 0x10 short (0x108 against 0x118) in that configuration, with calcDirectionVector's return buffer retail places between `forward` and `dir` in the named block.
+- TMovieDirector::rsetup: retail has a hole at 0x2c4 between `group2d` (0x2c8) and `thpRender` (0x2c0) and one at 0x2a0 between `screen` and `audioInfo`; movieName at function scope, a named `u8* buffer`, dropping `mem` and moving `audioTrack` below `audioInfo` do not move a byte (149 marks), so named scalars there take no slot.
+  hsearch (240 s) reaches frame 0x318 only by hoisting stageDisp and naming two getMovie() reads (129 slot marks).
+- TRollBlock::calcRootMatrix: a third MTXConcat argument through `getModel()->getBaseTRMtx()` or without the `mtx` local changes code (91.6 or worse).
+- TPollutionLayer::stampModel: `model->getBaseTRMtx()[0][3]` unnamed at both reads keeps the swapped pair; the raw `unk20` is private to J3DModel.
+- SelectDir's plain-accessor sweep (SMSGetMSound() at both gpMSound sites, TFlagManager::getInstance() at the setFlag site, all seven subsets) is inert.
+- hsearch at 160 s: TBaseNPC::behaveToHitObject_ reaches 0xa0 of 0xc0 only by stacking six moves, TRailBlock::control 0x188 of 0x1b0 through an extracted helper, TFenceWaterH::control finds nothing.
+- Debugger maps for the rest: TMenuDirector::direct lacks 29 words in three inline bands (12, 2 and 15), TLensFlare::perform 32 words in four bands, TRailBlock::control one named word above `mtx` plus 19 inline words, MSSceneSE::frameLoop three words above `listenerTrans` and seven below it; none is a single construct.
+
+### Reading
+
+- A named local that is never live across a call (a constant result, a switch value) still takes a named-block slot, and its word can hide in alignment slack until a second one arrives, so test such names in pairs.
+- CameraChange stays blocked on changeCamModeSub_'s missing `bgt; b` pair (its data is gated on that function's size), MSoundScene on the three unreconstructed UNUSED helpers, and MapWarp, SelectDir::rsetup and MenuDir::rsetup on the known-open operator and JGadget classes.
