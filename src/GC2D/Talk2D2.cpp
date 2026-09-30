@@ -429,11 +429,11 @@ void TTalk2D2::forceCloseTalk()
 	gpCamera->makeMtxForPrevTalk();
 
 	if (mIsBoard)
-		SMSGetMSoundBound()->startSoundSystemSE(MSD_SE_SY_RACE_START, 0, nullptr, 0);
+		SMSGetMSound()->startSoundSystemSE(MSD_SE_SY_RACE_START, 0, nullptr, 0);
 	else
 		SMSGetMSoundBound()->talkModeOut();
 
-	gpMarDirector->getConsole()->startAppearTelop(false);
+	SMSGetMarDirector()->getConsole()->startAppearTelop(false);
 
 	if (mTalkMode == TALK_MODE_READY) {
 		mTalkMode = TALK_MODE_IDLE;
