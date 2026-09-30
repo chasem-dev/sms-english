@@ -341,10 +341,9 @@ bool TKumokun::checkOnMovingWall(JGeometry::TVec3<f32>* param_1,
 }
 
 // The ground probe writes a local; only the wall result goes to param_2.
-// TODO: frame 0xd0 vs retail 0xc8, and checkWallPlane's inline temporaries
-// sit 4 low. Inert or worse: `local_8C = local_1C` (frame 0xc8 but every
-// vector slot moves), the probe result declared first or before local_80,
-// the wall result stored straight to *param_2.
+// TODO: frame exact (0xc8); checkWallPlane's inline temporaries sit 4 low.
+// Inert or worse: the probe result declared first or before local_80, the
+// wall result stored straight to *param_2.
 bool TKumokun::checkOnMovingFloor(JGeometry::TVec3<f32>* param_1,
                                   const TBGCheckData** param_2,
                                   const JGeometry::TVec3<f32>& param_3,
@@ -352,8 +351,7 @@ bool TKumokun::checkOnMovingFloor(JGeometry::TVec3<f32>* param_1,
 {
 	bool uVar7 = false;
 
-	JGeometry::TVec3<f32> local_1C = param_3;
-	JGeometry::TVec3<f32> local_98 = local_1C;
+	JGeometry::TVec3<f32> local_98 = param_3;
 	JGeometry::TVec3<f32> local_8C = local_98;
 
 	local_8C += param_4;
