@@ -534,8 +534,7 @@ void TDemoCannon::perform(u32 cue, JDrama::TGraphics* graphics)
 
 	J3DFrameCtrl* frameCtrl = unk13C->getMActor()->getFrameCtrl(ANM_TYPE_BCK);
 	if (frameCtrl->getFrame() < 174.0f) {
-		SMSGetMSound()->startSoundActor(MSD_SE_EN_CANNON_MOVE, &mPosition, 0,
-		                                nullptr, 0, 4);
+		SMSGetMSound()->startSoundActor(MSD_SE_EN_CANNON_MOVE, &mPosition);
 	}
 
 	frameCtrl = unk13C->getMActor()->getFrameCtrl(ANM_TYPE_BCK);
@@ -562,7 +561,7 @@ void TDemoCannon::perform(u32 cue, JDrama::TGraphics* graphics)
 
 		frameCtrl = unk13C->getMActor()->getFrameCtrl(ANM_TYPE_BCK);
 		if (frameCtrl->checkPass(204.0f)) {
-			SMSGetMSoundBound()->startMarioVoice(30911, SMS_GetMarioHP(), 0);
+			SMSGetMSound()->startMarioVoice(30911, SMS_GetMarioHP(), 0);
 
 			JAISound* voice = gpMSound->checkMarioVoicePlaying(0);
 			if (voice)
