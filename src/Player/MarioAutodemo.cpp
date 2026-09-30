@@ -270,8 +270,8 @@ static inline TWaterGun* UnUsualGun(const TMario* p)
 bool TMario::isUnUsualStageStart()
 {
 	// Pinna rollercoaster
-	if ((gpMarDirector->getCurrentMap() == 0x3A)
-	    && (SMSGetMarDirectorBound()->getCurrentStage() == 0
+	if ((SMSGetMarDirector()->getCurrentMap() == 0x3A)
+	    && (SMSGetMarDirector()->getCurrentStage() == 0
 	        || SMSGetMarDirectorBound()->getCurrentStage() == 1))
 		return toroccoStart();
 
