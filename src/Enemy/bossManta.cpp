@@ -1035,16 +1035,16 @@ void TBossMantaManager::TMantaMessageState::update()
 	}
 }
 
-// TODO: instructions exact; the inlined ctor's `this` sits at 0x4c against
-// retail's 0x50, and the list iterator temps 4-0xc low (iterator stride).
-// `add(this)` binds the ctor's own `this` slot as retail does; the named
-// group closes the frame. Inert: a named col for the new, a raw hit-flag
-// clear; getChildren().push_back(this) adds a copy of `this`.
+// The name is the collision's default argument (upstream's reading): with it,
+// the inlined ctor's getChildren().push_back(this) puts `this` at retail's
+// 0x50 and the iterator temps in place. Passing the name here instead costs
+// 8 bytes of frame with push_back, and add(this) with the default argument
+// changes the inline shape (85.8%).
 TBossMantaAdditionalCollisionSet::TBossMantaAdditionalCollisionSet()
 {
 	unkC = nullptr;
 	for (int i = 0; i < 3; ++i)
-		unk0[i] = new TBossMantaAdditionalCollision("マンタ追加コリジョン");
+		unk0[i] = new TBossMantaAdditionalCollision;
 }
 
 // TODO: frame 0x78 against retail's 0x80 (each getScaling() site reserves
@@ -1136,7 +1136,7 @@ TBossMantaAdditionalCollision::TBossMantaAdditionalCollision(const char* name)
 
 	TIdxGroupObj* group
 	    = JDrama::TNameRefGen::search<TIdxGroupObj>("オブジェクトグループ");
-	group->add(this);
+	group->getChildren().push_back(this);
 }
 
 BOOL TBossMantaAdditionalCollision::receiveMessage(THitActor* sender,
