@@ -1835,8 +1835,7 @@ DEFINE_NERVE(TNerveBWJumpToBath, TLiveActor)
 			colum->generate(pos, scale);
 			boss->mSplashDone = 1;
 		}
-		gpMSound->startSoundActor(MSD_SE_BS_WANWAN_DIVE, &boss->mPosition, 0,
-		                          nullptr, 0, 4);
+		gpMSound->startSoundActor(MSD_SE_BS_WANWAN_DIVE, &boss->mPosition);
 	}
 
 	// TODO: retail keeps this copy of BW_BATH_POS in the lowest stack slot
