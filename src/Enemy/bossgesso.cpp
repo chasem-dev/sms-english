@@ -260,9 +260,11 @@ BOOL TBGBeakHit::receiveMessage(THitActor* sender, u32 message)
 	return false;
 }
 
-// TODO: frame 0xe8 against retail 0x138. Every named slot now sits exactly
+// TODO: frame 0xf0 against retail 0x138. Every named slot now sits exactly
 // (up is declared before offset and never materialised), but retail's low
-// region is 0xd0 of dead inline temporaries against our 0x7c.
+// region is 0xd0 of dead inline temporaries against our 0x84 (getHolder()
+// at all six holder reads +8, c-hs6; getDamageHeight()/getDamageRadius(),
+// never used in this file, +8 more).
 // getSpine() at gotBeakDamage's four spine reads buys +0x10 here and in
 // TBGBeakHit::receiveMessage (0xc0 vs 0x100) but scores lower; gotEyeDamage
 // must stay raw for TBGEyeHit::receiveMessage.
@@ -273,15 +275,15 @@ void TBGBeakHit::perform(u32 cue, JDrama::TGraphics* graphics)
 		mPosition.y -= mDamageHeight * 0.5f;
 
 		ensureTakeSituation();
-		if (mHolder != nullptr && !unkA4.isZero()) {
+		if (getHolder() != nullptr && !unkA4.isZero()) {
 			mPosition += unkA4;
-			JGeometry::TVec3<f32> delta = mHolder->mPosition;
+			JGeometry::TVec3<f32> delta = getHolder()->mPosition;
 			delta += unkA4;
-			mHolder->moveRequest(delta);
+			getHolder()->moveRequest(delta);
 			unkA4.zero();
 		}
 
-		if (mHolder != nullptr) {
+		if (getHolder() != nullptr) {
 			JGeometry::TVec3<f32> us2mario = SMS_GetMarioPos();
 			us2mario -= mOwner->mPosition;
 			if (!us2mario.isZero())
@@ -320,12 +322,12 @@ void TBGBeakHit::perform(u32 cue, JDrama::TGraphics* graphics)
 
 			f32 lenPollute = mOwner->getSaveParam2()->mSLBeakLengthPollute.get();
 			if (mOwner->unk190.color.a != 0 && beakPullDist >= lenPollute) {
-				mHolder->receiveMessage(this, HIT_MESSAGE_UNK8);
+				getHolder()->receiveMessage(this, HIT_MESSAGE_UNK8);
 			}
 
 			f32 lenLimit = mOwner->getSaveParam2()->mSLBeakLengthLimit.get();
 			if (beakPullDist >= lenLimit) {
-				mHolder->receiveMessage(this, HIT_MESSAGE_UNK8);
+				getHolder()->receiveMessage(this, HIT_MESSAGE_UNK8);
 				mOwner->gotBeakDamage();
 			}
 		}
