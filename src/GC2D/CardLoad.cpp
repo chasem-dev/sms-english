@@ -124,14 +124,15 @@ TCardLoad::TCardLoad(const char* name)
 
 void TCardLoad::changePattern(J2DPicture*, s16, u32) { }
 
-// TODO: frame 0x220 vs retail 0x240: the low temporary region is 0x1c short
-// (buffer and local_90 sit adjacent in both); callee-saved GPRs are colored
-// one off in most loops. Function-scope loop counters are worse.
+// TODO: frame 0x228 vs retail 0x240 (0x220 before getCurrentMap()): the low
+// temporary region is short (buffer and local_90 sit adjacent in both);
+// callee-saved GPRs are colored one off in most loops. Function-scope loop
+// counters are worse.
 void TCardLoad::load(JSUMemoryInputStream& stream)
 {
 	JDrama::TViewObj::load(stream);
 
-	if (gpMarDirector->mMap != 15)
+	if (gpMarDirector->getCurrentMap() != 15)
 		return;
 
 	JKRArchive* optionVolume = (JKRArchive*)JKRFileLoader::getVolume("option");
