@@ -975,17 +975,13 @@ TSpineEnemy* TGorogoroManager::createEnemyInstance()
 	return new TGorogoro;
 }
 
-// TODO: 99.3%, every instruction and every stack slot matching (0x58 frame,
-// `point` at 0x34, the new manager's `this` temporary at 0x24): the header
-// accessors getObjNum(), getObj(), getTracer() and getNodeNum() supply the
-// forced-load words retail has below the temporary. Left: `i` and `web` swap
-// r28/r29; regalloc.py says retail colours `web` near the start (a much
-// higher degree or an `@` object), where a named local is coloured last.
-// Inert or worse (with the old binders): `goro` declared first, late or at
-// function scope, `web` at function scope, a named `new` result, the
-// `continue` as an if block.
+// The header accessors getObjNum(), getObj(), getTracer() and getNodeNum()
+// supply the forced-load words retail has below the new manager's `this`
+// temporary. `web` declared at function scope gives `i` and `web` retail's
+// registers (with the old binders it was inert).
 void TGorogoroManager::initSetEnemies()
 {
+	TGraphWeb* web;
 	unk6C = new TGorogoroPolluteModelManager("ゴロゴロモデル汚染");
 	unk6C->init((TLiveActor*)unk18[0]);
 
@@ -994,7 +990,7 @@ void TGorogoroManager::initSetEnemies()
 	// Alternate the two graphs; fall back to the first if one is missing.
 	for (int i = 0; i < getObjNum(); ++i) {
 		JGeometry::TVec3<f32> point;
-		TGraphWeb* web = gpConductor->getGraphByName(graphlist[i % 2]);
+		web = gpConductor->getGraphByName(graphlist[i % 2]);
 		if (web->isDummy())
 			web = gpConductor->getGraphByName(graphlist[0]);
 		if (web->isDummy())
