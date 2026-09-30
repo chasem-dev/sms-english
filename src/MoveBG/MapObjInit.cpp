@@ -11098,13 +11098,13 @@ MActor* TMapObjBase::initMActor(const char* param_1, const char* param_2,
 	return newActor;
 }
 
-// TODO: frame 0x40 short (low region), and each initMActor expansion lacks
+// TODO: frame 0x30 short (low region), and each initMActor expansion lacks
 // retail's dead `unkC` load and old-actor register (see initMActor's TODO).
 void TMapObjBase::makeMActors()
 {
 	u16 uVar6 = 1;
-	if (mMapObjData->mAnim)
-		uVar6 = mMapObjData->mAnim->unk2;
+	if (getMapObjData()->mAnim)
+		uVar6 = getMapObjData()->mAnim->unk2;
 
 	if (uVar6 == 0)
 		return;
@@ -11119,8 +11119,8 @@ void TMapObjBase::makeMActors()
 		                                   | J3DMLF_UseUniqueMaterials
 		                                   | (2 << J3DMLF_TevStageNumShift);
 
-	if (mMapObjData->mAnim) {
-		const TMapObjAnimDataInfo* anim = mMapObjData->mAnim;
+	if (getMapObjData()->mAnim) {
+		const TMapObjAnimDataInfo* anim = getMapObjData()->mAnim;
 		mMActor = initMActor(anim->unk4[0].unk0, anim->unk4[0].unkC,
 		                     getSDLModelFlag());
 
@@ -11136,7 +11136,7 @@ void TMapObjBase::makeMActors()
 		}
 	} else {
 		char buffer[64];
-		snprintf(buffer, 64, "%s.bmd", mMapObjData->unk0);
+		snprintf(buffer, 64, "%s.bmd", getMapObjData()->unk0);
 		mMActor = initMActor(buffer, nullptr, getSDLModelFlag());
 	}
 }
