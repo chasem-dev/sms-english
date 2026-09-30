@@ -960,13 +960,13 @@ void TBossEelTooth::perform(u32 cue, JDrama::TGraphics* graphics)
 		f32 damageRadius           = params->mSLToothDamageRadius.get();
 		// TODO: retail keeps all four products live before the stores (AR
 		// product in f3, DR param in f5) and params in r5; ours reuses f1/f3/r4.
-		// Same residue as TBossEelVortex::perform; frame 0x40 short (low region).
-		f32 scale                  = mOwner->mScaling.x;
+		// Same residue as TBossEelVortex::perform; frame 8 short (low region).
+		f32 scale                  = mOwner->getScaling().x;
 		setHitParams(attackRadius * scale, attackHeight * scale,
 		             damageRadius * scale, damageHeight * scale);
 
 		for (s32 i = 0; i < mColCount; ++i) {
-			THitActor* collision = mCollisions[i];
+			THitActor* collision = getCollision(i);
 			if (mOwner->isValidToothDamage()
 			    && collision->isActorType(0x80000001) && mHitPoints > 1) {
 				SMS_SendMessageToMario(this, HIT_MESSAGE_ATTACK);
@@ -1003,7 +1003,7 @@ void TBossEelTooth::perform(u32 cue, JDrama::TGraphics* graphics)
 					unk78.y += speed;
 					if (unk78.y > mOwner->getBossEelParams()
 					                  .mSLToothLiveHeight.get()
-					    || mPosition.y > gpMarioPos->y + 2000.0f) {
+					    || getPosition().y > gpMarioPos->y + 2000.0f) {
 						mHitPoints = 0;
 						onHitFlag(HIT_FLAG_NO_COLLISION);
 					}
@@ -1024,7 +1024,7 @@ void TBossEelTooth::perform(u32 cue, JDrama::TGraphics* graphics)
 			    = gpMarioParticleManager->emitAndBindToPosPtr(
 			        BOSSEEL_JPA_MS_MEO_TOOTH_ALWAYS, &mPosition, 1, this);
 			if (emitter)
-				emitter->setGlobalScale(mOwner->mScaling);
+				emitter->setGlobalScale(mOwner->getScaling());
 		}
 		if (mSharedParts->getMActor()->checkCurBckFromIndex(22)
 		    && mSharedParts->getMActor()->getFrameCtrl(ANM_TYPE_BCK)->getRate()
@@ -1033,14 +1033,14 @@ void TBossEelTooth::perform(u32 cue, JDrama::TGraphics* graphics)
 			    = gpMarioParticleManager->emitAndBindToPosPtr(
 			        BOSSEEL_JPA_MS_MEO_TOOTH_WASH, &mPosition, 1, this);
 			if (emitter)
-				emitter->setGlobalScale(mOwner->mScaling);
+				emitter->setGlobalScale(mOwner->getScaling());
 		}
 		if ((mToothType == 0 || mToothType == 2) && mHitPoints == 1) {
 			JPABaseEmitter* emitter
 			    = gpMarioParticleManager->emitAndBindToPosPtr(
 			        BOSSEEL_JPA_MS_MEO_TOOTH_KIRA, &mPosition, 1, this);
 			if (emitter)
-				emitter->setGlobalScale(mOwner->mScaling);
+				emitter->setGlobalScale(mOwner->getScaling());
 		}
 
 		TPosition3f transform(0, 0, unk78.x);
