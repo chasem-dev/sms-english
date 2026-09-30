@@ -267,17 +267,16 @@ void TSelectDir::changeOrder()
 	unk48->unkC.off(CUE_MOVE | CUE_CALC_ANIM | CUE_DRAW);
 }
 
-// TODO: instruction-exact, frame 0xc8 against 0xd0. The carriers the
-// batch-128/cc32 ladders counterfeited with TU-local levels are accessor
-// levels (research c-r29): the binder-shaped TApplication::getFader() at the
-// fader sites and getSelectMenu() at six of the seven menu reads (all seven
-// overshoot the low region by three words; leaving out the mCloseMenu read
-// or the first mSelectedShine read gives the same layout). Every temporary
-// is then on retail's offset; what is left is two named words, one declared
-// before `res` and one after it. A named BOOL for either pad test or for
-// OSIsThreadTerminated is inert or moves the temporaries.
+// The carriers the batch-128/cc32 ladders counterfeited with TU-local levels
+// are accessor levels (research c-r29): the binder-shaped
+// TApplication::getFader() at the fader sites and getSelectMenu() at six of
+// the seven menu reads. The last two named words are a result local declared
+// first (MenuDir's direct has the same `DEFAULT` result) and the fader status
+// named for the switch (c-k24).
 int TSelectDir::direct()
 {
+	int ret = TApplication::APP_STATE_DEFAULT;
+
 	if (!unk38) {
 		if (!OSIsThreadTerminated(&gSetupThread))
 			return TApplication::APP_STATE_WAIT;
@@ -302,7 +301,8 @@ int TSelectDir::direct()
 
 	JDrama::TDirector::direct();
 
-	switch (SMSGetApplication()->getFader()->mFadeStatus) {
+	int status = SMSGetApplication()->getFader()->mFadeStatus;
+	switch (status) {
 	case TSMSFader::FADE_STATUS_FULLY_FADED_IN:
 	case TSMSFader::FADE_STATUS_FADING_IN:
 		if (getSelectMenu()->unk14B)
@@ -335,5 +335,5 @@ int TSelectDir::direct()
 			return TApplication::APP_STATE_GAMEPLAY;
 	}
 
-	return TApplication::APP_STATE_DEFAULT;
+	return ret;
 }
