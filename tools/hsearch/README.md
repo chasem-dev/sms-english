@@ -76,6 +76,8 @@ Plausibility filters drop generated moves that compile but read wrong:
 `stmt-swap` treats any operator on a class-typed local (`stream >> x`) as a call that changes it, so such statements never swap.
 
 The lint refuses a winner that gained `volatile`, a pragma, `reinterpret_cast`, a padding array, a `(void)0` filler, an empty `if` body, a pass-through helper or a binder helper.
+It also refuses a winner with more local declarations shadowing one in an enclosing block than the base has (a dead outer local is padding).
+Moves that rewrite or delete the same text never combine, so two `decl-hoist`s of one declaration cannot leave it declared twice.
 Review every winner by eye anyway: generated helper names (`bindPart3`) must be renamed, and a helper must read like a real inline level.
 
 ## The search

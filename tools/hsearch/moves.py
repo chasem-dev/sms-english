@@ -1125,6 +1125,15 @@ def generate(text: str, info, idx=None) -> List[Move]:
 
 
 def apply(text: str, moves: List[Move]) -> Optional[str]:
+    # apply_edits merges an edit two moves share, which is right for a helper
+    # both insert, but two moves that rewrite or delete the same text (two
+    # decl-hoists of one declaration to different blocks) conflict: merged,
+    # they leave a dead outer declaration shadowed by the inner one
+    owner = {}
+    for i, m in enumerate(moves):
+        for e in m.edits:
+            if e[0] < e[1] and owner.setdefault(e, i) != i:
+                return None
     return apply_edits(text, [e for m in moves for e in m.edits])
 
 
@@ -1145,9 +1154,47 @@ BANNED = [
 ]
 
 
+def shadowed_decls(text: str) -> int:
+    """Count local declarations (`T name;`, `T* name = ...;`) that shadow a
+    declaration of the same name made in an enclosing, still open block."""
+    toks = lex(text)
+    n, stack = 0, []
+    for k, tk in enumerate(toks):
+        if tk.text == "{":
+            stack.append(set())
+        elif tk.text == "}":
+            if stack:
+                stack.pop()
+        elif stack and tk.kind == "id" and tk.text not in KEYWORDS and k + 1 < len(toks) \
+                and toks[k + 1].text in (";", "="):
+            j = k - 1
+            while j > 0 and toks[j].text in ("*", "&"):
+                j -= 1
+            if toks[j].text == ">":  # a template type: back to its '<'
+                d = 0
+                while j > 0:
+                    d += {">": 1, "<": -1}.get(toks[j].text, 0)
+                    if d == 0:
+                        break
+                    j -= 1
+                j -= 1
+            if toks[j].kind != "id" or (toks[j].text in KEYWORDS and toks[j].text != "const"):
+                continue
+            while j > 0 and (toks[j - 1].text == "::" or toks[j - 1].text in ("const", "unsigned", "signed")):
+                j -= 2 if toks[j - 1].text == "::" else 1
+            if toks[j - 1].text not in (";", "{", "}", "("):
+                continue
+            if any(tk.text in sc for sc in stack[:-1]):
+                n += 1
+            stack[-1].add(tk.text)
+    return n
+
+
 def lint(base: str, text: str) -> List[str]:
     bad = []
     for rx, name in BANNED:
         if len(rx.findall(text)) > len(rx.findall(base)):
             bad.append(name)
+    if shadowed_decls(text) > shadowed_decls(base):
+        bad.append("shadowed declaration")
     return bad
