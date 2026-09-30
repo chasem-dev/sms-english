@@ -1952,9 +1952,7 @@ DEFINE_NERVE(TNerveBWShake, TLiveActor)
 
 	if (actor->curAnmEndsNext()) {
 		boss->releasePicket();
-		SMSGetMSoundBound()->startSoundActor(MSD_SE_BS_WANWAN_ESCAPE2,
-		                          &BosswanwanPicket(boss)->mPosition, 0, nullptr, 0,
-		                          4);
+		SMSGetMSound()->startSoundActor(MSD_SE_BS_WANWAN_ESCAPE2, &BosswanwanPicket(boss)->mPosition);
 		return TRUE;
 	}
 
