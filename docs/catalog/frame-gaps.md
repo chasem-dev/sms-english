@@ -2594,7 +2594,7 @@ Dead words per expansion over a raw `gp->` read, measured with `int mk; extp(&mk
 ## Closure batch c-k21 (2026-09-30): replacing `...Bound` sites one function at a time
 
 Question: for each function that reads a global through a fabricated `...Bound` accessor, which real construct supplies the binder's two stack words?
-Answer: for 76 of the 267 sites (in 44 functions) an existing construct respells the site byte-identically; no `...Bound` accessor lost its last user, so none was deleted.
+Answer: for 89 of the 274 sites (in 52 functions) an existing construct respells the site byte-identically; `SMS_GetMarioPosBound` lost its last user and is deleted, and the other eleven accessors keep users.
 Every commit is one function, byte-identical code (per-function disassembly compared against HEAD), the DOL SHA-1 unchanged, `ninja changes_all` clean and validate-symbol-order unchanged.
 
 ### What landed (wt/c-k21)
@@ -2609,6 +2609,10 @@ Every commit is one function, byte-identical code (per-function disassembly comp
   `getPosition()` (TBossEel::updateTearsCnt, TCogwheelScale::touchPlayer, TCannon::bombShoot, TEnemyMario::startDisappear, TNerveYumboAppearing::execute with SMS_GetMarioPos()), `getLeash()` (TBossWanwan::emitEffects), `getDistToMarioSquared()` (TFireWanwan::updateRumble), `getCurrentBck()` (TNerveHino2Squat::execute), `getDamageStage()` (TNerveTinKoopaDamage::execute), `getActorKeeper()` (TPopo::possessedIn), `SMS_GetMarioAngleY()` (TMapObjGeneral::put).
   The short sound overload at a neighbouring plain site closes TNerveFireWanwanDie::execute and TDemoCannon::perform.
   A named `MSound* sound` receiver closes TKoopaJr::receiveMessage.
+- A sweep over every function with a Bound site, respelling its Bound calls plain or raw and every six-argument `startSoundActor(id, pos, 0, nullptr, 0, 4)` in it short, found six more byte-identical functions: TNerveBGDie::execute (its item-manager and demo-state sites), TShiningStone::putOnLight, TMapObjPuncher::touchPlayer, TAmiKing::calc, TMario::checkGraffitoFire, TYoshi::thinkHoldOut; TMareFall::calc the same by hand.
+  There the two words belonged to a neighbouring sound call, not to the particle or position read.
+- TBossEelAwaCollision::perform takes `getPosition()` in its first height test and `mPosition` in its second; retail re-reads Mario's position for each test, so no named value serves, and this is the only spelling of its frame found.
+  With it and TMapObjPuncher::touchPlayer, SMS_GetMarioPosBound has no user left and is removed from MarioAccess.hpp.
 - TBathtub::showMessage (UNUSED, 0x64) takes a bit index and shows balloon `0x1E + index`: that body is exactly the map's 0x64 (the old one was 0x60).
   TBathtub::perform's seven balloon blocks are this body with the index folded (0-5 give 0x1E-0x23, 15 gives 0x2D).
 
@@ -2620,7 +2624,7 @@ Every commit is one function, byte-identical code (per-function disassembly comp
 - TBossPakkun::showMessage(0) is inlined in TNerveBPVomit::execute (spelling the call there keeps every instruction), but with the Bound body the nerve is 8 over and with the plain body its slots move.
 - A named `s64 ticks` inside TMarDirector::startTimer (the getRestTime style) adds no frame.
 - `!isDemoMode3()` for `->unk124 != 3` in TNerveBGDie::execute, `*gpMarioPos`, SMS_GetMarioY/Z and getPosition() variants in TMapObjPuncher::touchPlayer, and plain getCurrentMap() at TResetFruit::perform: all worse.
-- hsearch's other exact results named single-use values (`spine->getTime()`, `isBckAnm(4)`, `getActorType()`, a loop's bool) or mixed getPosition()/mPosition two lines apart (TBossEelAwaCollision::perform); none were taken.
+- hsearch's other exact results named single-use values (`spine->getTime()`, `isBckAnm(4)`, `getActorType()`, a loop's bool) or combined several unrelated moves; none were taken.
 
 ### Reading
 
