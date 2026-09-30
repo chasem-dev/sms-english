@@ -210,10 +210,11 @@ void TMapWire::initPointAtJustReleased(f32 pos, TMapWirePoint* point)
 	point->mPosReturnRate = (point->mDefaultPosOnWire - pos) / 1000.0f;
 }
 
-// TODO: 99.8%: frame 0x138 vs ours 0xe8, every instruction right; the
-// gpMarioSpeedX/Z pointer registers swap. Same missing slots as move().
-// Assigning Mario's velocity component-wise (upstream's spelling) moves
-// the register choice closer than the three-argument constructor did.
+// TODO: 99.8%: frame 0x138 vs ours 0xf8, every instruction and register
+// right. Same missing slots as move(). Assigning Mario's velocity
+// component-wise (upstream's spelling) moves the register choice closer
+// than the three-argument constructor did; SMS_GetMarioSpeed*() at all
+// four reads instead of the raw pointers adds 0x10 of frame (c-hs6).
 void TMapWire::release()
 {
 	if (mState == TMapWire::RELEASED)
@@ -253,11 +254,11 @@ void TMapWire::release()
 
 	f32 stretchRatio = mStretchRate * abs(mHangPos - 0.5f);
 
-	if (*gpMarioSpeedY > 0) {
+	if (SMS_GetMarioSpeedY() > 0) {
 		JGeometry::TVec3<f32> marioVel;
-		marioVel.x = *gpMarioSpeedX;
-		marioVel.y = *gpMarioSpeedY;
-		marioVel.z = *gpMarioSpeedZ;
+		marioVel.x = SMS_GetMarioSpeedX();
+		marioVel.y = SMS_GetMarioSpeedY();
+		marioVel.z = SMS_GetMarioSpeedZ();
 		mBounceAmplitude = mHeightRate * marioVel.length();
 	} else {
 		mBounceAmplitude = mReleaseHeight;
