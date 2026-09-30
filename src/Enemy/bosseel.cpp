@@ -1500,9 +1500,11 @@ void TBossEelAwaCollision::perform(u32 cue, JDrama::TGraphics* graphics)
 {
 	if (cue & CUE_MOVE) {
 		calcEntryRadius();
-		if (SMS_GetMarioPosBound()->y < mPosition.y + 500.0f)
+		// The first test reads through getPosition() and the second raw: the
+		// accessor's reference temporary is two words of retail's 0x50 frame.
+		if (SMS_GetMarioPos().y < getPosition().y + 500.0f)
 			offHitFlag(HIT_FLAG_NO_COLLISION);
-		if (gpMarioPos->y > mPosition.y + mAttackHeight)
+		if (SMS_GetMarioPos().y > mPosition.y + mAttackHeight)
 			onHitFlag(HIT_FLAG_NO_COLLISION);
 
 		for (s32 i = 0; i < BossEelAwaColCount(this); ++i) {
