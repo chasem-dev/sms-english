@@ -226,3 +226,17 @@ The other accepted edits read a member through its header accessor at every read
 Rejected: machine extracts with no UNUSED of their shape (10), accessors the file never uses (getBodyScale, getSpine/getLeash in bosswanwan, getRotation in Koopa, getLinearVelocity, getDamageHeight/Radius), lone named values including two uncast `TNameRef*` temporaries, register trades (NpcChange, bgtentacle, Tongue, J3DCluster's x/z/y sign order), and pairs whose parts are each inert.
 Lead: `CPolarSubCamera::ctrlLButtonCamera_` is byte-exact with four stacked single-use names (u32 copies of both freeze counters, a bool for the FLUDD flag test, a const reference to the notice actor's getPosition()); any three are 8 short, and the recipe is in its TODO rather than the source.
 The disk filled once mid-leg (not this batch's files) and cleared on its own; hsearch then resumed from its database.
+
+## hsearch sweep c-hs7
+
+The resumed c-hs5 list (`scratchpad/hs5/targets.tsv`, 200 s per function, `-j 2`, one foreground call per row) ran rows 134 to 186; rows 187 onward are unsearched.
+Review accepted 14 and rejected 27 (the whole c-hs5 list so far: 60 accepted, 81 rejected), and the other 12 rows gave no gain.
+No function became byte-exact and no unit was linked.
+Landed on the retail frame: `TMario::running` (getInput(), getForwardVel(), getWallPlane() and getFludd() at every read; only the recorded pushed-zero r30 residue is left) and `TKoopaJrSubmarine::checkNerve` (getSpine() at all five reads and getKillerIndex(); registers 13 to 0).
+`TBiancoGateKeeper::init` loses all 17 register mismatches with getName() in both strcmp tests (MapObjBianco's spelling) and getMActor() at every read.
+`TBossGesso::perform` fixes the MTXCopy load order its TODO recorded with a named source matrix, which the TODO had measured as inert before getMActor() was in place.
+The three nozzle animation()s take 0x18, 0x18 and 0x28 of their frame gaps from getMActor() at every nozzle-actor read.
+The other accepted edits are header accessors at every read of a member in the function, where the file or the class's other files already use that accessor: getModel(), getGamePad(), getStatus(), getFludd(), getCamMode(), getCurrentMap(), getCurrentStage(), getUnk2E9(), plus one single-use target direction passed straight into calcTurnDirection as canRun does.
+Hand edits beat hsearch's winners in several rows: its best results usually stacked a machine extract or a lone named value on top of the honest accessor sets, and scoring the accessor set alone with `tools/score-variant.sh` kept the gain.
+Rejected: machine extracts with no UNUSED of their shape (10, including a 0x90 extract that matched UNUSED `TWaterGun::getWillBeEmitted` by size only), lone named values or receivers (8), accessors the file never uses (5), trades (3), and a far hoist of one declaration in both instances of one template body.
+Leads: `TFruitsBoat::moveObject` lands its frame with a named int for the anm switch on getBoatType(), and `TNerveHino2JumpIn::execute` reaches registers 0 at 0x60 with getUnk104() and named curAnmEndsNext() and getTime() values; both read as lone names and stay out of the source.
