@@ -760,11 +760,11 @@ void TNozzleTrigger::animation(int param_1)
 	// TODO: stack size likely influenced by inlined temporaries in original.
 	// volatile u32 unused[38];
 
-	int bckIdleOut;
-	int bckIdle;
 	int bckStart;
 	int bckSwapOut;
 	int bckSwapIn;
+	int bckIdleOut;
+	int bckIdle;
 	int emitMtxCount;
 
 	J3DFrameCtrl* ctrl = getMActor()->getFrameCtrl(ANM_TYPE_BCK);
