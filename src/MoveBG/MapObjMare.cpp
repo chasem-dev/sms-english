@@ -1017,12 +1017,12 @@ void TMuddyBoat::control()
 	switch (mState) {
 	case 1:
 		mSpeed *= mSpeedDecay;
-		SMSGetMSoundBound()->startSoundActorWithInfo(
+		SMSGetMSound()->startSoundActorWithInfo(
 		    MSD_SE_OBJ_DORO_FLOAT, &mPosition, nullptr, fabsf(mSpeed), 0, 0,
 		    nullptr, 0, 4);
 		if (mTurnSpeed != 0.0f) {
 			mRotation.y += mTurnSpeed;
-			mRotation.y = MsWrap(mRotation.y, 0.0f, 360.0f);
+			mRotation.y = MsWrap(getRotation().y, 0.0f, 360.0f);
 			mTurnSpeed *= mTurnDecay;
 			if (fabsf(mTurnSpeed) < 0.0001f)
 				mTurnSpeed = 0.0f;
@@ -1045,7 +1045,7 @@ void TMuddyBoat::control()
 			makeObjDefault();
 			makeObjAppeared();
 
-			JGeometry::TVec3<f32> scale(2.0f * mScaling.x,
+			JGeometry::TVec3<f32> scale(2.0f * getScaling().x,
 			                            2.0f * getScaling().y,
 			                            3.0f * getScaling().z);
 			mEffectPos.set(mPosition.x, mPosition.y - mYOffset, mPosition.z);
