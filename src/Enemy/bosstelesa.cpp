@@ -2292,7 +2292,7 @@ void TBossTelesa::fanfale()
 
 // TODO: no nerve body below is reconstructed; each carries its map size.
 
-// TODO: instruction-identical; retail's frame is 0x60 larger (0x128 vs 0xc8)
+// TODO: instruction-identical; retail's frame is 0x58 larger (0x128 vs 0xd0)
 // with no slot in the body using it, so some inlined callee reserves more.
 DEFINE_NERVE(TNerveBossTelesaDie, TLiveActor)
 {
@@ -2327,8 +2327,7 @@ DEFINE_NERVE(TNerveBossTelesaDie, TLiveActor)
 			boss->getMActor()->setBrkFromIndex(1);
 			boss->mSlot->mScaling.set(0.0f, 0.0f, 0.0f);
 
-			gpMSound->startSoundActor(MSD_SE_BS_TELESA_DOWN, &boss->mPosition,
-			                          0, nullptr, 0, 4);
+			gpMSound->startSoundActor(MSD_SE_BS_TELESA_DOWN, &boss->mPosition);
 		}
 	}
 
