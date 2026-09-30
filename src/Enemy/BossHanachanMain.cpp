@@ -830,19 +830,13 @@ f32 TBossHanachan::getBodyMaxRotateZ() const
 // instantiation for this TU and execWalk's inlined copy of isCanWalk reaches
 // it with a `bl`, so retail has one inline level between isCanWalk and the
 // unnamed vector's constructor: that puts `set` (three statements) at depth 4,
-// where the allowance is two. Same shape as NpcWalkTurn's
-// NpcWalkTurnSquaredXZ; parked here because the map has no symbol for it.
-static inline f32 BossHanachanSquaredXZ(const JGeometry::TVec3<f32>& a,
-                                        const JGeometry::TVec3<f32>& b)
-{
-	return JGeometry::TVec3<f32>(a.x - b.x, 0.0f, a.z - b.z).squared();
-}
-
+// where the allowance is two: MathUtil.hpp's MsSquaredDistXZ, as in
+// NpcWalkTurn.
 bool TBossHanachan::isCanWalk() const
 {
 	bool result = true;
 	JGeometry::TVec3<f32> target = unkF4.getPoint();
-	if (BossHanachanSquaredXZ(target, mPosition) < CLBSquared(10.0f))
+	if (MsSquaredDistXZ(target, mPosition) < CLBSquared(10.0f))
 		result = false;
 	return result;
 }

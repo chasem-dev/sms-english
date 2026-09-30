@@ -349,6 +349,17 @@ inline f32 MsAngleBetween(const JGeometry::TVec3<f32>& a,
 	return atan2f(len, a.dot(b));
 }
 
+// Fabricated name: the squared distance between a and b in the XZ plane,
+// built as an unnamed vector. It is its own inline level, which puts
+// TVec3::set<f32> deep enough that the ROM calls it out of line in
+// TBaseNPC::execWalk and TBossHanachan::isCanWalk. The map has no symbol for
+// it.
+inline f32 MsSquaredDistXZ(const JGeometry::TVec3<f32>& a,
+                           const JGeometry::TVec3<f32>& b)
+{
+	return JGeometry::TVec3<f32>(a.x - b.x, 0.0f, a.z - b.z).squared();
+}
+
 // fabricated
 inline f32 MsAngleWrap(f32 angle) { return MsWrap(angle, 0.0f, 360.0f); }
 

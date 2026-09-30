@@ -12,14 +12,8 @@
 // depth 4, where the allowance is two. Spelling the level as a squared-XZ
 // helper reproduces the call (execWalk 95.8 -> 97.7 and the MISSING symbol is
 // gone); a level *above* isCanWalk instead pushes TPathNode::getPoint() out of
-// line too, which retail expands. Parked here rather than in a shared header
-// because the map has no symbol for it.
-static inline f32 NpcWalkTurnSquaredXZ(const JGeometry::TVec3<f32>& a,
-                                       const JGeometry::TVec3<f32>& b)
-{
-	return JGeometry::TVec3<f32>(a.x - b.x, 0.0f, a.z - b.z).squared();
-}
-
+// line too, which retail expands. The helper is MathUtil.hpp's
+// MsSquaredDistXZ.
 // TODO: in execWalk's inlined copy retail puts the point copy at 0x90 and
 // the unnamed vector at 0x9c; ours has the vector at 0x90 and `target` at
 // 0xa8. Passing getPoint() straight to a by-value helper parameter, an
@@ -29,7 +23,7 @@ bool TBaseNPC::isCanWalk() const
 {
 	bool result = true;
 	JGeometry::TVec3<f32> target = unkF4.getPoint();
-	if (NpcWalkTurnSquaredXZ(target, mPosition) < CLBSquared(10.0f))
+	if (MsSquaredDistXZ(target, mPosition) < CLBSquared(10.0f))
 		result = false;
 	return result;
 }
