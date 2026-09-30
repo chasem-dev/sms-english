@@ -1213,6 +1213,8 @@ TWaterGun::TWaterGun(TMario* mario)
 	mMario = mario;
 }
 
+// TODO: five instructions differ and the frame is 0xe8 short (0x2b0 vs
+// 0x398); getMario() and getCurrentNozzleIndex() took it from 0x298.
 void TWaterGun::init()
 {
 	TNozzleTrigger* bomb       = &mNozzleDeform.mBomb;
@@ -1228,7 +1230,7 @@ void TWaterGun::init()
 	mNozzleRocket.unk38C       = MSD_SE_PO_ROCKET_TRIGGER;
 	mNozzleTurbo.unk38C        = MSD_SE_PO_SNIPER_TRIGGER;
 	mNozzleDeform.mBomb.unk38C = MSD_SE_PO_SHOTGUN_TRIGGER;
-	mCurrentWater = mNozzleList[mCurrentNozzle]->mEmitParams.mAmountMax.get();
+	mCurrentWater = mNozzleList[getCurrentNozzleIndex()]->mEmitParams.mAmountMax.get();
 	mIsEmitWater  = false;
 	unk1C88       = 0.0f;
 	mCurrentPressure              = 0;
@@ -1250,9 +1252,9 @@ void TWaterGun::init()
 	bomb->unk384                    = true;
 	mNozzleYoshiDeform.mBomb.unk384 = true;
 
-	MtxPtr r24 = mMario->mModel->getModel()->getAnmMtx(mMario->mJointIdChest);
+	MtxPtr r24 = getMario()->mModel->getModel()->getAnmMtx(getMario()->mJointIdChest);
 
-	unk1CBC = mMario->mPosition;
+	unk1CBC = getMario()->mPosition;
 
 	unk1CC0 = 0;
 	unk1CC2 = 0;
@@ -1266,7 +1268,7 @@ void TWaterGun::init()
 	createGunBody();
 
 	mFluddModel->getModel()->setBaseTRMtx(
-	    mMario->mModel->getModel()->getAnmMtx(mMario->mJointIdChest));
+	    getMario()->mModel->getModel()->getAnmMtx(getMario()->mJointIdChest));
 
 	mFluddModel->mModel->calc();
 
