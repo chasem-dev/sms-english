@@ -733,7 +733,7 @@ void TYoshi::emitTongue()
 	} while (tries < 10);
 }
 
-// TODO: frame is 0x110, retail 0x158; every instruction matches. Retail
+// TODO: frame is 0x118, retail 0x158; every instruction matches. Retail
 // puts each emitTongue expansion's `mTipPos - pos` operand copy in the low
 // region (0xa8/0x88) under the named block; ours sits above it. Naming the
 // distance or routing it through a TU-local helper breaks the inlining.
@@ -752,7 +752,7 @@ void TYoshi::doSearch()
 			THitActor* target = mTongue->findTarget(false, false);
 			if (target != nullptr) {
 				JGeometry::TVec3<f32> diff;
-				diff.sub(target->mPosition, mTranslation);
+				diff.sub(target->mPosition, getTranslation());
 				unkE0 = matan(diff.z, diff.x);
 				unkDC = 1;
 				return;
