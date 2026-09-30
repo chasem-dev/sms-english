@@ -746,8 +746,7 @@ DEFINE_NERVE(TNerveTabePukuBite, TLiveActor)
 
 	puku->doBite();
 	puku->setBckAnm(TABEPUKU_ANM_SWIM);
-	SMSGetMSoundBound()->startSoundActor(MSD_SE_EN_TOBIPUKU_BITE, &puku->mPosition, 0,
-	                          nullptr, 0, 4);
+	SMSGetMSound()->startSoundActor(MSD_SE_EN_TOBIPUKU_BITE, &puku->mPosition);
 
 	spine->pushAfterCurrent(&TNerveTabePukuDive::theNerve());
 	return TRUE;
