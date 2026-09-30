@@ -1368,9 +1368,9 @@ void TFireWanwan::updateRumble()
 {
 	f32 fVar1 = getSaveParam2()->mContShakeRange.get();
 
-	if (!isCameraShake() && mDistToMarioSquared < fVar1 * fVar1) {
+	if (!isCameraShake() && getDistToMarioSquared() < fVar1 * fVar1) {
 		if (!isOverApproachRumble()) {
-			SMSGetRumbleMgrBound()->start(9, &mPosition);
+			SMSRumbleMgr->start(9, &mPosition);
 			mApproachRumbleTimer += 1;
 		}
 	} else {
