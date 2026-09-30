@@ -3073,14 +3073,14 @@ void TGCConsole2::checkChangeTelopArray()
 	u32* oldArray = GCConsole2Unk570(this);
 
 	if (gpMarDirector->getCurrentMap() == 1) {
-		switch (gpMarDirector->unk7D) {
+		switch (gpMarDirector->getCurrentStage()) {
 		case 0:
 			unk570 = scDolpicNewsDolpic0;
 			break;
 		case 1:
 			if (static_cast<TTakeActor*>(
 			        static_cast<JDrama::TNameRef*>(GCConsole2UnkC4(this)))
-			        ->mHolder
+			        ->getHolder()
 			    != nullptr)
 				unk570 = scDolpicNewsDolpic1;
 			else
@@ -3102,12 +3102,12 @@ void TGCConsole2::checkChangeTelopArray()
 			// One message per flag, both messages when both are set and the
 			// generic pair when neither is.
 			if (TFlagManager::getInstance()->getBool(0x50001)) {
-				if (SMSGetFlagManagerBound()->getBool(0x50002))
+				if (TFlagManager::getInstance()->getBool(0x50002))
 					unk570 = scDolpicNewsDolpic5_4;
 				else
 					unk570 = scDolpicNewsDolpic5_2;
 			} else {
-				if (SMSGetFlagManagerBound()->getBool(0x50002))
+				if (TFlagManager::getInstance()->getBool(0x50002))
 					unk570 = scDolpicNewsDolpic5_3;
 				else
 					unk570 = scDolpicNewsDolpic5_1;
