@@ -106,6 +106,10 @@ void TMapWire::drawLower() const
 // ones is instruction-exact at 0x50; getEndPoint() in the end helpers lands
 // 0x58 but schedules the r31 restore after mtlr (and a raw end with the
 // accessor in only one helper breaks the body).
+// c-hs4: getStartPoint() at all six inline start reads (end raw, inline or
+// through the helpers) lands 0x58 with every slot; the only residue is the
+// first vertex's two fadds, where retail adds point + offset (addPoint's
+// order). addPoint(getStartPoint()) there is 0x50, and `xOffset + x` is inert.
 void TMapWire::drawUpper() const
 {
 	f32 xOffset = mDrawAxes.x;
