@@ -1054,8 +1054,7 @@ void TMuddyBoat::control()
 			           scale);
 			emitAndSRT(PARTICLE_MS_ENM_DISAP_B, 0, &mEffectPos, mRotation,
 			           scale);
-			SMSGetMSoundBound()->startSoundActor(
-			    MSD_SE_SMOKE_EFFECT, &mPosition, 0, nullptr, 0, 4);
+			SMSGetMSound()->startSoundActor(MSD_SE_SMOKE_EFFECT, &mPosition);
 			mState = 1;
 		}
 		break;
