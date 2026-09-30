@@ -166,12 +166,13 @@ void TGessoManager::initSetEnemies()
 	// default argument: the defaulted argument is one inline level, and with
 	// it the JDrama::TViewObj constructor lands at depth 3 and is called
 	// instead of expanded (81.21 -> 99.83).
-	// TODO: frame 0xe8 vs 0x20, every instruction matches. The map's UNUSED
+	// TODO: frame 0xe8 vs 0x30, every instruction matches (getObj(0) +0x10,
+	// c-hs6). The map's UNUSED
 	// TMsRange<s32> dtor right after this function says retail had dead code
 	// here with a TMsRange<s32> local (27 words above the new binding, 23
 	// below); dead random-graph placement loops tried reach only 0x68..0x90.
 	unk60 = new TGessoPolluteModelManager("ゲッソーモデル汚染");
-	unk60->init((TLiveActor*)unk18[0]);
+	unk60->init(getObj(0));
 }
 
 void TGessoManager::createModelData()
