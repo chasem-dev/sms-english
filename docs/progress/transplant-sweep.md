@@ -195,3 +195,19 @@ The one exact, `TNerveBGBeakDamage::execute`, is a machine extract of the BTP-fr
 Rejected: machine extracts (3), nonsense temporaries or lone spellings stacked for a frame (3), inverting an existing mixed split (`TLampSeesawMain::loadAfter`, where every consistent spelling misses by 8), and slot-only noise (2).
 Tool fixes: moves that rewrite or delete the same text no longer combine, and the lint refuses a new shadowed declaration (the doubled `decl-hoist`).
 Spelling moves are refused when an identical line anywhere in the function is left alone, `sound-short` only offers a form that is at least a quarter of the file's other calls and adds an all-sites move, and an extract winner's helpers are compiled out of line and checked against the unit's UNUSED map sizes (skipping UNUSEDs the build already emits at their size), with the result in the log and the patch header.
+
+## hsearch sweep c-hs5
+
+A new list of the 513 non-exact functions outside c-hs2's targets, less 81 whose TODO records a by-value TVec3, JGadget pool, JUTColor stride or MsMtxSetRot residue, left 432 rows ordered by fuzzy match then size (`scratchpad/hs5/targets.tsv`, own `trials.sqlite`).
+The batch (200 s per function, `-j 2`, one foreground call per row) searched rows 1 to 64; rows 65 onward are unsearched.
+It reported 46 candidates (one exact, 44 improved, one flagged as regressing another function) and 18 rows with no gain; review accepted 23 and rejected 23.
+No function became byte-exact and no unit was linked.
+Improved to the retail frame: `TNerveCannonSearch::execute`, where getRotation() at both yaw reads (the third site is a write) lands the frame and 27 of 40 slots.
+Improved part of the way, all instruction-exact before and after: `TApplication::proc`, `TOptionControl::checkInput`, the TBossTelesa Die and Appear nerves, `TMapObjBase::initUnique`, `TBossPakkun::perform` and `init`, `TNerveBPWait::execute` (8 short), `TYoshi::init`, `TNerveBossEelDie::execute`, `TBGBeakHit::receiveMessage`, `TResetFruit::control`, `TWaterGun::perform`, `TFluffManager::control`, `TMarDirector::updateGameMode`, `TFluff::move`, `TAmiKing::moveObject`, `TEnemyMario::initModel`, `TGorogoro::walkBehavior`, `TEMario::load`, `TCannon::calcRootMatrix` and `TTamaNokoManager::initSetEnemies`.
+Almost every accepted edit reads a member through its header accessor at every read in the function (getManager, getSpine, getTracer, getGroundPlane, getActorType, getGamePad, getM3UModel, getCurrentMap, getCurrentStage, getObjNum/getObj); the rest are a two-argument startSoundActor where the file already uses that form and one consistent `== 0` spelling at three parallel tests.
+On this list the residue is mostly a dead low region: accessor inlines add frame without moving instructions, so the frame grows toward retail in steps of 8 but rarely lands.
+Each TODO above an accepted function now records the new frame and what was tried.
+The one exact candidate, `TYoshi::init`, needed a machine extract of only the second of two identical hand-texture blocks; a helper over both blocks overshoots (0x298 to 0x2a8 against 0x290), so only its getM3UModel() was kept.
+`TMarDirector::changeState` lands its frame only with a machine extract of the card-save restore/next-area block; that block is not the map's UNUSED `decideNextStageOfMiss` (0x10c), which it compiles to at 0x8c.
+Rejected: lone named values or `!getTime()` among identical calls (9), two-argument sounds in files that spell every sound with six (bosseel, fireWanwan, MarioReceiveMsg, MarioMove), machine extracts with no UNUSED of their shape (7), accessor subsets that leave the other sites raw, and one step the function's TODO had already measured and declined (`considerSetAnm_`'s getRotation()).
+Tool note: `raw->acc` subsets such as "sites 3+4 of 4" and single `name-call`s dominate the improved results; filtering them out before the beam would save most of the review time.
