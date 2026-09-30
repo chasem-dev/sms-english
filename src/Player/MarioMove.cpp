@@ -172,8 +172,8 @@ void TMario::warpRequest(const JGeometry::TVec3<f32>& pos, f32 angle)
 	moveRequest(pos);
 	mFaceAngle.y    = (s16)DEG2SHORTANGLE(angle);
 	mModelFaceAngle = mFaceAngle.y;
-	SMSGetCameraBound()->addMoveCameraAndMario(offset);
-	if (SMSGetMarDirector()->mMap != 7)
+	gpCamera->addMoveCameraAndMario(offset);
+	if (SMSGetMarDirector()->getCurrentMap() != 7)
 		MarioMoveGamePad(this)->onNeutralMarioKey();
 	changePlayerStatus(MARIO_STATUS_WAIT, 0, 1);
 }
