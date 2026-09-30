@@ -2177,7 +2177,7 @@ DEFINE_NERVE(TNerveBGDie, TLiveActor)
 		}
 
 		if (SMSGetMarDirector()->getCurrentMap() == 3 || SMSGetMarDirector()->getCurrentMap() == 59) {
-			SMSGetItemManagerBound()->makeShineAppearWithDemo(
+			gpItemManager->makeShineAppearWithDemo(
 			    "シャイン（ボス用）", "ボスシャインカメラ", self->mPosition.x,
 			    6000.0f + self->mPosition.y, self->mPosition.z);
 		}
@@ -2188,14 +2188,12 @@ DEFINE_NERVE(TNerveBGDie, TLiveActor)
 		if (nameKuriMgr)
 			nameKuriMgr->killChildren();
 
-		BossgessoGetMSound()->startSoundActor(MSD_SE_BS_GESO_MHIT_NOBOICE,
-		                                &self->mPosition, 0, nullptr, 0, 4);
+		BossgessoGetMSound()->startSoundActor(MSD_SE_BS_GESO_MHIT_NOBOICE, &self->mPosition);
 	}
 
 	if (SMSGetMarDirector()->getCurrentMap() == 9 && spine->getTime() >= 740
 	    && spine->getTime() <= 750) {
-		BossgessoGetMSound()->startSoundActor(MSD_SE_OBJ_QUAKE, &self->mPosition, 0,
-		                                nullptr, 0, 4);
+		BossgessoGetMSound()->startSoundActor(MSD_SE_OBJ_QUAKE, &self->mPosition);
 
 		if (spine->getTime() == 745) {
 			self->unk1A4 = 1.0f;
@@ -2228,7 +2226,7 @@ DEFINE_NERVE(TNerveBGDie, TLiveActor)
 		self->onLiveFlag(LIVE_FLAG_UNK10);
 	}
 
-	if (self->isReachedToGoal() && SMSGetMarDirectorBound()->unk124 != 3) {
+	if (self->isReachedToGoal() && SMSGetMarDirector()->unk124 != 3) {
 
 		self->changeAllTentacleState(0);
 		self->kill();
