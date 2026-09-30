@@ -2635,7 +2635,7 @@ Every commit is one function, byte-identical code (per-function disassembly comp
 ## Closure batch c-k22 (2026-09-30): a site-level sweep for the `...Bound` stack words
 
 Question: which real constructs, beyond c-k21's, supply the two stack words of the remaining 185 `...Bound` sites?
-Answer: 46 sites in 36 functions respell byte-identically (whole object compared against HEAD, DOL SHA-1 unchanged, `changes_all` clean, symbol order unchanged); 139 remain and no accessor lost its last user.
+Answer: 46 sites in 32 functions respell byte-identically (whole object compared against HEAD, DOL SHA-1 unchanged, `changes_all` clean, symbol order unchanged); 139 remain and no accessor lost its last user.
 Per accessor: MarDirector 11, ParticleManager 12, MSound 8, Map 6, FlagManager 3, Mario 2, and one each for CameraShake, ModelWaterManager, Camera and RumbleMgr; ItemManager's two sites (TMonumentShine::receiveMessage, TItemManager::newAndRegisterCoin) found no carrier.
 
 ### Method
