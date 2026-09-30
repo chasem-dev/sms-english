@@ -1185,9 +1185,9 @@ void TFluffManager::findNextFluff()
 	}
 }
 
-// TODO: 99.9%, every instruction exact; frame 0xa0 against our 0x70, i.e.
-// 12 words of dead objects missing (iro.py: ours has 4 P, 4 inline and 3
-// named dead words). findNextFluff's own body is 0xf4 against the map's
+// TODO: 99.9%, every instruction exact; frame 0xa0 against our 0x78, i.e.
+// 10 words of dead objects missing (the two-argument sound is +8, c-hs5;
+// iro.py before it: ours had 4 P, 4 inline and 3 named dead words). findNextFluff's own body is 0xf4 against the map's
 // 0x118, so the WAIT branch's expansion may be the carrier; the calcDist /
 // `a - b` / length() spellings of its distance all change control's code.
 void TFluffManager::control()
@@ -1200,8 +1200,7 @@ void TFluffManager::control()
 
 		if (mRideFluff->mPosition.y < mPosition.y - mBlowHeight) {
 			gpMSound->startSoundActor(MSD_SE_OBJ_WATAGE_WIND,
-			                          &mRideFluff->mPosition, 0, nullptr, 0,
-			                          4);
+			                          &mRideFluff->mPosition);
 			mStateTimer = mBlowTime;
 			mState      = STATE_BLOW;
 		}
