@@ -2865,3 +2865,30 @@ In progress; results are appended below as they are measured.
 - The same comma in the copy-in (`TVec3 r((0, fst));`) also makes the word but costs enemyAttachment 6 extra instructions, and in `-=` (`r -= (0, snd)`, `(0, r) -= snd`) it makes none.
 - A comma whose left operand has side effects is hoisted by the front end and makes no word (`return (r -= snd, r);`, `return (snd, r);`).
 - A free `inline` template `operator-` (primary template, deduced `T`) compiles like the friend V1; without `inline` it is never expanded.
+- Correction to the line above: what decides is the kind of left operand, not side effects.
+  Constants and addresses (`0`, `1`, `&snd`) stay in the tree and make the word; lvalue reads (`snd`, `fst.x`, `r.x`) and side effects (`r -= snd`) are dropped or hoisted and make none.
+
+### An honest-body grammar, exhaustively (192 shapes, scratch TU)
+
+- Dimensions: friend or const member; left operand `const TVec3&` or by value; right operand `const TVec3&` or by value; return `TVec3`, `const TVec3` or `const TVec3&`.
+  Twelve bodies: copy-construct or copy-initialise then `-=`, `return r -= snd`, the by-value `fst -= snd` pair, `return TVec3(F) -= snd`, `r.sub(snd)`, `r.sub(fst, snd)`, `return TVec3(r)`, `r = F`, `r.set(F)`, and a `(const TVec3&)r` return.
+- None gives the coaster's layout (frame 0x40, live object at 0x10); 78 of them give Tongue's three calls, and those are all the no-word or two-word families already known.
+- Named aliases (`TVec3& rr = r;`, `TVec3* p = &r;`, `const TVec3& res = r;`) put the live object at 0x10 but add a word above it too, and make the body three statements, so `operator-` itself goes out of line at depth 4 (`__mi__`, not in the map).
+- Delegating to a helper (`return diff_(fst, snd);` as a static member, or `return fst.minus_(snd);`) compiles like V1 at depth 1-3 and emits the helper out of line at depth 4.
+- The helper families the task listed are each refuted by the depth-4 call sequence: `r.set(fst)` and `r = fst` put `operator-` out of line; `r.sub(fst, snd)` and `r.sub(snd)` call `sub` instead of `__ami__`; `TVec3 r(fst.x, fst.y, fst.z)` calls `__ct<f>`; a `PSVECSubtract` body calls it plus three `__opP3Vec__`; for `operator*`, `r.scale(snd, fst)` would call `scale(f, const&)` where Tongue's retail calls `scale(f)` after an inline copy.
+- So within honest C++ the word has no body-level source: every call-based construct is visible at depth 5, and the one non-call construct found is a meaningless comma.
+
+### The comma body tree-wide, as a reference measurement (not landed)
+
+- `TVec3 r(fst); r -= snd; return ((void)0, r);` for `-` and `+`, uncast `operator=`, stock `*`: exact 12051 -> 12059, 19 up, 38 down, `changes_all` 56 regressions, `__ami__` MISSING.
+- Gains: the `bind` of TLiveActor, coaster, enemyAttachment, wireBinder, amenbo, aminoko, bathtubKiller, chuuHana, hamukuri, koopajr and limitkoopa, plus `TMario::moveRequest`, `TYoshiTongue::canGo`, `TEffectColumWater::generate` and `TMapCollisionBase::setCheckData`.
+- Losses are c-r33's C1/C2 families: the wrapped `.length()` sites (soundTorocco, toroccoEffect, isTakeSituation, moveRoof, MameGessoJitabata, execUTurn), the wire family, `getPosInWire` (both), and the nerves tuned to the old header.
+- So it is as good as C2 (12061) with no out-of-line conversion, which confirms that the late word is an optimiser temporary of the return copy's source, not specifically an inliner binding.
+- V1-shaped bodies (with or without the word) also emit three symbols the map lacks: MarioSpecial's TU-local `MarioWireScaledCopy`, MapObjPlane's `__apl__` (a depth-4 `+=`) and walker's `TSpineEnemy::getWallRadius`; any migration must respell those sites too.
+
+### keepDistance says the word is not uniform
+
+- Under the comma `-` plus V2 `*` (`TVec3 r(fst); r *= snd; return r;`), TMario::keepDistance has every object in retail's order but 4 bytes high, exactly as C3 did.
+- The debugger shows why: our extra word is the comma temporary at the bottom, while retail's extra word sits between `diff` and `operator*`'s return temporary, a parse-time position.
+- A comma in `*` as well (`return ((void)0, r)`) is worse (55 markers).
+- So at keepDistance retail has no late word for `operator-`, and at the coaster it has one: the count is per site (c-r20 already found 0, 1 and 2), and no single operator body can supply it.
