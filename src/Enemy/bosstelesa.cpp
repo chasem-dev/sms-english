@@ -1191,11 +1191,10 @@ static inline JGeometry::TVec3<f32> BossTelesaGetCameraPos()
 	return SMSGetCamera()->getUnk124Vec();
 }
 
-// TODO: 99.9%; every instruction matches but the frame is 0x18 short (0x1b8
-// vs 0x1d0; the accessor spellings account for 0x28 of the old 0x40): retail
-// puts operator-'s by-value copy of Mario's position in the low region
-// (0xec/0xd0) instead of beside the camera temps. Wrapping the difference in
-// a static inline is worse (98.8%).
+// TODO: every instruction and the 0x1d0 frame match; some slots differ. The
+// accessor spellings (the camera's getUnk148Vec() and getSpine() at all three
+// nerve tests among them) account for the old 0x40. Wrapping the Mario-camera
+// difference in a static inline is worse (98.8%).
 void TBossTelesa::moveObject()
 {
 	if (checkLiveFlag(LIVE_FLAG_DEAD))
@@ -1203,7 +1202,7 @@ void TBossTelesa::moveObject()
 
 	JGeometry::TVec3<f32> toCamera = SMS_GetMarioPos() - BossTelesaGetCameraPos();
 	if (toCamera.length() < mCameraMoveLimit) {
-		unk360 += mCameraMoveSp * (SMS_GetMarioPos().y - SMSGetCamera()->unk148.y);
+		unk360 += mCameraMoveSp * (SMS_GetMarioPos().y - SMSGetCamera()->getUnk148Vec().y);
 		SMSGetCamera()->unk290 = unk360;
 	} else if (fabsf(unk360) > 1.0f) {
 		unk360           = unk360 * mCameraMoveSp;
@@ -1214,20 +1213,20 @@ void TBossTelesa::moveObject()
 		SMSGetMSound()->startSoundActor(MSD_SE_BS_TELESA_V_LAUGH1, &mPosition, 0,
 		                          nullptr, 0, 4);
 
-	if (mSpine->getCurrentNerve() == &TNerveBossTelesaFallDemo::theNerve()) {
+	if (getSpine()->getCurrentNerve() == &TNerveBossTelesaFallDemo::theNerve()) {
 		if (mRoulettes[0]->mPosition.y > 5.0f + mRoulettes[1]->mPosition.y) {
 			mSlot->mPosition = mRoulettes[0]->mPosition;
 			mSlot->mPosition.y += 300.0f;
 		}
 	}
 
-	if (mSpine->getCurrentNerve()
+	if (getSpine()->getCurrentNerve()
 	    != &TNerveBossTelesaPrepareSlot::theNerve()) {
 		getMActor()->setFrameRate(0.0f, ANM_TYPE_BTP);
 		getMActor()->getFrameCtrl(ANM_TYPE_BTP)->setFrame(0.0f);
 	}
 
-	if (mSpine->getCurrentNerve() == &TNerveBossTelesaDie::theNerve()) {
+	if (getSpine()->getCurrentNerve() == &TNerveBossTelesaDie::theNerve()) {
 		u8 maxHitPoints = getMaxHitPoints();
 		u8 alpha = MsClamp<u8>(
 		    mNormalAlpha + (maxHitPoints - mHitPoints) * 30, 0, 254);
