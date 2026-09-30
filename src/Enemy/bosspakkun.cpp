@@ -1693,11 +1693,11 @@ DEFINE_NERVE(TNerveBPCannon, TLiveActor)
 
 	return FALSE;
 }
-// TODO: every instruction matches; the frame is 0x108 against 0x110, so each
-// slot sits 4-8 low. `front` is assigned from MathUtil.hpp's fromPolar: its
-// return temporary is retail's 0xc8 slot below `front`, and 700.0f loads
-// before the table read. Helpers built over the MsSin/MsCos set chain
-// measured 88-91% here.
+// TODO: every instruction matches and getRotation() at all three reads lands
+// the 0x110 frame; fromPolar's return temporary and `wind` still sit 8 above
+// retail's 0xc8/0xd4, and the actor-keeper walk swaps r28/r29. `front` and
+// `frame` declared at the top, or `front` initialised, are inert. Helpers
+// built over the MsSin/MsCos set chain measured 88-91% here.
 DEFINE_NERVE(TNerveBPVomit, TLiveActor)
 {
 	TBossPakkun* boss = (TBossPakkun*)spine->getBody();
@@ -1719,7 +1719,7 @@ DEFINE_NERVE(TNerveBPVomit, TLiveActor)
 	if (actor->checkCurBckFromIndex(BOSSPAKU_BCK_POLLUT_END)) {
 		if (MsRandF() < 0.2f && spine->getTime() == 500) {
 			JGeometry::TVec3<f32> front;
-			front = fromPolar(boss->mRotation.y, 700.0f);
+			front = fromPolar(boss->getRotation().y, 700.0f);
 			gpItemManager->makeObjAppear(boss->mPosition.x + front.x,
 			                             1.0f + boss->mPosition.y,
 			                             boss->mPosition.z + front.z,
@@ -1747,8 +1747,8 @@ DEFINE_NERVE(TNerveBPVomit, TLiveActor)
 	}
 
 	if (actor->checkCurBckFromIndex(BOSSPAKU_BCK_POLLUT_END)) {
-		JGeometry::TVec3<f32> wind(MsSin(boss->mRotation.y), 0.0f,
-		                           MsCos(boss->mRotation.y));
+		JGeometry::TVec3<f32> wind(MsSin(boss->getRotation().y), 0.0f,
+		                           MsCos(boss->getRotation().y));
 		gpModelWaterManager->wind(wind);
 	}
 
