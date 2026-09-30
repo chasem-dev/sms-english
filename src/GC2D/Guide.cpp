@@ -847,7 +847,7 @@ void TGuide::changeBotStatus(int stage)
 // 0x84-byte dead region below it (a missing inline level around the pos math?).
 void TGuide::placeMario()
 {
-	if ((u8)SMS_getShineStage(gpMarDirector->mMap) != 1) {
+	if ((u8)SMS_getShineStage(gpMarDirector->getCurrentMap()) != 1) {
 		mMarioMarker->mVisible = false;
 		return;
 	}
@@ -953,10 +953,10 @@ static inline void GuideShowing(TGuide* guide)
 	}
 }
 
-// TODO: frame 0x260 against retail's 0x2b8 (show/hide/isVisible/getBounds and
-// getWidth/getHeight gave +0x38), the loop's i copies retail's zero register
-// (r28) where ours loads `li 0`, and the disappearGuidePane
-// expansion's callee-saved registers rotate (retail: stage r27, height r31,
+// TODO: frame 0x2a8 against retail's 0x2b8 (show/hide/isVisible/getBounds and
+// getWidth/getHeight gave +0x38, getCurrentMap() +0x10), the loop's i copies
+// retail's zero register (r28) where ours loads `li 0`, and the
+// disappearGuidePane expansion's callee-saved registers rotate (retail: stage r27, height r31,
 // width r28). setPaneAlpha's out-of-line copy is 8 bytes short of frame in
 // GC2D/ExPane.hpp (shared header, not changed here). Clamping through a
 // second local, `s16 b = a > 255 ? s16(255) : a; mPane->setAlpha(b);`,
@@ -969,7 +969,7 @@ void TGuide::perform(u32 cue, JDrama::TGraphics* graphics)
 		if (setup_wait == 0) {
 			SMSSwitch2DArchive("game_6", gArBkGuide);
 			unkC4         = 0;
-			s16 stage     = SMS_getShineStage(gpMarDirector->mMap);
+			s16 stage     = SMS_getShineStage(gpMarDirector->getCurrentMap());
 			mCurrentStage = stage;
 			resetObjects();
 			changeBotStatus(stage);
@@ -1006,7 +1006,7 @@ void TGuide::perform(u32 cue, JDrama::TGraphics* graphics)
 		}
 		{
 			JUTRect bounds
-			    = mStagePanes[SMS_getShineStage(gpMarDirector->mMap)]
+			    = mStagePanes[SMS_getShineStage(gpMarDirector->getCurrentMap())]
 			          ->getBounds();
 			mCursors[0]->getPane()->move(bounds.x1 + 6, bounds.y1 - 1);
 			mCursors[1]->getPane()->move(bounds.x1 + 6, bounds.y1 - 1);
