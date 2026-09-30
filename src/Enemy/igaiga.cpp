@@ -226,6 +226,8 @@ TRollEnemy::TRollEnemy(const char* name)
 
 // TODO: 99.8%, every instruction in place; frame 0x80 against retail's 0xb0,
 // so the TVec3 slots sit low.
+// TODO: instruction-exact; frame 0x90 vs retail 0xb0 with getTracer() and
+// getMarchSpeed() at every read (+0x10, c-hs6, as in TGorogoro::walkBehavior).
 void TRollEnemy::reset()
 {
 	gpCurRollEnemy = this;
@@ -237,19 +239,19 @@ void TRollEnemy::reset()
 
 	// Start on the first graph node, 10 up, facing the second.
 	JGeometry::TVec3<f32> point;
-	unk124->getGraph()->getFirstGraphNode().getPoint((Vec*)&point);
+	getTracer()->getGraph()->getFirstGraphNode().getPoint((Vec*)&point);
 	mPosition = point;
 	mPosition.y += 10.0f;
 
-	unk124->getGraph()->getGraphNode(1).getPoint((Vec*)&point);
+	getTracer()->getGraph()->getGraphNode(1).getPoint((Vec*)&point);
 	JGeometry::TVec3<f32> dir;
 	dir.sub(point, mPosition);
 	mRotation.y = MsWrap(MsGetRotFromZaxisY(dir), 0.0f, 360.0f);
 
-	unk198           = mMarchSpeed * 1.5f;
-	unk19C           = mMarchSpeed;
-	unk1A0           = 0.0f;
-	unk124->mCurrIdx = 0;
+	unk198                = getMarchSpeed() * 1.5f;
+	unk19C                = getMarchSpeed();
+	unk1A0                = 0.0f;
+	getTracer()->mCurrIdx = 0;
 }
 
 // The arc block reads the ground through getGroundHeight(), which gives the
