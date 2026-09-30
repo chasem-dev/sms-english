@@ -138,8 +138,11 @@ void MSSeCallBack::setWaterFilter(u16 param_1) { }
 // the loop body (98.3%); an inner-loop helper and a per-grandchild helper are
 // 98.3/98.7, C-style i/j declarations inert.
 // TODO: 98.8%. Retail loads the grandchild track straight into r3 (ours via
-// r0 + `mr r3, r0`; split getChild, raw mChildren, assign-in-test inert) and
+// r0 + `mr r3, r0`; split getChild, assign-in-test inert) and
 // has a dead 0x30 low frame region, likely a missing inline level.
+// getUnkCD() at case 110 gives 8 of it. Raw mChildren[i]->mChildren[j] in
+// case 20 drops the `mr` (18 instructions) but moves the loop registers, and
+// ninja changes_all reads it as 98.75 -> 98.32%.
 u16 MSSeCallBack::setParameterSeqSync(JASystem::TTrack* param_1, u16 param_2)
 {
 	u16 local_26;
@@ -268,7 +271,7 @@ u16 MSSeCallBack::setParameterSeqSync(JASystem::TTrack* param_1, u16 param_2)
 #endif
 
 	case 110: {
-		u8 a = MSGMSound->unkCD;
+		u8 a = MSGMSound->getUnkCD();
 		u8 b = MSGMSound->unkCE;
 #if defined(VERSION_GMSE01)
 		if (a == 8 && (b == 6 || b == 1))
@@ -277,7 +280,7 @@ u16 MSSeCallBack::setParameterSeqSync(JASystem::TTrack* param_1, u16 param_2)
 #else
 		if (a == 8 && b == 6)
 			return 0xffff;
-		return MSGMSound->unkCD;
+		return MSGMSound->getUnkCD();
 #endif
 	}
 
