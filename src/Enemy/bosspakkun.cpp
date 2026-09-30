@@ -1373,7 +1373,7 @@ BOOL TBossPakkun::receiveMessage(THitActor* sender, u32 message)
 	return FALSE;
 }
 
-// TODO: frame is 0x40 short (0x138 vs retail 0x178) with every instruction
+// TODO: frame is 0x28 short (0x150 vs retail 0x178) with every instruction
 // and register right: a missing inline level or helper, not a lever.
 void TBossPakkun::perform(u32 cue, JDrama::TGraphics* graphics)
 {
@@ -1392,7 +1392,7 @@ void TBossPakkun::perform(u32 cue, JDrama::TGraphics* graphics)
 	if (mNavel)
 		mNavel->perform(cue, graphics);
 
-	if (!((TBossPakkunManager*)mManager)->mIsLightVersion && (cue & 1)) {
+	if (!((TBossPakkunManager*)getManager())->mIsLightVersion && (cue & 1)) {
 		mMtxCalc->advanceMotionBlend(-mMotionBlendStep);
 
 		if (unk17C) {
@@ -1430,7 +1430,7 @@ void TBossPakkun::perform(u32 cue, JDrama::TGraphics* graphics)
 		}
 	}
 
-	if (!((TBossPakkunManager*)mManager)->mIsLightVersion && (cue & 2)) {
+	if (!((TBossPakkunManager*)getManager())->mIsLightVersion && (cue & 2)) {
 		if (getMActor()->checkCurBckFromIndex(BOSSPAKU_BCK_TORNADO)) {
 			MtxPtr left = getMActor()->getModel()->getAnmMtx(43);
 			unk194.set(left[0][3], left[1][3], left[2][3]);
@@ -1470,7 +1470,7 @@ void TBossPakkun::perform(u32 cue, JDrama::TGraphics* graphics)
 		}
 	}
 
-	if (!((TBossPakkunManager*)mManager)->mIsLightVersion) {
+	if (!((TBossPakkunManager*)getManager())->mIsLightVersion) {
 		// The death animation lives on its own model, so the base class is
 		// handed mEndMActor for one frame.
 		if (getLatestNerve() == &TNerveBPDie::theNerve()) {
@@ -1482,13 +1482,13 @@ void TBossPakkun::perform(u32 cue, JDrama::TGraphics* graphics)
 		}
 	}
 
-	if (!((TBossPakkunManager*)mManager)->mIsLightVersion && (cue & 2)) {
+	if (!((TBossPakkunManager*)getManager())->mIsLightVersion && (cue & 2)) {
 		updateSquareToMario();
 		getModel()->getModelData()->getJointNodePointer(0)->setMtxCalc(
 		    mMtxCalc);
 	}
 
-	if (!((TBossPakkunManager*)mManager)->mIsLightVersion && (cue & 2)) {
+	if (!((TBossPakkunManager*)getManager())->mIsLightVersion && (cue & 2)) {
 		if (mState == BOSSPAKU_STATE_BELLY_UP) {
 			JGeometry::TVec3<f32> target = mNavel->mPosition;
 			target.y += 100.0f;
@@ -1499,7 +1499,7 @@ void TBossPakkun::perform(u32 cue, JDrama::TGraphics* graphics)
 		}
 	}
 
-	if (!((TBossPakkunManager*)mManager)->mIsLightVersion && (cue & 0x200)) {
+	if (!((TBossPakkunManager*)getManager())->mIsLightVersion && (cue & 0x200)) {
 		if (getLatestNerve() == &TNerveBPPreDie::theNerve()
 		    || getLatestNerve() == &TNerveBPStompReact::theNerve()) {
 			getMActor()->offMakeDL();
