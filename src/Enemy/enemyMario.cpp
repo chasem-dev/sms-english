@@ -898,14 +898,6 @@ void TEnemyMario::emAppear()
 	}
 }
 
-// Binding level over a raw member read, worth +16 of low region in
-// TEnemyMario::startDisappear (batch 127).
-static inline TMarDirector* EnemyMarioGetMarDirector()
-{
-	TMarDirector* marDirector = gpMarDirector;
-	return marDirector;
-}
-
 // fabricated: raw-global MSound binder
 static inline MSound* EnemyMarioGetMSound()
 {
@@ -926,7 +918,7 @@ void TEnemyMario::startDisappear(u16 doing)
 	mDisappearPosition = mPosition;
 
 	u8 currentMap      = gpMarDirector->getCurrentMap();
-	u8 currentStage    = EnemyMarioGetMarDirector()->getCurrentStage();
+	u8 currentStage    = SMSGetMarDirectorBound()->getCurrentStage();
 	bool keepBossLives = false;
 	if (currentMap == 1 && currentStage == 1) {
 		keepBossLives = true;
@@ -1206,8 +1198,8 @@ void TEnemyMario::emDownAnimation()
 	changePlayerStatus(MARIO_STATUS_NOMOTION, 0, true);
 	setAnimation(ANIM_FALL_DOWN_WAIT, 1.0f);
 
-	if (EnemyMarioGetMarDirector()->isDemoMode3() || EnemyMarioGetMarDirector()->isDemoMode4()
-	    || EnemyMarioGetMarDirector()->isTalkModeNow()) {
+	if (SMSGetMarDirectorBound()->isDemoMode3() || SMSGetMarDirectorBound()->isDemoMode4()
+	    || SMSGetMarDirectorBound()->isTalkModeNow()) {
 		mReferencePosition = mPosition;
 		mDisappearPosition = mReferencePosition;
 		return;
@@ -1330,7 +1322,7 @@ void TEnemyMario::emRunAwayToNearestNode()
 		                                       &mPosition, 0, nullptr, 0, 4);
 		break;
 	case 300:
-		if (EnemyMarioGetMarDirector()->getCurrentMap() == 1) {
+		if (SMSGetMarDirectorBound()->getCurrentMap() == 1) {
 			JGeometry::TVec3<f32> waitingPoint;
 			EnemyMarioGetTracer(mEMario)->getGraph()->getGraphNode(7).getPoint(
 			    &waitingPoint);

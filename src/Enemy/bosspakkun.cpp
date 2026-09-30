@@ -1011,14 +1011,6 @@ static inline MSound* BosspakkunSound()
 	return sound;
 }
 
-// Binding level over a raw member read, worth +16 of low region in
-// TBossPakkun::showMessage (batch 127).
-static inline TMarDirector* BosspakkunGetMarDirector()
-{
-	TMarDirector* marDirector = gpMarDirector;
-	return marDirector;
-}
-
 // Binding level over TBossPakkun::getSaveParam2(): worth +8 of low region per
 // expansion where the plain accessor call is +0.
 static inline TBossPakkunParams* BosspakkunParams(const TBossPakkun* p)
@@ -1036,7 +1028,7 @@ void TBossPakkun::showMessage(u32 message)
 		mask = 1 << message;
 
 	if (!(mBalloonsShown & mask))
-		BosspakkunGetMarDirector()->getConsole()->startAppearBalloon(message, true);
+		SMSGetMarDirectorBound()->getConsole()->startAppearBalloon(message, true);
 
 	mBalloonsShown |= mask;
 }
@@ -1164,7 +1156,7 @@ void TBossPakkun::gotHipDropDamage()
 		MSoundSESystem::MSoundSE::startSoundActor(MSD_SE_BS_BSPAKU_DAMAGE, &mPosition, 0,
 		                          nullptr, 0, 4);
 
-	if (BosspakkunGetMarDirector()->unk7D == 4) {
+	if (SMSGetMarDirectorBound()->unk7D == 4) {
 		// getSpine() at this one reset is the last +8; the sibling
 		// else-arm reset stays on the raw member.
 		getSpine()->reset();
@@ -1966,7 +1958,7 @@ DEFINE_NERVE(TNerveBPTumbleOut, TLiveActor)
 			if (!boss->is2ndFightNow()) {
 				boss->unk1C4 -= 1;
 				if (boss->unk1C4 <= 0) {
-					BosspakkunGetMarDirector()->getConsole()->startAppearBalloon(1, true);
+					SMSGetMarDirectorBound()->getConsole()->startAppearBalloon(1, true);
 					boss->unk1C4 = 3;
 				}
 			}

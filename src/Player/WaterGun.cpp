@@ -587,12 +587,6 @@ static inline MSound* WaterGunMSound()
 	return sound;
 }
 
-static inline TMarDirector* WaterGunDirector()
-{
-	TMarDirector* d = gpMarDirector;
-	return d;
-}
-
 void TNozzleTrigger::movement(const TMarioControllerWork& controllerWork)
 {
 	f32 prevPressure = unk388;
@@ -648,7 +642,7 @@ void TNozzleTrigger::movement(const TMarioControllerWork& controllerWork)
 	if (canSpray == true) {
 		unk388 += 150.0f * controllerWork.mAnalogR;
 		if (!unk384 && unk385 == TNozzleTrigger::INACTIVE) {
-			if (WaterGunDirector()->unk58 % (int)mFludd->getMario()->unk568 == 0)
+			if (SMSGetMarDirectorBound()->unk58 % (int)mFludd->getMario()->unk568 == 0)
 				SMSRumbleMgr->start(20, (int)mFludd->getMario()->unk564,
 				                    (f32*)nullptr);
 		}
@@ -1782,12 +1776,6 @@ void TWaterGun::perform(u32 cue, JDrama::TGraphics* graphics)
 	}
 }
 
-static inline TMarDirector* WaterGunGetDirector()
-{
-	TMarDirector* d = gpMarDirector;
-	return d;
-}
-
 static inline TNozzleBase* WaterGunGetNozzle(const TWaterGun* gun)
 {
 	TNozzleBase* nozzle = gun->getCurrentNozzle();
@@ -1799,8 +1787,8 @@ bool TWaterGun::isEmitting()
 	if (getCurrentWater() == 0)
 		return false;
 
-	if (WaterGunGetDirector()->isDemoMode3() || WaterGunGetDirector()->isDemoMode4()
-	    || WaterGunGetDirector()->isTalkModeNow())
+	if (SMSGetMarDirectorBound()->isDemoMode3() || SMSGetMarDirectorBound()->isDemoMode4()
+	    || SMSGetMarDirectorBound()->isTalkModeNow())
 		return false;
 
 	if (WaterGunGetNozzle(this)->getNozzleKind() == 1) {

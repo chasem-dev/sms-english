@@ -2324,14 +2324,6 @@ const char** TBossEel::getBasNameTable() const { return bosseel_bastable; }
 
 // Binding level over a raw member read, worth +16 of low region in
 // TNerveBossEelWaitAppear::execute (batch 127).
-static inline TMarDirector* BosseelGetMarDirector()
-{
-	TMarDirector* marDirector = gpMarDirector;
-	return marDirector;
-}
-
-// Binding level over a raw member read, worth +16 of low region in
-// TNerveBossEelWaitAppear::execute (batch 127).
 static inline TCubeManagerBase* BosseelMouthCubeManager(const TBossEel* p)
 {
 	TCubeManagerBase* mouthCubeManager = p->mMouthCubeManager;
@@ -2345,7 +2337,7 @@ DEFINE_NERVE(TNerveBossEelWaitAppear, TLiveActor)
 		eel->setBckAnm(10);
 
 	if (spine->getTime() == 2500)
-		BosseelGetMarDirector()->getConsole()->startAppearBalloon(0x12, true);
+		SMSGetMarDirectorBound()->getConsole()->startAppearBalloon(0x12, true);
 
 	JGeometry::TVec3<f32> marioPosition = *gpMarioPos;
 	marioPosition.y += 75.0f;

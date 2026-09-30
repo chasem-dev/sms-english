@@ -112,20 +112,12 @@ static void evIsNpcSinkBottom(TSpcTypedInterp<TEventWatcher>* interp,
 	IsNpcFlagOn_(interp, arg_num, TBaseNPC::LIVE_FLAG_SINK_BOTTOM);
 }
 
-// Binding level over a raw member read, worth +16 of low region in
-// evIsGameModeNormal (batch 127).
-static inline TMarDirector* NpcEventGetMarDirector()
-{
-	TMarDirector* marDirector = gpMarDirector;
-	return marDirector;
-}
-
 static void evIsGameModeNormal(TSpcTypedInterp<TEventWatcher>* interp,
                                u32 arg_num)
 {
 	interp->verifyArgNum(0, &arg_num);
 	int result = 0;
-	if (NpcEventGetMarDirector()->unk124 == 0)
+	if (SMSGetMarDirectorBound()->unk124 == 0)
 		result = 1;
 	interp->push(TSpcSlice(result));
 }
@@ -146,11 +138,11 @@ static void ev__ForceStartTalk(TSpcTypedInterp<TEventWatcher>* interp,
 
 	int result = 0;
 
-	if (!NpcEventGetMarDirector()->isTalkOrDemoModeNow() && SMS_IsMarioTouchGround4cm()
+	if (!SMSGetMarDirectorBound()->isTalkOrDemoModeNow() && SMS_IsMarioTouchGround4cm()
 	    && !gpMarioOriginal->checkStatusType(MARIO_STATUS_FLAG_JUMPING)) {
 
-		NpcEventGetMarDirector()->unkA0  = (TBaseNPC*)(u32)interp->pop().getDataInt();
-		NpcEventGetMarDirector()->unk126 = 1;
+		SMSGetMarDirectorBound()->unkA0  = (TBaseNPC*)(u32)interp->pop().getDataInt();
+		SMSGetMarDirectorBound()->unk126 = 1;
 
 		result = 1;
 	} else {
@@ -186,15 +178,15 @@ static void ev__ForceStartTalkExceptNpc(TSpcTypedInterp<TEventWatcher>* interp,
 	int result = 0;
 	(void)interp->pop();
 
-	if (!NpcEventGetMarDirector()->isTalkOrDemoModeNow() && SMS_IsMarioTouchGround4cm()
+	if (!SMSGetMarDirectorBound()->isTalkOrDemoModeNow() && SMS_IsMarioTouchGround4cm()
 	    && !gpMarioOriginal->checkStatusType(MARIO_STATUS_FLAG_JUMPING)) {
 
 		TBaseNPC* dummyNpc
 		    = JDrama::TNameRefGen::search<TBaseNPC>("ダミーＮＰＣ");
 
 		if (dummyNpc) {
-			NpcEventGetMarDirector()->unkA0  = dummyNpc;
-			NpcEventGetMarDirector()->unk126 = 1;
+			SMSGetMarDirectorBound()->unkA0  = dummyNpc;
+			SMSGetMarDirectorBound()->unk126 = 1;
 
 			result = 1;
 		}

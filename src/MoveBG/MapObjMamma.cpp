@@ -1060,14 +1060,6 @@ void TLeanMirror::initMapObj()
 	}
 }
 
-// Binding level over the raw director pointer, worth the two words of low
-// region TLeanMirror::load was short.
-static inline TMarDirector* LeanMirrorDirector()
-{
-	TMarDirector* director = gpMarDirector;
-	return director;
-}
-
 void TLeanMirror::load(JSUMemoryInputStream& stream)
 {
 	TMapObjBase::load(stream);
@@ -1077,7 +1069,7 @@ void TLeanMirror::load(JSUMemoryInputStream& stream)
 	mSize        = 100.0f * size / 2.0f;
 	mDefaultSize = mSize;
 
-	if (LeanMirrorDirector()->getCurrentStage() == 1) {
+	if (SMSGetMarDirectorBound()->getCurrentStage() == 1) {
 		char demoName[0x40];
 		stream.readString(demoName, sizeof(demoName));
 		stream >> mMarioMovePos.x >> mMarioMovePos.y >> mMarioMovePos.z;

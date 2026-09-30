@@ -2250,12 +2250,6 @@ DEFINE_NERVE(TNerveFireWanwanRecover, TLiveActor)
 	return false;
 }
 
-static inline TMarDirector* FireWanwanMarDirector()
-{
-	TMarDirector* director = gpMarDirector;
-	return director;
-}
-
 static inline MSound* FireWanwanMSound()
 {
 	MSound* sound = SMSGetMSound();
@@ -2277,7 +2271,7 @@ DEFINE_NERVE(TNerveFireWanwanDie, TLiveActor)
 		manager->mWanwanRecoversBeforeHelpBalloon = -1;
 
 		if (++manager->mWanwansKilled == manager->getActiveObjNum()) {
-			FireWanwanMarDirector()->getConsole()->startAppearBalloon(0x19, true);
+			SMSGetMarDirectorBound()->getConsole()->startAppearBalloon(0x19, true);
 		}
 
 		self->stopTriggerSound();

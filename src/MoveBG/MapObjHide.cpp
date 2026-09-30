@@ -562,14 +562,6 @@ TWaterHitPictureHideObj::TWaterHitPictureHideObj(const char* name)
 	mColor.a = 0;
 }
 
-// Binding level over the director: with getPosition() on the twin it lands
-// afterFinishedAnim's 0x70 frame and matrix slot.
-static inline TMarDirector* HideObjGetMarDirector()
-{
-	TMarDirector* director = gpMarDirector;
-	return director;
-}
-
 void THideObjPictureTwin::afterFinishedAnim()
 {
 	removeMapCollision();
@@ -606,7 +598,7 @@ void THideObjPictureTwin::afterFinishedAnim()
 		SMSGetMSound()->startSoundSystemSE(MSD_SE_SY_TIMECOIN_APPEAR, 0,
 		                                   nullptr, 0);
 
-		HideObjGetMarDirector()->fireStartDemoCamera(
+		SMSGetMarDirectorBound()->fireStartDemoCamera(
 		    unk178, &obj->mPosition, -1, 0.0f, true, nullptr, 0, nullptr, 0);
 	}
 	mState = 3;

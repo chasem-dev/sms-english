@@ -261,13 +261,6 @@ BOOL TMario::warpIn()
 // their receiver once each, which is exactly the 0x28 of low region this
 // function was missing. The rungs are +0x10 per director site and +8 per
 // water-gun site; every other distribution over- or undershoots.
-// fabricated
-static inline TMarDirector* UnUsualDirector()
-{
-	TMarDirector* d = gpMarDirector;
-	return d;
-}
-
 static inline TWaterGun* UnUsualGun(const TMario* p)
 {
 	TWaterGun* g = p->mWaterGun;
@@ -278,8 +271,8 @@ bool TMario::isUnUsualStageStart()
 {
 	// Pinna rollercoaster
 	if ((gpMarDirector->getCurrentMap() == 0x3A)
-	    && (UnUsualDirector()->getCurrentStage() == 0
-	        || UnUsualDirector()->getCurrentStage() == 1))
+	    && (SMSGetMarDirectorBound()->getCurrentStage() == 0
+	        || SMSGetMarDirectorBound()->getCurrentStage() == 1))
 		return toroccoStart();
 
 	if (SMS_isDivingMap()) {

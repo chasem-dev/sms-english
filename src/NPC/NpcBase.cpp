@@ -103,17 +103,11 @@ void TBaseNPC::load(JSUMemoryInputStream& stream)
 		setIndividualDifference_(stream);
 }
 
-static inline TMarDirector* TBaseNPCGetMarDirector()
-{
-	TMarDirector* director = gpMarDirector;
-	return director;
-}
-
 void TBaseNPC::loadAfter()
 {
 	TSpineEnemy::loadAfter();
-	if (mActorType == 0x4000018 && TBaseNPCGetMarDirector()->getCurrentMap() == 1
-	    && TBaseNPCGetMarDirector()->getCurrentStage() == 1) {
+	if (mActorType == 0x4000018 && SMSGetMarDirectorBound()->getCurrentMap() == 1
+	    && SMSGetMarDirectorBound()->getCurrentStage() == 1) {
 		mBalloonCtrl = new TNpcBalloon;
 	}
 	gpMarDirector->entryNPC(this);
@@ -490,12 +484,6 @@ BOOL TBaseNPC::receiveMessage(THitActor* param_1, u32 param_2)
 	return result;
 }
 
-static inline TMarDirector* npcMarDirector()
-{
-	TMarDirector* r = gpMarDirector;
-	return r;
-}
-
 void TBaseNPC::moveObject()
 {
 	if (checkLiveFlag(LIVE_FLAG_DEAD))
@@ -518,7 +506,7 @@ void TBaseNPC::moveObject()
 
 	if (mBalloonCtrl != nullptr) {
 		int prev = mBalloonCtrl->unk0;
-		if (!npcMarDirector()->isTalkOrDemoModeNow()
+		if (!SMSGetMarDirectorBound()->isTalkOrDemoModeNow()
 		    && mBalloonCtrl->updateBalloon()) {
 			if (getHolder() != nullptr) {
 				switch (prev) {

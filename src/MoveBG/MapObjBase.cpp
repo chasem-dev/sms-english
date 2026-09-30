@@ -501,17 +501,9 @@ void TMapObjBase::setGroundCollision()
 	}
 }
 
-// Binder over the director: with the two sound binders it is perform's 0x30
-// of pool.
-static inline TMarDirector* MOBDir()
-{
-	TMarDirector* director = gpMarDirector;
-	return director;
-}
-
 void TMapObjBase::perform(u32 cue, JDrama::TGraphics* graphics)
 {
-	if (MOBDir()->isTalkModeNow() && !MOBDir()->isDemoModeNow()) {
+	if (SMSGetMarDirectorBound()->isTalkModeNow() && !SMSGetMarDirectorBound()->isDemoModeNow()) {
 		if (checkLiveFlag(LIVE_FLAG_DEAD) || isActorType(0x4000003B))
 			return;
 

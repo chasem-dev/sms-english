@@ -600,12 +600,6 @@ Mtx* TBathtub::getRootJointMtx() const
 // Named-local forks over the director and the shine actor: +0x60 and +8
 // per site, landing TBathtub::perform's 0x168 frame (the shine fork at six
 // of its seven sites; any six land it).
-static inline TMarDirector* MapObjCoronaDirector()
-{
-	TMarDirector* d = gpMarDirector;
-	return d;
-}
-
 static inline MActor* MapObjCoronaShine(const TBathtub* p)
 {
 	MActor* a = p->unk29C;
@@ -623,42 +617,42 @@ void TBathtub::perform(u32 cue, JDrama::TGraphics* graphics)
 		    JGeometry::TVec3<f32>(3.0f, 3.0f, 3.0f));
 	}
 	if (calcCue) {
-		int time = MapObjCoronaDirector()->unk58;
+		int time = SMSGetMarDirectorBound()->unk58;
 		switch (getNumGripsDead()) {
 		case 0:
 			if (time >= 7200) {
 				if (!(unk2A0 & 0x2))
-					MapObjCoronaDirector()->getConsole()->startAppearBalloon(0x1F, true);
+					SMSGetMarDirectorBound()->getConsole()->startAppearBalloon(0x1F, true);
 				unk2A0 |= 0x2;
 			} else if (time >= 3600) {
 				if (!(unk2A0 & 0x1))
-					MapObjCoronaDirector()->getConsole()->startAppearBalloon(0x1E, true);
+					SMSGetMarDirectorBound()->getConsole()->startAppearBalloon(0x1E, true);
 				unk2A0 |= 0x1;
 			}
 			break;
 		case 1:
 			if (!(unk2A0 & 0x4))
-				MapObjCoronaDirector()->getConsole()->startAppearBalloon(0x20, true);
+				SMSGetMarDirectorBound()->getConsole()->startAppearBalloon(0x20, true);
 			unk2A0 |= 0x4;
 			break;
 		case 2:
 			if (!(unk2A0 & 0x8))
-				MapObjCoronaDirector()->getConsole()->startAppearBalloon(0x21, true);
+				SMSGetMarDirectorBound()->getConsole()->startAppearBalloon(0x21, true);
 			unk2A0 |= 0x8;
 			break;
 		case 3:
 			if (!(unk2A0 & 0x10))
-				MapObjCoronaDirector()->getConsole()->startAppearBalloon(0x22, true);
+				SMSGetMarDirectorBound()->getConsole()->startAppearBalloon(0x22, true);
 			unk2A0 |= 0x10;
 			break;
 		case 4:
 			if (!(unk2A0 & 0x8000))
-				MapObjCoronaDirector()->getConsole()->startAppearBalloon(0x2D, true);
+				SMSGetMarDirectorBound()->getConsole()->startAppearBalloon(0x2D, true);
 			unk2A0 |= 0x8000;
 			break;
 		case 5:
 			if (!(unk2A0 & 0x20))
-				MapObjCoronaDirector()->getConsole()->startAppearBalloon(0x23, true);
+				SMSGetMarDirectorBound()->getConsole()->startAppearBalloon(0x23, true);
 			unk2A0 |= 0x20;
 			break;
 		}

@@ -476,7 +476,7 @@ static void evSetDead4LiveActor(TSpcTypedInterp<TEventWatcher>* interp,
 }
 
 // Binder over the director accessor; the raw-global
-// EventWatcherGetMarDirector binder is 8 cheaper.
+// SMSGetMarDirectorBound binder is 8 cheaper.
 static inline TMarDirector* EventWatcherMarDirector()
 {
 	TMarDirector* marDirector = SMSGetMarDirector();
@@ -556,13 +556,6 @@ static void evSetEventStart(TSpcTypedInterp<TEventWatcher>* interp, u32 arg_num)
 
 static void evSetEventEnd(TSpcTypedInterp<TEventWatcher>* interp, u32 arg_num)
 {
-}
-
-// Binding level over a raw member read, worth +8 of low region.
-static inline TMarDirector* EventWatcherGetMarDirector()
-{
-	TMarDirector* marDirector = gpMarDirector;
-	return marDirector;
 }
 
 static void evSetNextStage(TSpcTypedInterp<TEventWatcher>* interp, u32 arg_num)
@@ -758,7 +751,7 @@ static void evInsertTimer(TSpcTypedInterp<TEventWatcher>* interp, u32 arg_num)
 	int p2 = interp->pop().getDataInt();
 
 	if (p2 == 1)
-		EventWatcherGetMarDirector()->getConsole()->startAppearTimer(0, p1);
+		SMSGetMarDirectorBound()->getConsole()->startAppearTimer(0, p1);
 	else if (p2 == 2)
 		SMSGetMarDirector()->getConsole()->startAppearTimer(1, p1);
 	else
@@ -773,7 +766,7 @@ static void evStartTimer(TSpcTypedInterp<TEventWatcher>* interp, u32 arg_num)
 
 	int time = interp->pop().getDataInt();
 
-	EventWatcherGetMarDirector()->startTimer();
+	SMSGetMarDirectorBound()->startTimer();
 	SMSGetMarDirector()->getConsole()->startMoveTimer(time);
 
 	interp->push();
@@ -1423,7 +1416,7 @@ static void evAppear8RedCoinsAndTimer(TSpcTypedInterp<TEventWatcher>* interp,
 		                             &coin->getUnk158(), 0, nullptr);
 	}
 	EventWatcherTimerConsole()->startAppearTimer(1, iVar9 * 0.008333334f);
-	EventWatcherGetMarDirector()->startTimer();
+	SMSGetMarDirectorBound()->startTimer();
 	EventWatcherTimerConsole()->startMoveTimer(10);
 	interp->push();
 }

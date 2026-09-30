@@ -809,14 +809,6 @@ u32 TResetFruit::mFruitWaitTimeToAppear = 360;
 // UNUSED in the map; the value is not recoverable from the binary.
 GXColorS10 TResetFruit::mRottenColor    = { 0, 0, 0, 0 };
 
-// Binding level over a raw member read, worth +16 of low region in
-// TResetFruit::makeObjWaitingToAppear (batch 127).
-static inline TMarDirector* MapObjBallGetMarDirector()
-{
-	TMarDirector* marDirector = gpMarDirector;
-	return marDirector;
-}
-
 // Binding levels used to size TResetFruit::checkGroundCollision's low region.
 static inline TMap* ResetFruitGetMap()
 {
@@ -826,7 +818,7 @@ static inline TMap* ResetFruitGetMap()
 
 void TResetFruit::checkGroundCollision(JGeometry::TVec3<f32>* param_1)
 {
-	u8 map = MapObjBallGetMarDirector()->mMap;
+	u8 map = SMSGetMarDirectorBound()->mMap;
 	if (map != 7 && map != 4) {
 		TMapObjGeneral::checkGroundCollision(param_1);
 		return;
@@ -888,7 +880,7 @@ static inline u8 MapObjBallUnk1A4(const TResetFruit* p)
 
 void TResetFruit::waitingToAppear()
 {
-	if (MapObjBallGetMarDirector()->mMap == 3 && MapObjBallUnk1A4(this))
+	if (SMSGetMarDirectorBound()->mMap == 3 && MapObjBallUnk1A4(this))
 		makeObjDead();
 
 	if (checkMapObjFlag(MAP_OBJ_FLAG_UNK4000000))
@@ -926,7 +918,7 @@ void TResetFruit::makeObjWaitingToAppear()
 	mState = STATE_WAITING_TO_APPEAR;
 
 	// On the map where these are a one-shot, do not queue a respawn.
-	if (MapObjBallGetMarDirector()->mMap == 3 && MapObjBallUnk1A4(this))
+	if (SMSGetMarDirectorBound()->mMap == 3 && MapObjBallUnk1A4(this))
 		makeObjDead();
 }
 
@@ -1366,7 +1358,7 @@ static inline TCubeManagerArea* MapObjBallGetCubeArea()
 
 void TResetFruit::perform(u32 cue, JDrama::TGraphics* graphics)
 {
-	if (MapObjBallGetMarDirector()->mMap == 7) {
+	if (SMSGetMarDirectorBound()->mMap == 7) {
 		if (MapObjBallIsState(this, STATE_HOLDING)
 		    || !JGeometry::TVec3<f32>(mVelocity).isZero()) {
 			if (checkLiveFlag(LIVE_FLAG_UNK200))

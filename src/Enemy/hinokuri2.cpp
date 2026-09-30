@@ -1178,12 +1178,6 @@ static inline J3DFrameCtrl* Hino2BckFrameCtrl(THinokuri2* self)
 	return actor->getFrameCtrl(ANM_TYPE_BCK);
 }
 
-static inline TMarDirector* Hino2MarDirector()
-{
-	TMarDirector* director = gpMarDirector;
-	return director;
-}
-
 static inline THinokuri2* Hino2Self(TSpineBase<TLiveActor>* spine)
 {
 	TLiveActor* body = spine->getBody();
@@ -1260,7 +1254,7 @@ DEFINE_NERVE(TNerveHino2GraphWander, TLiveActor)
 		}
 	}
 
-	if (Hino2MarDirector()->unk7D >= 2 && self->unk164 <= 0) {
+	if (SMSGetMarDirectorBound()->unk7D >= 2 && self->unk164 <= 0) {
 		if (self->getLevel() >= 1) {
 			spine->pushAfterCurrent(&TNerveHino2PrePol::theNerve());
 			return 1;

@@ -221,12 +221,6 @@ void TBiancoGateKeeperManager::createModelData()
 	createModelDataArray(entry);
 }
 
-static inline TMarDirector* GateKeeperDirector()
-{
-	TMarDirector* director = gpMarDirector;
-	return director;
-}
-
 TBGKMtxCalc::TBGKMtxCalc(TBiancoGateKeeper* owner)
     : M3UMtxCalcSIAnmBlendQuat(true)
     , mOwner(owner)
@@ -261,8 +255,8 @@ void TBGKMtxCalc::calc(u16 param_1)
 		MtxPtr mtx = mOwner->getMActor()->getModel()->getAnmMtx(param_1);
 		JGeometry::TVec3<f32> diff;
 		Mtx rot;
-		if (!GateKeeperDirector()->isDemoModeNow()) {
-			if (!GateKeeperDirector()->isTalkModeNow()
+		if (!SMSGetMarDirectorBound()->isDemoModeNow()) {
+			if (!SMSGetMarDirectorBound()->isTalkModeNow()
 			    && (mOwner->getMActor()->checkCurBckFromIndex(0xB)
 			        || mOwner->getMActor()->checkCurBckFromIndex(0x12)
 			        || mOwner->getMActor()->checkCurBckFromIndex(0xF)
@@ -904,7 +898,7 @@ DEFINE_NERVE(TNerveBGKAppear, TLiveActor)
 		if (self->unk28A < 0xFF)
 			self->unk28A++;
 		if (self->unk28A == 2)
-			GateKeeperDirector()->getConsole()->startAppearBalloon(0x4A, true);
+			SMSGetMarDirectorBound()->getConsole()->startAppearBalloon(0x4A, true);
 	}
 
 	if (spine->getTime() == 8) {
@@ -915,7 +909,7 @@ DEFINE_NERVE(TNerveBGKAppear, TLiveActor)
 	}
 
 	if (self->getMActor()->curAnmEndsNext(ANM_TYPE_BCK, nullptr)) {
-		if (GateKeeperDirector()->getCurrentMap() == 0)
+		if (SMSGetMarDirectorBound()->getCurrentMap() == 0)
 			spine->pushAfterCurrent(&TNerveBGKWait2::theNerve());
 		else
 			spine->pushAfterCurrent(&TNerveBGKWait::theNerve());
@@ -1022,8 +1016,8 @@ DEFINE_NERVE(TNerveBGKWait2, TLiveActor)
 		} else if (actor->checkCurBckFromIndex(0x10)) {
 			self->unk288++;
 			if (self->unk288 == 2 && self->unk28A == 1
-			    && GateKeeperDirector()->getCurrentMap() == 0)
-				GateKeeperDirector()->getConsole()->startAppearBalloon(0, true);
+			    && SMSGetMarDirectorBound()->getCurrentMap() == 0)
+				SMSGetMarDirectorBound()->getConsole()->startAppearBalloon(0, true);
 			if (self->unk288 > self->getSaveParams()->getSLLoop2Dive()) {
 				self->changeBck(0xC);
 				self->unk288 = 0;

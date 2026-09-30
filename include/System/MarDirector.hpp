@@ -40,6 +40,18 @@ class TMarDirector;
 extern TMarDirector* gpMarDirector;
 inline TMarDirector* SMSGetMarDirector() { return gpMarDirector; }
 
+// Fabricated: the director bound to a named local before it is returned.
+// Many sites read the director through such a binding level, each expansion
+// +8 (+0x10 at some) of low region over SMSGetMarDirector; the plain
+// accessor as a binder costs far more sites than it gains (research batch
+// c-r30), so the two spellings are separate. Formerly parked TU-locally in
+// 19 units under 21 names.
+inline TMarDirector* SMSGetMarDirectorBound()
+{
+	TMarDirector* director = gpMarDirector;
+	return director;
+}
+
 enum {
 	// Some kind of light-related cues?
 	CUE_UNK10000 = 0x10000,

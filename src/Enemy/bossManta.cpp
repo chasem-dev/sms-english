@@ -996,18 +996,12 @@ void TBossMantaManager::TMantaBattleState::update()
 	}
 }
 
-static inline TMarDirector* BossMantaGetDirector()
-{
-	TMarDirector* director = gpMarDirector;
-	return director;
-}
-
 void TBossMantaManager::TMantaMessageState::update()
 {
 	switch (unk4) {
 	case 0:
 		if (((TBossManta*)unk0->getObj(0))->isSpawnState()) {
-			BossMantaGetDirector()->getConsole()->startAppearBalloon(0xC, true);
+			SMSGetMarDirectorBound()->getConsole()->startAppearBalloon(0xC, true);
 			unk4++;
 		}
 		break;
@@ -1019,7 +1013,7 @@ void TBossMantaManager::TMantaMessageState::update()
 				aliveCount++;
 		}
 		if (aliveCount > 50) {
-			BossMantaGetDirector()->getConsole()->startAppearBalloon(0xD, true);
+			SMSGetMarDirectorBound()->getConsole()->startAppearBalloon(0xD, true);
 			unk4++;
 		}
 		break;
