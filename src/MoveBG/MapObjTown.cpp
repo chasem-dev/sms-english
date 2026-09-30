@@ -675,8 +675,7 @@ BOOL TRedCoinSwitch::receiveMessage(THitActor*, u32 message)
 		    = (s32)(MapObjTownGetMActor(this)->getFrameCtrl(ANM_TYPE_BCK)->getEnd()
 		                * 2
 		            + 0x3C);
-		SMSGetMSoundBound()->startSoundActor(MSD_SE_OBJ_AP_BUTTON, &mPosition,
-		                                      0, nullptr, 0, 4);
+		SMSGetMSound()->startSoundActor(MSD_SE_OBJ_AP_BUTTON, &mPosition);
 		removeMapCollision();
 		onHitFlag(HIT_FLAG_NO_COLLISION);
 		mState = 2;
