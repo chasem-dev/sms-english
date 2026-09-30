@@ -463,7 +463,9 @@ void TMapWire::initTipPoints(const TCubeGeneralInfo* cubeInfo)
 	mWireSpan = mEndPoint - mStartPoint;
 }
 
-// TODO: Needs work, but otherwise mathematically equivalent
+// TODO: two instructions differ and the frame is 0x30 short (0x180 vs
+// 0x1b0); getStartPoint() at the start reads (end raw, as in drawUpper) took
+// it from 0x168.
 void TMapWire::init(const TCubeGeneralInfo* cubeInfo)
 {
 	mNumMapWirePoints = (s32)((cubeInfo->getUnk24().z / 50.0f + 1.0f) - 2.0f);
@@ -491,15 +493,16 @@ void TMapWire::init(const TCubeGeneralInfo* cubeInfo)
 		point2->reset();
 	}
 
-	if (mEndPoint.x != mStartPoint.x) {
-		f32 angle   = atanf((mEndPoint.z - mStartPoint.z)
-		                    / (mEndPoint.x - mStartPoint.x));
+	if (mEndPoint.x != getStartPoint().x) {
+		f32 angle   = atanf((mEndPoint.z - getStartPoint().z)
+		                    / (mEndPoint.x - getStartPoint().x));
 		mWireHAngle = -angle * 180.0f / M_PI + 90.0f;
 	} else {
 		mWireHAngle = 0.0f;
 	}
 
-	mDrawAxes.set(mEndPoint.x - mStartPoint.x, mEndPoint.z - mStartPoint.z);
+	mDrawAxes.set(mEndPoint.x - getStartPoint().x,
+	              mEndPoint.z - getStartPoint().z);
 	mDrawAxes.normalize();
 	mDrawAxes.rotate(M_PI / 2);
 
@@ -515,9 +518,9 @@ void TMapWire::init(const TCubeGeneralInfo* cubeInfo)
 
 	Mtx mtx;
 
-	MsMtxSetXYZRPH(mtx, mStartPoint.x, mStartPoint.y, mStartPoint.z,
-	               cubeInfo->getUnk18().x, cubeInfo->getUnk18().y,
-	               cubeInfo->getUnk18().z);
+	MsMtxSetXYZRPH(mtx, getStartPoint().x, getStartPoint().y,
+	               getStartPoint().z, cubeInfo->getUnk18().x,
+	               cubeInfo->getUnk18().y, cubeInfo->getUnk18().z);
 	mStartFittingModel->setBaseTRMtx(mtx);
 	mStartFittingModel->calc();
 
