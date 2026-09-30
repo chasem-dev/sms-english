@@ -357,7 +357,7 @@ void TBeeHive::bind()
 		return;
 
 	JGeometry::TVec3<f32> nextPos = getPosition();
-	nextPos.add(mLinearVelocity);
+	nextPos.add(getLinearVelocity());
 	nextPos.add(mVelocity);
 
 	mVelocity.y -= getGravityY();
