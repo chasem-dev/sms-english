@@ -597,9 +597,9 @@ Mtx* TBathtub::getRootJointMtx() const
 	return (Mtx*)getModel()->getBaseTRMtx();
 }
 
-// Named-local forks over the director and the shine actor: +0x60 and +8
-// per site, landing TBathtub::perform's 0x168 frame (the shine fork at six
-// of its seven sites; any six land it).
+// SMSGetMarDirectorBound and this named-local fork over the shine actor:
+// +0x60 and +8 per site, landing TBathtub::perform's 0x168 frame (the shine
+// fork at six of its seven sites; any six land it).
 static inline MActor* MapObjCoronaShine(const TBathtub* p)
 {
 	MActor* a = p->unk29C;
