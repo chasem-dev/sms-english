@@ -1126,29 +1126,26 @@ void TShiningStone::putOnLight(TLiveActor* mirror)
 
 	switch (mLightNum) {
 	case 0:
-		mEmitter = SMSGetParticleManagerBound()->emit(
+		mEmitter = gpMarioParticleManager->emit(
 		    0x143, (JGeometry::TVec3<f32>*)&mPosition, 1, this);
 		mEmitter->setRate(3.0f);
 		mEmitterRate = 1.5f;
-		gpMSound->startSoundActor(MSD_SE_DM_REFLECTION_1, &mPosition, 0,
-		                          nullptr, 0, 4);
+		gpMSound->startSoundActor(MSD_SE_DM_REFLECTION_1, &mPosition);
 		break;
 
 	case 1:
-		mEmitter = SMSGetParticleManagerBound()->emit(
+		mEmitter = gpMarioParticleManager->emit(
 		    0x144, (JGeometry::TVec3<f32>*)&mPosition, 1, this);
 		mEmitter->setRate(0.4f);
 		mEmitterRate = 0.2f;
-		gpMSound->startSoundActor(MSD_SE_DM_REFLECTION_2, &mPosition, 0,
-		                          nullptr, 0, 4);
+		gpMSound->startSoundActor(MSD_SE_DM_REFLECTION_2, &mPosition);
 		break;
 
 	case 2:
-		mEmitter = SMSGetParticleManagerBound()->emit(
+		mEmitter = gpMarioParticleManager->emit(
 		    0x145, (JGeometry::TVec3<f32>*)&mPosition, 1, this);
 		mEmitterRate = 0.0f;
-		gpMSound->startSoundActor(MSD_SE_DM_REFLECTION_3, &mPosition, 0,
-		                          nullptr, 0, 4);
+		gpMSound->startSoundActor(MSD_SE_DM_REFLECTION_3, &mPosition);
 		break;
 	}
 
