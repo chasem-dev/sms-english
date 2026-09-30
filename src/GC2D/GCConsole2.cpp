@@ -22,6 +22,7 @@
 #include <JSystem/JUtility/JUTTexture.hpp>
 #include <JSystem/JKernel/JKRFileLoader.hpp>
 #include <JSystem/JDrama/JDRNameRefGen.hpp>
+#include <Strategic/TakeActor.hpp>
 #include <JSystem/JSupport/JSUMemoryInputStream.hpp>
 #include <JSystem/JSupport/JSUMemoryOutputStream.hpp>
 #include <JSystem/J2D/J2DTextBox.hpp>
@@ -3085,7 +3086,10 @@ void TGCConsole2::checkChangeTelopArray()
 			unk570 = scDolpicNewsDolpic0;
 			break;
 		case 1:
-			if (*(u32*)((u8*)GCConsole2UnkC4(this) + 0x68) != 0)
+			if (static_cast<TTakeActor*>(
+			        static_cast<JDrama::TNameRef*>(GCConsole2UnkC4(this)))
+			        ->mHolder
+			    != nullptr)
 				unk570 = scDolpicNewsDolpic1;
 			else
 				unk570 = nullptr;
@@ -3451,6 +3455,7 @@ void TGCConsole2::drawJuice(J2DOrthoGraph& graph, u32 color)
 	GXTexCoord2s8(1, 1);
 	GXPosition2f32((f32)bounds.x1, (f32)bounds.y2);
 	GXTexCoord2s8(0, 1);
+	GXEnd();
 
 	graph.setup2D();
 
@@ -3543,6 +3548,7 @@ void TGCConsole2::drawWater(J2DOrthoGraph& graph)
 		GXTexCoord2s8(1, 1);
 		GXPosition2f32(unk2BC[layer].x1, bottom);
 		GXTexCoord2s8(0, 1);
+		GXEnd();
 	}
 
 	graph.setup2D();

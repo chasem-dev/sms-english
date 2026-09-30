@@ -44,3 +44,17 @@ The sync after it merged `upstream/main` at `7e788d9` on 2026-09-29 (merge base 
 - **Docs.** `AGENTS.md` (also `CLAUDE.md`) stays ours on conflict; upstream's other doc edits, such as `docs/AGENT_MATCHING_TIPS.md`, merge in normally.
 - **Enemy interpreter.** `Enemy/enemyinterp.cpp` keeps our US body (the class in the `.cpp`, an out-of-line destructor) under one `Object` entry in `configure.py`.
   Upstream's PAL version, its `PCHObject` entry and `include/Enemy/EnemyInterp.hpp` are not used here.
+
+## Sync of 2026-09-30
+
+This sync merged `upstream/main` at `2df38b9` (merge base `7e788d9`): 23 commits, 39 conflicted files.
+Upstream built alone under our GMSE01 config scored below ours in every conflicted unit (bombhei 37/48 exact against our 48/48, hanasambo 72/96 against 89/96, rocket 25/33 against 29/33, seal, effectEnemy, MapObjWave, generator, question, MSoundScene, Option, PacketUtil, GCConsole2, MarDirectorEvent, MarNameRefGen_*, MenuDir, NpcParts, ModelWaterManager), so every conflict hunk kept ours.
+The auto-merged `PacketUtil.cpp` interleaved upstream's FIFO fog writers into our body and was restored to ours whole.
+Upstream's `THamuKuriLauncherManager`/`TNameKuriLauncherManager` header classes were dropped because our `MarNameRefGen_Enemy.cpp` defines them TU-locally.
+`TPitchYaw` in `CameraMapTool.hpp` and `isUnk700` in `MapData.hpp` were not taken: ours has `mRotation` and `isSeaFloor` for the same bytes.
+`HIT_MESSAGE_UNK9` stays our `HIT_MESSAGE_ELECTRIC_SHOCK`; the new particle ids (0xB2, 0xB3, 0xB8, 0xB9, 0xC1, 0xC2, 0xD1, 0xD2, 0x179) were added to our `Particles.hpp`.
+Behaviour fixes that came in: the `uintptr_t` DSP/AI buffers, `GXTexCoord2u16` and `GXEnd` in `JUTRomFont::drawChar_scale`, `GXEnd` in `TPollutionLayerWave::draw` and `TGCConsole2::drawJuice`/`drawWater`, the named fields in `CPolarSubCamera::isJetCoaster1stCamera` and `TBoardNpcManager::clipActors`, and `TNpcParts`'s ctor reading `unk4[i]` at each use.
+The vtable-slot, `TShimmer::perform`, JPA 8-vertex and `Mtx44` fixes were already in our tree.
+Two of upstream's named-field reads were ported onto our bodies: `mInitialRotation.y` in `TMario::receiveMessage` and the unit's holder check in `TGCConsole2::checkChangeTelopArray`, spelled as `->mHolder` because `getHolder()` adds an inline level and 8 bytes of frame.
+Upstream's 1-up mushroom test in `TMario::receiveMessage` (`unk13A == 0 && unk13C >= 120`) is not what the ROM does; ours (take unless `unk13A == 0 && unk13C < 120`) is, so it stays.
+No function changed score and no unit became newly linkable.

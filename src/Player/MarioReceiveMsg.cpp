@@ -263,13 +263,14 @@ BOOL TMario::receiveMessage(THitActor* sender, u32 message)
 		case 0x20000010: // blue coin
 			getCoinBlue();
 			return TRUE;
-		case 0x20000013: // 1-up shroom / pickup-action
+		case 0x20000013: // shine
 			if (message == HIT_MESSAGE_ATTACK
 			    && getStatus() != MARIO_STATUS_WIN_DEMO) {
 				unk384          = sender;
 				mPosition.x     = sender->mPosition.x;
 				mPosition.z     = sender->mPosition.z;
-				mFaceAngle.y    = DEG2SHORTANGLE(*(f32*)((u8*)sender + 0x11C));
+				mFaceAngle.y    = DEG2SHORTANGLE(
+				    static_cast<TMapObjBase*>(sender)->mInitialRotation.y);
 				mModelFaceAngle = mFaceAngle.y;
 				setPlayerVelocity(0.0f);
 				mHealth = mDeParams.mHPMax.get();

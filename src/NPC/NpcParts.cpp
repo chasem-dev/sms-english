@@ -85,14 +85,13 @@ TNpcParts::TNpcParts(u32 param_1, const J3DGXColorS10* param_2,
 		*slot = nullptr;
 
 	for (int i = 0; i < 12; ++i) {
-		const TNpcModelData* iVar10 = initInfo->unk4[i];
-		if (iVar10 == nullptr || !(param_1 & (1 << i)))
+		if (initInfo->unk4[i] == nullptr || !(param_1 & (1 << i)))
 			continue;
 
-		u32 param3 = (&param_2->color.r)[iVar10->unk28];
+		u32 param3 = (&param_2->color.r)[initInfo->unk4[i]->unk28];
 
 		const GXColor* param4 = nullptr;
-		if (iVar10->unk2A)
+		if (initInfo->unk4[i]->unk2A)
 			param4 = unk60->getPtrInitPollutionColor();
 
 		for (int j = 0; j < 2; ++j) {

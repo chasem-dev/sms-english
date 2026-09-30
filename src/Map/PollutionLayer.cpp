@@ -105,6 +105,7 @@ void TPollutionLayerWave::draw() const
 			PollutionLayerWaveTexCoord(JGeometry::TVec2<f32>(
 			    invXSize * (x - mMinX), invZSize * (zNext - mMinZ)));
 		}
+		GXEnd();
 	}
 }
 
