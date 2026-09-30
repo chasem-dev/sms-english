@@ -873,7 +873,7 @@ static inline u8 MapObjBallUnk1A4(const TResetFruit* p)
 
 void TResetFruit::waitingToAppear()
 {
-	if (SMSGetMarDirectorBound()->mMap == 3 && MapObjBallUnk1A4(this))
+	if (SMSGetMarDirector()->getCurrentMap() == 3 && MapObjBallUnk1A4(this))
 		makeObjDead();
 
 	if (checkMapObjFlag(MAP_OBJ_FLAG_UNK4000000))
