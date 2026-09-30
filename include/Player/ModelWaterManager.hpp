@@ -72,6 +72,15 @@ class TModelWaterManager;
 
 extern TModelWaterManager* gpModelWaterManager;
 
+// Fabricated: the water manager bound to a named local before it is
+// returned, +8 of low region per expansion over a raw gpModelWaterManager
+// read. Formerly parked TU-locally in four units.
+inline TModelWaterManager* SMSGetModelWaterManagerBound()
+{
+	TModelWaterManager* manager = gpModelWaterManager;
+	return manager;
+}
+
 class TModelWaterManager : public JDrama::TViewObj {
 public:
 	TModelWaterManager(const char* name = "<TModelWaterParticle>")

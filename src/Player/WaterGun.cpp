@@ -331,15 +331,9 @@ void TNozzleBase::movement(const TMarioControllerWork& controllerWork)
 	calcGunAngle(controllerWork);
 }
 
-static inline TModelWaterManager* NozzleWaterMgr()
-{
-	TModelWaterManager* mgr = gpModelWaterManager;
-	return mgr;
-}
-
 static inline TModelWaterManager* NozzleWaterMgr2()
 {
-	return NozzleWaterMgr();
+	return SMSGetModelWaterManagerBound();
 }
 
 void TNozzleBase::emitCommon(int param_1, TWaterEmitInfo* param_2)

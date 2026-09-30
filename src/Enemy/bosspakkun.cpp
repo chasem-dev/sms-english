@@ -988,12 +988,6 @@ void TBossPakkun::rumblePad(int kind, const JGeometry::TVec3<f32>& from)
 	SMSRumbleMgr->start(8, &mRumblePower);
 }
 
-static inline TModelWaterManager* BosspakkunWaterManager()
-{
-	TModelWaterManager* manager = gpModelWaterManager;
-	return manager;
-}
-
 static inline TWaterEmitInfo* BosspakkunWaterEmitInfoRaw(TBossPakkun* p)
 {
 	return p->mWaterEmitInfo;
@@ -1072,7 +1066,7 @@ void TBossPakkun::resetWaterMark()
 		getJointTransByIndex(0x12, &mouth);
 		mouth.y += 250.0f;
 		BosspakkunWaterEmitInfo(this)->mPos.value = mouth;
-		BosspakkunWaterManager()->emitRequest(*mWaterEmitInfo);
+		SMSGetModelWaterManagerBound()->emitRequest(*mWaterEmitInfo);
 	}
 }
 

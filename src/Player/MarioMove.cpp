@@ -2416,12 +2416,6 @@ void TMario::thinkSound()
 		mSound->stop(1);
 }
 
-static inline TModelWaterManager* MarioMoveWaterManager()
-{
-	TModelWaterManager* manager = gpModelWaterManager;
-	return manager;
-}
-
 static inline TWaterEmitInfo* MarioMoveWetEmitInfo(const TMario* p)
 {
 	TWaterEmitInfo* info = p->unk158;
@@ -2463,7 +2457,7 @@ void TMario::checkWet()
 	// Why??? Are we missing THAT many inlines?
 	(Vec&)unk158->mV.value
 	    = (Vec) { mVel.x * 0.3f, mVel.y * 0.3f, mVel.z * 0.3f };
-	MarioMoveWaterManager()->emitRequest(*unk158);
+	SMSGetModelWaterManagerBound()->emitRequest(*unk158);
 }
 
 // TODO: the frame is 0x18 short. The Spray loop's temporaries sit 0x14-0x2c

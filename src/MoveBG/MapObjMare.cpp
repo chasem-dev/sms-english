@@ -1288,20 +1288,12 @@ void TMareCork::drawObject(JDrama::TGraphics* graphics)
 	}
 }
 
-// Binding level over a raw member read, worth +16 of low region in
-// TMareEventPoint::receiveMessage (batch 127).
-static inline TModelWaterManager* MapObjMareGetModelWaterManager()
-{
-	TModelWaterManager* modelWaterManager = gpModelWaterManager;
-	return modelWaterManager;
-}
-
 BOOL TMareEventPoint::receiveMessage(THitActor* sender, u32 message)
 {
 	if (message == HIT_MESSAGE_SPRAYED_BY_WATER) {
 		// Only clean water counts, and only once the spray has slowed down
 		// enough to be a deliberate hose rather than a passing jet.
-		if (!MapObjMareGetModelWaterManager()->checkFlagBottom4Bits(
+		if (!SMSGetModelWaterManagerBound()->checkFlagBottom4Bits(
 		        TMapObjBase::getWaterID(sender), 1)) {
 			if (TMapObjBase::getWaterPlane(sender) != nullptr
 			    && TMapObjBase::getWaterPlane(sender)->mNormal.y < 0.1f) {
