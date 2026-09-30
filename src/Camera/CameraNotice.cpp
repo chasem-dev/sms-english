@@ -263,6 +263,11 @@ void CPolarSubCamera::getNozzleTopPos_(JGeometry::TVec3<f32>* out) const
 // lands the vector at 0x34 with the frame 0x68, 8 short *above* it; bool/u32
 // flag wrappers, a TVec3 copy temporary, target-address forks/binders and a
 // named notice actor or target reference all overshoot or move the vector.
+// c-hs6 (hsearch): byte-exact with four named single-use values stacked, each
+// +8: u32 copies of both freeze counters for their == 0 tests, a bool for
+// SMS_CheckMarioFlag(MARIO_FLAG_HAS_FLUDD), and a const reference to
+// mNoticeActor->getPosition(). Any three leave it 8 short; not taken as a
+// stack of temporaries, kept here as the lead.
 void CPolarSubCamera::ctrlLButtonCamera_()
 {
 	f32 stickX = -unk120->mCompSPos[4];
