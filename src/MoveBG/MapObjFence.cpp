@@ -112,8 +112,7 @@ BOOL TRevolvingFenceInner::receiveMessage(THitActor* sender, u32 message)
 {
 	if (message == HIT_MESSAGE_SUPER_HIP_DROP && !RevolvingFenceIsWall(this)) {
 		if (isState(STATE_WAIT_FRONT)) {
-			SMSGetMSoundBound()->startSoundActor(MSD_SE_OBJ_FENCE_REVERSE1, &mPosition, 0,
-			                          nullptr, 0, 4);
+			SMSGetMSound()->startSoundActor(MSD_SE_OBJ_FENCE_REVERSE1, &mPosition);
 			setState(STATE_TURN_TO_BACK_CW);
 			startBck("fence_revolve_inner_roll_down");
 			offMapObjFlag(MAP_OBJ_FLAG_UNK100);
@@ -121,8 +120,7 @@ BOOL TRevolvingFenceInner::receiveMessage(THitActor* sender, u32 message)
 		}
 
 		if (isState(STATE_WAIT_BACK)) {
-			SMSGetMSoundBound()->startSoundActor(MSD_SE_OBJ_FENCE_REVERSE2, &mPosition, 0,
-			                          nullptr, 0, 4);
+			SMSGetMSound()->startSoundActor(MSD_SE_OBJ_FENCE_REVERSE2, &mPosition);
 			setState(STATE_TURN_TO_FRONT_CW);
 			startBck("fence_revolve_inner_roll_up");
 			offMapObjFlag(MAP_OBJ_FLAG_UNK100);
@@ -139,15 +137,13 @@ BOOL TRevolvingFenceInner::receiveMessage(THitActor* sender, u32 message)
 
 		if ((-180.0f < toMario && toMario < -90.0f)
 		    || (0.0f < toMario && toMario < 90.0f)) {
-			SMSGetMSoundBound()->startSoundActor(MSD_SE_OBJ_FENCE_REVERSE1, &mPosition, 0,
-			                          nullptr, 0, 4);
+			SMSGetMSound()->startSoundActor(MSD_SE_OBJ_FENCE_REVERSE1, &mPosition);
 			if (isState(STATE_WAIT_FRONT))
 				setState(STATE_TURN_TO_BACK_CW);
 			else
 				setState(STATE_TURN_TO_FRONT_CW);
 		} else {
-			SMSGetMSoundBound()->startSoundActor(MSD_SE_OBJ_FENCE_REVERSE2, &mPosition, 0,
-			                          nullptr, 0, 4);
+			SMSGetMSound()->startSoundActor(MSD_SE_OBJ_FENCE_REVERSE2, &mPosition);
 			if (isState(STATE_WAIT_FRONT))
 				setState(STATE_TURN_TO_BACK_CCW);
 			else
