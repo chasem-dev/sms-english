@@ -796,7 +796,8 @@ void TTalk2D2::checkBoardControler()
 	}
 }
 
-// TODO: frame 0x38 vs 0x40 and a register rotation in the character loop.
+// TODO: a register rotation in the character loop (getSelectedValue() at
+// all four reads gives the 0x40 frame).
 // Naming the clamped alpha (int/u8) fixes the frame but materialises &mAlpha;
 // inert: a by-value box, casts on the ternary, a named cursor, idx after the
 // continues.
@@ -829,7 +830,7 @@ void TTalk2D2::moveTalkWindow()
 	    || mCharCursor[mCurrentLine] > mLineLength[mCurrentLine]) {
 		J2DPane* pane;
 		J2DPane* cursor;
-		if (mSelectedValue == -1) {
+		if (getSelectedValue() == -1) {
 			pane = mCursor[mCurrentLine];
 			if (mIsLastPage) {
 				cursor = mCursorOn[mCurrentLine];
@@ -842,7 +843,7 @@ void TTalk2D2::moveTalkWindow()
 			}
 		} else {
 			pane   = mSelectPane;
-			cursor = mSelectCursor[mSelectedValue];
+			cursor = mSelectCursor[getSelectedValue()];
 		}
 
 		if (pane->isVisible()) {
@@ -870,14 +871,14 @@ void TTalk2D2::moveTalkWindow()
 			}
 			cursor->setAlpha(alpha);
 
-			if (mSelectedValue == 1) {
+			if (getSelectedValue() == 1) {
 				snprintf(
 				    mSelectTextBox->getStringPtr(), 94,
 				    "\033CC[ffffff60]\033GC[ffffff60]%s\033CC[ffffff%02x]"
 				    "\033GC[ffffff%02x]\n%s",
 				    mSelectString[0], (u8)alpha, (u8)alpha,
 				    mSelectString[1]);
-			} else if (mSelectedValue == 0) {
+			} else if (getSelectedValue() == 0) {
 				snprintf(mSelectTextBox->getStringPtr(), 94,
 				         "\033CC[ffffff%02x]\033GC[ffffff%02x]%s\n"
 				         "\033CC[ffffff60]\033GC[ffffff60]%s",
