@@ -503,7 +503,7 @@ void TMapObjBase::setGroundCollision()
 
 void TMapObjBase::perform(u32 cue, JDrama::TGraphics* graphics)
 {
-	if (SMSGetMarDirectorBound()->isTalkModeNow() && !SMSGetMarDirectorBound()->isDemoModeNow()) {
+	if (SMSGetMarDirector()->isTalkModeNow() && !SMSGetMarDirector()->isDemoModeNow()) {
 		if (checkLiveFlag(LIVE_FLAG_DEAD) || isActorType(0x4000003B))
 			return;
 
@@ -537,13 +537,11 @@ void TMapObjBase::perform(u32 cue, JDrama::TGraphics* graphics)
 			if (!mMapObjData->mSound) {
 				u32 sound = TMapObjGeneral::mDefaultSound.unk0[unk100];
 				if (sound != 0xffffffff)
-					MOBSound()->startSoundActor(sound, &mPosition, 0,
-					                                nullptr, 0, 4);
+					MOBSound()->startSoundActor(sound, &mPosition);
 			} else {
 				u32 sound = mMapObjData->mSound->unk4->unk0[unk100];
 				if (sound != 0xffffffff)
-					MOBSound()->startSoundActor(sound, &mPosition, 0,
-					                                nullptr, 0, 4);
+					MOBSound()->startSoundActor(sound, &mPosition);
 			}
 		}
 		if (checkLiveFlag(LIVE_FLAG_DEAD))
