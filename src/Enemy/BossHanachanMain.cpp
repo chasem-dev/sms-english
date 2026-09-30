@@ -289,7 +289,7 @@ void TBossHanachan::bind()
 		mBinder->bind(this);
 		return;
 	}
-	JGeometry::TVec3<f32> nextPosition = mPosition;
+	JGeometry::TVec3<f32> nextPosition = getPosition();
 	nextPosition += mLinearVelocity;
 	nextPosition += mVelocity;
 	mVelocity.y -= getGravityY();
@@ -314,7 +314,7 @@ void TBossHanachan::bind()
 	} else {
 		onLiveFlag(LIVE_FLAG_AIRBORNE);
 	}
-	SMSGetMapBound()->isTouchedOneWallAndMoveXZ(&mCollisionPosition.x,
+	gpMap->isTouchedOneWallAndMoveXZ(&mCollisionPosition.x,
 	    mCollisionPosition.y + mHeadHeight, &mCollisionPosition.z, mBodyRadius);
 	JGeometry::TVec3<f32> correction = mCollisionPosition - beforeCollision;
 	JGeometry::TVec3<f32> displacement;
