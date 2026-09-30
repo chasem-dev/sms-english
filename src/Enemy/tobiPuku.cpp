@@ -1235,42 +1235,42 @@ DEFINE_NERVE(TNerveTobiPukuLand, TLiveActor)
 	return FALSE;
 }
 
-// TODO: incorrect size. Map records 0x1c8 (456 bytes).
-// TODO: 99.9%. Frame 0x60 against 0x68; the trailing velocity copy sits at
-// 0x3c where retail has 0x54. `v` declared at the top and assigned from
-// getVelocity() lands the frame with both vector blocks 4 low (99.8); every
-// +4 level tried on top of it (by-value f32/int levels on each member read,
-// a setter level on unk1AE) is +8. Calling the UNUSED bound() is 94.5%.
-// c-c4: with `v` at the top and a raw `v = puku->mVelocity` both blocks sit
-// 0xc low at frame 0x60, i.e. retail has one more TVec3 of low region;
-// setVelocity() in the branch is inert.
+// The bounce start, one inline level below TNerveTobiPukuBound::execute: its
+// velocity vector is the extra TVec3 of low region retail's frame has. Parked
+// TU-local; retail's level is presumably a TTobiPuku inline.
+static inline void TobiPukuStartBound(TTobiPuku* puku)
+{
+	puku->unk1AE = 1;
+	int count    = puku->mBoundCount;
+	if (count < puku->unk19C->mSLBoundNum.get()) {
+		puku->mBoundCount = count + 1;
+
+		f32 damp = puku->unk19C->mSLBoundVal.get();
+		JGeometry::TVec3<f32> vel(puku->mLaunchVelocity);
+		vel.x *= damp;
+		vel.z *= damp;
+		vel.y = (TTobiPuku::mBoundVelocityY * damp
+		         * (puku->unk1B0 - puku->mGroundHeight))
+		        / 30.0f;
+
+		puku->mLaunchVelocity = vel;
+		puku->mVelocity       = vel;
+		puku->onLiveFlag(LIVE_FLAG_AIRBORNE);
+	}
+}
+
+// The tail reads the body through getVelocity() and getPosition().
 DEFINE_NERVE(TNerveTobiPukuBound, TLiveActor)
 {
 	TTobiPuku* puku = (TTobiPuku*)spine->getBody();
 
 	if (spine->getTime() == 0) {
-		puku->unk1AE = 1;
-		int count    = puku->mBoundCount;
-		if (count < puku->unk19C->mSLBoundNum.get()) {
-			puku->mBoundCount = count + 1;
-
-			f32 damp = puku->unk19C->mSLBoundVal.get();
-			JGeometry::TVec3<f32> vel(puku->mLaunchVelocity);
-			vel.x *= damp;
-			vel.z *= damp;
-			vel.y = (TTobiPuku::mBoundVelocityY * damp
-			         * (puku->unk1B0 - puku->mGroundHeight))
-			        / 30.0f;
-
-			puku->mLaunchVelocity = vel;
-			puku->mVelocity       = vel;
-			puku->onLiveFlag(LIVE_FLAG_AIRBORNE);
-		}
+		TobiPukuStartBound(puku);
 	}
 
-	JGeometry::TVec3<f32> vel(puku->mVelocity);
+	JGeometry::TVec3<f32> vel(puku->getVelocity());
 	if (vel.y > 0.0f)
-		puku->unk1B0 = puku->mPosition.y;
+		puku->unk1B0 = puku->getPosition().y;
 
 	if (!puku->isAirborne()) {
 		spine->pushAfterCurrent(&TNerveTobiPukuLand::theNerve());
