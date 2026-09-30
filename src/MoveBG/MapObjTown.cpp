@@ -107,8 +107,7 @@ void TManhole::touchPlayer(THitActor*)
 		    ->getFrameCtrl(ANM_TYPE_BCK)
 		    ->setFrame(getMActor()->getFrameCtrl(ANM_TYPE_BCK)->getFrame()
 		               + SMSGetAnmFrameRate());
-		SMSGetMSoundBound()->startSoundActor(MSD_SE_OBJ_MANHOLE_OPEN, &mPosition, 0,
-		                                nullptr, 0, 4);
+		SMSGetMSound()->startSoundActor(MSD_SE_OBJ_MANHOLE_OPEN, &mPosition);
 		offMapObjFlag(MAP_OBJ_FLAG_UNK100);
 		SMSRumbleMgr->start(0x15, 0xF, (f32*)nullptr);
 		return;
@@ -123,8 +122,7 @@ void TManhole::touchPlayer(THitActor*)
 		               + SMSGetAnmFrameRate());
 		offMapObjFlag(MAP_OBJ_FLAG_UNK100);
 		mMapCollisionManager->unk8->setAllBGType(0x400);
-		SMSGetMSoundBound()->startSoundActor(MSD_SE_OBJ_MANHOLE_OPEN, &mPosition, 0,
-		                                nullptr, 0, 4);
+		SMSGetMSound()->startSoundActor(MSD_SE_OBJ_MANHOLE_OPEN, &mPosition);
 		unk150 = 1;
 		SMSRumbleMgr->start(0x15, 0xF, (f32*)nullptr);
 		return;
@@ -137,8 +135,7 @@ void TManhole::touchPlayer(THitActor*)
 		}
 		if (!unk152) {
 			unk152 = 1;
-			SMSGetMSoundBound()->startSoundActor(MSD_SE_OBJ_MANHOLE_DOWN, &mPosition,
-			                                0, nullptr, 0, 4);
+			SMSGetMSound()->startSoundActor(MSD_SE_OBJ_MANHOLE_DOWN, &mPosition);
 		}
 		if (mPosition.y > getInitialPosition().y - mDownHeight)
 			mPosition.y = mPosition.y - mDownSpeed;
@@ -152,8 +149,7 @@ void TManhole::touchPlayer(THitActor*)
 
 	if (unk152) {
 		unk152 = 0;
-		SMSGetMSoundBound()->startSoundActor(MSD_SE_OBJ_MANHOLE_UP, &mPosition, 0,
-		                                nullptr, 0, 4);
+		SMSGetMSound()->startSoundActor(MSD_SE_OBJ_MANHOLE_UP, &mPosition);
 	}
 	appeared();
 }
