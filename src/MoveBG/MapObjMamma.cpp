@@ -1179,11 +1179,9 @@ void TShiningStone::perform(u32 cue, JDrama::TGraphics* graphics)
 	mTop->perform(cue, graphics);
 }
 
-// TODO: instructions exact; frame 8 long (0xb0 vs 0xa8, mtx at 0x38 vs
-// 0x30). The TPosition3f conversion in the loop hoists &mtx into r30 as
-// retail does, but its inline objects leave two words below mtx; the raw
-// .mMtx in the loop loses the hoist. Inert: Mtx declared first, u32 counter,
-// split mirrorActor, s16 args, raw .mMtx at the other two sites.
+// The TPosition3f conversion in the loop hoists &mtx into r30 as retail
+// does. The position goes through getPosition() and the mirrors' models are
+// read raw, which puts mtx at retail's 0x30 in a 0xa8 frame.
 void TShiningStone::load(JSUMemoryInputStream& stream)
 {
 	JDrama::TActor::load(stream);
@@ -1196,17 +1194,17 @@ void TShiningStone::load(JSUMemoryInputStream& stream)
 	};
 
 	TPosition3f mtx;
-	MsMtxSetXYZRPH(mtx, mPosition.x, mPosition.y, mPosition.z, mRotation.x,
-	               mRotation.y, mRotation.z);
+	MsMtxSetXYZRPH(mtx, getPosition().x, getPosition().y, getPosition().z,
+	               mRotation.x, mRotation.y, mRotation.z);
 
 	mMirrors = new MActor*[MIRROR_NUM];
 	for (int i = 0; i < MIRROR_NUM; i++) {
 		mMirrors[i] = SMS_MakeMActorWithAnmData(
 		    bmdNames[i], gpMapObjManager->getMActorAnmData(), 3, 0x10020000);
-		mMirrors[i]->getModel()->setBaseTRMtx(mtx);
+		mMirrors[i]->mModel->setBaseTRMtx(mtx);
 
 		TMirrorActor* mirrorActor = new TMirrorActor("太陽石in鏡");
-		mirrorActor->init(mMirrors[i]->getModel(), 0x1A);
+		mirrorActor->init(mMirrors[i]->mModel, 0x1A);
 	}
 
 	mTop = SMS_MakeMActorWithAnmData("/scene/mapObj/ShiningStone.bmd",
