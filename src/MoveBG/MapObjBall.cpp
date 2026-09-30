@@ -1065,9 +1065,9 @@ void TResetFruit::kicked()
 	if (JGeometry::TVec3<f32>(mVelocity).y <= 0.0f) {
 		// Already in the air and heading away from Mario: leave it alone.
 		JGeometry::TVec3<f32> diff;
-		diff.x = SMS_GetMarioPos().x - mPosition.x;
+		diff.x = SMS_GetMarioPos().x - getPosition().x;
 		diff.y = 0.0f;
-		diff.z = SMS_GetMarioPos().z - mPosition.z;
+		diff.z = SMS_GetMarioPos().z - getPosition().z;
 		f32 toward = JGeometry::TVec3<f32>(mVelocity).dot(diff);
 		// checkLiveFlag2 is the signed BOOL that emits retail's
 		// `li 1/0; cmpwi`. toward has to be computed first so that
@@ -1077,9 +1077,10 @@ void TResetFruit::kicked()
 			if (toward > 0.0f)
 				return;
 		}
-		// TODO: 99.8%, every instruction matches. Frame is 0xb8 against
+		// TODO: 99.8%, every instruction matches. Frame is 0xc8 against
 		// retail 0xe0 (ladder 330's TVec3-at-bottom-of-pool class): the
-		// velocity copies sit 0x30 low. Each test copies mVelocity itself,
+		// velocity copies sit low. getMapObjData() for minSpeed is +8
+		// more, but TMapObjBall::kicked reads it raw (c-hs6). Each test copies mVelocity itself,
 		// as in TMapObjBall::kicked; a named `vel` copied again for the dot
 		// product reloads it instead of reusing the source registers.
 
