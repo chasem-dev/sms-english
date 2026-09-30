@@ -908,9 +908,8 @@ void TMario::checkGraffitoFire()
 	mInvincibilityFrames = mGraffitoParams.mFireInvincibleTime.get();
 	dropObject();
 	changePlayerStatus(MARIO_STATUS_FIRE_DOWN, 1, false);
-	SMSGetParticleManagerBound()->emitAndBindToPosPtr(6, &mPosition, 0, nullptr);
-	MarioMoveGetMSound()->startSoundActor(MSD_SE_MA_DAMAGE_FIRE, &mPosition, 0,
-	                                      nullptr, 0, 4);
+	gpMarioParticleManager->emitAndBindToPosPtr(6, &mPosition, 0, nullptr);
+	MarioMoveGetMSound()->startSoundActor(MSD_SE_MA_DAMAGE_FIRE, &mPosition);
 }
 
 void TMario::checkGraffitoLava() { }
