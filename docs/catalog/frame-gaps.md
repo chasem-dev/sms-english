@@ -2796,3 +2796,51 @@ Nothing was committed apart from this entry.
 - tww's JAudio is a later generation: `updateJcToDSP` is a member with `flushChannel()` calls, a ternary `pan` in `updateEffectorParam` is 18 markers, and `JAInter::SeMgr::checkNextFrameSe` is an empty Nonmatching stub.
 - tww's JParticle is the JPA1 generation (`JPAFieldData`, function-pointer base planes); its single `force` vector in the vortex field (frame 0x68), `set` then `scale` in the convection field (0xe8) and the one-read `flag & 0x1FFF` in `J3DDeformer::deform` (20 markers) are all worse.
 - No sister carries JAIGFrameSe, JALModSe or JDrama, and a 420-second hsearch run on `JPAVortexField::affect` found no gain.
+
+## Research batch c-r33 (2026-09-30): retail's per-site operator word is created after every operator body, not at the call boundary
+
+Question: which honest source form, per site or per overload, gives retail's temporary order at the seven single-function units blocked on the operator-temporary class (TMarioCap::perform, CPolarSubCamera::updateDemoCamera_, TEnemyAttachment::bind, TWireBinder::bind, TBaseNPC::bind, TMario::keepDistance, TMapWireActor::getPosInWire)?
+Answer: none was found; nothing landed, and the header is unchanged.
+The debugger maps do narrow what retail's missing word is.
+Method: `hsearch dbg` maps of all seven under the stock header and under four header variants; each variant was scored on the seven units and on the coaster `bind`, with `census.py`/`cmpcensus.py` tree-wide against 12051 exact.
+The drivers `hv.py`, `bvrun.sh` and `score7.sh` are in the session scratchpad `r33/`.
+
+### Retail's temporaries per function (stock-header dumps)
+
+- TEnemyAttachment::bind, TWireBinder::bind and TBaseNPC::bind: retail's live `bl sub` object is created after every depth-1 inliner object (the wall record's bindings, the ground-plane binding), with one word below it and, in TBaseNPC::bind, two more above it; our by-value `fst` copy is a parse-time object directly under the named block.
+- CPolarSubCamera::updateDemoCamera_: the two `origin + offset` `bl add` objects sit at 0x58 and 0x4c, adjacent, with 36 bytes of pool above them (two dead return temporaries plus the three depth-1 words) and one word more than ours below the second.
+- TMario::keepDistance: top-down, retail has diff (0x78), the `diff * step` return copy (0x5c), the two sqrt words (0x58, 0x54), the `newPos - mPosition` live object (0x44), then the product operand (0x34); so both operators' live objects are late locals, and both return temporaries are parse-time objects.
+- TMapWireActor::getPosInWire and TMarioCap::perform are the `(a - b).length()` pool.
+  Unwrapped under any by-value header, getPosInWire has 14 IRO P temporaries and a frame of 0xd0-0xd8 (retail 0xb8), and TMarioCap::perform is 0x190-0x198 (retail 0x1e0).
+  The four torocco, isTakeSituation and moveRoof sites are likewise 0x18-0x20 over when unwrapped.
+
+### Header variants, all with the uncast `operator=` (the return copy is not elided without it)
+
+- V1, `TVec3 r(fst); r -= snd; return r;` for `-` and `+`, V2 for `*`: the five non-`.length()` targets have no missing or extra instructions, but every late object is one word high (keepDistance's frame is 8 short); tree-wide the exact count is 12051 -> 12044 (up 7, down 59).
+- A reference local for the left operand (`const TVec3& a = fst;` or `const Vec& a = fst;` before the copy) gives two words and loses the elision at TEnemyAttachment::bind (six extra instructions).
+- C1 (cc23's `operator-(const Vec* fst, ...)`, conversion at the call boundary, for `-` and `+`): 12060 exact, with 17 gains, among them TEnemyAttachment::bind, TWireBinder::bind, TLiveActor::bind, the coaster, amenbo, aminoko, hamukuri, koopajr and limitkoopa `bind`s, `TCannon::moveObject` and `TEffectColumWater::generate`.
+  The losses are the six wrapped `.length()` sites (MameGessoJitabata, execUTurn, isTakeSituation, toroccoEffect, soundTorocco, moveRoof), and Tongue's `__ami__` goes MISSING.
+- C2 (the same conversion moved inside the body: `const TVec3& fst`, `TVec3 r; r = *(const Vec*)fst; r -= snd; return r;`): 12061 exact.
+  Against C1 it also gains TChuuHana::attackToMario and TLeanMirror::loadAfter, two of c-r20's "two-word" sites, and loses TCannon::moveObject, and the conversion falls out of line as a weak `__opPC3Vec__` in 11 TUs (BossHanachanSub, cannon, fireWanwan, walker, SelectShine2, MapWarp, MapWire, MapObjPlane, MarioCollision, MarioSpecial, Tongue), which the map does not have.
+- **CameraDemo decides between C1 and C2.**
+  Under C1 the objects run r1, binding, r2, binding, one word too many between the two `bl add` objects; under C2 they run r1, r2, then both words, and updateDemoCamera_ is slot-exact.
+  The four markers left there are the separate load-order residue (2) of its TODO.
+- So retail's extra word at each site is created after all the operator bodies of the function have been expanded (depth d+1 or later), not in the operator's own expansion (depth d).
+  That is also why one body covers c-r20's one-word and two-word sites, whose counts looked per-site.
+- Under C2 plus V2 `*` (C3), keepDistance has every object in retail's order, uniformly 4 low (one word more above the return temporaries in retail, one fewer at the bottom).
+  `diff(newPos - mPosition)` is identical, `diff; diff = ...` loses the elision (8 more instructions), and `newPos - getPosition()` adds 32 markers.
+- Under C2 TBaseNPC::bind's live object is 8 high: the two IRO F temporaries of `getGroundPlane() && getGroundPlane()->isLegal()` are below it, where retail has one word, and retail has two more words above it.
+  `mGroundPlane` at either or both reads is inert or worse, and a 240 s hsearch run (1670 builds) under C2 found no gain; this is the site's unknown compiled-out ground-plane block (its fakematch TODO), not the operator.
+
+### What makes the word, and what does not
+
+- The word is the reference binding of an inline call whose argument is itself an inline call: `operator=(const Vec&)` taking `operator const Vec*()`'s result, whether at the call boundary (C1) or in the body (C2).
+- Casts do not make it, at depth d or d+1: `*(const Vec*)&fst`, `*(const Vec*)this` in a member, `*(const Vec*)&fst.x`, `*(const TVec3*)&fst.x`, `*(const TVec3*)(const void*)&fst` and a `static_cast` down from `const Vec&` all fold into simple arguments (frame 0x38 at the coaster, 0 words).
+- The other bodies measured confirm c-r20's two families and give nothing in between.
+  No word: `r(fst)`, `r = fst`, a `TVec3(r)` return, `*&r`, a `(const TVec3&)r` return, a member `r(*this)`, a by-value `fst`, and an implicit copy constructor.
+  Two words: `return r -= snd` and its member and by-value forms (the copy's `other` binding plus one ECOMMA P).
+  Three or more: a named reference to `r -= snd`, a second local copy, and `return TVec3(fst) -= snd`.
+  `r.sub(snd)` expands `sub` (55-90%).
+- `getPosition()` on the right operand makes a depth-d binding: the frame is right, but `addi r4` is hoisted to the top (95.9%).
+- Next: retail's d+1 object must be an inline call whose argument is non-simple and that inlines at every depth, since the map has no weak conversion.
+  Look for one among the plausible TVec3 members (a `Vec`-typed accessor used for the copy, or a copy routed through a `set`/`operator=` level that takes the operand by pointer) before any further site search; the seven functions do not close on site spellings under the stock header.
