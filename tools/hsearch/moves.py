@@ -149,6 +149,68 @@ class HGen(LS.Gen):
                 return True
         return False
 
+    def _recv(self, k: int) -> str:
+        """The receiver text of the member or call at token k ('' for implicit this)."""
+        if self.toks[k - 1].text in (".", "->"):
+            return self._norm(self.span(self.postfix_start(k - 2), k - 2))
+        return ""
+
+    def _is_read(self, k: int) -> bool:
+        """Is the member at token k read (not the target of an assignment through
+        `m = `, `m.x = `, `m[i] += `, `++m` or `&m`)?"""
+        t = self.toks
+        if not self.is_value_context(k, k):
+            return False
+        j = k + 1
+        while True:
+            if t[j].text in (".", "->") and t[j + 1].kind == "id":
+                j += 2
+            elif t[j].text == "[" and j in self.bm:
+                j = self.bm[j] + 1
+            else:
+                break
+        return t[j].text not in ASSIGN_OPS and t[j].text not in ("++", "--")
+
+    def _mixed_left(self, lever: str, eds) -> bool:
+        """Would this accessor move leave the same member, on the same receiver,
+        spelled the other way anywhere in the function?  Subsets such as
+        `raw->acc sites 3+4 of 4` read as two authors."""
+        t = self.toks
+        edited = [s for s, e, _ in eds if e > s]
+        sites = []  # (name, receiver) of each edited site
+        for s in edited:
+            k = next((q for q in range(self.bo, self.bc) if t[q].s == s), None)
+            if k is None:
+                continue
+            if t[k].text == "*":
+                k += 1
+            sites.append((t[k].text, self._recv(k)))
+        for name, recv in set(sites):
+            for q in range(self.bo + 1, self.bc):
+                if t[q].text != name or t[q - 1].text == "::" or any(s <= t[q].s < e for s, e, _ in eds):
+                    continue
+                if self._recv(q) != recv:
+                    continue
+                if lever == "raw->acc":
+                    if t[q + 1].text != "(" and self._is_read(q):
+                        return True  # a raw read of the member stays
+                elif t[q + 1].text == "(" and t[q + 2].text == ")":
+                    return True  # a call of the accessor stays
+        return False
+
+    WRITE_RX = re.compile(r"\s*(?:=(?!=)|[-+*/%&|^]=|<<=|>>=|\+\+|--)")
+
+    def _found_in_function(self, rx, edits) -> bool:
+        """Another read matching rx anywhere in the function, outside the edits
+        (a match that is assigned to is a write, not a second read)."""
+        lo, hi = self.toks[self.bo].s, self.toks[self.bc].e
+        for m in rx.finditer(self.text, lo, hi):
+            if any(s <= m.start() < max(e, s + 1) for s, e, _ in edits):
+                continue
+            if not self.WRITE_RX.match(self.text, m.end()):
+                return True
+        return False
+
     @staticmethod
     def _bare_rx(member: str):
         return re.compile(r"(?<![\w])" + re.escape(member) + r"\b(?!\s*\()")
@@ -238,6 +300,9 @@ class HGen(LS.Gen):
                 elif c.lever == "acc->raw" and re.fullmatch(r"\w+\s*\(\s*\)", old):
                     if self._found_outside(self._call_rx(old.split("(")[0].strip()), eds, s):
                         return False
+            # and anywhere else in the function on the same receiver
+            if self._mixed_left(c.lever, eds):
+                return False
             return True
         if c.lever in ("name-call", "name-read", "name-conv"):
             # naming one of two identical reads a line apart leaves the second
@@ -252,7 +317,8 @@ class HGen(LS.Gen):
                 if c.lever == "name-call" and (not re.search(r"\)\s*$", old) or
                                                (t[k - 1].kind == "id" and t[k - 1].text not in KEYWORDS)):
                     return False  # `T name(args)` is a declaration, not a call
-                if self._found_outside(re.compile(re.escape(old)), eds, s):
+                # a lone named value at one of several identical sites, however far apart
+                if self._found_in_function(re.compile(r"(?<![\w.])(?<!->)(?<!::)" + re.escape(old) + r"(?!\w)"), eds):
                     return False
                 m = re.fullmatch(r"(\w+)\s*\(\s*\)", old)
                 mem = self._getter_member(m.group(1)) if m else None

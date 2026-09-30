@@ -71,9 +71,9 @@ Added here:
 Plausibility filters drop generated moves that compile but read wrong:
 
 - any spelling move (accessor/raw, naming, null and zero tests, `commute`, `sound-short`, compound and split sums, `int`/`s32`) that edits a line or statement while an identical one anywhere in the function is left alone (three identical `if (unkA4->isVisible())` blocks spelled two ways, however far apart);
-- a single-site or subset accessor/raw flip that leaves the other spelling of the same member within four lines (`unk18.x; unk18.y; getUnk18().z`);
+- a single-site or subset accessor/raw flip that leaves the other spelling of the same member on the same receiver anywhere in the function (`raw->acc sites 3+4 of 4`, `unk18.x; unk18.y; getUnk18().z`); writes such as `mRotation.y = a` do not count as raw reads;
 - a `raw->acc` whose accessor is not the member's accessor in the function's class (the header index is keyed by name, so a namesake would change the value), or whose "member" is a local;
-- naming a value (`name-call`, `name-read`, `name-conv`) while an identical read stays within four lines, or naming an accessor's result next to a raw read of its member;
+- naming a value (`name-call`, `name-read`, `name-conv`) while an identical read stays anywhere in the function (a lone named value at one of several identical call sites), or naming an accessor's result next to a raw read of its member;
 - `name-read` of a `stream >> m` operand (the copy would not be written back) and `name-call` of a constructor declaration;
 - `== 0` to `== nullptr` on a non-pointer.
 
