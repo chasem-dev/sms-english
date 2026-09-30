@@ -982,7 +982,8 @@ u32 TFluff::touchWater(THitActor* actor)
 }
 
 // TODO: 99.9%, every instruction matches; retail's frame is 0x78 against
-// our 0x28. isZero is called on unkD0 itself (lfsu); the missing 0x50 is
+// our 0x38 (0x28 before getVelocity() and getInitialPosition(), c-hs5).
+// isZero is called on unkD0 itself (lfsu); the missing 0x40 is
 // an unidentified carrier, not another wind copy. c-m20: 20 words are
 // created after `velocity` (the top slot); add()/scale()/+=/*= are inert,
 // a TVec3 holding the swing offset is +0x18 at equal code (not landed).
@@ -1001,7 +1002,7 @@ void TFluff::move()
 	mDrift.x += mWindRate * gpMapObjManager->unkD0.x;
 	mDrift.z += mWindRate * gpMapObjManager->unkD0.z;
 
-	JGeometry::TVec3<f32> velocity = mVelocity;
+	JGeometry::TVec3<f32> velocity = getVelocity();
 	mDrift.x += velocity.x;
 	mDrift.y += velocity.y;
 	mDrift.z += velocity.z;
@@ -1013,10 +1014,10 @@ void TFluff::move()
 
 	f32 swing   = mSwingRadius * sinf(3.14f * mSwingAngle / 180.0f);
 	mPosition.x = mDrift.x + (swing * (mSwingCos + mSwingSin)
-	                          + mInitialPosition.x);
+	                          + getInitialPosition().x);
 	mPosition.y += mWindRate * gpMapObjManager->unkD0.y;
 	mPosition.z = mDrift.z + (swing * (mSwingSin - mSwingCos)
-	                          + mInitialPosition.z);
+	                          + getInitialPosition().z);
 
 	if (gpMapObjManager->unkD0.isZero()) {
 		mSwingAngle += mSwingAngleSpeed;
