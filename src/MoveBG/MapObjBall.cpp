@@ -1225,10 +1225,11 @@ void TResetFruit::appearing()
 	}
 }
 
-// TODO: instruction-exact, frame 0x90 vs 0xf8. The APPEARING arm is
-// TMapObjBall::control expanded; a 12-statement spelling of it (no `timer`,
-// if/else instead of return; 99.9 out of line) inlines at all three arms and
-// the frame jumps to 0x158. Retail must reach the LIVING and HOLDING arms one
+// TODO: instruction-exact, frame 0xb8 vs 0xf8 (0x90 before the ground
+// plane, map and initial scaling were read through their accessors, c-hs5).
+// The APPEARING arm is TMapObjBall::control expanded; a 12-statement
+// spelling of it (no `timer`, if/else instead of return; 99.9 out of line)
+// inlines at all three arms and the frame jumps to 0x158. Retail must reach the LIVING and HOLDING arms one
 // level deeper; living() itself is not it (it is then called, frame 0xe8).
 void TResetFruit::control()
 {
@@ -1237,16 +1238,17 @@ void TResetFruit::control()
 		offHitFlag(HIT_FLAG_NO_COLLISION);
 		for (int i = 0; i < mColCount; ++i)
 			pick(mCollisions[i]);
-		if (mGroundPlane->getActor())
+		if (getGroundPlane()->getActor())
 			calcCurrentMtx();
 		break;
 
 	case STATE_LIVING:
 		offHitFlag(HIT_FLAG_NO_COLLISION);
-		if (gpMarDirector->mMap == 4 && checkLiveFlag(LIVE_FLAG_UNK10))
+		if (gpMarDirector->getCurrentMap() == 4
+		    && checkLiveFlag(LIVE_FLAG_UNK10))
 			offLiveFlag(LIVE_FLAG_UNK10);
 
-		if (mGroundPlane->getActor()) {
+		if (getGroundPlane()->getActor()) {
 			if (checkLiveFlag(LIVE_FLAG_UNK10))
 				offLiveFlag(LIVE_FLAG_UNK10);
 
@@ -1292,7 +1294,7 @@ void TResetFruit::control()
 		{
 			JGeometry::TVec3<f32> vel;
 			vel = mVelocity;
-			if (!vel.isZero() || mGroundPlane->getActor())
+			if (!vel.isZero() || getGroundPlane()->getActor())
 				calcCurrentMtx();
 		}
 		break;
@@ -1301,9 +1303,9 @@ void TResetFruit::control()
 		// Sink into the ground, restore the original scale, puff smoke and
 		// sleep until the respawn timer runs out.
 		mPosition.y += mBodyRadius / 2.0f;
-		mScaling.x = mInitialScaling.x;
-		mScaling.y = mInitialScaling.y;
-		mScaling.z = mInitialScaling.z;
+		mScaling.x = getInitialScaling().x;
+		mScaling.y = getInitialScaling().y;
+		mScaling.z = getInitialScaling().z;
 		emitAndScale(0xE5, 0, &mPosition);
 		SMSGetMSound()->startSoundActor(MSD_SE_SMOKE_EFFECT, &mPosition, 0,
 		                                nullptr, 0, 4);
@@ -1329,7 +1331,7 @@ void TResetFruit::control()
 		mStateTimer = mFruitWaitTimeToAppear;
 		offMapObjFlag(MAP_OBJ_FLAG_DISAPPEARING);
 		mState = STATE_WAITING_TO_APPEAR;
-		if (gpMarDirector->mMap == 3 && unk1A4)
+		if (gpMarDirector->getCurrentMap() == 3 && unk1A4)
 			makeObjDead();
 		break;
 	}
