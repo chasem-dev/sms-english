@@ -1290,7 +1290,7 @@ void TBossWanwan::control()
 	if (mIsPicketPlanted || isHeadPulled()) {
 		mLinearVelocity.add(mPullVelocity);
 
-		JGeometry::TVec3<f32> toTail(mPosition);
+		JGeometry::TVec3<f32> toTail(getPosition());
 		toTail -= mLeash->getRope()->mPoints[3].unkC;
 
 		f32 yaw  = MsWrap(MsGetRotFromZaxisY(toTail), 0.0f, 360.0f);
