@@ -10825,8 +10825,9 @@ void TMapObjBase::setMatTableTex(J3DMaterialTable* table)
 void TMapObjBase::initUnique()
 {
 	// TODO: I hate switches, someone fix this please...
-	// TODO: instruction-exact; the frame is 0x100 against retail 0x2d8, a
-	// 0x1d8 dead region with no stack reference. The sixteen setMatTable/
+	// TODO: instruction-exact; the frame is 0x1a8 against retail 0x2d8, a
+	// 0x130 dead region with no stack reference (0x100 before the actor
+	// keeper and ground plane were read through their accessors, c-hs5). The sixteen setMatTable/
 	// setMatTableTex expansions share one temp block, so the missing bytes
 	// are not per-expansion accessor pool; unexplained (cc41).
 	// agg1: switch arms do not share slots (emptying any one arm drops 0 or
@@ -10852,21 +10853,21 @@ void TMapObjBase::initUnique()
 		break;
 	case 0x4000001C:
 		for (int i = 0; i < 2; ++i) {
-			mMActor = mMActorKeeper->mActors[i];
+			mMActor = getActorKeeper()->getMActor(i);
 			setMatTable(gpMapObjManager->unk7C);
 			SMS_UnifyMaterial(getModel());
 		}
-		mMActor = mMActorKeeper->mActors[0];
-		if (mGroundPlane->isShadow())
+		mMActor = getActorKeeper()->getMActor(0);
+		if (getGroundPlane()->isShadow())
 			mMapCollisionManager->unk8->setAllBGType(0x4000);
 		break;
 	case 0x4000005A:
 		for (int i = 0; i < 2; ++i) {
-			mMActor = mMActorKeeper->mActors[i];
+			mMActor = getActorKeeper()->getMActor(i);
 			setMatTable(gpMapObjManager->unk80);
 			SMS_UnifyMaterial(getModel());
 		}
-		mMActor = mMActorKeeper->mActors[0];
+		mMActor = getActorKeeper()->getMActor(0);
 		break;
 	case 0x400000BA:
 		setMatTable(gpMapObjManager->unk94);
@@ -10924,24 +10925,24 @@ void TMapObjBase::initUnique()
 		break;
 	case 0x20000068:
 		for (int i = 0; i < 3; ++i) {
-			mMActor = mMActorKeeper->mActors[i];
+			mMActor = getActorKeeper()->getMActor(i);
 			setMatTableTex(gpMapObjManager->unk70);
 		}
-		mMActor = mMActorKeeper->mActors[0];
+		mMActor = getActorKeeper()->getMActor(0);
 		break;
 	case 0x400002C2:
 		for (int i = 0; i < 2; ++i) {
-			mMActor = mMActorKeeper->mActors[i];
+			mMActor = getActorKeeper()->getMActor(i);
 			setMatTable(gpMapObjManager->unk84);
 		}
-		mMActor = mMActorKeeper->mActors[0];
+		mMActor = getActorKeeper()->getMActor(0);
 		break;
 	case 0x400002C3:
 		for (int i = 0; i < 2; ++i) {
-			mMActor = mMActorKeeper->mActors[i];
+			mMActor = getActorKeeper()->getMActor(i);
 			setMatTable(gpMapObjManager->unk88);
 		}
-		mMActor = mMActorKeeper->mActors[0];
+		mMActor = getActorKeeper()->getMActor(0);
 		break;
 	case 0x400000D0:
 		mMActor->setLightType(LIGHT_TYPE_OBJECT);
