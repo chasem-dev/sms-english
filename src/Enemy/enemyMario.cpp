@@ -135,8 +135,11 @@ void TEnemyMario::initValues()
 	unk390 = new TMBindShadowBody(this, getM3UModel()->getModel(), 1.0f);
 }
 
-// TODO: frame 0x2a0 vs retail 0x2f8. Retail stacks buffer 0x1b8, a 0x10 hole,
-// transform 0x178 above transformInfo 0x158, and its low temps start at 0x13c.
+// TODO: frame 0x2c8 vs retail 0x2f8 (0x2a0 before getM3UModel() and
+// getPosition() at every model and position read, c-hs5; that only shifts
+// every object up 0x24). Retail stacks buffer 0x1b8, a 0x10 hole,
+// transform 0x178 above transformInfo 0x158, and its low temps start at 0x13c;
+// ours still has transform (0x120) below transformInfo (0x150).
 // Inert: Mtx before transformInfo, either or both hoisted, buffer hoisted.
 void TEnemyMario::initModel()
 {
@@ -146,7 +149,7 @@ void TEnemyMario::initModel()
 	unk3A0 = nullptr;
 
 	TMario* original = gpMarioOriginal;
-	mBodyModelData   = original->mModel->getModel()->getModelData();
+	mBodyModelData   = original->getM3UModel()->getModel()->getModelData();
 	mJointIdCenter   = mBodyModelData->getJointName()->getIndex("center");
 	mJointIdChnChest = mBodyModelData->getJointName()->getIndex("chn_chest");
 	mJointIdChest    = mBodyModelData->getJointName()->getIndex("jnt_chest");
@@ -196,10 +199,10 @@ void TEnemyMario::initModel()
 	J3DFrameCtrl* frameCtrl                = new J3DFrameCtrl[3];
 
 	M3UModelCommonMario* marioCommon = new M3UModelCommonMario;
-	marioCommon->unk4                = original->mModel->unk4->unk4;
+	marioCommon->unk4                = original->getM3UModel()->unk4->unk4;
 	marioCommon->unk18               = anmBlendQuat;
 	marioCommon->unk8                = anmTexPattern;
-	marioCommon->unk8                = original->mModel->unk4->unk8;
+	marioCommon->unk8                = original->getM3UModel()->unk4->unk8;
 	marioCommon->unkC                = anmTexNoAnm;
 
 	M3UModelMario* modelMario = new M3UModelMario;
@@ -233,15 +236,15 @@ void TEnemyMario::initModel()
 	transformInfo.mRotation.x  = mFaceAngle.x;
 	transformInfo.mRotation.y  = mModelFaceAngle;
 	transformInfo.mRotation.z  = mFaceAngle.z;
-	transformInfo.mTranslate.x = mPosition.x;
-	transformInfo.mTranslate.y = mPosition.y;
-	transformInfo.mTranslate.z = mPosition.z;
+	transformInfo.mTranslate.x = getPosition().x;
+	transformInfo.mTranslate.y = getPosition().y;
+	transformInfo.mTranslate.z = getPosition().z;
 	Mtx transform;
 	J3DGetTranslateRotateMtx(transformInfo, transform);
-	mModel->getModel()->setBaseTRMtx(transform);
+	getM3UModel()->getModel()->setBaseTRMtx(transform);
 
-	mModel->updateInMotion();
-	mModel->getModel()->calc();
+	getM3UModel()->updateInMotion();
+	getM3UModel()->getModel()->calc();
 
 	mSurfGesso = nullptr;
 	mTorocco   = nullptr;
@@ -260,7 +263,7 @@ void TEnemyMario::initModel()
 	mtxEffectTypes[1]               = 0;
 	mtxEffectTypes[2]               = 0;
 	mMultiMtxEffect->mMtxEffectType = mtxEffectTypes;
-	mMultiMtxEffect->setup(mModel->getModel(), "Mario");
+	mMultiMtxEffect->setup(getM3UModel()->getModel(), "Mario");
 }
 
 // TODO: wrong! off by 1 instruction!
