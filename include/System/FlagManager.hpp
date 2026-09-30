@@ -78,4 +78,13 @@ private:
 // remain; sweep them against their frame gaps, not in bulk).
 inline TFlagManager* SMSGetFlagManager() { return TFlagManager::getInstance(); }
 
+// Fabricated: the singleton bound to a named local before it is returned, +8
+// of low region per expansion over a raw TFlagManager::smInstance read.
+// Formerly parked TU-locally in four units.
+inline TFlagManager* SMSGetFlagManagerBound()
+{
+	TFlagManager* flagManager = TFlagManager::smInstance;
+	return flagManager;
+}
+
 #endif

@@ -1515,12 +1515,6 @@ static inline J3DModel* NozzleBoxLoadModel(const TNozzleBox* p)
 	return model;
 }
 
-static inline TFlagManager* NozzleBoxLoadFlags()
-{
-	TFlagManager* flagManager = TFlagManager::smInstance;
-	return flagManager;
-}
-
 // By-value scalar fork over unk154: +4 of low pool, lands strBuf at retail's
 // 0x30.
 static inline f32 NozzleBoxLoadSpeed(const TNozzleBox* p) { return p->unk154; }
@@ -1546,7 +1540,7 @@ void TNozzleBox::load(JSUMemoryInputStream& stream)
 		unk15E.r             = 0xFF;
 		unk15E.g             = 0;
 		unk15E.b             = 0;
-		if (NozzleBoxLoadFlags()->getNozzleRight(gpMarDirector->mMap, 0)) {
+		if (SMSGetFlagManagerBound()->getNozzleRight(gpMarDirector->mMap, 0)) {
 			unk15C = true;
 			unk166 = true;
 		}
@@ -1555,7 +1549,7 @@ void TNozzleBox::load(JSUMemoryInputStream& stream)
 		unk15E.r             = 0x5A;
 		unk15E.g             = 0x5A;
 		unk15E.b             = 0x78;
-		if (NozzleBoxLoadFlags()->getNozzleRight(gpMarDirector->mMap, 1)) {
+		if (SMSGetFlagManagerBound()->getNozzleRight(gpMarDirector->mMap, 1)) {
 			unk15C = true;
 			unk166 = true;
 		}

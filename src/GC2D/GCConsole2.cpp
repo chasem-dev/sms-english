@@ -3055,13 +3055,6 @@ bool TGCConsole2::processDrawTelop(u32)
 	return isFinished;
 }
 
-// fabricated: a binder over the flag manager singleton.
-static inline TFlagManager* GCConsole2FlagManager()
-{
-	TFlagManager* x = TFlagManager::smInstance;
-	return x;
-}
-
 // fabricated: a binder over the telop data pointer.
 static inline void* GCConsole2UnkC4(const TGCConsole2* p)
 {
@@ -3109,13 +3102,13 @@ void TGCConsole2::checkChangeTelopArray()
 		case 5:
 			// One message per flag, both messages when both are set and the
 			// generic pair when neither is.
-			if (GCConsole2FlagManager()->getBool(0x50001)) {
-				if (GCConsole2FlagManager()->getBool(0x50002))
+			if (SMSGetFlagManagerBound()->getBool(0x50001)) {
+				if (SMSGetFlagManagerBound()->getBool(0x50002))
 					unk570 = scDolpicNewsDolpic5_4;
 				else
 					unk570 = scDolpicNewsDolpic5_2;
 			} else {
-				if (GCConsole2FlagManager()->getBool(0x50002))
+				if (SMSGetFlagManagerBound()->getBool(0x50002))
 					unk570 = scDolpicNewsDolpic5_3;
 				else
 					unk570 = scDolpicNewsDolpic5_1;
