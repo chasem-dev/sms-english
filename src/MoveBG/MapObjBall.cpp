@@ -811,7 +811,7 @@ GXColorS10 TResetFruit::mRottenColor    = { 0, 0, 0, 0 };
 
 void TResetFruit::checkGroundCollision(JGeometry::TVec3<f32>* param_1)
 {
-	u8 map = SMSGetMarDirectorBound()->mMap;
+	u8 map = SMSGetMarDirector()->getCurrentMap();
 	if (map != 7 && map != 4) {
 		TMapObjGeneral::checkGroundCollision(param_1);
 		return;
