@@ -488,10 +488,9 @@ void TMareEventDepressWall::initCommon()
 	unk3C = new f32[unk10];
 	unk40 = new f32[unk10];
 
-	J3DNode* joint = gpMap->getModelManager()
-	                     ->getJointModel(0)
-	                     ->getModelData()
-	                     ->getJointNodePointer(0)
+	J3DModelData* modelData
+	    = gpMap->getModelManager()->getJointModel(0)->getModelData();
+	J3DNode* joint = modelData->getJointNodePointer(0)
 	                     ->getChild()
 	                     ->getYounger()
 	                     ->getChild();
@@ -499,8 +498,8 @@ void TMareEventDepressWall::initCommon()
 	// The split sum with the subtraction left in the loop condition gives
 	// retail's `subi` before the add and its unrolled skip loop with the
 	// two trailing branches.
-	// TODO: 99.8%. The add's operands are swapped (retail `unk14 + last`)
-	// and the frame is 8 long (the char buffer 4 high). Tried:
+	// TODO: the add's operands are swapped (retail `unk14 + last`); the
+	// named modelData lands the frame, one f32 slot is 4 low. Tried:
 	// `skipCount = unk14 + skipCount` (98.3), the whole count named first,
 	// u32/s32/s16/u16 counters (u32 lands the frame, 93%), down-counting
 	// and offset-start loops, count/sum levels, a shared function-scope `i`.
