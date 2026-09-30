@@ -661,16 +661,17 @@ static inline void ApplicationStartTimerTwice(u32 tick, u32 param)
 	ApplicationCrTimeAry1(inst)[1].append(tick, param);
 }
 
-// TODO: frame 0x70 short: retail's low region runs to 0xac (the TRect
-// temp) where ours ends at 0x38, i.e. 0x74 bytes of inline temporaries from
-// an expansion this body lacks; plus the gpMSound reload noted below.
+// TODO: frame 0x50 short (0x70 before the display's video was read through
+// getVideo()): retail's low region runs to 0xac (the TRect temp) where ours
+// ended at 0x38, i.e. inline temporaries from an expansion this body lacks;
+// plus the gpMSound reload noted below.
 int TApplication::gameLoop()
 {
 	u32 nextState = APP_STATE_DEFAULT;
 	while (nextState <= APP_STATE_DEFAULT) {
 		mDisplay->startRendering();
 
-		ApplicationStartTimerTwice(mDisplay->unk60->mLastRetraceTime, 0);
+		ApplicationStartTimerTwice(mDisplay->getVideo()->mLastRetraceTime, 0);
 		TTimeRec::snapGxTimeStatic(0);
 
 		TMarioGamePad::read();
@@ -716,7 +717,7 @@ int TApplication::gameLoop()
 			JDrama::TGraphics graphics;
 			graphics.unk0 = 0;
 
-			JDrama::TVideo* video = mDisplay->unk60;
+			JDrama::TVideo* video = mDisplay->getVideo();
 			GXRenderModeObj& mode = video->mNextRenderMode;
 			GXSetViewport(0.0f, 0.0f, mode.fbWidth, mode.efbHeight, 0.0f,
 			              1.0f);
@@ -743,7 +744,7 @@ int TApplication::gameLoop()
 		if (TTimeRec::_instance)
 			TTimeRec::_instance->flip();
 
-		JDrama::TVideo* video = mDisplay->unk60;
+		JDrama::TVideo* video = mDisplay->getVideo();
 		if (video->mCurFrameBuffer) {
 			JUTDirectPrint::getManager()->changeFrameBuffer(
 			    (void*)video->mCurFrameBuffer, video->mCurRenderMode.fbWidth,
