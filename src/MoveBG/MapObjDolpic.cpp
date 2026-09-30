@@ -551,10 +551,8 @@ void TDemoCannon::perform(u32 cue, JDrama::TGraphics* graphics)
 		gpMarioParticleManager->emitAndBindToMtxPtr(235, mtx, 0, nullptr);
 		gpMarioParticleManager->emitAndBindToMtxPtr(236, mtx, 0, nullptr);
 
-		SMSGetMSoundBound()->startSoundActor(MSD_SE_EN_CANNON_FIRE_MARIO,
-		                                         &mPosition, 0, nullptr, 0, 4);
-		SMSGetMSoundBound()->startSoundActor(MSD_SE_DM_FLY_TO_PINNNA,
-		                                         &mPosition, 0, nullptr, 0, 4);
+		SMSGetMSound()->startSoundActor(MSD_SE_EN_CANNON_FIRE_MARIO, &mPosition);
+		SMSGetMSound()->startSoundActor(MSD_SE_DM_FLY_TO_PINNNA, &mPosition);
 	}
 
 	frameCtrl = unk13C->getMActor()->getFrameCtrl(ANM_TYPE_BCK);
