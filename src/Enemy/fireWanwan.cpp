@@ -604,7 +604,8 @@ void TFireWanwanTailHit::init()
 // TODO: 99.0%. The ROM's inlined bindBody -> getBodyTailPow calls the weak
 // *const* ArrayWrapper<Node>::operator[] out of line (the map has no
 // non-const overload anywhere, so ArrayWrapper.hpp now carries only the const
-// one). The frame is 0x30 short.
+// one). The frame is 0x18 short (0x1f0 vs 0x208; getPosition() at the three
+// position reads, getHostPos()'s spelling, took it from 0x1d8).
 void TFireWanwanTailHit::perform(u32 cue, JDrama::TGraphics* graphics)
 {
 	THitActor::perform(cue, graphics);
@@ -632,20 +633,20 @@ void TFireWanwanTailHit::perform(u32 cue, JDrama::TGraphics* graphics)
 
 	if (mHolder != nullptr) {
 		JGeometry::TVec3<f32> local_3c = getBodyNthPos(4);
-		local_3c -= mOwner->mPosition;
+		local_3c -= mOwner->getPosition();
 		SMS_CalcToDirMatrix(unk74, local_3c,
 		                    JGeometry::TVec3<f32>(0.0f, 1.0f, 0.0f));
 
 		bindBody();
 
-		unk74.setTrans(mPosition);
+		unk74.setTrans(getPosition());
 
 		mPrevTailLength = mCurTailLength;
 		mCurTailLength  = unkA4->getLength();
 
 		if (0.0f < mCurTailLength - mPrevTailLength) {
 			JGeometry::TVec3<f32> local_60 = SMS_GetMarioPos();
-			local_60 -= mOwner->mPosition;
+			local_60 -= mOwner->getPosition();
 
 			SMSGetMSound()->startSoundActorWithInfo(
 			    MSD_SE_EN_WANWAN_PULL, &unkA4->unk0[2].mPos, nullptr,
