@@ -747,6 +747,8 @@ void TPakkunSeed::shoot()
 
 // Where the seed ends up once it has come to rest: a stay pakkun's seeds just
 // stain the ground, everyone else's sprout a new pakkun or a water column.
+// TODO: frame 0x70 against retail's 0x78; the stay branch's stamp-and-sound
+// block as an inline gives the last 8, but no UNUSED of its 0xa8 exists.
 void TPakkunSeed::rebirth()
 {
 	if (mPakkun->mIsStay != 0) {
@@ -761,8 +763,7 @@ void TPakkunSeed::rebirth()
 		                   manager->getSaveParam2()->getSLStampRange() * 32.0f
 		                       * mPakkun->getUnk158());
 
-		gpMSound->startSoundActor(MSD_SE_EN_PAKKUN_SEED_SINK, &mPosition, 0,
-		                          nullptr, 0, 4);
+		gpMSound->startSoundActor(MSD_SE_EN_PAKKUN_SEED_SINK, &mPosition);
 		return;
 	}
 
@@ -780,10 +781,9 @@ void TPakkunSeed::rebirth()
 		return;
 	}
 
-	if (!mGroundPlane->isWaterSurface()) {
+	if (!getGroundPlane()->isWaterSurface()) {
 		TPakkun* pakkun = mPakkun;
-		gpMSound->startSoundActor(MSD_SE_EN_PAKKUN_SEED_SINK, &mPosition, 0,
-		                          nullptr, 0, 4);
+		gpMSound->startSoundActor(MSD_SE_EN_PAKKUN_SEED_SINK, &mPosition);
 		// TODO: name 0x13E/0x13F in System/Particles.hpp; they are the two
 		// halves of the seed sinking into the ground.
 		gpMarioParticleManager->emit(0x13E, &mPosition, 1, pakkun->mSeed);
