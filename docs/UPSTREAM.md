@@ -58,3 +58,16 @@ The vtable-slot, `TShimmer::perform`, JPA 8-vertex and `Mtx44` fixes were alread
 Two of upstream's named-field reads were ported onto our bodies: `mInitialRotation.y` in `TMario::receiveMessage` and the unit's holder check in `TGCConsole2::checkChangeTelopArray`, spelled as `->mHolder` because `getHolder()` adds an inline level and 8 bytes of frame.
 Upstream's 1-up mushroom test in `TMario::receiveMessage` (`unk13A == 0 && unk13C >= 120`) is not what the ROM does; ours (take unless `unk13A == 0 && unk13C < 120`) is, so it stays.
 No function changed score and no unit became newly linkable.
+
+## Upstream function port c-u4
+
+Built under our GMSE01 config, upstream at `2df38b9` scored strictly higher than ours in 22 functions; each was measured on our tree.
+Seven were ported, one commit each: `TBossPakkunMtxCalc::calcHeadDir` (96.91 -> 99.73), `TBossMantaAdditionalCollisionSet`'s ctor (99.81 -> 100), `TNerveBPVomit::execute` (99.52 -> 99.56), `TMapWire::release` (99.76 -> 99.84), `MSStageCubeFade::proc` (99.51 -> 99.53), `TMarDirector::initECDisp` (99.78 -> 99.81) and `TMarDirector::initECTGft` (99.65 -> 99.76).
+The bossManta ctor needs both halves of upstream's reading: the collision's name as a default argument in `BossManta.hpp` and `getChildren().push_back(this)` in its ctor; either alone is worse.
+Upstream's `fromPolar` for the vomit nerve is kept as the TU-local `BosspakkunFromPolar`; the nerve's instructions are exact, 8 bytes of frame short.
+`TStayPakkun::load` (and pakkun's weak `set<f>`), the `TWaterEmitInfo` ctor, `TNerveKumokunWait`, `TBossEelTooth::perform` and `TFireWanwan::bindBody` win upstream only through its `TPathNode` and `TVec3` copy-constructor headers, which cost more elsewhere than they gain (see the notes in `PathNode.hpp` and `JGVec3.hpp`); their bodies are inert on our tree.
+`changeAllTentacleState` (isThing), `cmdLoop` and `readBlock_` (upstream's `setCheckSum`/`read` bodies) are the trade-offs already recorded at those sites: they cost the bossgesso expansions and five CardManager functions, two of them exact.
+The `TWaterEmitInfo` ctor's zero defaults for mSize/mHitRadius/mHitHeight are contradicted by the ROM, which loads three non-zero literals there.
+`MSBgmXFade::xFadeBgm` reverses a comparison the ROM has the other way, `isBossDefeated` drops the ROM's default case, and `TSplineRail::getPosAndRot` needs `trash2` padding.
+`TMapWire::getPointPosOnWire` hand-expands the UNUSED `getPointPosAtReleased` with extra temporaries, and `TCardLoad::waitForStart` gains only through a fourth TU-local spelling of `setCenteredSize` (98.09 -> 98.34, frame exact) at its four sites, so neither was taken.
+`setLookDir` in BathWaterManager compiles to the same instructions as ours when upstream is rebuilt (97.48), so its report figure (97.57) is not a real gain.
