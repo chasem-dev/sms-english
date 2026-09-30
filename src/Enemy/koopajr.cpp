@@ -1111,15 +1111,17 @@ static inline void KoopajrCross(JGeometry::TVec3<f32>& dst,
 // implicit copy is exact through the cross product and keeps the
 // instruction count (99.51); only the frame is left. The spelling of the
 // cross does not matter: KoopajrCross, the body written out, `Vec&`
-// parameters and pointer parameters all score the same.
+// parameters and pointer parameters all score the same. c-hs8:
+// getKillerIndex(), SMS_GetMarioPos() and getPosition() at every read take
+// the frame from 0x150 to 0x168 of 0x178.
 void TKoopaJrSubmarine::makeKillerVelocity(TBathtubKiller* killer,
                                            JGeometry::TVec3<f32> dir)
 {
-	if ((int)mKillerTypes[mKillerIndex] == 2) {
+	if ((int)mKillerTypes[getKillerIndex()] == 2) {
 		dir.set(0.0f, 1.0f, 0.0f);
-		JGeometry::TVec3<f32> marioPos(*gpMarioPos);
+		JGeometry::TVec3<f32> marioPos(SMS_GetMarioPos());
 		JGeometry::TVec3<f32> toMario;
-		toMario.sub(marioPos, killer->mPosition);
+		toMario.sub(marioPos, killer->getPosition());
 		toMario.y = 0.0f;
 		toMario.normalize();
 
@@ -1132,7 +1134,7 @@ void TKoopaJrSubmarine::makeKillerVelocity(TBathtubKiller* killer,
 		q.rotate(dir, dir);
 
 		axis    = toMario;
-		int idx = mKillerIndex % 4;
+		int idx = getKillerIndex() % 4;
 		if (idx == 0)
 			angle = -KoopajrPiTimes(0.05f);
 		else if (idx == 1)
@@ -1149,11 +1151,11 @@ void TKoopaJrSubmarine::makeKillerVelocity(TBathtubKiller* killer,
 		dir.normalize();
 		dir.scale(killer->mPersonality.mInitialSpeed);
 
-		JGeometry::TVec3<f32> target(*gpMarioPos);
+		JGeometry::TVec3<f32> target(SMS_GetMarioPos());
 		target.y = (*mKoopaJr->mBathtub->getRootJointMtx())[1][3];
 
 		JGeometry::TVec3<f32> toMario;
-		toMario.sub(target, killer->mPosition);
+		toMario.sub(target, killer->getPosition());
 		toMario.y    = 0.0f;
 		f32 dist     = toMario.length()
 		           - getSaveParams()->killerTargetDistance.get();
@@ -1162,7 +1164,7 @@ void TKoopaJrSubmarine::makeKillerVelocity(TBathtubKiller* killer,
 		toMario.normalize();
 		toMario.scale(distMin);
 		JGeometry::TVec3<f32> goal;
-		goal.add(killer->mPosition, toMario);
+		goal.add(killer->getPosition(), toMario);
 		goal.y = target.y;
 		dir    = calcVelocityToJumpToY(
             goal, dir.y, killer->getSaveParam2()->mSLFlyingGravityY.get());
