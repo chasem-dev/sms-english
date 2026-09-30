@@ -512,8 +512,23 @@ void TBathtub::trample(const JGeometry::TVec3<f32>&)
 	}
 }
 
-// Unused
-void TBathtub::liftMario(const JGeometry::TVec3<f32>&) { }
+// Unused (0xe0 in the map, matched): inlined into control(), where Mario's
+// weight tips the tub.
+void TBathtub::liftMario(const JGeometry::TVec3<f32>& marioPos)
+{
+	f32 weight = unk16C->marioWeight.get();
+	if (unk250 > 0)
+		weight += unk16C->marioDropWeight.get();
+	if (!(weight <= 0.0000000001f)) {
+		static JGeometry::TVec3<f32> yDown(0.0f, -1.0f, 0.0f);
+		JGeometry::TVec3<f32> lever;
+		lever.sub(marioPos, mPosition);
+		JGeometry::TVec3<f32> torque;
+		torque.cross(lever, yDown);
+		torque.scale(0.00000001f * weight);
+		mAngleVel.add(torque);
+	}
+}
 
 void TBathtub::tumble(f32 angle, f32 power)
 {
@@ -672,7 +687,7 @@ void TBathtub::perform(u32 cue, JDrama::TGraphics* graphics)
 
 // The overturned branch clears the collisions through the UNUSED
 // removeCollisions_ (its counter copy is the ROM's `addi r30, r29, 0`).
-// TODO: 99.2%. Left: the star position's z/y land in swapped FPRs (a
+// TODO: 99.5%. Left: the star position's z/y land in swapped FPRs (a
 // getTrans through TPosition3f fixes them but costs 8 bytes of frame) and
 // the torque's FPR numbering (cross2, +=, scaleAdd are inert or worse;
 // regalloc: the scale product, a CSE temp, is coloured last, retail f3).
@@ -724,19 +739,7 @@ void TBathtub::control()
 	if (unk248 > 0)
 		unk248--;
 	if (unk250 > unk16C->hipdropRelease.get() || (marioIsOn() && !mHeldObject)) {
-		const JGeometry::TVec3<f32>& marioPos = SMS_GetMarioPos();
-		f32 weight = unk16C->marioWeight.get();
-		if (unk250 > 0)
-			weight += unk16C->marioDropWeight.get();
-		if (!(weight <= 0.0000000001f)) {
-			static JGeometry::TVec3<f32> yDown(0.0f, -1.0f, 0.0f);
-			JGeometry::TVec3<f32> lever;
-			lever.sub(marioPos, mPosition);
-			JGeometry::TVec3<f32> torque;
-			torque.cross(lever, yDown);
-			torque.scale(0.00000001f * weight);
-			mAngleVel.add(torque);
-		}
+		liftMario(SMS_GetMarioPos());
 	}
 	updatePosture_();
 	calcRootMatrix();
