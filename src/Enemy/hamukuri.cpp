@@ -2137,7 +2137,7 @@ void TDangoHamuKuri::reset()
 
 BOOL TDangoHamuKuri::receiveMessage(THitActor* sender, u32 message)
 {
-	if (message == HIT_MESSAGE_TAKE && mHolder == nullptr && mBoss != this) {
+	if (message == HIT_MESSAGE_TAKE && getHolder() == nullptr && mBoss != this) {
 		onHitFlag(HIT_FLAG_NO_COLLISION);
 		mHolder = (TLiveActor*)sender;
 		behaveToTaken(sender);
@@ -2145,7 +2145,7 @@ BOOL TDangoHamuKuri::receiveMessage(THitActor* sender, u32 message)
 	}
 
 	if ((message == HIT_MESSAGE_PUT || message == HIT_MESSAGE_THROWN)
-	    && mHolder == sender) {
+	    && getHolder() == sender) {
 		mHolder = nullptr;
 		behaveToRelease();
 		offHitFlag(HIT_FLAG_NO_COLLISION);
@@ -2168,13 +2168,14 @@ BOOL TDangoHamuKuri::receiveMessage(THitActor* sender, u32 message)
 		onHitFlag(HIT_FLAG_NO_COLLISION);
 	}
 
-	// TODO: instruction-exact; frame still 0x20 short (0x28 vs 0x48) after
-	// the particle-manager binder. getPosition/SMSGetMSound swap this/sender.
+	// TODO: instruction-exact; frame still 0x20 short (0x28 vs 0x48). The
+	// getHolder() tests above carry the words a particle-manager binder here
+	// used to. getPosition/SMSGetMSound swap this/sender.
 	// All 16 pairings of binder/raw, getPosition()/raw on both emitters and
 	// SMSGetMSound()/raw move the frame by at most the binder's 8. The same
 	// 0x20 is missing in TTamaNoko::receiveMessage (TSmallEnemy's is 0x30).
 	if (message == HIT_MESSAGE_SPRAYED_BY_WATER) {
-		SMSGetParticleManagerBound()->emit(
+		gpMarioParticleManager->emit(
 		    PARTICLE_MS_ENM_WATHIT, &sender->mPosition, 0, nullptr);
 		gpMSound->startSoundSet(MSD_SE_EN_COMMON_W_HIT_OK, &mPosition, 0.0f,
 		                        0.0f, 0, 0, 4);
