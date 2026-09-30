@@ -617,8 +617,7 @@ void TNozzleTrigger::movement(const TMarioControllerWork& controllerWork)
 		if (unk38C != 0xffffffff) {
 			u32 soundId = unk378 < 1.0f ? MSD_SE_PO_WATER_LOW_TRG
 			                            : MSD_SE_PO_WATER_HI_TRG;
-			WaterGunMSound()->startSoundActor(soundId, NozzleFludd(this)->mEmitPos[0], 0,
-			                                nullptr, 0, 4);
+			WaterGunMSound()->startSoundActor(soundId, NozzleFludd(this)->mEmitPos[0]);
 		}
 		unk386 = mEmitParams.mTriggerTime.get();
 	}
@@ -636,7 +635,7 @@ void TNozzleTrigger::movement(const TMarioControllerWork& controllerWork)
 	if (canSpray == true) {
 		unk388 += 150.0f * controllerWork.mAnalogR;
 		if (!unk384 && unk385 == TNozzleTrigger::INACTIVE) {
-			if (SMSGetMarDirectorBound()->unk58 % (int)mFludd->getMario()->unk568 == 0)
+			if (gpMarDirector->unk58 % (int)mFludd->getMario()->unk568 == 0)
 				SMSRumbleMgr->start(20, (int)mFludd->getMario()->unk564,
 				                    (f32*)nullptr);
 		}
