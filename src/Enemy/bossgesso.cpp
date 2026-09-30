@@ -2154,15 +2154,15 @@ DEFINE_NERVE(TNerveBGDie, TLiveActor)
 
 		self->getMActor()->resetDL();
 
-		if (SMSGetMarDirectorBound()->mMap == 3 || SMSGetMarDirectorBound()->mMap == 59) {
+		if (SMSGetMarDirector()->getCurrentMap() == 3 || SMSGetMarDirector()->getCurrentMap() == 59) {
 			MSBgm::stopTrackBGMs(7, 10);
 			MSMainProc::setBossLivesFlag(false);
-		} else if (SMSGetMarDirectorBound()->mMap == 9) {
+		} else if (SMSGetMarDirector()->getCurrentMap() == 9) {
 			MSBgm::stopTrackBGM(1, 10);
 			MSMainProc::setBossLivesFlagOnlyFlag(false);
 		}
 
-		if (SMSGetMarDirectorBound()->mMap == 9) {
+		if (SMSGetMarDirector()->getCurrentMap() == 9) {
 			gpMarDirector->fireStartDemoCamera("bgeso_fall_camera3", nullptr,
 			                                   -1, 0.0f, true, nullptr, 0,
 			                                   nullptr, JDrama::TFlagT<u16>(0));
@@ -2176,7 +2176,7 @@ DEFINE_NERVE(TNerveBGDie, TLiveActor)
 			                                   nullptr, JDrama::TFlagT<u16>(0));
 		}
 
-		if (SMSGetMarDirectorBound()->mMap == 3 || SMSGetMarDirectorBound()->mMap == 59) {
+		if (SMSGetMarDirector()->getCurrentMap() == 3 || SMSGetMarDirector()->getCurrentMap() == 59) {
 			SMSGetItemManagerBound()->makeShineAppearWithDemo(
 			    "シャイン（ボス用）", "ボスシャインカメラ", self->mPosition.x,
 			    6000.0f + self->mPosition.y, self->mPosition.z);
@@ -2192,7 +2192,7 @@ DEFINE_NERVE(TNerveBGDie, TLiveActor)
 		                                &self->mPosition, 0, nullptr, 0, 4);
 	}
 
-	if (SMSGetMarDirectorBound()->mMap == 9 && spine->getTime() >= 740
+	if (SMSGetMarDirector()->getCurrentMap() == 9 && spine->getTime() >= 740
 	    && spine->getTime() <= 750) {
 		BossgessoGetMSound()->startSoundActor(MSD_SE_OBJ_QUAKE, &self->mPosition, 0,
 		                                nullptr, 0, 4);
