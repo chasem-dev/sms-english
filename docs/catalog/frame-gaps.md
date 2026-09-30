@@ -2671,3 +2671,33 @@ Per accessor: MarDirector 11, ParticleManager 12, MSound 8, Map 6, FlagManager 3
 
 - Most remaining Bound sites sit in functions with no raw member read an accessor could carry (Talk2D2's 22 sound sites, the NPC event functions, TBathtub::perform, the gatekeeper and bosspakkun nerves); their words need a per-function structure, not a site respelling.
 - A unit's own spelling elsewhere is the best tie-breaker when several placements are byte-identical, as bossgesso's `getCurrentMap()` tests were.
+
+## Closure batch c-k23 (2026-09-30): the single-function units, with the new constructs
+
+Question: which of 25 units with exactly one non-exact function close with the constructs c-k21/c-k22/c-r31 found (accessor reads, plain global accessors, the short sound overload, UNUSED helpers, default-argument temporaries)?
+Answer: two functions closed and one unit linked; two more close only with shared-header changes, measured and parked below.
+
+### What landed (wt/c-k23)
+
+- TMario::jumpingBasic: the whole 0x48 of dead frame was accessor words: `getGroundPlane()->getActor()` at both receiveMessage reads, `getWallPlane()` at all seven wall reads, `getCurrentNozzleIndex()` and the short overload for the wall sound (hsearch, 52 s). MarioJump is linked.
+- TEnemyManager::performShared: its two TTimeRec colours are call-site temporaries of a `startTimer(const JUtility::TColor& = JUtility::TColor(0xff, 0xff, 0xff, 0xff))` overload, parked TU-locally as `EnemyManagerStartTimer` (also used by TEnemyManager::perform, which stays exact).
+  A call-site temporary is created while the caller is parsed, so both colours sit together at the top of the pool (0xbc/0xb8) with countLivingEnemy's result below them; the header's four-u8 overload makes the colour an inlined local instead (0xbc/0xb4).
+- TShine::control, partial: the six short sounds, getInitialPosition() at both reads and the idle state's light block as one inline level take the frame 0xa8 -> 0xe8, and the debugger shows retail's six words above the GXColor temporary.
+
+### Parked for a shared-header change
+
+- TimeRec.hpp: replacing `startTimer(u8 r = 0xff, u8 g, u8 b, u8 a)` with the `const JUtility::TColor&` overload above (callers written `startTimer(JUtility::TColor(0xff, 0x00, 0x00, 0x80))`) is neutral tree-wide (livemanager, objmanager, ModelWaterManager unchanged, DOL SHA-1 unchanged) and closes performShared without the TU-local copy.
+- With it, TMario::perform closes with two more moves: `sil` dropped and gpSilhouetteManager read through a plain accessor at both silhouette sites (`inline TSilhouette* SMSGetSilhouetteManager()` in DrawUtil.hpp, a fabricated name with no map evidence), and the one raw `mWaterGun` site moved to any of the seven sites after the first CUE_MOVE call (the last, CUE_SEMITRANSPARENT_PRIO_1, is exact).
+  Measured on the full tree: no regression, MarioMain 100%, and MarioMain linked from source keeps the DOL SHA-1.
+  The accessor cannot be parked TU-locally (it would be a pass-through helper), so this waits for the header decision.
+
+### Measured and rejected
+
+- enemymanager cannot be linked even though every function matches: its .sdata2 pool orders the int-to-float double first in retail (@3073) and fourth in ours, so the double belongs to one of the UNUSED bodies before getFarOutEnemy (createCopyAnmMtx 0x15c or killOtherEnemies 0xa4), which are 4-byte stubs here.
+- TShine::control from 0xe8: `MsWrap(getRotation().y, ...)` at one discarded wrap is +8 (0xf0) and lands appearWithDemo's TFlagT at retail's 0xa0, but both wraps saturate at 0xf0 with more slot marks; all 128 mixes of short and six-argument sounds with or without SMSGetCamera() peak at 0xe8; SMSGetCamera() swaps r28/r29 in the demo block; a TVec3 temporary or an unnamed colour for the light changes code.
+  The debugger then wants three more words between the colour temporary and the flag.
+- TMonumentShine::hitByWater: one named epsilon used at both tests puts waterDir right (0x54) but pushes marioDir 4 low (13 marks); direct-initialised vectors, a `static const` up vector and `0.0f <` are inert.
+- TRideCloud::control: seven spellings of `300 * scaling.x * unk160` keep the f0/f1 swap or add a frame.
+- TBossHanachanPartsBase::considerSetAnm_: the debugger maps only the conversion temporary and wants ten dead words below it; hsearch reaches 0xf8 (getRotation().z plus a named getActorType), so the TODO's four-expansion lead stands.
+- TRKSuppAccessFile: the loop as a `for` with `done += length` as its increment and a `u8 replyIOResult` are inert (12 marks).
+- MarioCap, CameraDemo, enemyAttachment, wireBinder, NpcCollision, keepDistance and getPosInWire are the `a = b - c`/`a = b + c` operator temporary order; PerformList and MirrorActor the JGadget iterator stride; MarioReceiveMsg a named-block hole of Mtx/TVec3/TVec2 size; none was retried.
