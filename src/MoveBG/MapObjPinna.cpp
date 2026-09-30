@@ -1000,7 +1000,7 @@ void TAmiKing::moveObject()
 
 void TAmiKing::calc()
 {
-	SMSGetParticleManagerBound()->emitAndBindToMtxPtr(
+	gpMarioParticleManager->emitAndBindToMtxPtr(
 	    (E_SMS_EFFECT_LOOP_NORMAL)0x184, getModel()->getAnmMtx(0), 1, this);
 
 	if (mFlying == 0) {
@@ -1016,14 +1016,14 @@ void TAmiKing::calc()
 		mEffectPos.y += offset.y;
 		mEffectPos.z += offset.z;
 
-		JPABaseEmitter* zzz = SMSGetParticleManagerBound()->emitAndBindToPosPtr(
+		JPABaseEmitter* zzz = gpMarioParticleManager->emitAndBindToPosPtr(
 		    PARTICLE_MS_POI_ZZZ, &mEffectPos, 1, this);
 		if (zzz)
 			zzz->setGlobalScale(JGeometry::TVec3<f32>(2.0f, 2.0f, 2.0f));
 
-		SMSGetMSound()->startSoundActor(0x214F, &mPosition, 0, nullptr, 0, 4);
+		SMSGetMSound()->startSoundActor(0x214F, &mPosition);
 	} else {
-		SMSGetMSound()->startSoundActor(0x2120, &mPosition, 0, nullptr, 0, 4);
+		SMSGetMSound()->startSoundActor(0x2120, &mPosition);
 	}
 }
 
