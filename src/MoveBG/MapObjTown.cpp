@@ -101,7 +101,7 @@ void TManhole::touchPlayer(THitActor*)
 		return;
 	}
 	if (SMSGetMarioBound()->getStatus() == MARIO_STATUS_HIP_DROP
-	    && SMSGetMarioBound()->mPosition.y < mPosition.y) {
+	    && gpMarioOriginal->getPosition().y < mPosition.y) {
 		getMActor()->getFrameCtrl(ANM_TYPE_BCK)->setRate(SMSGetAnmFrameRate());
 		getMActor()
 		    ->getFrameCtrl(ANM_TYPE_BCK)
