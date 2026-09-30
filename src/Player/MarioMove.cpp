@@ -2451,12 +2451,12 @@ void TMario::checkWet()
 	if (mWetWaterParticleTimer & 7)
 		return;
 
-	MarioMoveWetEmitInfo(this)->mPos.set(mPosition);
+	MarioMoveWetEmitInfo(this)->mPos.set(getPosition());
 	MarioMoveWetEmitInfo(this)->mPos.value.y += 5.0f;
 	// Why??? Are we missing THAT many inlines?
 	(Vec&)unk158->mV.value
 	    = (Vec) { mVel.x * 0.3f, mVel.y * 0.3f, mVel.z * 0.3f };
-	SMSGetModelWaterManagerBound()->emitRequest(*unk158);
+	gpModelWaterManager->emitRequest(*unk158);
 }
 
 // TODO: the frame is 0x18 short. The Spray loop's temporaries sit 0x14-0x2c
