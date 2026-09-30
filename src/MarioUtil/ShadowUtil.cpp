@@ -51,10 +51,10 @@ TMBindShadowParts::TMBindShadowParts(J3DModel* param_1, u8 param_2,
 	mMinRadius = param_4;
 }
 
-// TODO: instruction-identical (98.7%) but the frame is 0x90 against retail's
-// 0x128: 40 bytes of named locals declared before `request` and 112 bytes of
-// inline-expansion temporaries are missing, with no evidence for either beyond
-// the byte counts.
+// TODO: instruction-identical (98.7%) but the frame is 0xa0 against retail's
+// 0x128 (getPosition() gives 0x10 of it): 40 bytes of named locals declared
+// before `request` and inline-expansion temporaries are missing, with no
+// evidence for either beyond the byte counts.
 void TMBindShadowParts::calc(f32 param_1)
 {
 	if (!unk14)
@@ -63,7 +63,7 @@ void TMBindShadowParts::calc(f32 param_1)
 	f32 y1 = param_1;
 	f32 y2 = param_1;
 
-	f32 dist = fabsf(mBody->mActor->mPosition.y - param_1);
+	f32 dist = fabsf(mBody->mActor->getPosition().y - param_1);
 
 	const JGeometry::TVec3<f32>& light = gpBindShadowManager->mLightDir;
 
