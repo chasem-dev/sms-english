@@ -926,12 +926,13 @@ static inline bool MapObjPinnaIsGateBroken(TMapObjGeneral* gate)
 	return false;
 }
 
-// TODO: 99.9%, instruction exact; the frame is 0x88 against retail's 0xd8.
-// Retail's pool below the two TFlagT temporaries is 0x48 longer and 0x10
-// more sits above the column-water scale vector. Measured: the two-argument
-// startSoundActor +8 of pool; a named splash scale TVec3 moves only the
-// vector; raw gpMarDirector and getModel() for getMActor()->getModel() are
-// negative or break instructions.
+// TODO: 99.9%, instruction exact; the frame is 0xa8 against retail's 0xd8
+// (0x88 before the two-argument startSoundActor, getActor() at both gate
+// reads and getActorType(), c-hs5; getGroundPlane() breaks instructions).
+// Before those, retail's pool below the two TFlagT temporaries was 0x48
+// longer and 0x10 more sat above the column-water scale vector. A named
+// splash scale TVec3 moves only the vector; raw gpMarDirector and getModel()
+// for getMActor()->getModel() are negative or break instructions.
 // Also (pinna1): the wake-up branch as a TU-local level is inert; the
 // water-landing branch as one adds ten instructions.
 void TAmiKing::moveObject()
@@ -943,8 +944,7 @@ void TAmiKing::moveObject()
 			if (getMActor()->curAnmEndsNext(0, nullptr))
 				getMActor()->setBck("amiking_flying1_loop");
 		} else if (mGroundPlane->isWaterSurface() && !isAirborne()) {
-			SMSGetMSound()->startSoundActor(0x2921, &mPosition, 0, nullptr, 0,
-			                                4);
+			SMSGetMSound()->startSoundActor(0x2921, &mPosition);
 
 			JPABaseEmitter* splash
 			    = gpMarioParticleManager->emitAndBindToMtxPtr(
@@ -975,10 +975,10 @@ void TAmiKing::moveObject()
 
 			kill();
 		}
-	} else if (mGroundPlane->mActor) {
+	} else if (mGroundPlane->getActor()) {
 		// Wake up when the gate the net is sitting on gets broken.
-		TMapObjGeneral* gate = (TMapObjGeneral*)mGroundPlane->mActor;
-		if (gate->mActorType == 0x4000006A) {
+		TMapObjGeneral* gate = (TMapObjGeneral*)mGroundPlane->getActor();
+		if (gate->getActorType() == 0x4000006A) {
 			if (MapObjPinnaIsGateBroken(gate)) {
 				mFlying = true;
 
