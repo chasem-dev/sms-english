@@ -322,6 +322,20 @@ inline JGeometry::TVec3<f32> fromPolar(f32 theta, f32 radius)
 	                             radius * JMASCos(theta * (65536.0f / 360.0f)));
 }
 
+// Fabricated name: the distance from b to a, spelled as a named copy of a
+// that is subtracted in place (a 12-byte copy followed by three fsubs with
+// store-back) before its length is taken. TWalkerEnemy::isResignationAttack,
+// TFireWanwan::isMissMario and TNerveRHGraphWander::execute are exact with it;
+// TSpineEnemy::calcDist's by-value copy costs each of them 8 bytes of frame,
+// and TVec3::distance() expands to a different shape.
+inline f32 MsDistance(const JGeometry::TVec3<f32>& a,
+                      const JGeometry::TVec3<f32>& b)
+{
+	JGeometry::TVec3<f32> diff = a;
+	diff.sub(b);
+	return diff.length();
+}
+
 // fabricated
 inline f32 MsAngleWrap(f32 angle) { return MsWrap(angle, 0.0f, 360.0f); }
 

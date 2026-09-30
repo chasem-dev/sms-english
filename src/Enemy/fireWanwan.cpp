@@ -1075,14 +1075,6 @@ static inline int FireWanwanPolluteTimer(const TFireWanwan* p)
 	return p->mPolluteTimer;
 }
 
-static inline f32 dist(const JGeometry::TVec3<f32>& a,
-                       const JGeometry::TVec3<f32>& b)
-{
-	JGeometry::TVec3<f32> tmp = a;
-	tmp.sub(b);
-	return tmp.length();
-}
-
 // PathNode.hpp's getPoint() reaches the node's actor through getPosition();
 // reading mPosition raw instead is 4 bytes of low region here. Header round 27
 // measured the same change made in the header as a tree-wide wash, so it stays
@@ -1108,7 +1100,7 @@ bool TFireWanwan::isMissMario() const
 		return true;
 
 	f32 giveUpLen = getSaveParam2()->mSLGiveUpLength.get();
-	if (dist(FireWanwanGetPoint(unk104), mPosition) > giveUpLen)
+	if (MsDistance(FireWanwanGetPoint(unk104), mPosition) > giveUpLen)
 		return true;
 
 	return false;

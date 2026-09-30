@@ -187,20 +187,12 @@ void TWalkerEnemy::initAttacker(THitActor* param_1)
 	unk184    = 1;
 }
 
-// TODO: look for more places to use this
-static inline f32 dist(const JGeometry::TVec3<f32>& a,
-                       const JGeometry::TVec3<f32>& b)
-{
-	JGeometry::TVec3<f32> tmp = a;
-	tmp.sub(b);
-	return tmp.length();
-}
 
 bool TWalkerEnemy::isResignationAttack()
 {
 	f32 fVar1 = getSaveParam2()->mSLGiveUpLength.get();
 
-	if (dist(WalkerPathPoint(unk104), mPosition) > fVar1)
+	if (MsDistance(WalkerPathPoint(unk104), mPosition) > fVar1)
 		return true;
 	else
 		return false;

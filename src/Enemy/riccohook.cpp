@@ -2,6 +2,7 @@
 #include <Strategic/Spine.hpp>
 #include <Enemy/Graph.hpp>
 #include <JSystem/JMath.hpp>
+#include <MarioUtil/MathUtil.hpp>
 #include <MSound/MSound.hpp>
 #include <MSound/SoundEffects.hpp>
 #include <M3DUtil/InfectiousStrings.hpp>
@@ -168,20 +169,6 @@ static inline JGeometry::TVec3<f32> polarXZ(f32 theta, f32 radius)
 	return JGeometry::TVec3<f32>(s, 0.0f, c);
 }
 
-// Parked TU-local helper: retail's distance test copies the left operand into
-// a stack vector, subtracts component-wise in place and then takes its length
-// (a 12-byte copy at 0x9c followed by three fsubs with store-back).
-// JGeometry::TVec3<f32>::distance() expands to a different shape and has no map
-// symbol at all, so the site went through a copy-and-subtract helper.
-// TODO: promote once the real helper is identified; batch 83 found the same
-// shape in TEMario::perform and AnimalNerve::calcDist.
-static inline f32 riccoHookDistance(const JGeometry::TVec3<f32>& a,
-                                    const JGeometry::TVec3<f32>& b)
-{
-	JGeometry::TVec3<f32> diff = a;
-	diff.sub(b);
-	return diff.length();
-}
 
 DEFINE_NERVE(TNerveRHGraphWander, TLiveActor)
 {
@@ -194,7 +181,7 @@ DEFINE_NERVE(TNerveRHGraphWander, TLiveActor)
 		self->goToDirectedNextGraphNode(polar);
 	}
 
-	if (riccoHookDistance(self->unk104.getPoint(), self->getPosition())
+	if (MsDistance(self->unk104.getPoint(), self->getPosition())
 	    < 10.0f) {
 		TGraphNode& node = self->unk124->getCurrent();
 
@@ -217,7 +204,7 @@ DEFINE_NERVE(TNerveRHGraphWander, TLiveActor)
 		// accessor reads is a raw member read in retail -- the dead
 		// 4-byte temporary it drops is the last word of low region
 		// (pool base 0x9c, not 0xa0). `self->mRotation.y`,
-		// `riccoHookDistance(..., self->mPosition)` and this `sub`
+		// `MsDistance(..., self->mPosition)` and this `sub`
 		// argument each land the function byte-exact on their own and
 		// nothing distinguishes them; this one is chosen because the
 		// same block writes `self->mPosition.add(dPos)` raw two lines
