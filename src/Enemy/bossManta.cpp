@@ -1001,7 +1001,7 @@ void TBossMantaManager::TMantaMessageState::update()
 	switch (unk4) {
 	case 0:
 		if (((TBossManta*)unk0->getObj(0))->isSpawnState()) {
-			SMSGetMarDirectorBound()->getConsole()->startAppearBalloon(0xC, true);
+			SMSGetMarDirector()->getConsole()->startAppearBalloon(0xC, true);
 			unk4++;
 		}
 		break;
@@ -1020,7 +1020,7 @@ void TBossMantaManager::TMantaMessageState::update()
 	}
 	case 2:
 		if (unk0->unk88.mState == 2) {
-			gpMarDirector->getConsole()->startAppearBalloon(0xE, true);
+			SMSGetMarDirector()->getConsole()->startAppearBalloon(0xE, true);
 			unk4++;
 		}
 		break;
