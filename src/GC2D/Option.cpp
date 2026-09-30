@@ -1099,11 +1099,11 @@ void TOptionControl::toggleCurType()
 	}
 }
 
-// TODO: frame 0x70 against retail 0xc8 with every instruction right; a
-// 0x58 dead low region, most likely a missing inline level.
+// TODO: frame 0x80 against retail 0xc8 with every instruction right; a
+// 0x48 dead low region, most likely a missing inline level.
 void TOptionControl::checkInput()
 {
-	f32 fVar1       = gpMarDirector->unk18[0]->getMainStickInDir(0.0f, 1.0f);
+	f32 fVar1 = gpMarDirector->getGamePad()->getMainStickInDir(0.0f, 1.0f);
 	SelectType type = mSelectedOption;
 	if (0.75f <= fVar1) {
 		if (mStickNeutral) {
