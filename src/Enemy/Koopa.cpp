@@ -896,6 +896,9 @@ BOOL TKoopa::ignoresMario() const
 // UNUSED (0x8) -- one store and a return.
 void TKoopa::setIgnoreMario(long ignore) { mIgnoreMario = ignore; }
 
+// TODO: the frame is 0x58 short (0x98 vs 0xf0). `time` as s32 fixes all
+// seven register mismatches (all four step locals as s32 does too, at 8 of
+// frame).
 f32 TKoopa::getFlameDirRate() const
 {
 	f32 frame = getMActor()->getFrameCtrl(ANM_TYPE_BCK)->getFrame();
@@ -904,7 +907,7 @@ f32 TKoopa::getFlameDirRate() const
 	f32 overStart        = params->flameOverStart.get();
 	int startStep        = params->flameFocusStartStep.get();
 	int endStep          = params->flameFocusEndStep.get();
-	int time             = mSpine->getTime();
+	s32 time             = getSpine()->getTime();
 	int index            = getMActor()->getCurAnmIdx(ANM_TYPE_BCK);
 
 	switch (index) {
@@ -913,7 +916,7 @@ f32 TKoopa::getFlameDirRate() const
 	case KOOPA_ANM_FIRE_END:
 	case KOOPA_ANM_FIRE_LOOP: {
 		f32 rate;
-		if (mSpine->getTime() <= startStep)
+		if (getSpine()->getTime() <= startStep)
 			rate = -overStart;
 		else if (time <= endStep)
 			rate = ((1.0f + overStart) * (f32)(time - startStep))
