@@ -3072,7 +3072,7 @@ void TGCConsole2::checkChangeTelopArray()
 {
 	u32* oldArray = GCConsole2Unk570(this);
 
-	if (gpMarDirector->mMap == 1) {
+	if (gpMarDirector->getCurrentMap() == 1) {
 		switch (gpMarDirector->unk7D) {
 		case 0:
 			unk570 = scDolpicNewsDolpic0;
@@ -3101,7 +3101,7 @@ void TGCConsole2::checkChangeTelopArray()
 		case 5:
 			// One message per flag, both messages when both are set and the
 			// generic pair when neither is.
-			if (SMSGetFlagManagerBound()->getBool(0x50001)) {
+			if (TFlagManager::getInstance()->getBool(0x50001)) {
 				if (SMSGetFlagManagerBound()->getBool(0x50002))
 					unk570 = scDolpicNewsDolpic5_4;
 				else
