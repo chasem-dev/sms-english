@@ -831,11 +831,13 @@ void TMapObjPuncher::load(JSUMemoryInputStream& stream)
 	offHitFlag(HIT_FLAG_NO_COLLISION);
 }
 
-// TODO: retail keeps dir.x/dir.z in f31/f30 and push in f29 (ours push first),
-// frame 8 larger; named dir components, heading/dot helpers and push placement were inert.
+// TODO: retail keeps dir.x/dir.z in f31/f30 and push in f29 (ours push first);
+// named dir components, heading/dot helpers and push placement were inert.
+// The named emitWater test gives retail's 0x80 frame and every slot.
 void TMuddyBoat::moveByWater()
 {
-	if (SMS_GetMarioWaterGun()->isEmitWater() == 0)
+	int emitWater = SMS_GetMarioWaterGun()->isEmitWater();
+	if (emitWater == 0)
 		return;
 
 	MtxPtr emitMtx = SMS_GetMarioWaterGun()->getEmitMtx(0);
