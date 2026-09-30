@@ -37,9 +37,10 @@ TEMario::TEMario(const char* name)
 {
 }
 
-// TODO: 99.9%. Instruction-exact; frame 0xf0 vs 0xa8 and every stream-read
-// slot is 92 bytes higher in retail, so ~72 dead bytes sit below them and the
-// rest above.
+// TODO: 99.9%. Instruction-exact; frame 0xf0 vs 0xc0 (0xa8 before the three
+// pads were read through getGamePad(), c-hs5). Before that every stream-read
+// slot was 92 bytes higher in retail, ~72 dead bytes below them and the rest
+// above.
 void TEMario::load(JSUMemoryInputStream& stream)
 {
 	TSpineEnemy::load(stream);
@@ -66,19 +67,19 @@ void TEMario::load(JSUMemoryInputStream& stream)
 
 	// "Mario 2 P"
 	if (strcmp(mName, "マリオ２Ｐ") == 0) {
-		mEnemyMario->setGamePad(gpMarDirector->unk18[1]);
+		mEnemyMario->setGamePad(gpMarDirector->getGamePad(1));
 		mEnemyMario->mPlayerType = TMario::PLAYER_TYPE_P2;
 	}
 
 	// "Mario 3 P"
 	if (strcmp(mName, "マリオ３Ｐ") == 0) {
-		mEnemyMario->setGamePad(gpMarDirector->unk18[2]);
+		mEnemyMario->setGamePad(gpMarDirector->getGamePad(2));
 		mEnemyMario->mPlayerType = TMario::PLAYER_TYPE_P3;
 	}
 
 	// "Mario 4 P
 	if (strcmp(mName, "マリオ４Ｐ") == 0) {
-		mEnemyMario->setGamePad(gpMarDirector->unk18[3]);
+		mEnemyMario->setGamePad(gpMarDirector->getGamePad(3));
 		mEnemyMario->mPlayerType = TMario::PLAYER_TYPE_P4;
 	}
 
