@@ -2077,9 +2077,11 @@ void TMario::removeCallBack()
 	modelData->getJointNodePointer(mJointIdFootL)->setCallBack(nullptr);
 }
 
-// TODO: 99.4%. Retail's frame is 0x28 larger (0x24 above baseMtx; calling
-// calcAnimBody/calcAnimHands is code- and frame-identical to the written-out
-// blocks), and both Yoshi
+// TODO: 99.4%. The frame is exact (0x328) with the body model read as
+// `mModel->getModel()` and the surf gesso's as its raw mModel (through
+// getM3UModel()->unk8 it was 0x28 short, and getM3UModel()->getModel()
+// overshoots to 0x348); calling calcAnimBody/calcAnimHands is code- and
+// frame-identical to the written-out blocks. Left: both Yoshi
 // setMotionBlendRatioForBck sites test mAnmBck in r0 and reload it for the
 // call; ours caches it (raw mAnmBck / getAnmBck() spellings are worse).
 void TMario::calcAnim(u32 param_1, JDrama::TGraphics* graphics)
@@ -2091,14 +2093,14 @@ void TMario::calcAnim(u32 param_1, JDrama::TGraphics* graphics)
 	calcAnimHands();
 
 	if (mCap != nullptr) {
-		mCap->unkC->setBaseTRMtx(getM3UModel()->unk8->getAnmMtx(mJointIdMHead));
-		mCap->unk10[2]->setBaseTRMtx(getM3UModel()->unk8->getAnmMtx(mJointIdHead));
-		mCap->unk10[3]->setBaseTRMtx(getM3UModel()->unk8->getAnmMtx(mJointIdMHead));
+		mCap->unkC->setBaseTRMtx(mModel->getModel()->getAnmMtx(mJointIdMHead));
+		mCap->unk10[2]->setBaseTRMtx(mModel->getModel()->getAnmMtx(mJointIdHead));
+		mCap->unk10[3]->setBaseTRMtx(mModel->getModel()->getAnmMtx(mJointIdMHead));
 		mCap->perform(CUE_CALC_ANIM, graphics);
 	}
 
 	if (checkStatusType(MARIO_STATUS_FLAG_UNK10000)) {
-		mSurfGesso->getModel()->setBaseTRMtx(getM3UModel()->unk8->getBaseTRMtx());
+		mSurfGesso->mModel->setBaseTRMtx(mModel->getModel()->getBaseTRMtx());
 		mSurfGesso->perform(CUE_CALC_ANIM, graphics);
 	}
 
@@ -2125,9 +2127,9 @@ void TMario::calcAnim(u32 param_1, JDrama::TGraphics* graphics)
 	}
 
 	if (mAnimationId == ANIM_DEMO_GATE_OUT_GET2) {
-		getM3UModel()->unk8->getModelData()->getShapeNodePointer(5)->onFlag(
+		mModel->getModel()->getModelData()->getShapeNodePointer(5)->onFlag(
 		    J3DShpFlag_Visible);
-		getM3UModel()->unk8->getModelData()->getShapeNodePointer(6)->onFlag(
+		mModel->getModel()->getModelData()->getShapeNodePointer(6)->onFlag(
 		    J3DShpFlag_Visible);
 		flagOnAllShapes(mHandModels[0][0]->getModelData(), J3DShpFlag_Visible);
 		flagOnAllShapes(mHandModels[0][1]->getModelData(), J3DShpFlag_Visible);
