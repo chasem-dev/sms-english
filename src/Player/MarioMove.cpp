@@ -1425,15 +1425,17 @@ f32 TMario::getLRLevel(u8 level)
 	return out;
 }
 
-// TODO: every instruction is present; the frame is 0xd0 short (0x120 against
-// 0x1f0), so every slot and a few FPR tie-breaks differ. The UNUSED
+// TODO: every instruction is present; the frame is 0x40 short (0x1b0 against
+// 0x1f0), so every slot and a few FPR tie-breaks differ. c-hs7: getGamePad(),
+// getStatus(), getFludd() and its getCurrentNozzleIndex()/getCurrentWater()
+// at every read took it from 0x120 (+0x50, +0x10, +0x10, +0x20). The UNUSED
 // getLRLevel, getDizzyAngle and getDizzyPower bodies (all at map size), a
 // single MsSqrtf (it carries its own `> 0` test), the camera's getUnk258()
 // and an `int` (not `long`) jitter closed the instruction diffs.
 void TMario::checkController(JDrama::TGraphics*)
 {
-	unk108->mStickHS16 = (s16)(128.0f * mGamePad->mCompSPos[0]);
-	unk108->mStickVS16 = (s16)(128.0f * mGamePad->mCompSPos[1]);
+	unk108->mStickHS16 = (s16)(128.0f * getGamePad()->mCompSPos[0]);
+	unk108->mStickVS16 = (s16)(128.0f * getGamePad()->mCompSPos[1]);
 
 	if (isSinking()) {
 		f32 sinkScale
@@ -1448,35 +1450,35 @@ void TMario::checkController(JDrama::TGraphics*)
 	unk108->mInput      = (TMarioControllerWork::Buttons)0;
 	unk108->mFrameInput = (TMarioControllerWork::Buttons)0;
 
-	if (mGamePad->mMeaning & 0x80)
+	if (getGamePad()->mMeaning & 0x80)
 		unk108->mInput |= TMarioControllerWork::A;
 
-	if (mGamePad->mEnabledFrameMeaning & 0x80)
+	if (getGamePad()->mEnabledFrameMeaning & 0x80)
 		unk108->mFrameInput |= TMarioControllerWork::A;
 
-	if (mGamePad->mMeaning & 0x100)
+	if (getGamePad()->mMeaning & 0x100)
 		unk108->mInput |= TMarioControllerWork::B;
 
-	if (mGamePad->mEnabledFrameMeaning & 0x100)
+	if (getGamePad()->mEnabledFrameMeaning & 0x100)
 		unk108->mFrameInput |= TMarioControllerWork::B;
 
-	if (mGamePad->mMeaning & 0x400)
+	if (getGamePad()->mMeaning & 0x400)
 		unk108->mInput |= TMarioControllerWork::R;
 
-	if (mGamePad->mEnabledFrameMeaning & 0x400)
+	if (getGamePad()->mEnabledFrameMeaning & 0x400)
 		unk108->mFrameInput |= TMarioControllerWork::R;
 
-	if (mGamePad->mEnabledFrameMeaning & 0x1000)
+	if (getGamePad()->mEnabledFrameMeaning & 0x1000)
 		unk108->mFrameInput |= TMarioControllerWork::UNK10;
 
-	unk108->mAnalogRU8 = mGamePad->mCompSPos[3];
-	unk108->mAnalogLU8 = mGamePad->mCompSPos[2];
+	unk108->mAnalogRU8 = getGamePad()->mCompSPos[3];
+	unk108->mAnalogLU8 = getGamePad()->mCompSPos[2];
 
 	// The UNUSED getLRLevel (map 0xd8) is the 3-segment trigger curve,
 	// expanded four times: R and L for the controller work, then the L and R
 	// Mario-side copies.
-	s32 rawR = (s32)mGamePad->mCompSPos[3];
-	s32 rawL = (s32)mGamePad->mCompSPos[2];
+	s32 rawR = (s32)getGamePad()->mCompSPos[3];
+	s32 rawL = (s32)getGamePad()->mCompSPos[2];
 	unk108->mAnalogR = getLRLevel(rawR);
 	unk108->mAnalogL = getLRLevel(rawL);
 	unk10C = getLRLevel(rawL);
@@ -1532,11 +1534,11 @@ void TMario::checkController(JDrama::TGraphics*)
 	}
 
 	// Rocket-nozzle pump rotation latch
-	if (mWaterGun != nullptr) {
-		if ((s32)mWaterGun->mCurrentNozzle == TWaterGun::Turbo
+	if (getFludd() != nullptr) {
+		if ((s32)getFludd()->getCurrentNozzleIndex() == TWaterGun::Turbo
 		    && isUpperState(UPPER_STATE_PUMPING)
-		    && mGamePad->mCompSPos[3] > 0.0f
-		    && (f32)mWaterGun->mCurrentWater > 0.0f) {
+		    && getGamePad()->mCompSPos[3] > 0.0f
+		    && (f32)getFludd()->getCurrentWater() > 0.0f) {
 			if (mIntendedMag == 0.0f)
 				mIntendedYaw = mFaceAngle.y;
 
@@ -1547,7 +1549,7 @@ void TMario::checkController(JDrama::TGraphics*)
 				if ((f32)mDashTimer > (f32)mDeParams.mDashStartTime.get()) {
 					mDashTimer = mDeParams.mDashStartTime.get();
 					if (!checkFlag(MARIO_FLAG_FLUDD_EMITTING)
-					    && ((TNozzleTrigger*)((const TWaterGun*)mWaterGun)
+					    && ((TNozzleTrigger*)((const TWaterGun*)getFludd())
 					            ->getCurrentNozzle())
 					               ->getSprayState()
 					           == TNozzleTrigger::ACTIVE) {
@@ -1561,8 +1563,8 @@ void TMario::checkController(JDrama::TGraphics*)
 							                   false);
 					}
 				}
-				if (((mStatus + 0xFC000000) & 0xFFFFFFFF) != 0x440
-				    && mStatus != MARIO_STATUS_SWIM_PADDLE) {
+				if (((getStatus() + 0xFC000000) & 0xFFFFFFFF) != 0x440
+				    && getStatus() != MARIO_STATUS_SWIM_PADDLE) {
 					mDashTimer = 0;
 					offFlag(MARIO_FLAG_FLUDD_EMITTING);
 				}
@@ -1571,7 +1573,7 @@ void TMario::checkController(JDrama::TGraphics*)
 				offFlag(MARIO_FLAG_FLUDD_EMITTING);
 			}
 			mIntendedMag = mDashSpeed;
-			mWaterGun->rotateProp(mDashSpeed);
+			getFludd()->rotateProp(mDashSpeed);
 		} else {
 			if (mDashSpeed > 0.1f) {
 				if (mIntendedMag == 0.0f)
@@ -1585,14 +1587,14 @@ void TMario::checkController(JDrama::TGraphics*)
 			offFlag(MARIO_FLAG_FLUDD_EMITTING);
 		}
 
-		if ((s32)mWaterGun->mCurrentNozzle == TWaterGun::Turbo
-		    && ((mStatus + 0xF3C00000) == 0x201
-		        || ((mStatus + 0xFC000000) & 0xFFFFFFFF) == 0x440)) {
+		if ((s32)getFludd()->getCurrentNozzleIndex() == TWaterGun::Turbo
+		    && ((getStatus() + 0xF3C00000) == 0x201
+		        || ((getStatus() + 0xFC000000) & 0xFFFFFFFF) == 0x440)) {
 			f32 propRot = mIntendedMag / 32.0f;
 			// Retail's own bug: the shipped turbo nozzle is a TNozzleTrigger,
 			// but this stores through the abandoned TNozzleTurbo, 0x384 past
 			// the trigger's end.
-			((TNozzleTurbo*)((const TWaterGun*)mWaterGun)->getCurrentNozzle())
+			((TNozzleTurbo*)((const TWaterGun*)getFludd())->getCurrentNozzle())
 			    ->unk714
 			    = propRot;
 		}
@@ -1602,10 +1604,10 @@ void TMario::checkController(JDrama::TGraphics*)
 	if (mIntendedMag > 0.0f)
 		mInput |= 0x1;
 
-	if (mGamePad->mEnabledFrameMeaning & 0x80)
+	if (getGamePad()->mEnabledFrameMeaning & 0x80)
 		mInput |= 0x2;
 
-	if (mGamePad->mMeaning & 0x80)
+	if (getGamePad()->mMeaning & 0x80)
 		mInput |= 0x80;
 
 	if (unk108->mInput & 0x200)
@@ -1616,7 +1618,7 @@ void TMario::checkController(JDrama::TGraphics*)
 		mInput |= 0x2000;
 	}
 
-	if ((mGamePad->mEnabledFrameMeaning & 0x2000)
+	if ((getGamePad()->mEnabledFrameMeaning & 0x2000)
 	    || (unk108->mFrameInput & 0x40)) {
 		if (checkStatusType(MARIO_STATUS_FLAG_JUMPING) == true)
 			mInput |= 0x8000;
@@ -1624,9 +1626,9 @@ void TMario::checkController(JDrama::TGraphics*)
 
 	if (checkFlag(MARIO_FLAG_HAS_FLUDD)) {
 		if (!checkFlag(MARIO_FLAG_FLUDD_EMITTING)) {
-			if ((mGamePad->mMeaning & 0x400) || (mGamePad->mMeaning & 0x2000))
+			if ((getGamePad()->mMeaning & 0x400) || (getGamePad()->mMeaning & 0x2000))
 				mInput |= 0x200;
-			if (mGamePad->mEnabledFrameMeaning & 0x400)
+			if (getGamePad()->mEnabledFrameMeaning & 0x400)
 				mInput |= 0x100;
 		}
 	}
