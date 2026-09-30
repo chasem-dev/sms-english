@@ -1293,12 +1293,6 @@ static inline MActor* BossgessoGetUnk178(const TBossGesso* p)
 
 static inline int BossgessoGetUnk195(const TBossGesso* p) { return p->unk195; }
 
-static inline TMario* BossgessoGetMario()
-{
-	TMario* mario = gpMarioOriginal;
-	return mario;
-}
-
 static inline TTakeActor* BossgessoGetBeakHolder(const TBossGesso* p)
 {
 	TTakeActor* holder = BossgessoGetBeak(p)->mHolder;
@@ -1383,7 +1377,7 @@ void TBossGesso::doAttackUnison()
 
 	f32 sightAngle = BossgessoGetSaveParam2(this)->mSLSightAngle.get();
 	if (inSightAngle(sightAngle)
-	    && BossgessoGetMario()->isTouchGround4cm()
+	    && SMSGetMarioBound()->isTouchGround4cm()
 	    && delta.squared() < unisonAttackLen2) {
 
 		BOOL bVar3 = true;

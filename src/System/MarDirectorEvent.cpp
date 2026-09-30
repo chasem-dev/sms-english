@@ -73,10 +73,9 @@ TBaseNPC* TMarDirector::findNearestTakeNPC()
 	return result;
 }
 
-// Binders over the player, the pad and the talk cursor: with SMSGetCamera()
+// Binders over the player (SMSGetMarioBound), the pad and the talk cursor: with SMSGetCamera()
 // at the L-button test they are retail's 0x30 of pool in movement_game (one
 // of fourteen equally sized lever combinations; weakly evidenced).
-static inline TMario* MDEMario() { TMario* m = gpMarioOriginal; return m; }
 static inline TMarioGamePad* MDEPad(TMarDirector* d) { TMarioGamePad* p = d->unk18[0]; return p; }
 static inline TTalkCursor* MDECursor(TMarDirector* d) { TTalkCursor* c = d->unk84; return c; }
 
@@ -87,7 +86,7 @@ void TMarDirector::movement_game()
 	switch (unk124) {
 	case 0:
 		unk18[0]->offFlag(0x4);
-		if (MDEMario()->isHolding())
+		if (SMSGetMarioBound()->isHolding())
 			return;
 		if (SMSGetCamera()->isLButtonCamera())
 			return;

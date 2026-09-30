@@ -87,12 +87,6 @@ static inline MActor* MapObjTownGetMActor(const TManhole* p)
 	return mActor;
 }
 
-static inline TMario* MapObjTownGetMario()
-{
-	TMario* mario = gpMarioOriginal;
-	return mario;
-}
-
 static inline TMapCollisionManager* MapObjTownColManager(const TManhole* p)
 {
 	TMapCollisionManager* manager = p->mMapCollisionManager;
@@ -106,8 +100,8 @@ void TManhole::touchPlayer(THitActor*)
 		mPosition.y = getInitialPosition().y;
 		return;
 	}
-	if (MapObjTownGetMario()->getStatus() == MARIO_STATUS_HIP_DROP
-	    && MapObjTownGetMario()->mPosition.y < mPosition.y) {
+	if (SMSGetMarioBound()->getStatus() == MARIO_STATUS_HIP_DROP
+	    && SMSGetMarioBound()->mPosition.y < mPosition.y) {
 		getMActor()->getFrameCtrl(ANM_TYPE_BCK)->setRate(SMSGetAnmFrameRate());
 		getMActor()
 		    ->getFrameCtrl(ANM_TYPE_BCK)
@@ -204,7 +198,7 @@ void TManhole::appeared()
 		}
 	}
 	if (unk150) {
-		if (MapObjTownGetMario()->mVel.y <= 0.0f) {
+		if (SMSGetMarioBound()->mVel.y <= 0.0f) {
 			MapObjTownColManager(this)->unk8->setAllBGType(
 			    BG_TYPE_GROUND_POUND_TO_PASS_THROUGH);
 			unk150 = 0;

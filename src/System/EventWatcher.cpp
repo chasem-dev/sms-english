@@ -935,21 +935,13 @@ static void evAppearShineForWoodBox(TSpcTypedInterp<TEventWatcher>* interp,
 	interp->push();
 }
 
-// Binding level over a raw member read, worth +8 of low region in
-// evChangeNozzle (batch 127).
-static inline TMario* EventWatcherGetMarioOriginal()
-{
-	TMario* marioOriginal = gpMarioOriginal;
-	return marioOriginal;
-}
-
 static void evChangeNozzle(TSpcTypedInterp<TEventWatcher>* interp, u32 arg_num)
 {
 	interp->verifyArgNum(1, &arg_num);
 	TWaterGun::TNozzleType id
 	    = (TWaterGun::TNozzleType)interp->pop().getDataInt();
 	if (id == TWaterGun::DivingHelmet)
-		EventWatcherGetMarioOriginal()->setDivHelm();
+		SMSGetMarioBound()->setDivHelm();
 	else
 		gpMarioOriginal->mWaterGun->changeNozzle(id, true);
 	interp->push();

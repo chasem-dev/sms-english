@@ -1963,6 +1963,15 @@ public:
 };
 
 extern TMario* gpMarioOriginal;
+
+// Fabricated: the player bound to a named local before it is returned, +8 of
+// low region per expansion over a raw gpMarioOriginal read. Formerly parked
+// TU-locally in four units.
+inline TMario* SMSGetMarioBound()
+{
+	TMario* mario = gpMarioOriginal;
+	return mario;
+}
 extern TMario* gpMarioForCallBack;
 
 // The binding is load-bearing, unlike the other SMSGet* globals: an expansion
