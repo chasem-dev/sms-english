@@ -1283,7 +1283,9 @@ void TKoopaJrSubmarine::makeDirection()
 		// Named: the ROM copies the vector once (makeDirection's by-value
 		// parameter), calls atan2f and keeps the result in f31 before it
 		// fetches the rotation speed.
-		// TODO: the frame is 0x28 short in checkNerve's expansion.
+		// TODO: in checkNerve's expansion the frame now matches (c-hs7:
+		// getSpine() and getKillerIndex() there), but v sits 4 low and the
+		// by-value copy 0x30 high.
 		TDirectionCalc calc;
 		calc.makeDirection(v);
 		f32 dir                   = calc.get();
@@ -1295,7 +1297,8 @@ void TKoopaJrSubmarine::makeDirection()
 
 void TKoopaJrSubmarine::checkNerve()
 {
-	if (mKoopaJr->mSpine->getCurrentNerve() == &TNerveKoopaJrWait::theNerve()) {
+	if (mKoopaJr->getSpine()->getCurrentNerve()
+	    == &TNerveKoopaJrWait::theNerve()) {
 		makeRelativeAngle();
 		mRoundDistance = getSaveParams()->mSLRoundDistance.get();
 		makeRoundVelocity();
@@ -1303,19 +1306,20 @@ void TKoopaJrSubmarine::checkNerve()
 	mVelocity.scale(0.95f);
 	makeDirection();
 
-	if (mSpine->getCurrentNerve() == &TNerveKoopaJrSubmarineWait::theNerve())
+	if (getSpine()->getCurrentNerve()
+	    == &TNerveKoopaJrSubmarineWait::theNerve())
 		return;
-	if (mSpine->getCurrentNerve()
+	if (getSpine()->getCurrentNerve()
 	    == &TNerveKoopaJrSubmarineCannonOpenClose::theNerve()) {
-		if (mKillerIndex == 0) {
+		if (getKillerIndex() == 0) {
 			J3DFrameCtrl* ctrl = getMActor()->getFrameCtrl(0);
 			if (ctrl->checkPass(30.0f)) {
 				ctrl->setRate(0.0f);
-				mSpine->pushNerve(
+				getSpine()->pushNerve(
 				    &TNerveKoopaJrSubmarineLaunchKiller::theNerve());
 			}
 		}
-	} else if (mSpine->getCurrentNerve()
+	} else if (getSpine()->getCurrentNerve()
 	           == &TNerveKoopaJrSubmarineLaunchKiller::theNerve()) {
 	}
 }
