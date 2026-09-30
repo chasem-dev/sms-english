@@ -346,8 +346,16 @@ CannonGetSLChorobeiAttackRadius(const TCannonSaveLoadParams* p)
 	return sLChorobeiAttackRadius;
 }
 
+// TODO: frame 0x1a0 matches and the resource locals declared at the top fix
+// the marioData register (c-hs6); left: two TVec3 temporaries 4 bytes low
+// and initHitActor's four floats loaded in the reverse order. hsearch's
+// fix names three of the four hit parameters and the model data: not taken.
 void TCannon::init(TLiveManager* manager)
 {
+	void* domResource;
+	SDLModelData* domData;
+	void* marioResource;
+	SDLModelData* marioData;
 	static const char* sCannonDomPartsJointTable[]
 	    = { "nullC", "nullB", "nullA" };
 
@@ -357,8 +365,8 @@ void TCannon::init(TLiveManager* manager)
 	mSaveParams = (TCannonSaveLoadParams*)getSaveParam();
 	setBckAnm(3);
 
-	void* domResource     = JKRGetResource("/scene/cannon/cannon_Dom.bmd");
-	SDLModelData* domData = new SDLModelData(
+	domResource = JKRGetResource("/scene/cannon/cannon_Dom.bmd");
+	domData     = new SDLModelData(
 	    J3DModelLoaderDataBase::load(domResource, 0x10050000));
 
 	mInitialYaw = mRotation.y;
@@ -411,8 +419,8 @@ void TCannon::init(TLiveManager* manager)
 		mSingleDom->mIsHidden = 1;
 	}
 
-	void* marioResource     = JKRGetResource("/scene/cannon/hodai_mario.bmd");
-	SDLModelData* marioData = new SDLModelData(
+	marioResource = JKRGetResource("/scene/cannon/hodai_mario.bmd");
+	marioData     = new SDLModelData(
 	    J3DModelLoaderDataBase::load(marioResource, 0x10010000));
 	mMarioParts = new TSharedParts(this, 0, marioData, 3, "<TSharedParts>");
 	for (u8 i = 0; i < getModel()->getModelData()->getJointNum(); ++i) { }
