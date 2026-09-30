@@ -96,7 +96,8 @@ TObjHitCheck::checkWaterWithActorsInList(const JGeometry::TVec3<f32>& pos,
 
 // Retail calls this from checkActorsHit: the body costs 15 statements, one
 // over the depth-1 budget, and the named `hit` result is the fifteenth.
-// TODO: frame 8 short and saved GPRs rotated: retail gives pos r30 above
+// The particle's alive test is a named bool: it lands the frame and every slot.
+// TODO: saved GPRs rotated: retail gives pos r30 above
 // particlePositions r29, particleHitActors r28 and i r27, as if pos were a
 // base temp. The C-style top pointer puts i in r27 (99.3 -> 99.5); ours
 // still has particlePositions r30, particleHitActors r29, pos r28. Inert on
@@ -117,7 +118,8 @@ void TObjHitCheck::checkWater()
 	THitActor** particleHitActors = gpModelWaterManager->getParticleUnk2514();
 
 	for (int i = 0; i < gpModelWaterManager->getParticleCount(); ++i) {
-		if (!gpModelWaterManager->checkFlagBottom4Bits(i, 0x1))
+		bool alive = gpModelWaterManager->checkFlagBottom4Bits(i, 0x1);
+		if (!alive)
 			continue;
 
 		pos = &particlePositions[i];
