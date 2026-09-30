@@ -682,6 +682,9 @@ void TIgaiga::boundSE()
 	    abs(getGroundPlane()->getNormal().y), 0, 0, nullptr, 0, 4);
 }
 
+// TODO: instruction-exact; frame 0x70 vs retail 0xc8 with getGroundPlane()
+// at all three plane reads (c-hs6). getLinearVelocity() and getVelocity(),
+// never used in this file, are +0x10 more.
 void TIgaiga::walkBehavior(int param_1, f32 param_2)
 {
 	TRollEnemy::walkBehavior(param_1, param_2);
@@ -709,8 +712,8 @@ void TIgaiga::walkBehavior(int param_1, f32 param_2)
 	// `mr`s it to r3, so the name is declared after both guards. The
 	// wall actor is the load destination and needs no name.
 	if (!isAirborne()) {
-		if (mGroundPlane && mGroundPlane->getActor()) {
-			const TLiveActor* actor = mGroundPlane->getActor();
+		if (getGroundPlane() && getGroundPlane()->getActor()) {
+			const TLiveActor* actor = getGroundPlane()->getActor();
 			((THitActor*)actor)
 			    ->receiveMessage(this, HIT_MESSAGE_ATTACK);
 		}
