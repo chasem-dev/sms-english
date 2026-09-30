@@ -1336,8 +1336,9 @@ void TFireWanwan::moveObject()
 	if (mSprayedByWaterCooldown > 30)
 		mSprayedByWaterCooldown = 0;
 
-	if (mMapCollisionManager && mMapCollisionManager->unk8)
-		mMapCollisionManager->unk8->moveSRT(mPosition, mRotation, mScaling);
+	if (mMapCollisionManager != nullptr
+	    && mMapCollisionManager->getUnk8() != nullptr)
+		mMapCollisionManager->getUnk8()->moveSRT(mPosition, mRotation, mScaling);
 
 	if (!isInhibitedForceMove())
 		calcRidePos();
