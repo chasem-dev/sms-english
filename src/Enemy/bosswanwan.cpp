@@ -1703,9 +1703,7 @@ DEFINE_NERVE(TNerveBWBark, TLiveActor)
 
 		if (boss->mIsPicketFixed == 0) {
 			boss->releasePicket();
-			SMSGetMSoundBound()->startSoundActor(MSD_SE_BS_WANWAN_ESCAPE1,
-			                          &BosswanwanPicket(boss)->mPosition, 0,
-			                          nullptr, 0, 4);
+			SMSGetMSound()->startSoundActor(MSD_SE_BS_WANWAN_ESCAPE1, &BosswanwanPicket(boss)->mPosition);
 		}
 	}
 
