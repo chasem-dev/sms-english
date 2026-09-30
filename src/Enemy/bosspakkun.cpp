@@ -1586,8 +1586,10 @@ void TBossPakkunManager::load(JSUMemoryInputStream& stream)
 	initJParticle();
 }
 
-// TODO: instruction-exact; the frame is 0x38 short (0x180 vs 0x1b8), every
-// named slot uniformly low.
+// TODO: instruction-exact; the frame is 8 short (0x1b0 vs 0x1b8; 0x180
+// before the Mario position, stage, map and goal were read through their
+// accessors, c-hs5). hsearch lands the frame by also naming the inArea()
+// result as a BOOL, which is a lone name; every named slot is still low.
 DEFINE_NERVE(TNerveBPWait, TLiveActor)
 {
 	TBossPakkun* boss = (TBossPakkun*)spine->getBody();
@@ -1615,7 +1617,7 @@ DEFINE_NERVE(TNerveBPWait, TLiveActor)
 		spine->pushAfterCurrent(&TNerveBPWait::theNerve());
 		spine->pushAfterCurrent(&TNerveBPVomit::theNerve());
 
-		TPathNode node(*gpMarioPos);
+		TPathNode node(SMS_GetMarioPos());
 		boss->unk114.push(boss->unkF4);
 		boss->unkF4 = node;
 
@@ -1628,10 +1630,10 @@ DEFINE_NERVE(TNerveBPWait, TLiveActor)
 
 	if (spine->getTime() >= boss->getSaveParam2()->mSLWaitFrameStg0.get()
 	    && boss->getMActor()->isCurAnmAlreadyEnd(ANM_TYPE_BCK)) {
-		if (SMSGetMarDirector()->mMap == 2
-		    && (SMSGetMarDirector()->unk7D == 0
-		        || SMSGetMarDirector()->unk7D == 1)) {
-			if (boss->inArea(*gpMarioPos)) {
+		if (SMSGetMarDirector()->getCurrentMap() == 2
+		    && (SMSGetMarDirector()->getCurrentStage() == 0
+		        || SMSGetMarDirector()->getCurrentStage() == 1)) {
+			if (boss->inArea(SMS_GetMarioPos())) {
 				if (!SMS_GetMarioGroundPlane()->isWaterSurface()) {
 					spine->pushAfterCurrent(&TNerveBPCannon::theNerve());
 					return TRUE;
@@ -1642,7 +1644,7 @@ DEFINE_NERVE(TNerveBPWait, TLiveActor)
 			return TRUE;
 		}
 
-		if (gpMarDirector->unk7D == 4) {
+		if (gpMarDirector->getCurrentStage() == 4) {
 			f32 prop = boss->getSaveParam2()->mSLTornadoProp.get();
 			if (boss->mTornado->mState != BOSSPAKU_TORNADO_DEAD
 			    || MsRandF() < prop) {
@@ -1660,7 +1662,7 @@ DEFINE_NERVE(TNerveBPWait, TLiveActor)
 		spine->pushAfterCurrent(&TNerveBPWait::theNerve());
 		spine->pushAfterCurrent(&TNerveBPVomit::theNerve());
 
-		JGeometry::TVec3<f32> goal = boss->mPosition;
+		JGeometry::TVec3<f32> goal = boss->getPosition();
 		goal.x += 10000.0f * (MsRandF() - 0.5f);
 		goal.z += 10000.0f * (MsRandF() - 0.5f);
 
