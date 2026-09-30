@@ -964,8 +964,6 @@ void TLeanMirror::controlShake()
 // (retail pivots on 3 because the fourth, empty `case STATE_DONE: break;` arm
 // makes the sorted case set {1,2,3,4}), and controlGoTarget is now a real
 // `bl` as retail has it.
-static inline TMarDirector* LeanMirrorGetMarDirector() { return gpMarDirector; }
-
 void TLeanMirror::control()
 {
 	TMapObjBase::control();
@@ -991,11 +989,11 @@ void TLeanMirror::control()
 			if (stone->getLightNum() < 3) {
 				MSBgm::setTrackVolume(0, 1.0f, 0xA, 0);
 				if (stone->getLightNum() == 1)
-					LeanMirrorGetMarDirector()
+					SMSGetMarDirector()
 					    ->getConsole()
 					    ->startAppearBalloon(0x32, true);
 				else
-					LeanMirrorGetMarDirector()
+					SMSGetMarDirector()
 					    ->getConsole()
 					    ->startAppearBalloon(0x33, true);
 			}

@@ -185,8 +185,6 @@ void TMapEventSink::initWithBuildingNum(JSUMemoryInputStream& stream)
 	unk60                = new Unk60Struct[mBuildingNum];
 }
 
-static inline TMarDirector* getMarDirector() { return gpMarDirector; }
-
 void TMapEventSink::load(JSUMemoryInputStream& stream)
 {
 	TMapEvent::load(stream);
@@ -198,10 +196,10 @@ void TMapEventSink::load(JSUMemoryInputStream& stream)
 		initBuilding(i, stream);
 	}
 
-	if (getMarDirector()->getCurrentMap() == 0) {
+	if (SMSGetMarDirector()->getCurrentMap() == 0) {
 		mCleanedDegree = 30;
 		unk38          = 200.0f;
-	} else if (getMarDirector()->getCurrentMap() == 2) {
+	} else if (SMSGetMarDirector()->getCurrentMap() == 2) {
 		mCleanedDegree = 30;
 	}
 }

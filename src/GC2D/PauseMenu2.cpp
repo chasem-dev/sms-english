@@ -600,11 +600,6 @@ static inline TGCConsole2* PauseConsole(TMarDirector* director)
 	return console;
 }
 
-static inline TMarDirector* PauseDirector()
-{
-	return gpMarDirector;
-}
-
 void TPauseMenu2::setDrawStart()
 {
 	mPressedB           = false;
@@ -629,7 +624,7 @@ void TPauseMenu2::setDrawStart()
 
 	mMenuPane->setAlpha(255);
 	mMenuPane->mRotation = 0.0f;
-	PauseConsole(PauseDirector())->pauseIn();
+	PauseConsole(SMSGetMarDirector())->pauseIn();
 	SMSRumbleMgr->startPause();
 	gpMSound->pauseOn(true);
 	// TODO: frame-exact; four stack markers on the TColor assignment temps
