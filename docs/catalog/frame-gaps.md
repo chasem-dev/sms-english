@@ -2554,3 +2554,39 @@ A spelling was kept only where every site it replaced stayed byte-identical or i
 - getCubeInfo's `(*unk14)[i]` and getCube's `begin()[i]` cannot share a body: either one at the other's sites costs CubeManagerBase or MSStageCubeFade (and the begin() weak copy).
 - Binders over the header accessor (`MSound* x = SMSGetMSound(); return x;`, 25 copies; the director, flag manager and getCurrentMap families too) are 8 bytes smaller at every site as the raw-global binder (32 functions drop), so they are a separate family and stay TU-local.
 - Binders over member accessors (getCurrentMap, getHeldObject, getModel, getConsole, checkFlag) were not folded; c-r30 already showed their header accessors cannot take the binder shape.
+
+## Research batch c-r31 (2026-09-30): no single accessor body serves both the plain and the `...Bound` global sites
+
+Question: is there one honest spelling of a global accessor (specimen `SMSGetMarDirector`/`SMSGetMarDirectorBound`) that reproduces both the plain sites and the c-sh1 `...Bound` sites, so the fabricated duplicates can go?
+Answer: no; every accessor body adds a fixed number of dead words per expansion in every call context, and the Bound sites need two more than the plain sites in the same contexts, so the difference has to come from something else in those functions.
+Nothing landed; the `...Bound` accessors stay.
+
+### The cost ladder is a constant shift per body (synthetic TU, marker method)
+
+Dead words per expansion over a raw `gp->` read, measured with `int mk; extp(&mk);` declared first, GC/1.2.5 with the game flags, in seven contexts (`gp->getConsole()->f(x, true);`, `if (gp->mMap == 3)`, `u8 m = gp->mMap; if (m != 7 && m != 4)`, a member store, `if (!gp->isTalk())`, a root member call, and `a == 3 || a == 59` with two reads).
+- Plain `{ return gp; }` is +1 (one F forced load), 0 when the value feeds a call directly.
+- The binder `{ T* x = gp; return x; }` is the plain cost +2 in every context: the callee local and the P comma temporary (dump of `TBossPakkun::showMessage`: inline 2, F 2, P 1 against the plain spelling's 3).
+- `T* f(T* d = gp) { return d; }` (a default argument) and an identity inline over the raw read (`id(gp)`) equal the binder exactly; an identity inline over the plain accessor is +3.
+- A statement body without a local (`{ (void)0; return gp; }`, `return ((void)0, gp);`) is plain +1.
+- Equal to plain: a `T* const` return, `static inline`, `*&gp`, a class-static getter, a namespace-struct getter, a `T* const` global, a two-level accessor (`return Plain();`), a same-type cast; a base-typed global with a derived cast is plain except +1 under a predicate.
+- Equal to raw: `T*&` and `T* const&` returns.
+- Statement mode against expression mode (c-r24) moves nothing here: the root member call, the receiver of an out-of-line root call, a `!` operand, a store and an inline's argument all keep binder minus plain at exactly two words.
+- So a body X costs plain + k at every site for a fixed k; the plain sites need k = 0 and the Bound sites k = 2 in the same contexts (`...->getConsole()->startAppearBalloon(N, true);` is plain in TNerveBossEelDie, BossHanachanNerve and chuuhana and Bound in TNerveBossEelWaitAppear, bossManta and fireWanwan).
+  No accessor body, qualifier or declaration of the global can serve both.
+
+### Tree-wide checks (census against the base, 12038 exact)
+
+- Bound's body as the plain one (the duplicate simply deleted): 0 up / 37 down (32 exact lost), all frame-only.
+- Bound's body as the statement body `{ (void)0; return gp; }`: 0 up / 31 down, every one 8 short or with slots 4 low.
+- Every plain `SMSGetMarDirector()` site respelled raw `gpMarDirector` (72 units): about 100 down, so the plain sites are real one-word expansions and not raw reads.
+- The plain accessor as the binder: c-r30's 7 up / 63 down.
+- One uniform body does fit `TMantaMessageState::update`'s three identical balloon statements: its 0x98 frame takes raw+Bound+Bound, plain+plain+Bound or the statement body at all three; the statement body there is the only uniform one, and the same body loses 30 functions elsewhere.
+- Frames pin only the count: in the slot-class specimens (TNerveBossEelWaitAppear, TNerveFireWanwanDie) the named `marioPosition` at the top moves with the total, not with where the binder's words sit, so any honest source of the same two words anywhere in the function would do.
+
+### Leads, not landed
+
+- `SMSGetMarDirectorBound()->mMap` in a condition equals `SMSGetMarDirector()->getCurrentMap()` (3 words each) and `->unk7D` equals `->getCurrentStage()`: bossgesso's six mMap sites, bosspakkun's and hinokuri2's unk7D sites and MapObjBall's lines 814 and 876 respell byte-identically; MapObjBall's makeObjWaitingToAppear and perform sites drop (receiveMessage 8 short, perform slots).
+  Not committed: getCurrentMap and getCurrentStage are themselves fabricated names, so it swaps one frame carrier for another and leaves the Bound accessor in place.
+- The Bound sites share no call shape that the plain sites lack (the same `isDemoMode3() || isDemoMode4() || isTalkModeNow()` test is raw in MarioMove and Yoshi and Bound in WaterGun and enemyMario), and most Bound functions carry other fabricated binders (fireWanwan's tail-hit and manager helpers, bosseel's cube-manager binder, MapObjBall's unk1A4 binder).
+  The missing words belong to per-function structure (a missing inline level or a different local), which is closure work, one function at a time.
+- The map has no inline evidence for a second director or sound accessor: no `TMarDirector` inline is emitted anywhere, and the weak `SMSGetMSound__Fv` (8 bytes, Option.cpp) and `SMS_GetMarioPos__Fv` (bossgesso) are one-load bodies that the plain and the binder shape both compile to.
