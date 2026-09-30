@@ -1138,8 +1138,8 @@ void TBathtub::showMessage(u32 message)
 
 // TODO: 98.8%, every instruction right. Left: callee-saved FPR numbering
 // (retail gives rate f26, rebound f27 and the normalised axis f23-f25; the
-// second block's up f24-f26 and excess f23) and the frame, 0x158 against
-// 0x148 -- QuatRotate's dq sits at 0xa8 against our 0x94. The named
+// second block's up f24-f26 and excess f23). getUnk16C() at all three
+// param reads gives retail's 0x158 frame (raw it was 0x148). The named
 // limitAngle is what unfuses `excess`; QuatRotate's dq.mul(dq, q) gives
 // retail's term order but drops the 0x10 the one-argument mul's locals held.
 void TBathtub::updatePosture_()
@@ -1159,9 +1159,9 @@ void TBathtub::updatePosture_()
 		JGeometry::TVec3<f32> axis;
 		axis.cross(yDown, up);
 		axis.normalize();
-		f32 rebound = unk16C->rebound.get();
+		f32 rebound = getUnk16C()->rebound.get();
 		axis.scale(rebound * (rate * -acosf(yDown.dot(up))));
-		mAngleVel.scaleAdd(unk16C->angleVelDamp.value, mAngleVel, axis);
+		mAngleVel.scaleAdd(getUnk16C()->angleVelDamp.value, mAngleVel, axis);
 	} else {
 		unk250--;
 	}
@@ -1171,7 +1171,7 @@ void TBathtub::updatePosture_()
 	JGeometry::TVec3<f32> up;
 	mQuat.getYDir(up);
 	f32 angle = acosf(yDown.dot(up));
-	f32 limitAngle = unk16C->maxAngle.value * 0.017453292f;
+	f32 limitAngle = getUnk16C()->maxAngle.value * 0.017453292f;
 	f32 excess = angle - limitAngle;
 	if (excess > 0.0f) {
 		JGeometry::TQuat4<f32> limit;
