@@ -2782,3 +2782,17 @@ Nothing was committed apart from this entry.
 - In MWCC a callee's named local is created later than its temporaries: a named local of an inline expanded inside an argument expression lands after the enclosing body's depth-2 copies, while a temporary lands with the argument's chain.
 - Retail's `perform` therefore has depth-2 objects in the `begin()`/`end()` chains that are not named iterators (those would change `push_back`) and a receiver that binds nothing between the chains; neither has been found.
 - Treat the eight functions as separate per-site residues, as cc39 concluded; no header round is pending for them.
+
+## Library batch c-lib1
+
+- `J3DSkinDeform::initMtxIndexArray` compiles exact with zeldaret/tww's display-list cursor, but only with the identity cast below, so under the no-fakematch rule it is held back (branch parked/c-lib1-cast), not on main: `u8 cmd = *dl; dl++;`, `u16 vtxCount = *(u16*)dl; dl += 2;`, `&dl[vtxSize * k]` inside the loop and `dl = (u8*)dl + vtxSize * vtxCount;` at its end.
+- The identity `(u8*)` cast on that last line is load-bearing: `dl += n`, `dl = dl + n` and `dl = &dl[n]` are one instruction longer and reorder the loop header, while `(u8*)(dl + n)` is also exact.
+- So a cast anywhere on the right of `p = p + n` stops MWCC treating it as the in-place increment; that is the lever for a pointer step that compiles one instruction long.
+- With the cursor stepped past the header, `int vtxCount` leaves every instruction right but the named block 4 low; `u16 vtxCount` lands it, and `s32` or `int` for `k` are both exact.
+- `JPABaseEmitter::deleteAllParticle` is exact with one function-scope `next` shared by both list loops; a block-scope `next` in each loop (our old body, and tww's) costs 8 bytes of frame.
+- Sister shapes measured and not better: melee's TRKSuppAccessFile `(0, TRKRequestSend(...))` comma and its declaration order (12 and 19 markers), and melee's TRK flags (94.0%).
+- Also not better: tww's `allocFromHead` (two `getContent()` calls, `int foundSize`, a `blockSize` local: 97.3%) and mkdd's (C-style top declarations with `ALIGN_PREV`: 94.9%, frame 0x40).
+- pikmin2's `AudioDecoderForOnMemory` is built with GC/2.6 and declares `readSize` first, which is the 86.2% order already recorded at the function.
+- tww's JAudio is a later generation: `updateJcToDSP` is a member with `flushChannel()` calls, a ternary `pan` in `updateEffectorParam` is 18 markers, and `JAInter::SeMgr::checkNextFrameSe` is an empty Nonmatching stub.
+- tww's JParticle is the JPA1 generation (`JPAFieldData`, function-pointer base planes); its single `force` vector in the vortex field (frame 0x68), `set` then `scale` in the convection field (0xe8) and the one-read `flag & 0x1FFF` in `J3DDeformer::deform` (20 markers) are all worse.
+- No sister carries JAIGFrameSe, JALModSe or JDrama, and a 420-second hsearch run on `JPAVortexField::affect` found no gain.

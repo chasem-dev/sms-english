@@ -82,3 +82,8 @@ Measured on GMSE01 in this worktree; each needs its unit claimed, a review of th
 - Exact but regresses `readBlock_` and `copyTo` in the unit: `TCardManager::decideUseSector` (#200, a ternary join).
 - Large gains: `MSSceneSE::frameLoop` 96.8 -> 99.7, `TConductor::isBossDefeated` 95.6 -> 98.8 (drops a `default:` label), `TKumokun::checkOnMovingFloor` 97.9 -> 99.4, `TMapCollisionData::checkRoofList` 98.6 -> 99.9 (open-codes the edge test), `TBaseNPC::setIndividualDifference_` 98.1 -> 98.9, `TMario::keepDistance` 99.55 -> 99.9.
 - Rejected on review: stack padding (`warpOut`, `TSmallEnemy::receiveMessage`, `TDangoHamuKuri::receiveMessage`, `updateCheckListNode`, `getSlideStickMult`, `writeBlock_`, `TMenuBase::perform`, `watchToWarp`), a fabricated two-vector struct (`execWallCheck_`), `a - -b` (`MtxToQuat`), and a dead duplicate pointer (`randPlay`).
+
+## Library batch c-lib1 (2026-09-30)
+
+- zeldaret/tww (`src/JSystem/J3DGraphAnimator/J3DCluster.cpp`, file NonMatching there): its `initMtxIndexArray` display-list cursor makes ours exact only together with an identity `(u8*)` cast, so that match is held back from main (branch parked/c-lib1-cast); see frame-gaps.md, "Library batch c-lib1".
+- Also compared and not better here: doldecomp/melee `src/MetroTRK/support.c`, doldecomp/mkdd `JKRExpHeap.cpp`, doldecomp/pikmin2 `THPAudioDecode.c` (GC/2.6), and tww's JKRExpHeap, JASChannel, JAISeMgr and JParticle files.
