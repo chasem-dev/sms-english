@@ -48,16 +48,6 @@ static f32 mGrowEndFrame   = 175.0f;
 /// Second emitter position for the waterfall's upper half.
 static JGeometry::TVec3<f32> fall_upper_pos(2827.0f, 8604.0f, 7202.0f);
 
-// Binding level over a raw member read, worth +16 of low region in
-// TMuddyBoat::kill (batch 127).
-// Binding level over a raw member read, worth +16 of low region in
-// TMapObjPuncher::touchPlayer (batch 127).
-static inline JGeometry::TVec3<f32>* MapObjMareGetMarioPos()
-{
-	JGeometry::TVec3<f32>* marioPos = gpMarioPos;
-	return marioPos;
-}
-
 static inline J3DModel* MapObjMareGetModel(const TMapObjBase* object)
 {
 	return object->getModel();
@@ -105,7 +95,7 @@ void TCogwheelScale::touchPlayer(THitActor* player)
 		mRiderWeight = mMarioWeight;
 
 	if (mPosition.y - getObjCollisionHeightOffset()
-	        > 150.0f + MapObjMareGetMarioPos()->y
+	        > 150.0f + SMS_GetMarioPosBound()->y
 	    && ((mIsUpper && CogwheelSpeed(mCogwheel) > 0.0f)
 	        || (!mIsUpper && CogwheelSpeed(mCogwheel) < 0.0f))) {
 		mCogwheel->rebound();
@@ -791,7 +781,7 @@ void TMapObjPuncher::touchPlayer(THitActor* player)
 	JGeometry::TVec3<f32> dir;
 	makeVecToLocalZ(1.0f, &dir);
 
-	JGeometry::TVec3<f32> dest(*MapObjMareGetMarioPos());
+	JGeometry::TVec3<f32> dest(*SMS_GetMarioPosBound());
 	dest += dir * 100.0f;
 	SMS_MarioMoveRequest(dest);
 	SMS_SendMessageToMario(this, HIT_MESSAGE_THROWN);

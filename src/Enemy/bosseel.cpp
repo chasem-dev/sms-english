@@ -1484,12 +1484,6 @@ void TBossEelAwaCollision::behaveToMario()
 	SMS_MarioMoveRequest(marioTarget);
 }
 
-static inline JGeometry::TVec3<f32>* BossEelAwaMarioPos()
-{
-	JGeometry::TVec3<f32>* pos = gpMarioPos;
-	return pos;
-}
-
 static inline s32 BossEelAwaColCount(const THitActor* collider)
 {
 	s32 count = collider->mColCount;
@@ -1506,7 +1500,7 @@ void TBossEelAwaCollision::perform(u32 cue, JDrama::TGraphics* graphics)
 {
 	if (cue & CUE_MOVE) {
 		calcEntryRadius();
-		if (BossEelAwaMarioPos()->y < mPosition.y + 500.0f)
+		if (SMS_GetMarioPosBound()->y < mPosition.y + 500.0f)
 			offHitFlag(HIT_FLAG_NO_COLLISION);
 		if (gpMarioPos->y > mPosition.y + mAttackHeight)
 			onHitFlag(HIT_FLAG_NO_COLLISION);
@@ -1776,12 +1770,6 @@ void TBossEel::calcAndSetCollisionCubeBite_()
 	                     7000.0f * mScaling.z);
 }
 
-static inline JGeometry::TVec3<f32>* BosseelMarioPos()
-{
-	JGeometry::TVec3<f32>* pos = gpMarioPos;
-	return pos;
-}
-
 static inline TBossEelEye* BosseelEye(const TBossEel* p, s32 i)
 {
 	TBossEelEye* eye = p->mEyes[i];
@@ -1800,7 +1788,7 @@ void TBossEel::updateTearsCnt()
 
 	++mTearCycleTimer;
 	s32 interval = mSaveParams->mSLGenTearsTime.get();
-	f32 height   = fabsf(mPosition.y - BosseelMarioPos()->y);
+	f32 height   = fabsf(mPosition.y - SMS_GetMarioPosBound()->y);
 	if (height > 30000.0f)
 		interval *= 4;
 	else if (height > 15000.0f)

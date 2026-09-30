@@ -689,12 +689,6 @@ void TCannon::bombSet()
 	hitHead(bomb);
 }
 
-static inline JGeometry::TVec3<f32>* CannonMarioPos()
-{
-	JGeometry::TVec3<f32>* r = gpMarioPos;
-	return r;
-}
-
 // TODO: the final lift's volatiles differ (retail r3 for the bomb, 2.0f
 // loaded first). Inert: a position reference, a named y, a bomb local.
 void TCannon::bombShoot()
@@ -704,7 +698,7 @@ void TCannon::bombShoot()
 		return;
 
 	JGeometry::TVec3<f32> dir(gpMarioPos->x - mPosition.x, 0.0f,
-	                          CannonMarioPos()->z - mPosition.z);
+	                          SMS_GetMarioPosBound()->z - mPosition.z);
 	if (dir.x == 0.0f && dir.z == 0.0f)
 		dir.x = 1.0f;
 	MsVECNormalize((Vec*)&dir, (Vec*)&dir);
