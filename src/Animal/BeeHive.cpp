@@ -307,13 +307,14 @@ TRealoidActor* TBeeHive::createRealoidActor(MActor* actor)
 	return new TBee(actor, this);
 }
 
-// TODO: frame 0x10 short, and retail reloads mSwingSpeed for the sign test
-// (ours CSEs it into f2), putting sign in f29. Inert: __fabsf, fabs, a sign helper.
+// TODO: retail reloads mSwingSpeed for the sign test (ours CSEs it into f2),
+// putting sign in f29. Inert: __fabsf, fabs, a sign helper. getPosition() and
+// getSpine() at every read land the frame (0xd8); each alone is 0xd0.
 BOOL TBeeHive::receiveMessage(THitActor* sender, u32 message)
 {
 	switch (message) {
 	case HIT_MESSAGE_SPRAYED_BY_WATER: {
-		JGeometry::TVec3<f32> toMario = mPosition;
+		JGeometry::TVec3<f32> toMario = getPosition();
 		toMario.sub(*gpMarioPos);
 
 		setShakePower(toMario);
@@ -326,8 +327,8 @@ BOOL TBeeHive::receiveMessage(THitActor* sender, u32 message)
 	case HIT_MESSAGE_HIP_DROP:
 	case HIT_MESSAGE_PUNCH:
 		if (isWaiting()) {
-			mSpine->reset();
-			mSpine->setNext(&TNerveBeeHiveFall::theNerve());
+			getSpine()->reset();
+			getSpine()->setNext(&TNerveBeeHiveFall::theNerve());
 		}
 		return TRUE;
 	}
