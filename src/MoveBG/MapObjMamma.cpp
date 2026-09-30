@@ -673,6 +673,8 @@ bool TLeanMirror::enemyIsOn() const
 	return false;
 }
 
+// TODO: frame exact (0x58); nearPos and farPos have each other's slots
+// (retail farPos at 0x30). farPos declared first, uninitialised, is worse.
 void TLeanMirror::draw() const
 {
 	MtxPtr mtx = getModel()->getAnmMtx(0);
@@ -681,11 +683,11 @@ void TLeanMirror::draw() const
 	JGeometry::TVec3<f32> nearPos(up);
 	f32 length = 0.001f * (350.0f * mBodyRadius);
 	nearPos.scale(length);
-	nearPos.add(mPosition);
+	nearPos.add(getPosition());
 
 	JGeometry::TVec3<f32> farPos(up);
 	farPos.scale(10000.0f);
-	farPos.add(mPosition);
+	farPos.add(getPosition());
 
 	gpBeamManager->requestCone(farPos, nearPos, 1.7f * mBodyRadius, true, true,
 	                           false);
