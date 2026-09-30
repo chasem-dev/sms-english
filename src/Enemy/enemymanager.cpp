@@ -282,23 +282,35 @@ void TEnemyManager::copyFromShared()
 	j3dSys.setViewMtx(viewMtx);
 }
 
+// Parked header shape (c-k23): TTimeRec::startTimer taking its colour as a
+// `const JUtility::TColor&` with a white default argument. The colour is then
+// a call-site temporary, created while the caller is parsed, so both of
+// performShared's colours sit together at the top of the pool (0xbc/0xb8)
+// with countLivingEnemy's result below them, as in retail. TimeRec.hpp's
+// four-u8 overload makes it an inlined local instead (0xbc/0xb4).
+static inline void EnemyManagerStartTimer(
+    const JUtility::TColor& color = JUtility::TColor(0xff, 0xff, 0xff, 0xff))
+{
+	TTimeRec* inst = TTimeRec::_instance;
+	u32 col        = color;
+	if (!inst)
+		return;
+	OSTick tick           = OSGetTick();
+	TTimeArray* timeArray = inst->crTimeAry();
+	timeArray->append(tick, col);
+}
+
 // The alive count is the inlined countLivingEnemy() (c-k5): as inliner
 // objects its counter and the loop's byte offset share one zero (retail's
 // `li r5, 0; addi r3, r5, 0`), which the old spelled-out loop with named
 // locals could not give; countLivingEnemy reads the objects one level
 // shallower than getObj() so that it still expands here at depth 2.
-// TODO: every instruction and the frame exact (0xf0: the getObjNum() bound
-// with raw unk18[i] in the no-collision loop, hsearch c-k12). Retail's two
-// TTimeRec colour temporaries sit at 0xbc/0xb8, ours at 0xbc/0xb4: the
-// debugger shows countLivingEnemy's int result object (dead at the `<= 0`
-// test) created between them, where retail creates it after the second.
-// A named `aliveNum` and `!(... > 0)` are inert; `getActiveObjNum()` in the
-// loop condition breaks countLivingEnemy, and so does a predicate level
-// around the call (it stops expanding at depth 2: frame 0xc0, 22 missing).
+// The frame (0xf0) is the getObjNum() bound with raw unk18[i] in the
+// no-collision loop (hsearch c-k12).
 void TEnemyManager::performShared(u32 param_1, JDrama::TGraphics* param_2)
 {
 	if (unk30 & 1)
-		TTimeRec::startTimer();
+		EnemyManagerStartTimer();
 
 	if (countLivingEnemy() <= 0) {
 		if ((unk30 & 1))
@@ -319,7 +331,7 @@ void TEnemyManager::performShared(u32 param_1, JDrama::TGraphics* param_2)
 
 	if (unk30 & 1) {
 		TTimeRec::endTimer();
-		TTimeRec::startTimer(0xff, 0x00, 0x00);
+		EnemyManagerStartTimer(JUtility::TColor(0xff, 0x00, 0x00, 0xff));
 	}
 
 	int num = getActiveObjNum();
@@ -381,7 +393,7 @@ void TEnemyManager::perform(u32 cue, JDrama::TGraphics* graphics)
 	}
 
 	if (unk30 & 1)
-		TTimeRec::startTimer();
+		EnemyManagerStartTimer();
 
 	if (cue & CUE_CALC_ANIM) {
 		clipEnemies(graphics);
@@ -390,7 +402,7 @@ void TEnemyManager::perform(u32 cue, JDrama::TGraphics* graphics)
 
 	if (unk30 & 1) {
 		TTimeRec::endTimer();
-		TTimeRec::startTimer(0xff, 0x0, 0x0);
+		EnemyManagerStartTimer(JUtility::TColor(0xff, 0x0, 0x0, 0xff));
 	}
 
 	int num = getActiveObjNum();
