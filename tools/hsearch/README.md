@@ -63,7 +63,8 @@ Added here:
 - `extract`: a run of one to four statements moved into a TU-local `static inline void` level; a single statement qualifies only with a computation or a control statement, so pass-through helpers are never generated.
   Members are rewritten as `self->m`; the compiler is the type check, so a wrong guess just fails to compile.
 - `conv-raw`: a matrix argument through its conversion operator against the raw `.mMtx` array.
-- `sound-short`: `startSoundActor(id, pos, 0, nullptr, 0, 4)` against the two-argument `startSoundActor(id, pos)` overload (and the handle form against the three-argument one), per site (codegen-tells.md, batch 82).
+- `sound-short`: `startSoundActor(id, pos, 0, nullptr, 0, 4)` against the two-argument `startSoundActor(id, pos)` overload (and the handle form against the three-argument one), per site (codegen-tells.md, batch 82) and at every site of the function at once.
+  A form is offered only when it is at least a quarter of the file's other calls, so a file that spells its sounds with six arguments is not given a lone short one.
 
 Plausibility filters drop generated moves that compile but read wrong:
 

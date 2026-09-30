@@ -270,9 +270,9 @@ class HGen(LS.Gen):
     # MSound::startSoundActor: the six-argument call against the two- and
     # three-argument overloads (codegen-tells.md, batch 82: a per-site lever)
     # ------------------------------------------------------------------
-    def gen_sound_short(self):
+    def _sound_calls(self, lo: int, hi: int):
         t = self.toks
-        for k in range(self.bo + 1, self.bc):
+        for k in range(lo + 1, hi):
             if t[k].text != "startSoundActor" or t[k - 1].text != "->" or t[k + 1].text != "(":
                 continue
             cp = self.bm.get(k + 1)
@@ -281,15 +281,55 @@ class HGen(LS.Gen):
             d = self.pdepth.get(k + 2)
             cuts = [q for q in range(k + 2, cp) if t[q].text == "," and self.pdepth.get(q) == d]
             bounds = [k + 1] + cuts + [cp]
-            args = [self.text[t[bounds[i]].e:t[bounds[i + 1]].s].strip() for i in range(len(bounds) - 1)]
-            if len(args) == 6 and args[2] == "0" and args[4] == "0" and args[5] == "4":
+            yield k, cp, [self.text[t[bounds[i]].e:t[bounds[i + 1]].s].strip() for i in range(len(bounds) - 1)]
+
+    @staticmethod
+    def _sound_form(args) -> Optional[str]:
+        if len(args) == 6 and args[2] == "0" and args[4] == "0" and args[5] == "4":
+            return "six"
+        if len(args) in (2, 3) and args[0] and args[1]:
+            return "short"
+        return None
+
+    def gen_sound_short(self):
+        """Offer a form only when the file's other calls spell it that way often
+        enough to be the file's style (a quarter of them), and also offer every
+        site of the function at once."""
+        t = self.toks
+        pdepth = self.pdepth
+        if not hasattr(self, "_file_pdepth"):  # the file's other calls: its own depths
+            self._file_pdepth = {}
+            st = []
+            for q, tk in enumerate(t):
+                if tk.text == "(":
+                    st.append(q)
+                self._file_pdepth[q] = len(st)
+                if tk.text == ")" and st:
+                    st.pop()
+        self.pdepth = self._file_pdepth
+        try:
+            other = [self._sound_form(args) for k, cp, args in self._sound_calls(0, len(t) - 1)
+                     if not (self.bo < k < self.bc)]
+        finally:
+            self.pdepth = pdepth
+        used = {f for f in ("six", "short") if other.count(f) and 4 * other.count(f) >= len(other)}
+        per = {"six": [], "short": []}
+        for k, cp, args in self._sound_calls(self.bo, self.bc):
+            form = self._sound_form(args)
+            if form == "six" and "short" in used:
                 short = args[:2] if args[3] in ("nullptr", "NULL", "0") else args[:2] + [args[3]]
-                self.add("sound-short", k, "startSoundActor six arguments -> %d" % len(short),
-                         [(t[k + 1].e, t[cp].s, ", ".join(short))])
-            elif len(args) in (2, 3) and args[0] and args[1]:
+                ed = (t[k + 1].e, t[cp].s, ", ".join(short))
+                self.add("sound-short", k, "startSoundActor six arguments -> %d" % len(short), [ed])
+                per["six"].append((k, ed))
+            elif form == "short" and "six" in used:
                 full = args[:2] + ["0", args[2] if len(args) == 3 else "nullptr", "0", "4"]
-                self.add("sound-short", k, "startSoundActor %d arguments -> six" % len(args),
-                         [(t[k + 1].e, t[cp].s, ", ".join(full))])
+                ed = (t[k + 1].e, t[cp].s, ", ".join(full))
+                self.add("sound-short", k, "startSoundActor %d arguments -> six" % len(args), [ed])
+                per["short"].append((k, ed))
+        for form, sites in per.items():
+            if len(sites) > 1:
+                self.add("sound-short", sites[0][0], "startSoundActor all %d sites %s -> %s" % (
+                    len(sites), form, "six" if form == "short" else "short"), [e for _, e in sites])
 
     # ------------------------------------------------------------------
     # expression helpers
