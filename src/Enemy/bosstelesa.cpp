@@ -1694,15 +1694,12 @@ bool TBossTelesa::rouletteFall()
 			if (SMS_SendMessageToMario(this, HIT_MESSAGE_TAKE))
 				mHeldObject = (TTakeActor*)SMS_GetMarioHitActor();
 		} else if (SMS_SendMessageToMario(this, HIT_MESSAGE_UNK8)) {
-			SMSGetMSoundBound()->startSoundActor(MSD_SE_BS_TELESA_RLT_SET, &mPosition, 0,
-			                          nullptr, 0, 4);
+			SMSGetMSound()->startSoundActor(MSD_SE_BS_TELESA_RLT_SET, &mPosition);
 			mHeldObject = nullptr;
 		}
 
-		SMSGetMSoundBound()->startSoundActor(MSD_SE_BS_TELESA_V_LAUGH1B, &mPosition, 0,
-		                          nullptr, 0, 4);
-		SMSGetMSoundBound()->startSoundActor(MSD_SE_BS_TELESA_RLT_DOWN, &mPosition, 0,
-		                          nullptr, 0, 4);
+		SMSGetMSound()->startSoundActor(MSD_SE_BS_TELESA_V_LAUGH1B, &mPosition);
+		SMSGetMSound()->startSoundActor(MSD_SE_BS_TELESA_RLT_DOWN, &mPosition);
 		gpMarioOriginal->mGamePad->onNeutralMarioKey();
 
 		return false;
