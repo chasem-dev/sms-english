@@ -887,8 +887,8 @@ void MSStageCubeFade::proc()
 	if (sound1 == nullptr)
 		return;
 
-	Vec local_164 = *gpMarioPos;
-	local_164.y   = 75.0f + gpCubeSoundChange->unk14->begin()[0]->unkC.y;
+	Vec local_164 = SMS_GetMarioPos();
+	local_164.y   = 75.0f + gpCubeSoundChange->getCubeInfo(0)->unkC.y;
 
 	unk4 = gpCubeSoundChange->getInCubeNo(local_164);
 	if (unk4 == -1) {
@@ -899,8 +899,8 @@ void MSStageCubeFade::proc()
 		f32 ratio = calcParamRatioInCube(unk4);
 		gpMSound->unk9C->xFadeBgm(ratio);
 		if (MSMainProc::MSStageInfo::cubeFadeUsePan != 0) {
-			Vec local_158 = gpCubeSoundChange->unk14->begin()[unk4]->unkC;
-			Vec local_14c = *gpMarioPos;
+			Vec local_158 = gpCubeSoundChange->getCubeInfo(unk4)->unkC;
+			Vec local_14c = SMS_GetMarioPos();
 
 			// The pan is taken at Mario's own height, so the fade only
 			// reacts to the horizontal distance to the cube's centre.
