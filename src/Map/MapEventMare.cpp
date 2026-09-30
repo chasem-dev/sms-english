@@ -101,8 +101,7 @@ void TMareWallRock::movement()
 			transformInfo.mTranslate.z -= mAppearSpeed;
 			if (TMapObjBase::marioIsOn(this))
 				mPosition.z -= mAppearSpeed;
-			SMSGetMSound()->startSoundActor(MSD_SE_OBJ_QUAKE, &mPosition, 0,
-			                                nullptr, 0, 4);
+			SMSGetMSound()->startSoundActor(MSD_SE_OBJ_QUAKE, &mPosition);
 			SMSGetRumbleMgrBound()->start(0x13, -1, (f32*)nullptr);
 			SMSGetCameraShakeBound()->keepShake(
 			    CAM_SHAKE_MODE_BUILDING_APPEAR, 0.5f);
@@ -115,7 +114,7 @@ void TMareWallRock::movement()
 			unk100 = mWaitTimeToDepress;
 			unk10C[1]->setUp();
 			unkF4 = 1;
-			SMSGetRumbleMgrBound()->stop(0x13);
+			SMSRumbleMgr->stop(0x13);
 			return;
 		}
 		JGeometry::TVec3<f32> t(0.0f, 0.0f, z);
