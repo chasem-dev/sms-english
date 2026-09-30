@@ -781,7 +781,7 @@ void TMapObjPuncher::touchPlayer(THitActor* player)
 	JGeometry::TVec3<f32> dir;
 	makeVecToLocalZ(1.0f, &dir);
 
-	JGeometry::TVec3<f32> dest(*SMS_GetMarioPosBound());
+	JGeometry::TVec3<f32> dest(SMS_GetMarioPos());
 	dest += dir * 100.0f;
 	SMS_MarioMoveRequest(dest);
 	SMS_SendMessageToMario(this, HIT_MESSAGE_THROWN);
@@ -791,8 +791,7 @@ void TMapObjPuncher::touchPlayer(THitActor* player)
 	JGeometry::TVec3<f32> scale(2.0f, 2.0f, 2.0f);
 	emitAndScale(PARTICLE_MS_ENM_DISAP_A_W, 0, &mPosition, scale);
 	emitAndScale(PARTICLE_MS_ENM_DISAP_B, 0, &mPosition, scale);
-	gpMSound->startSoundActor(MSD_SE_SMOKE_EFFECT, &mPosition, 0, nullptr, 0,
-	                          4);
+	gpMSound->startSoundActor(MSD_SE_SMOKE_EFFECT, &mPosition);
 
 	mState = 2;
 }
