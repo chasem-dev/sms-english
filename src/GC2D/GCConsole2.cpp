@@ -1316,10 +1316,9 @@ void TGCConsole2::startDisappearCoin()
 	unk4D = true;
 	unk5A = true;
 
-	// TODO: instructions exact; frame 0xc8 vs 0xd0 (two dead words, every
-	// slot shifts). getInitialBounds() at the offset line changes its code;
-	// the above-screen helper at the unk140 offset as well is back at 0xc0.
-	if (unk140->isInterpolatorAtZero())
+	// The named test result gives the frame its two words (0xd0).
+	bool atZero = unk140->isInterpolatorAtZero();
+	if (atZero)
 		unk140->updatePaneOffset(
 		    40, 0,
 		    -(1 + unk140->getInitialBounds().y2 + unk128->getPane()->getHeight()));
