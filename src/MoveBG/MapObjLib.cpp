@@ -1186,8 +1186,9 @@ void TMapObjTurn::turn()
 }
 
 // TODO: retail materialises the matrix pointer inside each case (after the
-// MsWrap store) rather than before the switch, and its frame is 0x10 larger in
-// the dead low region below the case-2 yRot block. Worse or inert (c-mbg):
+// MsWrap store) rather than before the switch. getPosition() and
+// getObjCollisionHeightOffset() in the translation land the frame (0x140) and
+// every slot (c-hs9). Worse or inert (c-mbg):
 // `mtx` passed directly (91.5), `ptr = mtx;` inside each case (94.2), a
 // TMtx34f matrix (96.2), one function-scope yRot (frame 0x100), a block-local
 // `MtxPtr p = mtx` in cases 0/2 with case 1 on `mtx` (94.2).
@@ -1234,10 +1235,10 @@ void TMapObjTurn::control()
 	}
 
 	MtxPtr m = mtx;
-	m[0][3]  = mPosition.x;
-	m[1][3]  = mPosition.y;
-	m[2][3]  = mPosition.z;
-	m[1][3] -= mYOffset;
+	m[0][3]  = getPosition().x;
+	m[1][3]  = getPosition().y;
+	m[2][3]  = getPosition().z;
+	m[1][3] -= getObjCollisionHeightOffset();
 	getModel()->setAnmMtx(0, m);
 }
 
