@@ -442,22 +442,22 @@ void SMS_MakeJointsToArc(J3DModel* model, const JGeometry::TVec3<f32>& start,
 	JGeometry::TVec3<f32> up = upDir;
 	up.normalize();
 
-	int jointNum = model->getModelData()->getJointNum();
+	int jointNum = model->getModelData()->mJointNum;
 	for (u16 i = 0; i < jointNum; ++i) {
 		f32 t = (f32)i / (f32)(jointNum - 1);
 
 		JGeometry::TVec3<f32> c = JGeometry::TVec3<f32>(up * (1.0f - t)) + dir * t;
 		c.normalize();
 
-		MtxPtr jm = model->getAnmMtx(i);
-
 		f32 dist = (f32)i * (mag / (f32)(jointNum - 1));
+
+		MtxPtr jm = model->getAnmMtx(i);
 
 		// TODO: retail keeps xAxis.y/.z in f29/f30 (x spilled to its slot),
 		// which our TVec3 user copy constructor blocks; removing it from
 		// JGVec3.hpp takes this function 84.6 -> 90.6 on the old body. The
-		// by-value copy of up * (1 - t) above is instruction-exact but leaves
-		// the frame 8 bytes long (0x1d0 vs 0x1c8).
+		// by-value copy of up * (1 - t) above is instruction-exact; the raw
+		// mJointNum read gives retail's 0x1c8 frame (getJointNum() is 8 long).
 		JGeometry::TVec3<f32> xAxis = c;
 		JGeometry::TVec3<f32> zAxis(jm[0][2], jm[1][2], jm[2][2]);
 		JGeometry::TVec3<f32> side;
