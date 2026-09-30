@@ -289,6 +289,8 @@ BOOL TEnemyMario::canJumpToNode() const
 // non-normalized value. Exact form is TODO (dead code, no callsite to anchor).
 bool TEnemyMario::isDispPencil() const { return false; }
 
+// TODO: every instruction exact; frame 0x538 against retail's 0x590, with
+// register and slot residue.
 void TEnemyMario::initEnemyValues()
 {
 	static const char* names[5] = {
@@ -498,7 +500,7 @@ void TEnemyMario::initEnemyValues()
 		}
 	}
 
-	mGamePad = gpMarDirector->unk18[1];
+	mGamePad = gpMarDirector->getGamePad(1);
 	mEMFlags = EM_FLAG_DISP_PENCIL;
 	switch (mEMario->mInitialState) {
 	case 0:
@@ -545,7 +547,7 @@ void TEnemyMario::initEnemyValues()
 		mInputReplays = nullptr;
 	}
 
-	if (gpMarDirector->mMap == 1 && gpMarDirector->unk7D == 1) {
+	if (gpMarDirector->getCurrentMap() == 1 && gpMarDirector->getCurrentStage() == 1) {
 		mRunAwayInputReplays = new TMarioInputReplay*[8];
 		for (int i = 0; i < 8; ++i) {
 			if (recordFileNamesDolpic1[i] != nullptr) {
@@ -569,25 +571,25 @@ void TEnemyMario::initEnemyValues()
 		mGateReplay          = nullptr;
 	}
 
-	if (gpMarDirector->mMap == 12) {
+	if (gpMarDirector->getCurrentMap() == 12) {
 		if (strcmp(mEMario->getName(), "マリオ２Ｐ") == 0) {
 			mPlayerType = TMario::PLAYER_TYPE_P2;
-			mGamePad    = gpMarDirector->unk18[1];
+			mGamePad    = gpMarDirector->getGamePad(1);
 		}
 		if (strcmp(mEMario->getName(), "マリオ３Ｐ") == 0) {
 			mPlayerType = TMario::PLAYER_TYPE_P3;
-			mGamePad    = gpMarDirector->unk18[2];
+			mGamePad    = gpMarDirector->getGamePad(2);
 		}
 		if (strcmp(mEMario->getName(), "マリオ４Ｐ") == 0) {
 			mPlayerType = TMario::PLAYER_TYPE_P4;
-			mGamePad    = gpMarDirector->unk18[3];
+			mGamePad    = gpMarDirector->getGamePad(3);
 		}
 		mEMDoing = EM_DOING_GET_PAD;
 		if (mPlayerType == TMario::PLAYER_TYPE_P2
 		    || mPlayerType == TMario::PLAYER_TYPE_P3
 		    || mPlayerType == TMario::PLAYER_TYPE_P4) {
 			mTrembleModelEffect = new TTrembleModelEffect;
-			mTrembleModelEffect->init(mModel->getModel());
+			mTrembleModelEffect->init(getM3UModel()->getModel());
 		}
 	}
 	if (mTrembleModelEffect != nullptr) {
