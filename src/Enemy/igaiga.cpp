@@ -252,17 +252,16 @@ void TRollEnemy::reset()
 	unk124->mCurrIdx = 0;
 }
 
-// TODO: 99.9%, every instruction in place; frame 8 short (0x40 vs 0x48, `vel`
-// sits 8 low). Inert: unnamed temporary, setVelocity (temp or named), vel.set,
-// a named f32, getPosition() at the first or last y read.
+// The arc block reads the ground through getGroundHeight(), which gives the
+// frame its missing 8 bytes; all three reads through it are 8 too many.
 void TRollEnemy::walkBehavior(int param_1, f32 param_2)
 {
 	if (!unk1A8)
 		TWalkerEnemy::walkBehavior(param_1, param_2);
 
-	if (isAirborne() && mPosition.y > 20.0f + mGroundHeight) {
+	if (isAirborne() && mPosition.y > 20.0f + getGroundHeight()) {
 		// Remember the highest point of the arc, in bounce units.
-		f32 height = MsWrap((mPosition.y - mGroundHeight) / mBoundVal, 0.0f,
+		f32 height = MsWrap((mPosition.y - getGroundHeight()) / mBoundVal, 0.0f,
 		                    unk1A4->mSLBoundVYMax.get());
 		if (unk1A0 < height)
 			unk1A0 = height;
