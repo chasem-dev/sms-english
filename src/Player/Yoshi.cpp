@@ -89,8 +89,9 @@ MtxPtr TYoshi::getMtxPtrFootR() const
 	return mActor->getModel()->getAnmMtx(mJointIdxFootR);
 }
 
-// TODO: frame is 0x20 short (0x270 vs retail 0x290); every instruction
-// matches. A TU-local texture-copy helper reaches 0x288 but not 0x290.
+// TODO: frame is 0x10 short (0x280 vs retail 0x290); every instruction
+// matches. A texture-copy helper over both hand blocks overshoots (0x298 to
+// 0x2a8 by shape); an extract of the second block alone is exact (c-hs5).
 void TYoshi::init(TMario* param_1)
 {
 	mMario = param_1;
@@ -216,7 +217,7 @@ void TYoshi::init(TMario* param_1)
 	mActor->getFrameCtrl(ANM_TYPE_BTP)->setRate(0.5f);
 
 	mActor->getModel()->setBaseTRMtx(
-	    mMario->mModel->getModel()->getBaseTRMtx());
+	    mMario->getM3UModel()->getModel()->getBaseTRMtx());
 	mActor->getModel()->calc();
 
 	mActor->getModel()->getModelData()->onFlag1OnAllShapes();
