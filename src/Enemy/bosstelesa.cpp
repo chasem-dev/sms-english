@@ -1863,12 +1863,6 @@ void TBossTelesa::setBckAnm(int index)
 // TODO: incorrect size. Map records 140 bytes.
 bool TBossTelesa::isInDamage() { return false; }
 
-static inline RumbleMgr* BossTelesaRouletteGetRumbleMgr()
-{
-	RumbleMgr* rumble = SMSRumbleMgr;
-	return rumble;
-}
-
 // The named first speed puts both TMsRange locals at the ROM's 0x50/0x48, and
 // `sign` declared with `direction` gives it f27 above speedUp's f26.
 void TBossTelesa::rouletteStart()
@@ -1910,7 +1904,7 @@ void TBossTelesa::rouletteStart()
 
 	rollRouletteCircle();
 
-	BossTelesaRouletteGetRumbleMgr()->start(0x14, 0xF, (f32*)nullptr);
+	SMSGetRumbleMgrBound()->start(0x14, 0xF, (f32*)nullptr);
 	// mCamShakeNameSave[0x23] is "/Camera/shakeBTelesaRoll.prm".
 	SMSGetCameraShakeBound()->startShake((EnumCamShakeMode)0x23,
 	                                               1.0f);

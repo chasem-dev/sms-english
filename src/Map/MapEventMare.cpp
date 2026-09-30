@@ -81,12 +81,6 @@ void TMareWallRock::appear()
 	unkF4 = 2;
 }
 
-static inline RumbleMgr* MareWallRockRumbleMgr()
-{
-	RumbleMgr* mgr = SMSRumbleMgr;
-	return mgr;
-}
-
 // Case 4 declares its translation vector at the top of the block, above the
 // joint, which is what puts it directly under case 2's vector.
 void TMareWallRock::movement()
@@ -109,7 +103,7 @@ void TMareWallRock::movement()
 				mPosition.z -= mAppearSpeed;
 			SMSGetMSound()->startSoundActor(MSD_SE_OBJ_QUAKE, &mPosition, 0,
 			                                nullptr, 0, 4);
-			MareWallRockRumbleMgr()->start(0x13, -1, (f32*)nullptr);
+			SMSGetRumbleMgrBound()->start(0x13, -1, (f32*)nullptr);
 			SMSGetCameraShakeBound()->keepShake(
 			    CAM_SHAKE_MODE_BUILDING_APPEAR, 0.5f);
 		}
@@ -121,7 +115,7 @@ void TMareWallRock::movement()
 			unk100 = mWaitTimeToDepress;
 			unk10C[1]->setUp();
 			unkF4 = 1;
-			MareWallRockRumbleMgr()->stop(0x13);
+			SMSGetRumbleMgrBound()->stop(0x13);
 			return;
 		}
 		JGeometry::TVec3<f32> t(0.0f, 0.0f, z);

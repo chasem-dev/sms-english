@@ -1364,19 +1364,13 @@ void TFireWanwan::updateCameraShake()
 		gpCameraShake->keepShake(CAM_SHAKE_MODE_ENEMY, 0.5f);
 }
 
-static inline RumbleMgr* FireWanwanRumbleMgr()
-{
-	RumbleMgr* mgr = SMSRumbleMgr;
-	return mgr;
-}
-
 void TFireWanwan::updateRumble()
 {
 	f32 fVar1 = getSaveParam2()->mContShakeRange.get();
 
 	if (!isCameraShake() && mDistToMarioSquared < fVar1 * fVar1) {
 		if (!isOverApproachRumble()) {
-			FireWanwanRumbleMgr()->start(9, &mPosition);
+			SMSGetRumbleMgrBound()->start(9, &mPosition);
 			mApproachRumbleTimer += 1;
 		}
 	} else {
