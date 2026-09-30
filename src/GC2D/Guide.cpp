@@ -861,8 +861,8 @@ void TGuide::placeMario()
 
 	J2DPane* marker = mMarioMarker;
 	int paneWidth   = marker->getWidth();
-	int paneHeight  = marker->getHeight();
 	s32 x = 0.5f * (f32)mapWidth + pos.x - 0.5f * (f32)paneWidth - 2.0f;
+	int paneHeight  = marker->getHeight();
 	s32 y = 0.5f * (f32)mapHeight + pos.z + 0.5f * (f32)paneHeight;
 	if (x > mapWidth - paneWidth)
 		x = mapWidth - paneWidth;
