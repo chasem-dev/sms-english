@@ -1248,7 +1248,7 @@ DEFINE_NERVE(TNerveCannonDamage, TLiveActor)
 	if (spine->getTime() == 0) {
 		JGeometry::TVec3<f32> scale(2.0f, 2.0f, 2.0f);
 		JPABaseEmitter* emitter
-		    = SMSGetParticleManagerBound()->emitAndBindToPosPtr(
+		    = gpMarioParticleManager->emitAndBindToPosPtr(
 		        0xC4, &cannon->mPosition, 0, nullptr);
 		if (emitter)
 			emitter->setGlobalScale(scale);
@@ -1287,7 +1287,7 @@ DEFINE_NERVE(TNerveCannonDamage, TLiveActor)
 				emitter->setGlobalScale(cannon->getChorobei()->mScaling);
 
 			if (gpApplication.mCurrArea.unk0 == 5) {
-				cannon->mDemoCamPos   = cannon->mPosition;
+				cannon->mDemoCamPos   = cannon->getPosition();
 				cannon->mDemoCamPos.y = 0.0f;
 				SMSGetMarDirector()->fireStartDemoCamera(
 				    "tyorocam_pinna", &cannon->mDemoCamPos, -1,
