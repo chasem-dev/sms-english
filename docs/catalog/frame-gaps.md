@@ -2849,3 +2849,19 @@ The drivers `hv.py`, `bvrun.sh` and `score7.sh` are in the session scratchpad `r
 
 Question: which honest construct inside the TVec3 `operator-`/`operator+`/`operator*` bodies creates c-r33's late per-site stack word, with no out-of-line symbol the map lacks?
 In progress; results are appended below as they are measured.
+
+### Harness and first results (scratch TU, game flags)
+
+- A scratch TU models the coaster `bind` (`setLin(nextPos - mPos)`, retail: frame 0x40, live object at 0x10, word at 0xc) and a depth-4 site (`use(p - q)` under three inline wrappers), and lists every text symbol the object emits.
+- Retail's depth-4 shape is known from Tongue: `bl __ct(r <- &tpos); bl __ami__(r, &mTipPos); bl __ct(result <- r)`.
+  So at depth d+1 retail's `operator-` body makes exactly three calls, a copy construction, `-=` and the return copy, and any helper call in the body would show as a fourth `bl` there.
+  That rules out every helper candidate (`set`, `sub`, `add`, `scale`, a `self()` accessor, a conversion) on the map alone: each is called out of line at depth 5 in the scratch TU (`self()` and `__opPC3Vec__` appear as new weak symbols).
+- `TVec3 r(fst); r -= snd; return r;` (V1) reproduces Tongue's three calls exactly and emits nothing new, but has no word.
+- The word does not need an inline call: a comma with a constant left operand makes it with no call at any depth.
+  `return (0, r);` or `return ((void)0, r);` after `TVec3 r(fst); r -= snd;` gives the coaster's frame and slots, Tongue's three calls, and no new symbol.
+  On the real units it makes coaster, enemyAttachment, wireBinder and TLiveActor `bind` exact and CameraDemo 4 markers, the same as c-r33's C2.
+- The debugger shows what that word is: the copy constructor substitutes the comma directly for `other` (no binding), and the IR optimiser then gives the pointer-valued `ECOMMA` its own temporary (`@N iro`), created after every inliner object.
+  C2's word, by contrast, is an inliner binding (`operator=`'s `other`).
+- The same comma in the copy-in (`TVec3 r((0, fst));`) also makes the word but costs enemyAttachment 6 extra instructions, and in `-=` (`r -= (0, snd)`, `(0, r) -= snd`) it makes none.
+- A comma whose left operand has side effects is hoisted by the front end and makes no word (`return (r -= snd, r);`, `return (snd, r);`).
+- A free `inline` template `operator-` (primary template, deduced `T`) compiles like the friend V1; without `inline` it is never expanded.
