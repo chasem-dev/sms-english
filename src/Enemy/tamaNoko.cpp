@@ -189,6 +189,8 @@ void TTamaNokoManager::loadAfter()
 	SMS_LoadParticle("/scene/tamaNoko/jpa/ms_mnt_kira.jpa", 0x70);
 }
 
+// TODO: instruction-exact; frame 0x48 against retail 0xe0 (0x38 before
+// getObjNum() and getObj(), c-hs5), a dead low region.
 void TTamaNokoManager::initSetEnemies()
 {
 	void* data = JKRGetResource("/scene/tamaNoko/tamaflower_model1.bmd");
@@ -196,8 +198,8 @@ void TTamaNokoManager::initSetEnemies()
 	    data, J3DMLF_MaterialPEFull | J3DMLF_UseUniqueMaterials
 	              | (2 << J3DMLF_TevStageNumShift)));
 
-	for (int i = 0; i < mObjNum; ++i) {
-		TTamaNoko* enemy = (TTamaNoko*)unk18[i];
+	for (int i = 0; i < getObjNum(); ++i) {
+		TTamaNoko* enemy = (TTamaNoko*)getObj(i);
 		enemy->unk19C
 		    = new TTamaNokoFlower(enemy, 0, modelData, 0x3, "タマノコフラワー");
 	}
