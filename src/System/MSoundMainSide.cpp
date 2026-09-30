@@ -1039,14 +1039,9 @@ void MSStageCubeFadeMonte::proc()
 // The cube lookup sits two inline levels below calcParamRatioInCube, which
 // puts JGadget::TVector<void*>::begin() five levels down: deep enough that the
 // ROM `bl`s it in every caller, while the depth-0 lookups in the procs fold it.
-static inline TCubeGeneralInfo* getCube(TCubeManagerBase* mgr, s32 id)
-{
-	return mgr->unk14->getChildren().begin()[id];
-}
-
 static inline TCubeGeneralInfo* getSoundCube(s32 id)
 {
-	return getCube(gpCubeSoundChange, id);
+	return gpCubeSoundChange->getCube(id);
 }
 
 // UNUSED, 0x108: inlined into all four callers (proc, MSStageCubeFadeMonte and

@@ -29,6 +29,17 @@ public:
 	// fabricated
 	TCubeGeneralInfo* getCubeInfo(s32 i) const { return (*unk14)[i]; }
 
+	// Fabricated: the same lookup through JGadget::TVector::begin(), which
+	// puts begin() one level deeper than getCubeInfo. bosseel's mouth cube
+	// and MSStageCubeFade's sound cubes read it this way: that depth is what
+	// makes the ROM `bl` begin() inside TBossEel::perform and
+	// MSStageCubeFade::calcParamRatioInCube, while getCubeInfo's callers in
+	// CubeManagerBase and MSStageCubeFade::proc drop to 97.7-99.8 under it.
+	TCubeGeneralInfo* getCube(s32 i) const
+	{
+		return unk14->getChildren().begin()[i];
+	}
+
 	s32 getDataNo(s32) const;
 	int getInCubeNo(const Vec&) const;
 	bool isInCube(const Vec&, s32) const;

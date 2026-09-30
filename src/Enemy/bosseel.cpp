@@ -1758,15 +1758,10 @@ MtxPtr TBossEel::getTakingMtx() { return mMActor->getModel()->getAnmMtx(7); }
 // calcAndSetCollisionCubeBite_, which puts JGadget::TVector<void*>::begin()
 // deep enough in TBossEel::perform's expansion that the ROM `bl`s it, as in
 // MSStageCubeFade::calcParamRatioInCube.
-static inline TCubeGeneralInfo* getCube(TCubeManagerBase* mgr, s32 id)
-{
-	return mgr->unk14->getChildren().begin()[id];
-}
-
 static inline TCubeGeneralInfo* getMouthCube(const TBossEel* p, s32 id)
 {
 	TCubeManagerBase* mgr = p->mMouthCubeManager;
-	return getCube(mgr, id);
+	return mgr->getCube(id);
 }
 
 void TBossEel::calcAndSetCollisionCubeBite_()
