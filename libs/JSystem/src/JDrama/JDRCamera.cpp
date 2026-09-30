@@ -45,11 +45,10 @@ void TPolarCamera::load(JSUMemoryInputStream& stream)
 //     `setEularZ` in the header ((1,2) must be -s and (2,1) +s); block two's
 //     products prove it.
 //
-// Direct-return level over the far plane, the polar sibling of the binders
-// the look-at and ortho cameras use; with the projection matrix read through
-// its conversion and the four translations passed as `TVec3` temporaries it
-// is exactly retail's 104 bytes of inline pool.
-static inline f32 JDRCameraFar(const TPolarCamera* p) { return p->mFar; }
+// The far plane is read through TCamera::getFar(), a direct-return level;
+// with the projection matrix read through its conversion and the four
+// translations passed as `TVec3` temporaries it is exactly retail's 104 bytes
+// of inline pool.
 
 void TPolarCamera::perform(u32 cue, TGraphics* graphics)
 {
@@ -59,7 +58,7 @@ void TPolarCamera::perform(u32 cue, TGraphics* graphics)
 	MtxPtr projMtx = graphics->mProjMtx;
 	C_MTXPerspective(projMtx, mFovy, mAspect, mNear, mFar);
 	graphics->mNearPlane = mNear;
-	graphics->mFarPlane  = JDRCameraFar(this);
+	graphics->mFarPlane  = getFar();
 
 	// `dist` has to be named: as a bare `-unk44` argument the value outranks
 	// the three literals above (f31 instead of f28) and every FPR in the
@@ -98,9 +97,9 @@ void TPolarCamera::JSGSetProjectionFovy(float fovy) { mFovy = fovy; }
 float TPolarCamera::JSGGetProjectionAspect() const { return mAspect; }
 void TPolarCamera::JSGSetProjectionAspect(float aspect) { mAspect = aspect; }
 
-// Binding level over a raw member read, worth +8 of low region in
-// JDrama::TLookAtCamera::perform (batch 127).
-static inline f32 JDRCameraFar(const TLookAtCamera* p)
+// Binding level over the far plane, worth +8 of low region in
+// TLookAtCamera::perform and TOrthoProj::perform (batch 127).
+static inline f32 JDRCameraFar(const TCamera* p)
 {
 	f32 far = p->mFar;
 	return far;
@@ -143,13 +142,6 @@ void TOrthoProj::load(JSUMemoryInputStream& stream)
 {
 	TPlacement::load(stream);
 	stream >> mField[0] >> mField[1] >> mField[2] >> mField[3];
-}
-// Binding level over a raw member read, worth +8 of low region in
-// JDrama::TOrthoProj::perform (batch 127).
-static inline f32 JDRCameraFar(const TOrthoProj* p)
-{
-	f32 far = p->mFar;
-	return far;
 }
 
 void TOrthoProj::perform(u32 cue, TGraphics* graphics)
