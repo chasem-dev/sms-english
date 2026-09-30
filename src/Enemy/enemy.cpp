@@ -418,24 +418,24 @@ void TSpineEnemy::goToRandomEscapeGraphNode()
 	unk12C = 0.0f;
 }
 
-// TODO: frame 0x160 vs 0x170. Retail has 3-4 words above the else-branch
-// block (ours 10 tracer/manager bindings) and 2 fewer below; the whole else
-// branch as a this-taking inline lands the blocks at 0x168 but copies the
-// loop counter (`addi r30, r29, 0`), so the loop is caller-level code.
+// TODO: frame 0x170 exact through getManager() at all three reads (+8) and
+// the named previous index (+8); the slots still differ. The whole else
+// branch as a this-taking inline copies the loop counter
+// (`addi r30, r29, 0`), so the loop is caller-level code.
 void TSpineEnemy::goToExclusiveNextGraphNode()
 {
-	if (mManager == nullptr) {
+	if (getManager() == nullptr) {
 		goToRandomNextGraphNode();
 	} else {
 		if (getTracer()->getCurGraphIndex() < 0) {
 			unk124->setTo(
 			    getTracer()->getGraph()->findNearestNodeIndex(mPosition, -1));
 		} else {
+			int prevIdx = getTracer()->getPrevIndex();
 			int idx = getTracer()->getGraph()->getRandomNextIndex(
-			    getTracer()->getCurGraphIndex(), getTracer()->getPrevIndex(),
-			    -1);
-			for (int i = 0; i < mManager->getObjNum(); ++i) {
-				TSpineEnemy* enemy = (TSpineEnemy*)mManager->getObj(i);
+			    getTracer()->getCurGraphIndex(), prevIdx, -1);
+			for (int i = 0; i < getManager()->getObjNum(); ++i) {
+				TSpineEnemy* enemy = (TSpineEnemy*)getManager()->getObj(i);
 				if (this != enemy
 				    && idx == enemy->getTracer()->getCurGraphIndex())
 					idx = getTracer()->getGraph()->getRandomNextIndex(
