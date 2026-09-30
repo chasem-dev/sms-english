@@ -2631,3 +2631,43 @@ Every commit is one function, byte-identical code (per-function disassembly comp
 - The Bound sites are not one construct: sound sites were the short overload, and many other sites were a raw member read that retail spelled through its header accessor somewhere else in the same function.
 - Before respelling a site, check whether another function inlines it (MapObjBall's makeObjWaitingToAppear into receiveMessage and perform): a byte-identical function can still move its inliners.
 - UNUSED helpers whose bodies fold into a caller (TBathtub::showMessage, TBossPakkun::showMessage, THinokuri2::shakeCamera, TFireWanwanManager's balloon checks) are the next lead for the balloon and shake sites.
+
+## Closure batch c-k22 (2026-09-30): a site-level sweep for the `...Bound` stack words
+
+Question: which real constructs, beyond c-k21's, supply the two stack words of the remaining 185 `...Bound` sites?
+Answer: 46 sites in 36 functions respell byte-identically (whole object compared against HEAD, DOL SHA-1 unchanged, `changes_all` clean, symbol order unchanged); 139 remain and no accessor lost its last user.
+Per accessor: MarDirector 11, ParticleManager 12, MSound 8, Map 6, FlagManager 3, Mario 2, and one each for CameraShake, ModelWaterManager, Camera and RumbleMgr; ItemManager's two sites (TMonumentShine::receiveMessage, TItemManager::newAndRegisterCoin) found no carrier.
+
+### Method
+
+- A scratch sweep compiled each variant of one unit in a shadow tree and compared every function of the object with the HEAD compile (words and relocation targets), so an inliner that moves is caught.
+- Per function it removed one or two Bound sites (plain or raw) and applied the same number of single-site alternates, then pairs and triples mixed across kinds.
+- Alternates: the short `startSoundActor(id, pos)`, a const-reference or member-level header accessor for a raw member read (`getPosition()`, `getRotation()`, `getScaling()`, `getVelocity()`, `getGroundHeight()`, `getHolder()`, `getSpine()`, `getMActor()`), `getCurrentMap()`/`getCurrentStage()`, and a raw global read respelled through its plain accessor (`gpMarDirector->` as `SMSGetMarDirector()->`, likewise gpMSound, gpMap, gpCamera).
+- Word prices measured on the way: a const-reference accessor read is +2 words, `getCurrentMap()` +2, a plain global accessor +1 over the raw read, so one Bound site trades for one accessor read or for two plain-global reads.
+
+### What landed (wt/c-k22)
+
+- Accessor reads that make a function consistent were preferred, and a hit was taken only when the respelled reads read naturally:
+  `getPosition()` at TBossHanachan::bind, TNerveCannonDamage (demo camera copy), TEnemyMario::emDownAnimation (both reference copies), TBGKMtxCalc::calc, TMario::thinkYoshiHeadCollision, TMario::checkWet, TCogwheel::control and TManhole::touchPlayer;
+  `getRotation()` at TCraneRotY::control and TCraneUpDown::control (both limit tests) and ExecSpinNerve_Sub (both wrap tests);
+  `getGroundHeight()` at TBossHanachan::bind and TResetFruit::checkGroundCollision, `getVelocity()` at TResetFruit::perform, `getHolder()` at TDangoHamuKuri::receiveMessage and TGCConsole2::checkChangeTelopArray, `getSpine()` at TBiancoGateKeeper::emitParticles and the else arm of TBossPakkun::gotHipDropDamage, and `getScaling()`/`getRotation()` at TMuddyBoat::control.
+- The short sound overload at TMareWallRock::movement, TNerveBGEyeDamage, TNerveBGKDie, TMapObjBase::perform (both state sounds, both director reads plain), TFluff::control, TRiccoWatermill::control, TNozzleTrigger::movement and TYoshi::doEat.
+- Plain director reads: TMantaMessageState::update, TEnemyMario::emDownAnimation, TTalk2D2::forceCloseTalk, evAppear8RedCoinsAndTimer, TMario::isUnUsualStageStart and TNerveBGBeakDamage.
+- TNerveBGBeakDamage::execute loses all seven of its Bound sites: its two boss-theme tests take `SMSGetMarDirector()->getCurrentMap() == 3 || ... == 59`, the spelling the same unit already uses at four other sites, and the function improves from 19 slot mismatches to 8 (frame exact).
+- `getCurrentMap()`/`getCurrentStage()` also carry the words at TGCConsole2::checkChangeTelopArray and TMario::warpRequest.
+- THinokuri2::shakeCamera (UNUSED) is 0xa8 in the map: `if (getDistToMarioSquared() <= range * range)` adds the `cror` the old early return lacked.
+
+### Measured and rejected
+
+- The UNUSED helpers that hold Bound sites (ExecSpinNerve_Sub, TBossPakkun::resetWaterMark, TConductor::clipAloneActors, TSamboHead::setCrashAnm, TTalk2D2::closeTalkWindow, TYumbo::updateEffect) are all inlined into exact callers, so their Bound words are needed; only ExecSpinNerve_Sub found a carrier (its own `getRotation()` tests).
+- THinokuri2::shakeCamera does not fold into TNerveHino2GraphWander or TNerveHino2Stamp: retail tests the clip and airborne flags before the frame test there, and the helper tests them first.
+- TBossPakkun::showMessage with a plain body, called as `showMessage(1)` from TNerveBPTumbleOut (identical) and `showMessage(0)` from TNerveBPVomit (frame fixed, slots 30 to 8), leaves the out-of-line showMessage 8 short; seven body spellings (ternary mask, named console, bool, `!= 1` arms, zero-initialised mask) all do, so the out-of-line frame has two words the inlined copies must not have.
+- TMario::soundMovement accepts any three of its 24 six-argument sounds made short (920 of 1500 pairs byte-identical), so no site is identified.
+- TBGKMtxCalc::calc's second director site and TRiccoWatermill::control's wheel sound only fit with one accessor inside a call whose sibling arguments stay raw; TNozzleBox::load only with one of two identical `getNozzleRight(gpMarDirector->mMap, n)` arguments respelled; not taken.
+- Frames count words per path: in TResetFruit::checkGroundCollision the two `param_1->y <= mGroundHeight` tests sit in exclusive arms and only one Bound site can go, whichever arm takes the accessor.
+- TMonumentShine::receiveMessage: 42 combinations of `getPosition()`, raw sound receivers and `getActorType()` around the item-manager site all move code or frame.
+
+### Reading
+
+- Most remaining Bound sites sit in functions with no raw member read an accessor could carry (Talk2D2's 22 sound sites, the NPC event functions, TBathtub::perform, the gatekeeper and bosspakkun nerves); their words need a per-function structure, not a site respelling.
+- A unit's own spelling elsewhere is the best tie-breaker when several placements are byte-identical, as bossgesso's `getCurrentMap()` tests were.
