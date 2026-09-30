@@ -991,7 +991,7 @@ static inline MActor* PopoPossessedActor(TPopo* popo)
 
 void TPopo::possessedIn()
 {
-	TMActorKeeper* keeper = mMActorKeeper;
+	TMActorKeeper* keeper = getActorKeeper();
 	mMActor               = keeper->getMActor("popoH.bmd");
 	setBckAnm(3);
 	PopoPossessedActor(this)->setBtpFromIndex(0);
@@ -1005,7 +1005,7 @@ void TPopo::possessedIn()
 	offLiveFlag(LIVE_FLAG_UNK10);
 	mRollAngle   = 90.0f;
 	mIsPossessed = 1;
-	if (SMSGetMSoundBound()->gateCheck(0x2861))
+	if (SMSGetMSound()->gateCheck(0x2861))
 		MSoundSESystem::MSoundSE::startSoundActor(0x2861, &mPosition, 0,
 		                                          nullptr, 0, 4);
 	mIsLevelReached = 0;
