@@ -514,7 +514,8 @@ void TTinKoopaLaunchOrder::checkOrder()
 {
 	TTinKoopa* tinKoopa;
 	int count;
-	if (mTinKoopa->getLap() != mLap)
+	int lap = mTinKoopa->getLap();
+	if (lap != mLap)
 		return;
 
 	if (!mTinKoopa->checkTruckAnimationPass(mFrame))
@@ -539,15 +540,15 @@ void TTinKoopaLaunchOrder::checkOrder()
 	if ((int)mDirection == 1)
 		count = count <= 2 ? count : 2;
 
-	// TODO: 99.4%, every instruction right. Retail's getLap() compare takes
-	// the operands the other way round, and the direction and receiver sit
-	// in r5/r4 where ours are r4/r5: the direction (mDirection's CSE temp,
+	// TODO: 99.5%, every instruction right. Naming the lap puts the getLap()
+	// compare's operands in retail's order; the direction and receiver still
+	// sit in r5/r4 where ours are r4/r5: the direction (mDirection's CSE temp,
 	// or makeKillerQueue's s8 binding when it is named) is an `@` object and
 	// is coloured before the named receiver, so retail's receiver is an `@`
 	// object created earlier, yet loaded before the clamp. Declaring the
 	// receiver above `count` gives count its r6. Inert: a named u8 or s8
-	// direction in any declaration order, an unnamed receiver (sinks the
-	// load past the clamp), the clamp as a ternary argument.
+	// direction in any declaration order, an unnamed receiver (sinks the load
+	// past the clamp), the clamp as a ternary argument.
 	tinKoopa = mTinKoopa;
 	int num = count;
 	if (num > 4)
