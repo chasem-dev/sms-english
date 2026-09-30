@@ -1779,12 +1779,13 @@ void TEnemyMario::playerControl(JDrama::TGraphics* graphics)
 
 void TEnemyMario::damageExec(THitActor*, int, int, int, f32, int, f32, s16) { }
 
-// TODO: frame 0xb8 vs 0xc8 (0xc more between the colour temporaries and
-// `identity`, 4 below them), retail puts `right` in borderLeft's f28 and adds
+// TODO: frame 0xc0 vs 0xc8 (getPosition() for the world position gives 8;
+// before it 0xc more between the colour temporaries and `identity`, 4 below
+// them), retail puts `right` in borderLeft's f28 and adds
 // variable-first in bottom and left + 96. Needs a structural probe.
 void TEnemyMario::drawHPMeter(MtxPtr viewMtx)
 {
-	JGeometry::TVec3<f32> worldPosition = mPosition;
+	JGeometry::TVec3<f32> worldPosition = getPosition();
 	worldPosition.y += 210.0f;
 	JGeometry::TVec3<f32> screenPosition;
 	MTXMultVec(viewMtx, &worldPosition, &screenPosition);
