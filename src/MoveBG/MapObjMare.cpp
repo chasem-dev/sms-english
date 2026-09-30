@@ -315,14 +315,14 @@ void TCogwheel::control()
 	if (mPlateRopeLength > mRopeLength - mLowerMargin && mSpeed > 0.0f)
 		rebound();
 
-	mPlate->mPosition.y = mPosition.y - mPlateRopeLength
+	mPlate->mPosition.y = getPosition().y - mPlateRopeLength
 	    + mPlate->getObjCollisionHeightOffset();
 	mPot->mPosition.y   = mPosition.y - (mRopeLength - mPlateRopeLength);
 
 	f32 speed = fabsf(mSpeed);
 	if (speed > 0.01f) {
 		f32 volume = 10.0f * speed;
-		SMSGetMSoundBound()->startSoundActorWithInfo(
+		SMSGetMSound()->startSoundActorWithInfo(
 		    MSD_SE_OBJ_MR_TSUBO_PULL, &mPosition, nullptr, volume, 0, 0,
 		    nullptr, 0, 4);
 	}
