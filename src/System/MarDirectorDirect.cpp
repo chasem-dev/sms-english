@@ -847,9 +847,10 @@ void TMarDirector::nextStateInitialize(u8 next_state)
 	}
 }
 
-// TODO: instructions exact; frame 0xd0 vs retail 0x130 (0xa8 before
+// TODO: instructions exact; frame 0xf0 vs retail 0x130 (0xa8 before
 // getGamePad() at the pad reads and getTalkMode()/getTalkingNPC() at the
-// talk reads, research c-r29; the NPC accessor as openTalkWindow's
+// talk reads, research c-r29; 0xe0 before getCurrentMap() and getConsole(),
+// c-hs5; the NPC accessor as openTalkWindow's
 // argument changes code). Body from upstream
 // (its flag accessors fixed the r29/r30 swap, 99.8 -> 99.93), with the ROM's
 // GET_SHINE fanfare, the `1` demo flag and the 0x40 clear kept from ours.
@@ -867,7 +868,7 @@ u8 TMarDirector::updateGameMode()
 				break;
 			}
 
-			if (mMap != 15) {
+			if (getCurrentMap() != 15) {
 				if (getGamePad()->testTrigger(0x10)) {
 					r29 = STATE_GUIDE;
 					break;
@@ -895,7 +896,7 @@ u8 TMarDirector::updateGameMode()
 				offFlag(DIRECTOR_FLAG_SHINE_GET_PENDING);
 				unk126 = 3;
 
-				TGCConsole2* console = gpMarDirector->mConsole;
+				TGCConsole2* console = gpMarDirector->getConsole();
 				console->unk94->startAppearShineGet();
 				console->unk47 = 1;
 				MSBgm::startBGM(MSD_BGM_GET_SHINE);
