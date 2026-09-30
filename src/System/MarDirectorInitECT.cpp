@@ -30,11 +30,12 @@ static inline JDrama::TNameRef* ECTSearch(const char* name)
 	return ref;
 }
 
-// TODO: 96.5%, 16 bytes of frame short (0x208 vs 0x218) after the ECTSearch
+// TODO: 24 bytes of frame short (0x200 vs 0x218) after the ECTSearch
 // level (+32 over three sites). Retail converts the TOrthoProj width before
 // the height and keeps one fewer vtable spilled; inert: size.mWidth/mHeight
 // for the projection, reusing the outer rect, TRect constructors, raw
-// search2 at either remaining site.
+// search2 at either remaining site. Naming both projections before their
+// push_back (upstream's spelling) aligns the register choice.
 void TMarDirector::initECTGft(
     TPerformList* param_1, TPerformList* param_2,
     JDrama::TViewObjPtrListT<JDrama::TViewObj>* perf_event_group,
@@ -64,9 +65,9 @@ void TMarDirector::initECTGft(
 	param_1->push_back(graffitiEfbTex, CUE_DRAW_INIT);
 
 	param_1->push_back(new JDrama::TViewport(rect, "graffito"), CUE_DRAW);
-	param_1->push_back(
-	    new JDrama::TOrthoProj(-1.0f, 1.0f, 0.0f, 0.0f, 512.0f, 512.0f),
-	    CUE_SET_PROJECTION);
+	JDrama::TOrthoProj* ortho
+	    = new JDrama::TOrthoProj(-1.0f, 1.0f, 0.0f, 0.0f, 512.0f, 512.0f);
+	param_1->push_back(ortho, CUE_SET_PROJECTION);
 	param_1->push_back(drawInit, CUE_DRAW);
 	param_1->push_back(graffitiGroup, CUE_UNK1000000);
 	param_1->push_back(graffitiEfbTex, CUE_DRAW);
@@ -87,9 +88,9 @@ void TMarDirector::initECTGft(
 
 		param_2->push_back(efbTex, CUE_DRAW_INIT);
 		param_2->push_back(new JDrama::TViewport(rect, "graffito"), CUE_DRAW);
-		param_2->push_back(new JDrama::TOrthoProj(-1.0f, 1.0f, 0.0f, 0.0f,
-		                                          img->height, img->width),
-		                   CUE_SET_PROJECTION);
+		JDrama::TOrthoProj* ortho = new JDrama::TOrthoProj(
+		    -1.0f, 1.0f, 0.0f, 0.0f, img->height, img->width);
+		param_2->push_back(ortho, CUE_SET_PROJECTION);
 		param_2->push_back(drawInit, CUE_DRAW);
 		param_2->push_back(graffitiGroup, (i << CUE_OFFSET_POLLUTION_LAYER)
 		                                      | CUE_SEMITRANSPARENT_PRIO_2
