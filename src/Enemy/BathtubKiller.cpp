@@ -768,11 +768,11 @@ bool TBathtubKiller::isAttackable()
 
 bool TBathtubKiller::isAboided()
 {
-	if (mPosition.y > 5.0f + (unk204 + getBathtubY()))
+	if (getPosition().y > 5.0f + (unk204 + getBathtubY()))
 		return false;
 
-	JGeometry::TVec3<f32> marioPos = *gpMarioPos;
-	JGeometry::TVec3<f32> myPos = mPosition;
+	JGeometry::TVec3<f32> marioPos = SMS_GetMarioPos();
+	JGeometry::TVec3<f32> myPos = getPosition();
 	f32 heightDiff = fabsf(marioPos.y - myPos.y);
 	marioPos.y = 0.0f;
 	myPos.y = 0.0f;
