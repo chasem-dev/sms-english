@@ -214,11 +214,11 @@ BOOL TBGBeakHit::receiveMessage(THitActor* sender, u32 message)
 		mOwner->gotEyeDamage();
 
 		gpMarioParticleManager->emit(PARTICLE_MS_ENM_WATHIT,
-		                             &sender->mPosition, 0, nullptr);
+		                             &sender->getPosition(), 0, nullptr);
 		return true;
 	}
 
-	if (mOwner->mAttackMode == 3)
+	if (mOwner->getAttackMode() == 3)
 		return false;
 
 	if (mOwner->getLatestNerve() == &TNerveBGPollute::theNerve()
@@ -229,7 +229,8 @@ BOOL TBGBeakHit::receiveMessage(THitActor* sender, u32 message)
 	if (sender->getActorType() == 0x80000001) {
 		if (message == HIT_MESSAGE_TAKE) {
 			TTakeActor* actor = (TTakeActor*)sender;
-			if (actor->mHeldObject != nullptr && actor->mHeldObject != this)
+			if (actor->getHeldObject() != nullptr
+			    && actor->getHeldObject() != this)
 				return false;
 
 			mHolder = actor;
@@ -243,9 +244,9 @@ BOOL TBGBeakHit::receiveMessage(THitActor* sender, u32 message)
 
 		if (message == HIT_MESSAGE_THROWN || message == HIT_MESSAGE_UNK8) {
 			// TODO: inlined from TBossGesso?
-			JGeometry::TVec3<f32> delta = mPosition;
+			JGeometry::TVec3<f32> delta = getPosition();
 			TBossGesso* gesso           = mOwner;
-			delta -= gesso->mPosition;
+			delta -= gesso->getPosition();
 			f32 length = gesso->getSaveParam2()->mSLBeakLengthDamage.get();
 
 			if (delta.length() >= length)
