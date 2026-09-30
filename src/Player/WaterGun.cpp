@@ -431,10 +431,12 @@ void TNozzleBase::emit(int param_1)
 // UNUSED (map size 0x94). Emitted between TNozzleBase::emit and
 // TNozzleBase::animation, i.e. defined here in source order; inlined into all
 // three animation() overrides.
-// TODO: the three animation()s are 0x28/0x30/0xa8 short in frame with every
-// instruction right. Measured per expansion: isAnmEnd 0x18, isEmitting 0x70,
-// setFrame 8, isSwitchingTo* 8; no one-helper change fits all three (a
-// named `done` bool is +8 each and code-exact but unjustified; setBck() inert).
+// TODO: the three animation()s are 0x10/0x18/0x80 short in frame with every
+// instruction right (c-hs7: getMActor() at every nozzle-actor read took
+// 0x18/0x18/0x28 of the 0x28/0x30/0xa8 they were). Measured per expansion:
+// isAnmEnd 0x18, isEmitting 0x70, setFrame 8, isSwitchingTo* 8; no one-helper
+// change fits all three (a named `done` bool is +8 each and code-exact but
+// unjustified; setBck() inert).
 bool TNozzleBase::isAnmEnd() const
 {
 	bool end = false;
@@ -458,7 +460,7 @@ void TNozzleBase::animation(int param_1)
 	int bckSwapOut;
 	int bckSwapIn;
 
-	J3DFrameCtrl* ctrl = unk380->getFrameCtrl(ANM_TYPE_BCK);
+	J3DFrameCtrl* ctrl = getMActor()->getFrameCtrl(ANM_TYPE_BCK);
 
 	// The case assigns the animation indices the way TNozzleTrigger does; they
 	// fold to constants, but the dead `b body; b ret` pair retail keeps after
@@ -487,7 +489,7 @@ void TNozzleBase::animation(int param_1)
 	// all inert on the registers.
 	switch (unk36C) {
 	case 0: {
-		MActor* mactor = unk380;
+		MActor* mactor = getMActor();
 		if (!mactor->checkCurBckFromIndex(bckIdleOut))
 			mactor->setBckFromIndex(bckIdleOut);
 
@@ -499,7 +501,7 @@ void TNozzleBase::animation(int param_1)
 	}
 
 	case 1: {
-		MActor* mactor = unk380;
+		MActor* mactor = getMActor();
 		if (!mactor->checkCurBckFromIndex(bckIdle))
 			mactor->setBckFromIndex(bckIdle);
 
@@ -511,7 +513,7 @@ void TNozzleBase::animation(int param_1)
 	}
 
 	case 2: {
-		MActor* mactor = unk380;
+		MActor* mactor = getMActor();
 		if (!mactor->checkCurBckFromIndex(bckStart))
 			mactor->setBckFromIndex(bckStart);
 
@@ -521,7 +523,7 @@ void TNozzleBase::animation(int param_1)
 	}
 
 	case 3: {
-		MActor* mactor = unk380;
+		MActor* mactor = getMActor();
 		if (!mactor->checkCurBckFromIndex(bckSwapOut))
 			mactor->setBckFromIndex(bckSwapOut);
 
@@ -534,7 +536,7 @@ void TNozzleBase::animation(int param_1)
 	}
 
 	case 4:
-		MActor* mactor = unk380;
+		MActor* mactor = getMActor();
 		if (!mactor->checkCurBckFromIndex(bckSwapIn))
 			mactor->setBckFromIndex(bckSwapIn);
 
@@ -765,7 +767,7 @@ void TNozzleTrigger::animation(int param_1)
 	int bckSwapIn;
 	int emitMtxCount;
 
-	J3DFrameCtrl* ctrl = unk380->getFrameCtrl(ANM_TYPE_BCK);
+	J3DFrameCtrl* ctrl = getMActor()->getFrameCtrl(ANM_TYPE_BCK);
 
 	switch (param_1) {
 	case 4:
@@ -804,7 +806,7 @@ void TNozzleTrigger::animation(int param_1)
 
 	switch (unk36C) {
 	case 0: {
-		MActor* mactor = unk380;
+		MActor* mactor = getMActor();
 		if (!mactor->checkCurBckFromIndex(bckIdleOut))
 			mactor->setBckFromIndex(bckIdleOut);
 
@@ -815,7 +817,7 @@ void TNozzleTrigger::animation(int param_1)
 	}
 
 	case 1: {
-		MActor* mactor = unk380;
+		MActor* mactor = getMActor();
 		if (!mactor->checkCurBckFromIndex(bckIdle))
 			mactor->setBckFromIndex(bckIdle);
 
@@ -826,7 +828,7 @@ void TNozzleTrigger::animation(int param_1)
 	}
 
 	case 2: {
-		MActor* mactor = unk380;
+		MActor* mactor = getMActor();
 		if (!mactor->checkCurBckFromIndex(bckStart))
 			mactor->setBckFromIndex(bckStart);
 
@@ -837,7 +839,7 @@ void TNozzleTrigger::animation(int param_1)
 	}
 
 	case 3: {
-		MActor* mactor = unk380;
+		MActor* mactor = getMActor();
 		if (!mactor->checkCurBckFromIndex(bckSwapOut))
 			mactor->setBckFromIndex(bckSwapOut);
 
@@ -850,7 +852,7 @@ void TNozzleTrigger::animation(int param_1)
 	}
 
 	case 4: {
-		MActor* mactor = unk380;
+		MActor* mactor = getMActor();
 		if (!mactor->checkCurBckFromIndex(bckSwapIn))
 			mactor->setBckFromIndex(bckSwapIn);
 
@@ -1077,14 +1079,14 @@ void TNozzleDeform::animation(int param)
 		}
 	}
 
-	J3DFrameCtrl* ctrl = unk380->getFrameCtrl(ANM_TYPE_BCK);
+	J3DFrameCtrl* ctrl = getMActor()->getFrameCtrl(ANM_TYPE_BCK);
 
 	// TODO: retail keeps the inlined isAnmEnd() result and isEmitting()
 	// receiver (cases 2, 3, 8) in r29 where ours reuses ctrl's r31, and the
 	// frame is 0xa8 larger; hoisting ctrl or mactor to the top is inert.
 	switch (unk36C) {
 	case 0: {
-		MActor* mactor = unk380;
+		MActor* mactor = getMActor();
 		if (!mactor->checkCurBckFromIndex(4))
 			mactor->setBckFromIndex(4);
 
@@ -1095,7 +1097,7 @@ void TNozzleDeform::animation(int param)
 	case 1:
 		break;
 	case 2: {
-		MActor* mactor = unk380;
+		MActor* mactor = getMActor();
 		if (!mactor->checkCurBckFromIndex(7))
 			mactor->setBckFromIndex(7);
 
@@ -1105,7 +1107,7 @@ void TNozzleDeform::animation(int param)
 		break;
 	}
 	case 3: {
-		MActor* mactor = unk380;
+		MActor* mactor = getMActor();
 		if (!mactor->checkCurBckFromIndex(5))
 			mactor->setBckFromIndex(5);
 
@@ -1115,7 +1117,7 @@ void TNozzleDeform::animation(int param)
 		break;
 	}
 	case 8: {
-		MActor* mactor = unk380;
+		MActor* mactor = getMActor();
 		if (!mactor->checkCurBckFromIndex(6))
 			mactor->setBckFromIndex(6);
 
@@ -1128,7 +1130,7 @@ void TNozzleDeform::animation(int param)
 		break;
 	}
 	case 4: {
-		MActor* mactor = unk380;
+		MActor* mactor = getMActor();
 		if (!mactor->checkCurBckFromIndex(1))
 			mactor->setBckFromIndex(1);
 
@@ -1138,7 +1140,7 @@ void TNozzleDeform::animation(int param)
 		break;
 	}
 	case 5: {
-		MActor* mactor = unk380;
+		MActor* mactor = getMActor();
 		if (!mactor->checkCurBckFromIndex(0))
 			mactor->setBckFromIndex(0);
 
@@ -1152,7 +1154,7 @@ void TNozzleDeform::animation(int param)
 		break;
 	}
 	case 6: {
-		MActor* mactor = unk380;
+		MActor* mactor = getMActor();
 		if (!mactor->checkCurBckFromIndex(3))
 			mactor->setBckFromIndex(3);
 
@@ -1162,7 +1164,7 @@ void TNozzleDeform::animation(int param)
 		break;
 	}
 	case 7:
-		MActor* mactor = unk380;
+		MActor* mactor = getMActor();
 		if (!mactor->checkCurBckFromIndex(2))
 			mactor->setBckFromIndex(2);
 
