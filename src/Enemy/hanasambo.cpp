@@ -944,12 +944,6 @@ DEFINE_NERVE(TNerveHanaSamboWait, TLiveActor)
 	return false;
 }
 
-static inline MSound* HanasamboAttackGetMSound()
-{
-	MSound* sound = gpMSound;
-	return sound;
-}
-
 DEFINE_NERVE(TNerveHanaSamboAttack, TLiveActor)
 {
 	THanaSambo* sambo = (THanaSambo*)spine->getBody();
@@ -958,7 +952,7 @@ DEFINE_NERVE(TNerveHanaSamboAttack, TLiveActor)
 	} else if (sambo->checkCurAnmEnd(0)) {
 		if (sambo->isBckAnm(3)) {
 			sambo->createPollen();
-			if (HanasamboAttackGetMSound()->gateCheck(0x291B))
+			if (SMSGetMSoundBound()->gateCheck(0x291B))
 				MSoundSESystem::MSoundSE::startSoundActor(
 				    0x291B, &sambo->mPosition, 0, nullptr, 0, 4);
 			sambo->setBckAnm(1);
@@ -1330,12 +1324,6 @@ static inline TMarioParticleManager* SamboHeadGetMarioParticleManager()
 	return marioParticleManager;
 }
 
-static inline MSound* SamboHeadGetMSound()
-{
-	MSound* sound = gpMSound;
-	return sound;
-}
-
 void TSamboHead::setAfterDeadEffect()
 {
 	JPABaseEmitter* emitter;
@@ -1354,7 +1342,7 @@ void TSamboHead::setAfterDeadEffect()
 	                                                   nullptr);
 	if (emitter)
 		setEmitterScale(emitter, 1.5f, 1.5f, 1.5f);
-	if (SamboHeadGetMSound()->gateCheck(0x295F))
+	if (SMSGetMSoundBound()->gateCheck(0x295F))
 		MSoundSESystem::MSoundSE::startSoundActor(0x295F, &mPosition, 0,
 		                                          nullptr, 0, 4);
 }

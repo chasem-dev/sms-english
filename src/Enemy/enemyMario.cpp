@@ -898,13 +898,6 @@ void TEnemyMario::emAppear()
 	}
 }
 
-// fabricated: raw-global MSound binder
-static inline MSound* EnemyMarioGetMSound()
-{
-	MSound* sound = gpMSound;
-	return sound;
-}
-
 // fabricated: two-local binder over getSettingsParams + stop flag
 static inline u8 EnemyMarioGetStopFlag(TEnemyMario* p)
 {
@@ -1293,7 +1286,7 @@ void TEnemyMario::emRunAwayToNearestNode()
 		mDisappearPosition.y += 80.0f;
 		gpMarioParticleManager->emit(SCENE_KAGEMARIO_JPA_MS_KGM_CHANGE,
 		                             &mDisappearPosition, 0, nullptr);
-		EnemyMarioGetMSound()->startSoundActor(MSD_SE_MA_KAGE_FIELD_AWAY,
+		SMSGetMSoundBound()->startSoundActor(MSD_SE_MA_KAGE_FIELD_AWAY,
 		                                       &mPosition, 0, nullptr, 0, 4);
 		break;
 	case 8:
@@ -1318,7 +1311,7 @@ void TEnemyMario::emRunAwayToNearestNode()
 	case 220:
 		gpMarioParticleManager->emit(SCENE_KAGEMARIO_JPA_MS_KGM_CHANGE,
 		                             &mDisappearPosition, 0, nullptr);
-		EnemyMarioGetMSound()->startSoundActor(MSD_SE_MA_KAGE_FIELD_APPEAR,
+		SMSGetMSoundBound()->startSoundActor(MSD_SE_MA_KAGE_FIELD_APPEAR,
 		                                       &mPosition, 0, nullptr, 0, 4);
 		break;
 	case 300:

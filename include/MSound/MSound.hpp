@@ -333,6 +333,17 @@ extern MSound* gpMSound;
 // real
 inline MSound* SMSGetMSound() { return gpMSound; }
 
+// Fabricated: the sound manager bound to a named local before it is
+// returned, +8 of low region per expansion over SMSGetMSound. The plain
+// accessor as a binder loses far more sites than it gains (research batch
+// c-r30), so the two spellings are separate. Formerly parked TU-locally in
+// 23 units under 29 names.
+inline MSound* SMSGetMSoundBound()
+{
+	MSound* sound = gpMSound;
+	return sound;
+}
+
 // Fabricated name: a position raised to ear height, the probe the sound cube
 // lookups take (MSoundSE, MSMainProc). The copy it returns is the inline
 // temporary retail keeps below each probe vector.

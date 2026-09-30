@@ -706,12 +706,6 @@ static inline const JGeometry::TVec3<f32>& MapObjHideMarioPos()
 	return pos;
 }
 
-static inline MSound* MapObjHideMSound()
-{
-	MSound* sound = gpMSound;
-	return sound;
-}
-
 void TWoodBox::killNearWoodBox(f32 dX, f32 dY) const
 {
 	const TBGCheckData* groundPlane;
@@ -734,7 +728,7 @@ void TWoodBox::kill()
 	mStateTimer = -1;
 	mState      = 2;
 
-	MSound* sound = MapObjHideMSound();
+	MSound* sound = SMSGetMSoundBound();
 	sound->startSoundActor(MSD_SE_IT_BARREL_CRASH, &mPosition, 0, nullptr, 0,
 	                       4);
 

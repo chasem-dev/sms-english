@@ -1005,12 +1005,6 @@ static inline TWaterEmitInfo* BosspakkunWaterEmitInfo(TBossPakkun* p)
 	return info;
 }
 
-static inline MSound* BosspakkunSound()
-{
-	MSound* sound = gpMSound;
-	return sound;
-}
-
 // Binding level over TBossPakkun::getSaveParam2(): worth +8 of low region per
 // expansion where the plain accessor call is +0.
 static inline TBossPakkunParams* BosspakkunParams(const TBossPakkun* p)
@@ -1142,7 +1136,7 @@ void TBossPakkun::gotHipDropDamage()
 
 		mSpine->setNext(&TNerveBPPreDie::theNerve());
 
-		if (BosspakkunSound()->gateCheck(MSD_SE_BS_BSPAKU_DOWN))
+		if (SMSGetMSoundBound()->gateCheck(MSD_SE_BS_BSPAKU_DOWN))
 			MSoundSESystem::MSoundSE::startSoundActor(MSD_SE_BS_BSPAKU_DOWN, &mPosition, 0,
 			                          nullptr, 0, 4);
 		return;
@@ -1152,7 +1146,7 @@ void TBossPakkun::gotHipDropDamage()
 	if (mSpine->getLatestNerve() == tumbleOut)
 		return;
 
-	if (BosspakkunSound()->gateCheck(MSD_SE_BS_BSPAKU_DAMAGE))
+	if (SMSGetMSoundBound()->gateCheck(MSD_SE_BS_BSPAKU_DAMAGE))
 		MSoundSESystem::MSoundSE::startSoundActor(MSD_SE_BS_BSPAKU_DAMAGE, &mPosition, 0,
 		                          nullptr, 0, 4);
 
@@ -2078,12 +2072,6 @@ DEFINE_NERVE(TNerveBPPreDie, TLiveActor)
 	return FALSE;
 }
 
-static inline MSound* BossPakkunDieSound()
-{
-	MSound* sound = gpMSound;
-	return sound;
-}
-
 DEFINE_NERVE(TNerveBPDie, TLiveActor)
 {
 	TBossPakkun* boss = (TBossPakkun*)spine->getBody();
@@ -2094,9 +2082,9 @@ DEFINE_NERVE(TNerveBPDie, TLiveActor)
 	// the first arm and the raw member in the second are the two spellings
 	// that reach retail's frame.
 	if (spine->getTime() == 0)
-		BossPakkunDieSound()->getModBgm()->modBgm(0, 1);
+		SMSGetMSoundBound()->getModBgm()->modBgm(0, 1);
 	else
-		BossPakkunDieSound()->unk98->modBgm(0, 1);
+		SMSGetMSoundBound()->unk98->modBgm(0, 1);
 
 	if (actor->checkCurBckFromIndex(BOSSPAKU_BCK_DOWN_START)
 	    && spine->getTime() == 680)

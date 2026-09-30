@@ -983,12 +983,6 @@ void TPopo::explosion()
 	gpModelWaterManager->emitRequest(*manager->mExplosionWater);
 }
 
-static inline MSound* PopoPossessedSound()
-{
-	MSound* sound = gpMSound;
-	return sound;
-}
-
 static inline MActor* PopoPossessedActor(TPopo* popo)
 {
 	MActor* actor = popo->getMActor();
@@ -1011,7 +1005,7 @@ void TPopo::possessedIn()
 	offLiveFlag(LIVE_FLAG_UNK10);
 	mRollAngle   = 90.0f;
 	mIsPossessed = 1;
-	if (PopoPossessedSound()->gateCheck(0x2861))
+	if (SMSGetMSoundBound()->gateCheck(0x2861))
 		MSoundSESystem::MSoundSE::startSoundActor(0x2861, &mPosition, 0,
 		                                          nullptr, 0, 4);
 	mIsLevelReached = 0;

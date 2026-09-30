@@ -108,17 +108,11 @@ static inline bool RevolvingFenceIsWall(const TRevolvingFenceInner* p)
 	return isWall;
 }
 
-static inline MSound* RevolvingFenceSound()
-{
-	MSound* sound = gpMSound;
-	return sound;
-}
-
 BOOL TRevolvingFenceInner::receiveMessage(THitActor* sender, u32 message)
 {
 	if (message == HIT_MESSAGE_SUPER_HIP_DROP && !RevolvingFenceIsWall(this)) {
 		if (isState(STATE_WAIT_FRONT)) {
-			RevolvingFenceSound()->startSoundActor(MSD_SE_OBJ_FENCE_REVERSE1, &mPosition, 0,
+			SMSGetMSoundBound()->startSoundActor(MSD_SE_OBJ_FENCE_REVERSE1, &mPosition, 0,
 			                          nullptr, 0, 4);
 			setState(STATE_TURN_TO_BACK_CW);
 			startBck("fence_revolve_inner_roll_down");
@@ -127,7 +121,7 @@ BOOL TRevolvingFenceInner::receiveMessage(THitActor* sender, u32 message)
 		}
 
 		if (isState(STATE_WAIT_BACK)) {
-			RevolvingFenceSound()->startSoundActor(MSD_SE_OBJ_FENCE_REVERSE2, &mPosition, 0,
+			SMSGetMSoundBound()->startSoundActor(MSD_SE_OBJ_FENCE_REVERSE2, &mPosition, 0,
 			                          nullptr, 0, 4);
 			setState(STATE_TURN_TO_FRONT_CW);
 			startBck("fence_revolve_inner_roll_up");
@@ -145,14 +139,14 @@ BOOL TRevolvingFenceInner::receiveMessage(THitActor* sender, u32 message)
 
 		if ((-180.0f < toMario && toMario < -90.0f)
 		    || (0.0f < toMario && toMario < 90.0f)) {
-			RevolvingFenceSound()->startSoundActor(MSD_SE_OBJ_FENCE_REVERSE1, &mPosition, 0,
+			SMSGetMSoundBound()->startSoundActor(MSD_SE_OBJ_FENCE_REVERSE1, &mPosition, 0,
 			                          nullptr, 0, 4);
 			if (isState(STATE_WAIT_FRONT))
 				setState(STATE_TURN_TO_BACK_CW);
 			else
 				setState(STATE_TURN_TO_FRONT_CW);
 		} else {
-			RevolvingFenceSound()->startSoundActor(MSD_SE_OBJ_FENCE_REVERSE2, &mPosition, 0,
+			SMSGetMSoundBound()->startSoundActor(MSD_SE_OBJ_FENCE_REVERSE2, &mPosition, 0,
 			                          nullptr, 0, 4);
 			if (isState(STATE_WAIT_FRONT))
 				setState(STATE_TURN_TO_BACK_CCW);
@@ -564,12 +558,6 @@ void TRailFence::goOnRail()
 	}
 }
 
-static inline MSound* RailFenceSound()
-{
-	MSound* sound = gpMSound;
-	return sound;
-}
-
 static inline TGraphTracer* RailFenceTracer(TRailFence* fence)
 {
 	TGraphTracer* tracer = fence->mTracer;
@@ -591,7 +579,7 @@ void TRailFence::control()
 	case STATE_AT_GOAL:
 		if (!isStateTimerEngaged()) {
 			removeMapCollision();
-			RailFenceSound()->startSoundActor(MSD_SE_OBJ_SUPERBLOCK_BREAK,
+			SMSGetMSoundBound()->startSoundActor(MSD_SE_OBJ_SUPERBLOCK_BREAK,
 			                                  &mPosition, 0, nullptr, 0, 4);
 			setState(STATE_FALL);
 		}

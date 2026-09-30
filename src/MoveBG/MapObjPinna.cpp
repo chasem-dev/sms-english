@@ -807,22 +807,16 @@ TMerrygoround::TMerrygoround(const char* name)
 
 // TChangeStageMerrygoround
 
-static inline MSound* ChangeStageMerrygoroundGetMSound()
-{
-	MSound* sound = gpMSound;
-	return sound;
-}
-
 void TChangeStageMerrygoround::touchPlayer(THitActor* sender)
 {
 	if (!isStateTimerEngaged()) {
 		if (SMS_GetYoshi()->mType == 1) {
-			ChangeStageMerrygoroundGetMSound()->startSoundSystemSE(
+			SMSGetMSoundBound()->startSoundSystemSE(
 			    0x4840, 0, nullptr, 0);
 			TMapObjChangeStage::touchPlayer(sender);
 			unk13C = 1;
 		} else {
-			ChangeStageMerrygoroundGetMSound()->startSoundSystemSE(
+			SMSGetMSoundBound()->startSoundSystemSE(
 			    0x483E, 0, nullptr, 0);
 		}
 

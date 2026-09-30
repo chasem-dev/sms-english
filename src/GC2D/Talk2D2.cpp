@@ -424,26 +424,14 @@ void TTalk2D2::setMessageID(u32 message_id, u32 flags)
 	mIsTalking = true;
 }
 
-// Binding level over a raw member read, worth +16 of low region in
-// TTalk2D2::forceCloseTalk (batch 127). Retail binds gpMSound through it at
-// every sound site of the talk window's open/close/controller paths, except
-// the plain talkModeOut() arm of closeTalkWindow; together with
-// SMSGetMarDirector() at the console sites it is what closes openTalkWindow,
-// checkControler and checkBoardControler's frames (0x98 / 0xa8 / 0x70).
-static inline MSound* Talk2D2GetMSound()
-{
-	MSound* mSound = gpMSound;
-	return mSound;
-}
-
 void TTalk2D2::forceCloseTalk()
 {
 	gpCamera->makeMtxForPrevTalk();
 
 	if (mIsBoard)
-		Talk2D2GetMSound()->startSoundSystemSE(MSD_SE_SY_RACE_START, 0, nullptr, 0);
+		SMSGetMSoundBound()->startSoundSystemSE(MSD_SE_SY_RACE_START, 0, nullptr, 0);
 	else
-		Talk2D2GetMSound()->talkModeOut();
+		SMSGetMSoundBound()->talkModeOut();
 
 	gpMarDirector->getConsole()->startAppearTelop(false);
 
@@ -458,10 +446,10 @@ void TTalk2D2::closeTalkWindow()
 {
 	if (mFlags & 1) {
 		if (mMessageID == 0x1e) {
-			Talk2D2GetMSound()->startSoundSystemSE(MSD_SE_SY_RACE_START, 0, nullptr, 0);
+			SMSGetMSoundBound()->startSoundSystemSE(MSD_SE_SY_RACE_START, 0, nullptr, 0);
 		} else if (mIsBoard) {
-			Talk2D2GetMSound()->startSoundSystemSE(MSD_SE_SY_2D_OUT, 0, nullptr, 0);
-			Talk2D2GetMSound()->talkModeOut();
+			SMSGetMSoundBound()->startSoundSystemSE(MSD_SE_SY_2D_OUT, 0, nullptr, 0);
+			SMSGetMSoundBound()->talkModeOut();
 		} else {
 			gpMSound->talkModeOut();
 		}
@@ -514,12 +502,12 @@ void TTalk2D2::openTalkWindow(TBaseNPC* npc)
 	gpMarDirector->getConsole()->startDisappearMario();
 
 	if (mMessageID == 0x1e) {
-		Talk2D2GetMSound()->startSoundSystemSE(MSD_SE_SY_PROBLEM_SIGN, 0, nullptr, 0);
+		SMSGetMSoundBound()->startSoundSystemSE(MSD_SE_SY_PROBLEM_SIGN, 0, nullptr, 0);
 	} else if (mIsBoard) {
-		Talk2D2GetMSound()->startSoundSystemSE(MSD_SE_SY_2D_IN, 0, nullptr, 0);
-		Talk2D2GetMSound()->talkModeIn(false);
+		SMSGetMSoundBound()->startSoundSystemSE(MSD_SE_SY_2D_IN, 0, nullptr, 0);
+		SMSGetMSoundBound()->talkModeIn(false);
 	} else {
-		Talk2D2GetMSound()->talkModeIn(true);
+		SMSGetMSoundBound()->talkModeIn(true);
 	}
 
 	SMSRumbleMgr->startPause();
@@ -655,12 +643,6 @@ bool TTalk2D2::openBoardWindow()
 	return done;
 }
 
-static inline MSound* Talk2D2MSound()
-{
-	MSound* r = gpMSound;
-	return r;
-}
-
 bool TTalk2D2::openNormalWindow()
 {
 	bool done = false;
@@ -686,7 +668,7 @@ bool TTalk2D2::openNormalWindow()
 			mLineProgress[i] = 1.0f;
 
 		if (mCharCursor[i] == 0 && mLineProgress[i] < mLineDelay) {
-			Talk2D2MSound()->startSoundSystemSE(MSD_SE_SY_TALK_OBI, 0, nullptr, 0);
+			SMSGetMSoundBound()->startSoundSystemSE(MSD_SE_SY_TALK_OBI, 0, nullptr, 0);
 			mCharCursor[i] = 1;
 			mCharBox[i * LINE_LENGTH]->show();
 		}
@@ -778,7 +760,7 @@ void TTalk2D2::checkBoardControler()
 		        & TMarioGamePad::MEANING_0x20000)
 		    || (mGamePad->mEnabledFrameMeaning
 		        & TMarioGamePad::MEANING_0x40000)) {
-			Talk2D2GetMSound()->startSoundSystemSE(MSD_SE_SY_SELECT_COMMON, 0, nullptr,
+			SMSGetMSoundBound()->startSoundSystemSE(MSD_SE_SY_SELECT_COMMON, 0, nullptr,
 			                             0);
 			mBoardBound->setPanePosition(60, JUTPoint(0, 0), JUTPoint(0, 0),
 			                             JUTPoint(0, -600));
@@ -790,12 +772,12 @@ void TTalk2D2::checkBoardControler()
 			// pattern as TBombHei::bombIn in docs/catalog.
 			if (mFlags & 1) {
 				if (mMessageID == 0x1e) {
-					Talk2D2GetMSound()->startSoundSystemSE(MSD_SE_SY_RACE_START, 0,
+					SMSGetMSoundBound()->startSoundSystemSE(MSD_SE_SY_RACE_START, 0,
 					                             nullptr, 0);
 				} else if (mIsBoard) {
-					Talk2D2GetMSound()->startSoundSystemSE(MSD_SE_SY_2D_OUT, 0, nullptr,
+					SMSGetMSoundBound()->startSoundSystemSE(MSD_SE_SY_2D_OUT, 0, nullptr,
 					                             0);
-					Talk2D2GetMSound()->talkModeOut();
+					SMSGetMSoundBound()->talkModeOut();
 				} else {
 					gpMSound->talkModeOut();
 				}
@@ -809,7 +791,7 @@ void TTalk2D2::checkBoardControler()
 	} else if (mGamePad->mEnabledFrameMeaning
 	           & (TMarioGamePad::MEANING_0x20000
 	              | TMarioGamePad::MEANING_0x40000)) {
-		Talk2D2GetMSound()->startSoundSystemSE(MSD_SE_SY_SELECT_COMMON, 0, nullptr, 0);
+		SMSGetMSoundBound()->startSoundSystemSE(MSD_SE_SY_SELECT_COMMON, 0, nullptr, 0);
 		mTalkMode = TALK_MODE_ERASING;
 	}
 }
@@ -919,14 +901,14 @@ void TTalk2D2::checkControler()
 			        & TMarioGamePad::MEANING_0x20000)
 			    || (mGamePad->mEnabledFrameMeaning
 			        & TMarioGamePad::MEANING_0x40000)) {
-				Talk2D2GetMSound()->startSoundSystemSE(MSD_SE_SY_SELECT_COMMON, 0,
+				SMSGetMSoundBound()->startSoundSystemSE(MSD_SE_SY_SELECT_COMMON, 0,
 				                             nullptr, 0);
 				closeTalkWindow();
 			}
 		} else if (mGamePad->mEnabledFrameMeaning
 		           & (TMarioGamePad::MEANING_0x20000
 		              | TMarioGamePad::MEANING_0x40000)) {
-			Talk2D2GetMSound()->startSoundSystemSE(MSD_SE_SY_SELECT_COMMON, 0, nullptr,
+			SMSGetMSoundBound()->startSoundSystemSE(MSD_SE_SY_SELECT_COMMON, 0, nullptr,
 			                             0);
 			mTalkMode = TALK_MODE_ERASING;
 		}
@@ -935,7 +917,7 @@ void TTalk2D2::checkControler()
 
 		if ((meaning & TMarioGamePad::MEANING_0x80000)
 		    && mSelectedValue == 1) {
-			Talk2D2GetMSound()->startSoundSystemSE(MSD_SE_SY_E3_MENU_CURSOR, 0, nullptr,
+			SMSGetMSoundBound()->startSoundSystemSE(MSD_SE_SY_E3_MENU_CURSOR, 0, nullptr,
 			                             0);
 			mSelectedValue = 0;
 			mSelectCursor[1]->setAlpha(254);
@@ -946,7 +928,7 @@ void TTalk2D2::checkControler()
 
 		if ((meaning & TMarioGamePad::MEANING_0x100000)
 		    && mSelectedValue == 0) {
-			Talk2D2GetMSound()->startSoundSystemSE(MSD_SE_SY_E3_MENU_CURSOR, 0, nullptr,
+			SMSGetMSoundBound()->startSoundSystemSE(MSD_SE_SY_E3_MENU_CURSOR, 0, nullptr,
 			                             0);
 			mSelectedValue = 1;
 			mSelectCursor[0]->setAlpha(254);
@@ -961,14 +943,14 @@ void TTalk2D2::checkControler()
 			       | TMarioGamePad::MEANING_0x40000)) {
 				if (mFlags & 1)
 					gpCamera->makeMtxForPrevTalk();
-				Talk2D2GetMSound()->startSoundSystemSE(MSD_SE_SY_SELECT_COMMON, 0,
+				SMSGetMSoundBound()->startSoundSystemSE(MSD_SE_SY_SELECT_COMMON, 0,
 				                             nullptr, 0);
 				mTalkMode = TALK_MODE_CLOSING;
 			}
 		} else if (meaning
 		           & (TMarioGamePad::MEANING_0x20000
 		              | TMarioGamePad::MEANING_0x40000)) {
-			Talk2D2GetMSound()->startSoundSystemSE(MSD_SE_SY_SELECT_COMMON, 0, nullptr,
+			SMSGetMSoundBound()->startSoundSystemSE(MSD_SE_SY_SELECT_COMMON, 0, nullptr,
 			                             0);
 			mTalkMode = TALK_MODE_ERASING;
 		}
@@ -1156,7 +1138,7 @@ static inline void Talk2D2CalcAnim(TTalk2D2* p)
 
 // TODO: frame 0x178 vs retail 0x1c8. SMSGetMarDirector() at the director
 // sites (as in openTalkWindow) moves it to 0x190 at no instruction change;
-// Talk2D2GetMSound() at the sound sites is inert here.
+// SMSGetMSoundBound() at the sound sites is inert here.
 void TTalk2D2::perform(u32 cue, JDrama::TGraphics* graphics)
 {
 	if (cue & CUE_MOVE) {

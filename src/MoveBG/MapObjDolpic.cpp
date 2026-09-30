@@ -424,18 +424,10 @@ void TBellDolpic::control()
 
 // TDptMonteFence
 
-// Binding level over gpMSound, +8 of low region per site (touchPlayer,
-// TDemoCannon::perform).
-static inline MSound* MapObjDolpicGetMSound()
-{
-	MSound* sound = gpMSound;
-	return sound;
-}
-
 void TDptMonteFence::touchPlayer(THitActor* actor)
 {
 	if (SMS_IsMarioStatusThrownDown()) {
-		MapObjDolpicGetMSound()->startSoundActor(MSD_SE_IT_BARREL_CRASH,
+		SMSGetMSoundBound()->startSoundActor(MSD_SE_IT_BARREL_CRASH,
 		                                         &mPosition, 0, nullptr, 0, 4);
 		SMSGetMSound()->startSoundActor(MSD_SE_OBJ_GLASS_BREAK, &mPosition, 0,
 		                                nullptr, 0, 4);
@@ -568,9 +560,9 @@ void TDemoCannon::perform(u32 cue, JDrama::TGraphics* graphics)
 		gpMarioParticleManager->emitAndBindToMtxPtr(235, mtx, 0, nullptr);
 		gpMarioParticleManager->emitAndBindToMtxPtr(236, mtx, 0, nullptr);
 
-		MapObjDolpicGetMSound()->startSoundActor(MSD_SE_EN_CANNON_FIRE_MARIO,
+		SMSGetMSoundBound()->startSoundActor(MSD_SE_EN_CANNON_FIRE_MARIO,
 		                                         &mPosition, 0, nullptr, 0, 4);
-		MapObjDolpicGetMSound()->startSoundActor(MSD_SE_DM_FLY_TO_PINNNA,
+		SMSGetMSoundBound()->startSoundActor(MSD_SE_DM_FLY_TO_PINNNA,
 		                                         &mPosition, 0, nullptr, 0, 4);
 	}
 
@@ -581,7 +573,7 @@ void TDemoCannon::perform(u32 cue, JDrama::TGraphics* graphics)
 
 		frameCtrl = unk13C->getMActor()->getFrameCtrl(ANM_TYPE_BCK);
 		if (frameCtrl->checkPass(204.0f)) {
-			MapObjDolpicGetMSound()->startMarioVoice(30911, SMS_GetMarioHP(), 0);
+			SMSGetMSoundBound()->startMarioVoice(30911, SMS_GetMarioHP(), 0);
 
 			JAISound* voice = gpMSound->checkMarioVoicePlaying(0);
 			if (voice)

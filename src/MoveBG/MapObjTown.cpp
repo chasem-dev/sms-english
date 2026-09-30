@@ -30,14 +30,8 @@
 
 TMapObjSwitch* gpMapObjSwitch;
 
-// Named-local fork over gpMSound, worth +8 of low region at each site that
-// expands TMapObjBillboard::swing and in TMapObjChangeStage::touchPlayer
-// (batch 127).
-static inline MSound* MapObjTownGetMSound()
-{
-	MSound* mSound = gpMSound;
-	return mSound;
-}
+// SMSGetMSoundBound is worth +8 of low region at each site that expands
+// TMapObjBillboard::swing and in TMapObjChangeStage::touchPlayer (batch 127).
 
 f32 TManhole::mDownHeight            = 12.0f;
 f32 TManhole::mDownSpeed             = 1.5f;
@@ -119,7 +113,7 @@ void TManhole::touchPlayer(THitActor*)
 		    ->getFrameCtrl(ANM_TYPE_BCK)
 		    ->setFrame(getMActor()->getFrameCtrl(ANM_TYPE_BCK)->getFrame()
 		               + SMSGetAnmFrameRate());
-		MapObjTownGetMSound()->startSoundActor(MSD_SE_OBJ_MANHOLE_OPEN, &mPosition, 0,
+		SMSGetMSoundBound()->startSoundActor(MSD_SE_OBJ_MANHOLE_OPEN, &mPosition, 0,
 		                                nullptr, 0, 4);
 		offMapObjFlag(MAP_OBJ_FLAG_UNK100);
 		SMSRumbleMgr->start(0x15, 0xF, (f32*)nullptr);
@@ -135,7 +129,7 @@ void TManhole::touchPlayer(THitActor*)
 		               + SMSGetAnmFrameRate());
 		offMapObjFlag(MAP_OBJ_FLAG_UNK100);
 		mMapCollisionManager->unk8->setAllBGType(0x400);
-		MapObjTownGetMSound()->startSoundActor(MSD_SE_OBJ_MANHOLE_OPEN, &mPosition, 0,
+		SMSGetMSoundBound()->startSoundActor(MSD_SE_OBJ_MANHOLE_OPEN, &mPosition, 0,
 		                                nullptr, 0, 4);
 		unk150 = 1;
 		SMSRumbleMgr->start(0x15, 0xF, (f32*)nullptr);
@@ -149,7 +143,7 @@ void TManhole::touchPlayer(THitActor*)
 		}
 		if (!unk152) {
 			unk152 = 1;
-			MapObjTownGetMSound()->startSoundActor(MSD_SE_OBJ_MANHOLE_DOWN, &mPosition,
+			SMSGetMSoundBound()->startSoundActor(MSD_SE_OBJ_MANHOLE_DOWN, &mPosition,
 			                                0, nullptr, 0, 4);
 		}
 		if (mPosition.y > getInitialPosition().y - mDownHeight)
@@ -164,7 +158,7 @@ void TManhole::touchPlayer(THitActor*)
 
 	if (unk152) {
 		unk152 = 0;
-		MapObjTownGetMSound()->startSoundActor(MSD_SE_OBJ_MANHOLE_UP, &mPosition, 0,
+		SMSGetMSoundBound()->startSoundActor(MSD_SE_OBJ_MANHOLE_UP, &mPosition, 0,
 		                                nullptr, 0, 4);
 	}
 	appeared();
@@ -219,7 +213,7 @@ void TManhole::appeared()
 	if (animationFinished()) {
 		if (unk152 == 1 && mColCount == 0) {
 			unk152 = 0;
-			MapObjTownGetMSound()->startSoundActor(MSD_SE_OBJ_MANHOLE_UP,
+			SMSGetMSoundBound()->startSoundActor(MSD_SE_OBJ_MANHOLE_UP,
 			                                       &mPosition, 0, nullptr, 0,
 			                                       4);
 		}
@@ -326,7 +320,7 @@ void TMapObjBillboard::swing(THitActor* param_1)
 			startAnim(2);
 		else
 			startAnim(1);
-		MapObjTownGetMSound()->startSoundActor(MSD_SE_OBJ_BILLBOARD_MOVE,
+		SMSGetMSoundBound()->startSoundActor(MSD_SE_OBJ_BILLBOARD_MOVE,
 		                                       &mPosition, 0, &unk150, 0, 4);
 	}
 }
@@ -375,7 +369,7 @@ void TMapObjChangeStage::touchPlayer(THitActor*)
 	gpMarDirector->setNextStage(unk138, nullptr);
 	onHitFlag(HIT_FLAG_NO_COLLISION);
 	mColCount = 0;
-	MapObjTownGetMSound()->startSoundActor(MSD_SE_MA_WARP_EX, &mPosition, 0, nullptr, 0, 4);
+	SMSGetMSoundBound()->startSoundActor(MSD_SE_MA_WARP_EX, &mPosition, 0, nullptr, 0, 4);
 }
 
 void TMapObjChangeStage::load(JSUMemoryInputStream& stream)
@@ -693,7 +687,7 @@ BOOL TRedCoinSwitch::receiveMessage(THitActor*, u32 message)
 		    = (s32)(MapObjTownGetMActor(this)->getFrameCtrl(ANM_TYPE_BCK)->getEnd()
 		                * 2
 		            + 0x3C);
-		MapObjTownGetMSound()->startSoundActor(MSD_SE_OBJ_AP_BUTTON, &mPosition,
+		SMSGetMSoundBound()->startSoundActor(MSD_SE_OBJ_AP_BUTTON, &mPosition,
 		                                      0, nullptr, 0, 4);
 		removeMapCollision();
 		onHitFlag(HIT_FLAG_NO_COLLISION);

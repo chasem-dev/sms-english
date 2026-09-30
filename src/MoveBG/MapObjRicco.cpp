@@ -31,12 +31,6 @@ static JGeometry::TVec3<f32> submarineSetWtPos_forSound(1956.0f, -100.0f,
 
 // TCraneRotY
 
-static inline MSound* MapObjRiccoGetMSound()
-{
-	MSound* sound = gpMSound;
-	return sound;
-}
-
 static inline bool MapObjRiccoIsState(TMapObjBase* self, u32 state)
 {
 	bool v = self->isState(state);
@@ -81,7 +75,7 @@ void TCraneRotY::control()
 
 	if (MapObjRiccoIsState(this, STATE_TURNING_UP)
 	    || MapObjRiccoIsState(this, STATE_TURNING_DOWN))
-		MapObjRiccoGetMSound()->startSoundActor(mSoundId, &mPosition);
+		SMSGetMSoundBound()->startSoundActor(mSoundId, &mPosition);
 }
 
 void TCraneRotY::load(JSUMemoryInputStream& stream)
@@ -159,7 +153,7 @@ void TCraneUpDown::control()
 
 	if (MapObjRiccoIsState(this, STATE_TIPPING_DOWN)
 	    || MapObjRiccoIsState(this, STATE_TIPPING_UP))
-		MapObjRiccoGetMSound()->startSoundActor(mSoundId, &mPosition);
+		SMSGetMSoundBound()->startSoundActor(mSoundId, &mPosition);
 }
 
 void TCraneUpDown::initMapObj()
@@ -246,7 +240,7 @@ void TRiccoWatermill::control()
 	    || MapObjRiccoIsState(this, STATE_SINKING)) {
 		if (0.0f != mRotSpeed) {
 			mRotation.z -= mRotSpeed;
-			MapObjRiccoGetMSound()->startSoundActorWithInfo(
+			SMSGetMSoundBound()->startSoundActorWithInfo(
 			    0x3031, &mPosition, nullptr, fabsf(mRotSpeed), 0, 0,
 			    &mWheelSound, 0, 4);
 
@@ -279,7 +273,7 @@ void TRiccoWatermill::control()
 			mSubmarine->mPosition.y = mSubmarineMaxTransY;
 
 			if (!isStateTimerEngaged()) {
-				MapObjRiccoGetMSound()->startSoundActor(
+				SMSGetMSoundBound()->startSoundActor(
 				    0x3832, &mSubmarine->mPosition);
 
 				if (!mCoinThrown) {

@@ -500,19 +500,11 @@ void TKoopaJr::updateTimers()
 
 const char** TKoopaJr::getBasNameTable() const { return koopajr_bastable; }
 
-// Binding level over a raw member read, worth +8 of low region in
-// TKoopaJr::receiveMessage (batch 127).
-static inline MSound* KoopajrGetMSound()
-{
-	MSound* mSound = gpMSound;
-	return mSound;
-}
-
 BOOL TKoopaJr::receiveMessage(THitActor* sender, u32 message)
 {
 	if (message == HIT_MESSAGE_SPRAYED_BY_WATER) {
 		gpMarioParticleManager->emit(0xE7, &sender->mPosition, 0, nullptr);
-		KoopajrGetMSound()->startSoundSet(0x6802, &mPosition, 0, 0.0f, 0, 0, 4);
+		SMSGetMSoundBound()->startSoundSet(0x6802, &mPosition, 0, 0.0f, 0, 0, 4);
 		damageKoopaJr();
 		return TRUE;
 	}
@@ -1086,7 +1078,7 @@ void TKoopaJrSubmarine::launchKiller()
 	killer->mPosition.set(mtx[0][3], mtx[1][3], mtx[2][3]);
 	JGeometry::TVec3<f32> dir(mtx[0][2], mtx[1][2], mtx[2][2]);
 	makeKillerVelocity(killer, dir);
-	if (KoopajrGetMSound()->gateCheck(0x285D))
+	if (SMSGetMSoundBound()->gateCheck(0x285D))
 		MSoundSESystem::MSoundSE::startSoundActor(0x285D, &killer->mPosition,
 		                                          0, nullptr, 0, 4);
 }

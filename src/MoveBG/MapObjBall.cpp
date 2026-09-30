@@ -973,16 +973,10 @@ void TResetFruit::touchPollution()
 	makeObjWaitingToAppear();
 }
 
-static inline MSound* ResetFruitGetMSound()
-{
-	MSound* sound = gpMSound;
-	return sound;
-}
-
 void TResetFruit::touchWaterSurface()
 {
 	emitColumnWater();
-	ResetFruitGetMSound()->startSoundActor(MSD_SE_OBJ_DRINA_TO_WATER,
+	SMSGetMSoundBound()->startSoundActor(MSD_SE_OBJ_DRINA_TO_WATER,
 	                                       &mPosition, 0, nullptr, 0, 4);
 	makeObjWaitingToAppear();
 }

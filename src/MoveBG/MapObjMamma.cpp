@@ -966,12 +966,6 @@ void TLeanMirror::controlShake()
 // `bl` as retail has it.
 static inline TMarDirector* LeanMirrorGetMarDirector() { return gpMarDirector; }
 
-static inline MSound* LeanMirrorGetMSound()
-{
-	MSound* sound = gpMSound;
-	return sound;
-}
-
 void TLeanMirror::control()
 {
 	TMapObjBase::control();
@@ -979,14 +973,14 @@ void TLeanMirror::control()
 	switch (mState) {
 	case STATE_SHAKE:
 		controlShake();
-		LeanMirrorGetMSound()->startSoundActorWithInfo(
+		SMSGetMSoundBound()->startSoundActorWithInfo(
 		    MSD_SE_OBJ_MA_MIRROR_MOVE, &mPosition, nullptr,
 		    fabsf(mSpeed.length()), 0, 0, nullptr, 0, 4);
 		break;
 
 	case STATE_GO_TARGET:
 		controlGoTarget();
-		LeanMirrorGetMSound()->startSoundActorWithInfo(
+		SMSGetMSoundBound()->startSoundActorWithInfo(
 		    MSD_SE_OBJ_MA_MIRROR_DEMOMV, &mPosition, nullptr,
 		    fabsf(mSpeed.length()), 0, 0, nullptr, 0, 4);
 		break;

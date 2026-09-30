@@ -831,21 +831,12 @@ static void evKillMushroom1up(TSpcTypedInterp<TEventWatcher>* interp,
 	interp->push();
 }
 
-// Binder over the raw global, named again at the call site: retail's 0x88
-// frame with every pool slot in place. The SMSGetMSound() binder is 4 high,
-// and naming the popped mushroom as well moves the pop slices 4 high.
-static inline MSound* EventWatcherRawMSound()
-{
-	MSound* sound = gpMSound;
-	return sound;
-}
-
 static void evAppearMushroom1up(TSpcTypedInterp<TEventWatcher>* interp,
                                 u32 arg_num)
 {
 	interp->verifyArgNum(1, &arg_num);
 	((TMushroom1up*)getNameRefPtr(interp->pop()))->appear();
-	MSound* sound = EventWatcherRawMSound();
+	MSound* sound = SMSGetMSoundBound();
 	sound->startSoundSystemSE(MSD_SE_SY_1UP_APPEAR, 0, nullptr, 0);
 	interp->push();
 }
@@ -1251,7 +1242,7 @@ static void evStartEventSE(TSpcTypedInterp<TEventWatcher>* interp, u32 arg_num)
 		se = 0x485B;
 		break;
 	}
-	MSound* sound = EventWatcherRawMSound();
+	MSound* sound = SMSGetMSoundBound();
 	sound->startSoundSystemSE(se, 0, nullptr, 0);
 	// TODO: 99.9%, all 98 instructions matching at retail's 0x58 frame. The
 	// named receiver through the raw-global binder (as in

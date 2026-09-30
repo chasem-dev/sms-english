@@ -422,12 +422,6 @@ static inline TBWPicket* BosswanwanPicket(const TBossWanwan* p)
 	return picket;
 }
 
-static inline MSound* BWPicketSound()
-{
-	MSound* sound = gpMSound;
-	return sound;
-}
-
 static inline TBossWanwan* BWPicketOwnerRaw(const TBWPicket* p)
 {
 	return p->mOwner;
@@ -446,7 +440,7 @@ BOOL TBWPicket::receiveMessage(THitActor* sender, u32 message)
 			TBossWanwan* owner      = BWPicketOwner(this);
 			owner->mIsPicketPlanted = 1;
 			owner->mPulledTimer     = 0;
-			BWPicketSound()->startSoundActor(MSD_SE_BS_WANWAN_LOCK, &mPosition, 0,
+			SMSGetMSoundBound()->startSoundActor(MSD_SE_BS_WANWAN_LOCK, &mPosition, 0,
 			                          nullptr, 0, 4);
 			return TRUE;
 		}
@@ -1058,16 +1052,16 @@ BOOL TBossWanwan::receiveMessage(THitActor* sender, u32 message)
 
 		u8 hp = getHitPoints();
 		if (hp == 0) {
-			BWPicketSound()->startSoundActor(MSD_SE_BS_WANWAN_COOL_MORE, &mPosition, 0,
+			SMSGetMSoundBound()->startSoundActor(MSD_SE_BS_WANWAN_COOL_MORE, &mPosition, 0,
 			                          nullptr, 0, 4);
 		} else if (hp == 1) {
 			gpMarioParticleManager->emitAndBindToMtxPtr(
 			    BWANWAN_JPA_MS_BWAN_DOWNYUGE, getModel()->getAnmMtx(1), 0,
 			    nullptr);
-			BWPicketSound()->startSoundActor(MSD_SE_BS_WANWAN_TO_COOL, &mPosition, 0,
+			SMSGetMSoundBound()->startSoundActor(MSD_SE_BS_WANWAN_TO_COOL, &mPosition, 0,
 			                          nullptr, 0, 4);
 		} else {
-			BWPicketSound()->startSoundActor(MSD_SE_BS_WANWAN_COOL, &mPosition, 0,
+			SMSGetMSoundBound()->startSoundActor(MSD_SE_BS_WANWAN_COOL, &mPosition, 0,
 			                          nullptr, 0, 4);
 		}
 
@@ -1084,7 +1078,7 @@ BOOL TBossWanwan::receiveMessage(THitActor* sender, u32 message)
 			mWasSprayed += 1;
 		gpMarioParticleManager->emitAndBindToMtxPtr(
 		    BWANWAN_JPA_MS_BWAN_DOWNYUGE, getModel()->getAnmMtx(1), 0, nullptr);
-		BWPicketSound()->startSoundActor(MSD_SE_BS_WANWAN_TO_COOL, &mPosition, 0,
+		SMSGetMSoundBound()->startSoundActor(MSD_SE_BS_WANWAN_TO_COOL, &mPosition, 0,
 		                          nullptr, 0, 4);
 	}
 
@@ -1320,12 +1314,6 @@ void TBossWanwan::control()
 	updateSquareToMario();
 }
 
-static inline MSound* BosswanwanSound()
-{
-	MSound* sound = gpMSound;
-	return sound;
-}
-
 static inline TMarioParticleManager* BosswanwanParticles()
 {
 	TMarioParticleManager* manager = gpMarioParticleManager;
@@ -1350,16 +1338,16 @@ void TBossWanwan::emitEffects()
 		gpMarioParticleManager->emit(BWANWAN_JPA_MS_BWAN_JUMP_SMOKE,
 		                             &mPosition, 0, nullptr);
 		if (getHitPoints() == 0) {
-			BosswanwanSound()->startSoundActor(MSD_SE_M_BOSW_CHAIN_CAL_F,
+			SMSGetMSoundBound()->startSoundActor(MSD_SE_M_BOSW_CHAIN_CAL_F,
 			                          mLeash->getRope()->mPoints[0].unkC, 0,
 			                          nullptr, 0, 4);
-			BosswanwanSound()->startSoundActor(MSD_SE_M_BOSW_CHAIN_CAL_R,
+			SMSGetMSoundBound()->startSoundActor(MSD_SE_M_BOSW_CHAIN_CAL_R,
 			                          &mPicket->mPosition, 0, nullptr, 0, 4);
 		} else {
-			BosswanwanSound()->startSoundActor(MSD_SE_M_BOSW_CHAIN_ANG_F,
+			SMSGetMSoundBound()->startSoundActor(MSD_SE_M_BOSW_CHAIN_ANG_F,
 			                          mLeash->getRope()->mPoints[0].unkC, 0,
 			                          nullptr, 0, 4);
-			BosswanwanSound()->startSoundActor(MSD_SE_M_BOSW_CHAIN_ANG_R,
+			SMSGetMSoundBound()->startSoundActor(MSD_SE_M_BOSW_CHAIN_ANG_R,
 			                          &mPicket->mPosition, 0, nullptr, 0, 4);
 		}
 	}
@@ -1732,7 +1720,7 @@ DEFINE_NERVE(TNerveBWBark, TLiveActor)
 
 		if (boss->mIsPicketFixed == 0) {
 			boss->releasePicket();
-			BWPicketSound()->startSoundActor(MSD_SE_BS_WANWAN_ESCAPE1,
+			SMSGetMSoundBound()->startSoundActor(MSD_SE_BS_WANWAN_ESCAPE1,
 			                          &BosswanwanPicket(boss)->mPosition, 0,
 			                          nullptr, 0, 4);
 		}
@@ -1983,7 +1971,7 @@ DEFINE_NERVE(TNerveBWShake, TLiveActor)
 
 	if (actor->curAnmEndsNext()) {
 		boss->releasePicket();
-		BWPicketSound()->startSoundActor(MSD_SE_BS_WANWAN_ESCAPE2,
+		SMSGetMSoundBound()->startSoundActor(MSD_SE_BS_WANWAN_ESCAPE2,
 		                          &BosswanwanPicket(boss)->mPosition, 0, nullptr, 0,
 		                          4);
 		return TRUE;

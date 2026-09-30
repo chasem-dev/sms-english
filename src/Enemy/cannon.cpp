@@ -1336,12 +1336,6 @@ DEFINE_NERVE(TNerveCannonDamage, TLiveActor)
 	return FALSE;
 }
 
-static inline MSound* CannonObjectSound()
-{
-	MSound* sound = gpMSound;
-	return sound;
-}
-
 static inline TConductor* CannonDamageDemoConductor()
 {
 	TConductor* conductor = gpConductor;
@@ -1407,7 +1401,7 @@ DEFINE_NERVE(TNerveCannonObject, TLiveActor)
 
 	if (cannon->isBckAnm(4)
 	    && cannon->getMActor()->getFrameCtrl(0)->checkPass(60.0f)
-	    && CannonObjectSound()->gateCheck(MSD_SE_EN_CANNON_LAND))
+	    && SMSGetMSoundBound()->gateCheck(MSD_SE_EN_CANNON_LAND))
 		MSoundSESystem::MSoundSE::startSoundActor(
 		    MSD_SE_EN_CANNON_LAND, &cannon->mPosition, 0, nullptr, 0, 4);
 

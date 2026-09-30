@@ -58,12 +58,6 @@ static inline JGeometry::TVec3<f32>* MapObjMareGetMarioPos()
 	return marioPos;
 }
 
-static inline MSound* MapObjMareGetMSound()
-{
-	MSound* mSound = gpMSound;
-	return mSound;
-}
-
 static inline J3DModel* MapObjMareGetModel(const TMapObjBase* object)
 {
 	return object->getModel();
@@ -338,7 +332,7 @@ void TCogwheel::control()
 	f32 speed = fabsf(mSpeed);
 	if (speed > 0.01f) {
 		f32 volume = 10.0f * speed;
-		MapObjMareGetMSound()->startSoundActorWithInfo(
+		SMSGetMSoundBound()->startSoundActorWithInfo(
 		    MSD_SE_OBJ_MR_TSUBO_PULL, &mPosition, nullptr, volume, 0, 0,
 		    nullptr, 0, 4);
 	}
@@ -895,7 +889,7 @@ void TMuddyBoat::kill()
 
 	SMS_EasyEmitParticle(PARTICLE_MS_M_AMIATTACK, &mEffectPos, nullptr,
 	                     JGeometry::TVec3<f32>(1.0f, 1.0f, 1.0f));
-	MapObjMareGetMSound()->startSoundActor(MSD_SE_OBJ_DORO_BROKEN, &mPosition, 0, nullptr,
+	SMSGetMSoundBound()->startSoundActor(MSD_SE_OBJ_DORO_BROKEN, &mPosition, 0, nullptr,
 	                          0, 4);
 
 	MTXCopy(MapObjMareGetModel(this)->getAnmMtx(0), getModel()->getBaseTRMtx());
@@ -1035,7 +1029,7 @@ void TMuddyBoat::control()
 	switch (mState) {
 	case 1:
 		mSpeed *= mSpeedDecay;
-		MapObjMareGetMSound()->startSoundActorWithInfo(
+		SMSGetMSoundBound()->startSoundActorWithInfo(
 		    MSD_SE_OBJ_DORO_FLOAT, &mPosition, nullptr, fabsf(mSpeed), 0, 0,
 		    nullptr, 0, 4);
 		if (mTurnSpeed != 0.0f) {
@@ -1071,7 +1065,7 @@ void TMuddyBoat::control()
 			           scale);
 			emitAndSRT(PARTICLE_MS_ENM_DISAP_B, 0, &mEffectPos, mRotation,
 			           scale);
-			MapObjMareGetMSound()->startSoundActor(
+			SMSGetMSoundBound()->startSoundActor(
 			    MSD_SE_SMOKE_EFFECT, &mPosition, 0, nullptr, 0, 4);
 			mState = 1;
 		}

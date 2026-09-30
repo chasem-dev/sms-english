@@ -606,12 +606,6 @@ void TTelesaSlot::calcRootMatrix()
 // TODO: TTelesaSlot::mOwner wants an accessor in BossTelesaObj.hpp; parked
 // here as a TU-local until a header batch adds it.
 
-static inline MSound* TelesaSlotGetMSound()
-{
-	MSound* sound = gpMSound;
-	return sound;
-}
-
 static inline TBossTelesa* TelesaSlotBindOwner(const TTelesaSlot* p)
 {
 	TBossTelesa* owner = p->mOwner;
@@ -663,7 +657,7 @@ void TTelesaSlot::moveObject()
 					unk13C[i] = unk168 * (s32)(unk13C[i] / (f32)unk168);
 					unk138[i] = 0.0f;
 
-					TelesaSlotGetMSound()->startSoundActor(
+					SMSGetMSoundBound()->startSoundActor(
 					    MSD_SE_BS_TELESA_SLT_STOP,
 					                          &mPosition, 0, nullptr, 0, 4);
 
@@ -1687,12 +1681,6 @@ void TBossTelesa::tongueHitWater()
 		mSpine->pushNerve(&TNerveBossTelesaSlotStart::theNerve());
 }
 
-static inline MSound* BossTelesaRouletteFallGetMSound()
-{
-	MSound* sound = gpMSound;
-	return sound;
-}
-
 bool TBossTelesa::rouletteFall()
 {
 	f32 y      = mRoulettes[0]->mPosition.y;
@@ -1706,14 +1694,14 @@ bool TBossTelesa::rouletteFall()
 			if (SMS_SendMessageToMario(this, HIT_MESSAGE_TAKE))
 				mHeldObject = (TTakeActor*)SMS_GetMarioHitActor();
 		} else if (SMS_SendMessageToMario(this, HIT_MESSAGE_UNK8)) {
-			BossTelesaRouletteFallGetMSound()->startSoundActor(MSD_SE_BS_TELESA_RLT_SET, &mPosition, 0,
+			SMSGetMSoundBound()->startSoundActor(MSD_SE_BS_TELESA_RLT_SET, &mPosition, 0,
 			                          nullptr, 0, 4);
 			mHeldObject = nullptr;
 		}
 
-		BossTelesaRouletteFallGetMSound()->startSoundActor(MSD_SE_BS_TELESA_V_LAUGH1B, &mPosition, 0,
+		SMSGetMSoundBound()->startSoundActor(MSD_SE_BS_TELESA_V_LAUGH1B, &mPosition, 0,
 		                          nullptr, 0, 4);
-		BossTelesaRouletteFallGetMSound()->startSoundActor(MSD_SE_BS_TELESA_RLT_DOWN, &mPosition, 0,
+		SMSGetMSoundBound()->startSoundActor(MSD_SE_BS_TELESA_RLT_DOWN, &mPosition, 0,
 		                          nullptr, 0, 4);
 		gpMarioOriginal->mGamePad->onNeutralMarioKey();
 
