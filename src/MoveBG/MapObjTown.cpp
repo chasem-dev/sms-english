@@ -100,8 +100,8 @@ void TManhole::touchPlayer(THitActor*)
 		mPosition.y = getInitialPosition().y;
 		return;
 	}
-	if (SMSGetMarioBound()->getStatus() == MARIO_STATUS_HIP_DROP
-	    && gpMarioOriginal->getPosition().y < mPosition.y) {
+	if (gpMarioOriginal->getStatus() == MARIO_STATUS_HIP_DROP
+	    && gpMarioOriginal->getPosition().y < getPosition().y) {
 		getMActor()->getFrameCtrl(ANM_TYPE_BCK)->setRate(SMSGetAnmFrameRate());
 		getMActor()
 		    ->getFrameCtrl(ANM_TYPE_BCK)
@@ -137,8 +137,8 @@ void TManhole::touchPlayer(THitActor*)
 			unk152 = 1;
 			SMSGetMSound()->startSoundActor(MSD_SE_OBJ_MANHOLE_DOWN, &mPosition);
 		}
-		if (mPosition.y > getInitialPosition().y - mDownHeight)
-			mPosition.y = mPosition.y - mDownSpeed;
+		if (getPosition().y > getInitialPosition().y - mDownHeight)
+			mPosition.y = getPosition().y - mDownSpeed;
 		else
 			mPosition.y = getInitialPosition().y - mDownHeight;
 		unk148 = 1.0f;
