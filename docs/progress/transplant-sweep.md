@@ -155,3 +155,16 @@ Hand ports tried on that list: `TMuddyBoat::bind` (each statement-level differen
 - The accessors differ: the other tree adds header helpers ours lacks (`getSaveParam2`, `setScale`, `getWireBinderDirect`, per-class `get...Param` casts), which is most of the undefined-identifier failures; none was needed for the ports above.
 
 Raw rows (one per function, with the automatic fixes and first compile error) are in the session scratchpad as `transplant/results.tsv`; rerun with `python3 tools/transplant/transplant.py --other <tree> --out results.tsv -j 2`.
+
+## hsearch sweep c-hs2 (continued)
+
+The resumed `tools/hsearch` batch (200 s per function, `-j 2`) ran rows 124 to 213 of its 350-function list in two 2-hour legs before the session's background time limit stopped it; rows 214 onward are unsearched and the batch resumes from there.
+It reported 40 new exact or improved candidates; review accepted 12 and rejected 28 (the whole sweep so far: 22 accepted, 59 rejected, 81 reviewed).
+Made exact: `TGorogoroManager::initSetEnemies`, `TNerveTobiPukuBound::execute`, `TRollEnemy::walkBehavior`, `TShiningStone::load`, `TGCConsole2::startDisappearCoin`, `JPADrawExecLine::exec`.
+Improved: `TTinKoopaLaunchOrder::checkOrder`, `SetViewFrustumClipCheck`, `TBathtub::control`, `TKumokun::checkOnMovingFloor`, `TLeanMirror::draw`, `TMario::wireRolling`.
+Accepted edits were C-style top declarations, a declaration order, one named compare operand and one named bool test, consistent accessor or raw spellings across a whole block, a dropped redundant TVec3 copy, and two inline levels.
+The best find was an extract that turned out to be a map UNUSED: `TBathtub::liftMario` was an empty stub, and holding the extracted torque block it now compiles to its map size 0xe0.
+Check every machine extract against the unit's UNUSED map entries before rejecting it.
+The other accepted level, `TobiPukuStartBound`, wraps a whole `getTime() == 0` branch whose TVec3 the old TODO had already measured as missing from the low region.
+Rejected: arbitrary machine-cut extracts (9), results that stack on an existing fabricated binder or fork (5), hoisting one of several parallel locals (5), a lone `!getTime()` that is the only such spelling in its file (2), a local named at one of two identical call sites (2), whole-body wrappers (2), and small trades or mixed spellings across parallel branches (3).
+Tool notes: `extract` offers whole-body wrappers and helpers that take every parameter, and the plausibility filter's four-line window misses spellings mixed across parallel `case` arms.
