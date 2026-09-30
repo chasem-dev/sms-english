@@ -58,41 +58,32 @@ void TMario::soundMovement()
 		           ->getCurrentNozzle()
 		           ->unk378
 		           > 0.0f) {
-			SMSGetMSoundBound()->startSoundActor(
-			    MSD_SE_YV_WATER, &getYoshi()->getTranslation(), 0, nullptr, 0,
-			    4);
+			SMSGetMSound()->startSoundActor(MSD_SE_YV_WATER, &getYoshi()->getTranslation());
 		}
 
 		if (curStatus & MARIO_STATUS_FLAG_UNK40000) {
-			SMSGetMSoundBound()->startSoundActor(
-			    MSD_SE_MA_SLIP, &getYoshi()->getTranslation(), 0, nullptr, 0, 4);
+			SMSGetMSound()->startSoundActor(MSD_SE_MA_SLIP, &getYoshi()->getTranslation());
 			if (curStatus == MARIO_STATUS_SLIP_FORE
 			    && mSoundValues.unk00 != MARIO_STATUS_SLIP_FORE) {
-				SMSGetMSoundBound()->startSoundActor(
-				    MSD_SE_YV_FUNBARI, &getYoshi()->getTranslation(), 0, nullptr, 0, 4);
+				SMSGetMSound()->startSoundActor(MSD_SE_YV_FUNBARI, &getYoshi()->getTranslation());
 			}
 		} else if (mSoundValues.unk00 == MARIO_STATUS_SLIP_FORE) {
-			SMSGetMSoundBound()->startSoundActor(
-			    MSD_SE_YV_PURU_PURU2, &getYoshi()->getTranslation(), 0, nullptr, 0, 4);
+			SMSGetMSound()->startSoundActor(MSD_SE_YV_PURU_PURU2, &getYoshi()->getTranslation());
 		}
 
 		if ((curStatus & MARIO_STATUS_FLAG_JUMPING)
 		    && !(mSoundValues.unk00 & MARIO_STATUS_FLAG_JUMPING)) {
-			SMSGetMSoundBound()->startSoundActor(
-			    MSD_SE_YV_JUMP1, &getYoshi()->getTranslation(), 0, nullptr, 0, 4);
+			SMSGetMSound()->startSoundActor(MSD_SE_YV_JUMP1, &getYoshi()->getTranslation());
 		}
 
 		if (curStatus == MARIO_STATUS_HIP_DROP
 		    && mSoundValues.unk00 != MARIO_STATUS_HIP_DROP) {
-			SMSGetMSoundBound()->startSoundActor(MSD_SE_YV_PURU_POWERFUL,
-			                                &getYoshi()->getTranslation(), 0, nullptr,
-			                                0, 4);
+			SMSGetMSound()->startSoundActor(MSD_SE_YV_PURU_POWERFUL, &getYoshi()->getTranslation());
 		}
 
 		if (curStatus == MARIO_STATUS_HIP_ATTACK_END
 		    && mSoundValues.unk00 == MARIO_STATUS_HIP_DROP) {
-			SMSGetMSoundBound()->startSoundActor(
-			    MSD_SE_YO_HIP_ATTACK, &getYoshi()->getTranslation(), 0, nullptr, 0, 4);
+			SMSGetMSound()->startSoundActor(MSD_SE_YO_HIP_ATTACK, &getYoshi()->getTranslation());
 		}
 
 		if (mSoundValues.unk00 != MARIO_STATUS_HIP_DROP) {
@@ -110,15 +101,11 @@ void TMario::soundMovement()
 				u8 unk20New        = mSoundValues.unk20;
 				if (unk20New == 0) {
 					if (inputBit == 0) {
-						SMSGetMSoundBound()->startSoundActor(MSD_SE_MA_BOUND,
-						                                &getYoshi()->getTranslation(),
-						                                0, nullptr, 0, 4);
+						SMSGetMSound()->startSoundActor(MSD_SE_MA_BOUND, &getYoshi()->getTranslation());
 					}
 				} else if (unk20New == 4) {
 					if (inputBit == 0) {
-						SMSGetMSoundBound()->startSoundActor(MSD_SE_MA_BOUND,
-						                                &getYoshi()->getTranslation(),
-						                                0, nullptr, 0, 4);
+						SMSGetMSound()->startSoundActor(MSD_SE_MA_BOUND, &getYoshi()->getTranslation());
 						SMSGetMSoundBound()->startMarioVoice(MSD_SE_YV_PURU_PURU2, 1,
 						                                1);
 					}
@@ -152,8 +139,7 @@ void TMario::soundMovement()
 		if (isRotJump) {
 			mSoundValues.unk22 += 1;
 			if (mSoundValues.unk22 == 10)
-				SMSGetMSoundBound()->startSoundActor(
-				    MSD_SE_MA_ROLL_JUMP, &mPosition, 0, nullptr, 0, 4);
+				SMSGetMSound()->startSoundActor(MSD_SE_MA_ROLL_JUMP, &mPosition);
 		} else {
 			mSoundValues.unk22 = 0;
 		}
@@ -226,8 +212,7 @@ void TMario::soundMovement()
 
 		if (getStatus() == MARIO_STATUS_FOOT_DOWN) {
 			if (mSoundValues.unk04 & 4) {
-				SMSGetMSoundBound()->startSoundActor(
-				    MSD_SE_MA_UMARI, &mPosition, 0, nullptr, 0, 4);
+				SMSGetMSound()->startSoundActor(MSD_SE_MA_UMARI, &mPosition);
 				mSoundValues.unk04 ^= 4;
 			}
 		} else {
