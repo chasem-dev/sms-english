@@ -302,14 +302,14 @@ void TBossHanachan::bind()
 	mCollisionPosition.x += offsetX;
 	mCollisionPosition.z += offsetZ;
 	JGeometry::TVec3<f32> beforeCollision = mCollisionPosition;
-	mGroundHeight = SMSGetMapBound()->checkGroundIgnoreWaterSurface(mCollisionPosition.x,
+	mGroundHeight = gpMap->checkGroundIgnoreWaterSurface(mCollisionPosition.x,
 	    mCollisionPosition.y + mHeadHeight, mCollisionPosition.z, &mGroundPlane);
 	mGroundHeight += 1.0f;
-	if (mCollisionPosition.y <= 0.05f + mGroundHeight) {
+	if (mCollisionPosition.y <= 0.05f + getGroundHeight()) {
 		if (mGroundPlane && (mGroundPlane->isIllegalData() == true ? false : true)) {
 			offLiveFlag(LIVE_FLAG_AIRBORNE);
 			mVelocity.set(0.0f, 0.0f, 0.0f);
-			mCollisionPosition.y = mGroundHeight;
+			mCollisionPosition.y = getGroundHeight();
 		}
 	} else {
 		onLiveFlag(LIVE_FLAG_AIRBORNE);
