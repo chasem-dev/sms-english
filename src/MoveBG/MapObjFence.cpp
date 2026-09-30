@@ -575,8 +575,7 @@ void TRailFence::control()
 	case STATE_AT_GOAL:
 		if (!isStateTimerEngaged()) {
 			removeMapCollision();
-			SMSGetMSoundBound()->startSoundActor(MSD_SE_OBJ_SUPERBLOCK_BREAK,
-			                                  &mPosition, 0, nullptr, 0, 4);
+			SMSGetMSound()->startSoundActor(MSD_SE_OBJ_SUPERBLOCK_BREAK, &mPosition);
 			setState(STATE_FALL);
 		}
 		break;
