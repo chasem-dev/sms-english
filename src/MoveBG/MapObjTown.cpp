@@ -308,8 +308,8 @@ void TMapObjBillboard::swing(THitActor* param_1)
 			startAnim(2);
 		else
 			startAnim(1);
-		SMSGetMSoundBound()->startSoundActor(MSD_SE_OBJ_BILLBOARD_MOVE,
-		                                       &mPosition, 0, &unk150, 0, 4);
+		SMSGetMSound()->startSoundActor(MSD_SE_OBJ_BILLBOARD_MOVE, &mPosition,
+		                                &unk150);
 	}
 }
 
