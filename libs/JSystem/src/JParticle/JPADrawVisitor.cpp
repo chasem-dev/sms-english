@@ -1147,20 +1147,16 @@ void JPADrawExecPoint::exec(const JPADrawContext* dc, JPABaseParticle* particle)
 	GXEnd();
 }
 
-// TODO: 99.6%, instruction-exact; frame 0x70 vs 0x78 with local_40 at 0x44
-// (retail 0x40): retail keeps a dead 16-byte slot above it. Swapping the two
-// declarations is inert, swapping the two getter calls worse (k5).
-// Also inert: scale()/named length, raw mGlobalPosition set, interleaved
-// declarations; setLength, a separate end vector or params local are worse.
-// c-m15: both declaration orders x {scale(k), scale(k, v), named length,
-// params local} inert; TWW's `if (!isZero()) {...}` shape is far worse.
+// Both vectors are declared before the visibility test and the test result
+// is named; together they give retail's 0x78 frame with local_40 at 0x40.
 void JPADrawExecLine::exec(const JPADrawContext* dc, JPABaseParticle* particle)
 {
-	if (particle->isInvisibleParticle())
+	JGeometry::TVec3<f32> f31_f30_f39;
+	JGeometry::TVec3<f32> local_40;
+	bool invisible = particle->isInvisibleParticle();
+	if (invisible)
 		return;
 
-	JGeometry::TVec3<f32> local_40;
-	JGeometry::TVec3<f32> f31_f30_f39;
 	particle->getGlobalPosition(f31_f30_f39);
 	particle->getVelVec(local_40);
 	if (local_40.isZero())
