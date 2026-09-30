@@ -2253,12 +2253,11 @@ DEFINE_NERVE(TNerveFireWanwanDie, TLiveActor)
 		manager->mWanwanRecoversBeforeHelpBalloon = -1;
 
 		if (++manager->mWanwansKilled == manager->getActiveObjNum()) {
-			SMSGetMarDirectorBound()->getConsole()->startAppearBalloon(0x19, true);
+			SMSGetMarDirector()->getConsole()->startAppearBalloon(0x19, true);
 		}
 
 		self->stopTriggerSound();
-		FireWanwanMSound()->startSoundActor(MSD_SE_EN_WANWAN_DOWN, &self->mPosition,
-		                                0, nullptr, 0, 4);
+		FireWanwanMSound()->startSoundActor(MSD_SE_EN_WANWAN_DOWN, &self->mPosition);
 
 		self->changeBodyToSilver(40);
 
