@@ -1051,17 +1051,14 @@ BOOL TBossWanwan::receiveMessage(THitActor* sender, u32 message)
 
 		u8 hp = getHitPoints();
 		if (hp == 0) {
-			SMSGetMSoundBound()->startSoundActor(MSD_SE_BS_WANWAN_COOL_MORE, &mPosition, 0,
-			                          nullptr, 0, 4);
+			SMSGetMSound()->startSoundActor(MSD_SE_BS_WANWAN_COOL_MORE, &mPosition);
 		} else if (hp == 1) {
 			gpMarioParticleManager->emitAndBindToMtxPtr(
 			    BWANWAN_JPA_MS_BWAN_DOWNYUGE, getModel()->getAnmMtx(1), 0,
 			    nullptr);
-			SMSGetMSoundBound()->startSoundActor(MSD_SE_BS_WANWAN_TO_COOL, &mPosition, 0,
-			                          nullptr, 0, 4);
+			SMSGetMSound()->startSoundActor(MSD_SE_BS_WANWAN_TO_COOL, &mPosition);
 		} else {
-			SMSGetMSoundBound()->startSoundActor(MSD_SE_BS_WANWAN_COOL, &mPosition, 0,
-			                          nullptr, 0, 4);
+			SMSGetMSound()->startSoundActor(MSD_SE_BS_WANWAN_COOL, &mPosition);
 		}
 
 		decHitPoints();
@@ -1077,8 +1074,7 @@ BOOL TBossWanwan::receiveMessage(THitActor* sender, u32 message)
 			mWasSprayed += 1;
 		gpMarioParticleManager->emitAndBindToMtxPtr(
 		    BWANWAN_JPA_MS_BWAN_DOWNYUGE, getModel()->getAnmMtx(1), 0, nullptr);
-		SMSGetMSoundBound()->startSoundActor(MSD_SE_BS_WANWAN_TO_COOL, &mPosition, 0,
-		                          nullptr, 0, 4);
+		SMSGetMSound()->startSoundActor(MSD_SE_BS_WANWAN_TO_COOL, &mPosition);
 	}
 
 	return TSpineEnemy::receiveMessage(sender, message);
