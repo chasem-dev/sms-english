@@ -379,18 +379,18 @@ BOOL TMario::toroccoStart()
 	return TRUE;
 }
 
+// Both animation picks in warpOut test the same argument byte; this level
+// and the named camera-flag test give retail's 0x38 frame.
+static inline bool IsWarpOutGet(u32 arg) { return (arg & 0xff) == 2; }
+
 BOOL TMario::warpOut()
 {
-	// TODO: instruction-exact, frame 0x28 vs retail 0x38 (both conversion
-	// buffers 0x10 higher). Named warpOutEffect args, a named jumpProcess
-	// result and a named mStatusArg are inert.
-
 	mStatusTimer += 1;
 	onUnk114(UNK114_FLAG_VISIBLE);
 	switch (mStatusState) {
 	case 0:
 		onUnk114(UNK114_FLAG_VISIBLE);
-		if ((mStatusArg & 0xff) == 2) {
+		if (IsWarpOutGet(mStatusArg)) {
 			setAnimation(ANIM_DEMO_GATE_OUT_APPEAR_GET, 1.0f);
 		} else {
 			setAnimation(ANIM_DEMO_GATE_OUT_APPEAR, 1.0f);
@@ -409,7 +409,8 @@ BOOL TMario::warpOut()
 			unkDelay = 0xb4;
 		}
 		if (mStatusTimer >= unkDelay) {
-			if (checkFlag(MARIO_FLAG_HELMET_FLW_CAMERA)) {
+			bool follow = checkFlag(MARIO_FLAG_HELMET_FLW_CAMERA);
+			if (follow) {
 				onUnk114(UNK114_FLAG_VISIBLE);
 				return changePlayerStatus(MARIO_STATUS_DIVE, 0, true);
 			}
@@ -418,7 +419,7 @@ BOOL TMario::warpOut()
 		break;
 	case 2:
 		onUnk114(UNK114_FLAG_VISIBLE);
-		if ((mStatusArg & 0xff) == 2) {
+		if (IsWarpOutGet(mStatusArg)) {
 			setAnimation(ANIM_DEMO_GATE_OUT_ROLLING_GET, 1.0f);
 		} else {
 			setAnimation(ANIM_DEMO_GATE_OUT_ROLLING, 1.0f);
