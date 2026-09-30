@@ -575,8 +575,9 @@ struct Plane {
 
 Plane sViewPlane[6];
 
-// TODO: 99.6%. The four far-plane products colour differently: retail holds
-// far/near in f9 (reused by farBottom), -near in f0, farTop f5, farRight f8.
+// TODO: 99.6%. Declared left, right, top, bottom, farRight takes retail's
+// f8; the other products colour differently: retail holds far/near in f9
+// (reused by farBottom), -near in f0 and farTop in f5.
 // Tried: a named ratio (also `ratio /= near`, `ratio *= bottom` in place,
 // farBottom as the ratio), ratio-first products, scale levels (+0x30 frame),
 // named -near/-far locals.
@@ -584,8 +585,8 @@ static void SetViewFrustumClipCheck(f32 top, f32 bottom, f32 left, f32 right,
                                     f32 near, f32 far)
 {
 	f32 farLeft   = left * (far / near);
-	f32 farTop    = top * (far / near);
 	f32 farRight  = right * (far / near);
+	f32 farTop    = top * (far / near);
 	f32 farBottom = bottom * (far / near);
 
 	Vec corner[8];
