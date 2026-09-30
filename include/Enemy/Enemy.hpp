@@ -52,11 +52,13 @@ public:
 	// `TVec3::distance()` cannot do (`isReachedToGoal` 67.46 -> 99.74,
 	// TFishoid's weak copy 98.79 -> 99.93 in header round 22; writing the
 	// three statements into `isReachedToGoal` itself instead loses the level
-	// and scores 60.80). The same body is parked TU-locally as
-	// AnimalNerve.cpp's `calcDist`, emario's `EMarioCalcDist`,
-	// elecNokonoko's `ElecDistTo` and TabePuku's `TabePukuLength`; see the
-	// note on `TVec3::distance()` in JGVec3.hpp for why that member cannot
-	// carry it.
+	// and scores 60.80). AnimalNerve's two graph-walk tests call it too.
+	// Near-twins stay TU-local because this body costs them (research batch
+	// c-sh1): emario's `EMarioCalcDist` (perform 98.18 -> 73.48), the named
+	// copy `T d = a; d.sub(b); return d.length();` of walkerEnemy,
+	// fireWanwan and riccohook (8 bytes of frame each), elecNokonoko's
+	// `ElecDistTo` and TabePuku's `TabePukuLength`; see the note on
+	// `TVec3::distance()` in JGVec3.hpp for why that member cannot carry it.
 	static f32 calcDist(JGeometry::TVec3<f32> a,
 	                    const JGeometry::TVec3<f32>& b)
 	{

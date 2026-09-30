@@ -16,7 +16,7 @@
 // codegen change.
 //
 // Matching levers that closed execute (frame already 0xe8 from batch 131's raw
-// member reads + by-value calcDist `a`):
+// member reads + TSpineEnemy::calcDist's by-value `a`):
 //   * `mSLSharedAnmNum.value` not `.get()` — the const-ref temporary from
 //     `.get()` was the uniform +4 on every low-pool slot (getUnkF4 at the
 //     height test is kept; raw unkF4 lands the pool but drops retail's
@@ -24,13 +24,6 @@
 //   * `s32 count` not `int` — restores retail's r7/r6 count/index colouring.
 //   * `resetAnmTimer` around the shared MsRandI setup — restores `other` in
 //     r27 (open-coded sites leave it in r28).
-
-inline f32 calcDist(JGeometry::TVec3<f32> a,
-                    const JGeometry::TVec3<f32>& b)
-{
-	a.sub(b);
-	return JGeometry::TUtil<f32>::sqrt(a.squared());
-}
 
 inline void resetAnmTimer(TAnimalBase* actor, int lo, int hi)
 {
@@ -89,14 +82,14 @@ DEFINE_NERVE(TNerveAnimalGraphWander, TLiveActor)
 
 	if (!actor->unk114.empty()) {
 		const JGeometry::TVec3<f32>& goalPos = actor->unkF4.getPoint();
-		f32 dist = calcDist(goalPos, actor->mPosition);
+		f32 dist = TSpineEnemy::calcDist(goalPos, actor->mPosition);
 
 		if (dist < 200.0f && !actor->unk114.empty()) {
 			actor->unkF4 = actor->unk114.pop();
 		}
 	} else {
 		const JGeometry::TVec3<f32>& curPos = actor->unk104.getPoint();
-		f32 dist = calcDist(curPos, actor->mPosition);
+		f32 dist = TSpineEnemy::calcDist(curPos, actor->mPosition);
 
 		if (dist < 100.0f) {
 			actor->goToRandomNextGraphNode();
