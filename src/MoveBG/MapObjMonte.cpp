@@ -576,7 +576,8 @@ void THangingBridge::initMonte()
 	}
 }
 
-// TODO: every instruction matches but the frame is 0x2a8 against our 0x208,
+// TODO: every instruction matches but the frame is 0x2a8 against our 0x228
+// (0x208 before getCurrentMap() at all six map tests),
 // and the board-fixup loop counter lands in r25 where retail uses r27.
 // Retail puts the two unit-scale temporaries at 0x208/0x214 just under
 // `rot`, leaves 0x18 above the board table (0xa0) and 0x94 below it; ours
@@ -589,7 +590,7 @@ void THangingBridge::loadAfter()
 	JDrama::TNameRef::loadAfter();
 
 	f32 pitch = 0.0f;
-	if (gpMarDirector->mMap == 0xD) {
+	if (gpMarDirector->getCurrentMap() == 0xD) {
 		mBoardNum = 14;
 		mStart.set(1550.0f, 2980.0f, -9410.0f);
 		mEnd.set(3570.0f, 2455.0f, -9410.0f);
@@ -598,7 +599,7 @@ void THangingBridge::loadAfter()
 		mNeighborRate  = 0.8f;
 		mNeighbor2Rate = 0.5f;
 		mRopeOffset    = 160.0f;
-	} else if (gpMarDirector->mMap == 8) {
+	} else if (gpMarDirector->getCurrentMap() == 8) {
 		mBoardNum = 19;
 		mStart.set(0.0f, 0.0f, 11356.0f);
 		mEnd.set(0.0f, -750.0f, 17743.0f);
@@ -626,7 +627,7 @@ void THangingBridge::loadAfter()
 		pos.z = t * (mEnd.z - mStart.z) + mStart.z;
 
 		JGeometry::TVec3<f32> rot(15.0f, pitch, 0.0f);
-		if (gpMarDirector->mMap == 8) {
+		if (gpMarDirector->getCurrentMap() == 8) {
 			mBoards[i] = (THangingBridgeBoard*)
 			    TMapObjManager::newAndRegisterObj(
 			        "HangingBridgeBoard", pos, rot,
@@ -641,13 +642,13 @@ void THangingBridge::loadAfter()
 		mBoards[i]->appear();
 	}
 
-	if (gpMarDirector->mMap == 8)
+	if (gpMarDirector->getCurrentMap() == 8)
 		initMonte();
 
-	if (gpMarDirector->mMap == 0xD) {
+	if (gpMarDirector->getCurrentMap() == 0xD) {
 		mStart.set(1436.32f, 3201.477f - mRopeHeight, -9417.205f);
 		mEnd.set(3656.32f, 2631.477f - mRopeHeight, -9417.205f);
-	} else if (gpMarDirector->mMap == 8) {
+	} else if (gpMarDirector->getCurrentMap() == 8) {
 		mEnd.z -= 120.0f;
 	}
 
