@@ -111,6 +111,20 @@ public:
 		return unk4;
 	}
 
+	// Fabricated: getPoint() reading the actor's mPosition raw, which drops
+	// getPosition()'s reference temporary (low region at every site). Ten
+	// units want it at some of their sites and parked TU-local copies of it
+	// (walkerEnemy, telesa, tobiPuku, igaiga, hamukuri, fireWanwan, enemy,
+	// tamaNoko, mameGesso, boid); the TODO above records why getPoint() itself
+	// cannot take this body.
+	const JGeometry::TVec3<f32>& getPointRaw() const
+	{
+		if (unk0 != 0)
+			return unk0->mPosition;
+
+		return unk4;
+	}
+
 public:
 	/* 0x0 */ THitActor* unk0;
 	/* 0x4 */ JGeometry::TVec3<f32> unk4;

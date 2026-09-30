@@ -226,17 +226,6 @@ TBoidLeader::calcGoalForce(const JGeometry::TVec3<f32>& pos) const
 	return force;
 }
 
-// `away` is declared at the top and assigned later so it sits directly
-// under `force` in the named block, as retail's (cc32).  A TU-local raw
-// getPoint at the mFleeTarget site is -0x10 of frame.
-static inline const JGeometry::TVec3<f32>& BoidGetPoint(const TPathNode& node)
-{
-	if (node.unk0 != 0)
-		return node.unk0->mPosition;
-
-	return node.unk4;
-}
-
 // A direct-return level around the alignment product: it moves the
 // operator's by-value argument below calcGoalForce's return slot, retail's
 // pool order (cc32; a helper wrapping the whole `+=` or a scalar fork over
@@ -247,6 +236,9 @@ static inline JGeometry::TVec3<f32> BoidAlignForce(const TBoidLeader* leader,
 	return boid->mAlignmentForce * leader->mAlignmentStrength;
 }
 
+// `away` is declared at the top and assigned later so it sits directly
+// under `force` in the named block, as retail's (cc32). TPathNode's
+// getPointRaw at the mFleeTarget site is -0x10 of frame against getPoint.
 JGeometry::TVec3<f32> TBoidLeader::calcForces(const TBoid* boid) const
 {
 	JGeometry::TVec3<f32> force = boid->mSeparationForce;
@@ -265,7 +257,7 @@ JGeometry::TVec3<f32> TBoidLeader::calcForces(const TBoid* boid) const
 		f32 tmp = mFleeRadius;
 
 		away = boid->mPosition;
-		away -= BoidGetPoint(mFleeTarget);
+		away -= mFleeTarget.getPointRaw();
 		f32 d2 = away.squared();
 		if (0.0f < d2 && d2 < tmp * tmp) {
 			away.setLength(mFleeStrength);

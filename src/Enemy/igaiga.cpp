@@ -356,21 +356,9 @@ bool TRollEnemy::isCollidMove(THitActor* param_1)
 	return false;
 }
 
-// PathNode.hpp's getPoint() reaches the node's actor through getPosition();
-// reading mPosition raw instead is low region here. Header round 27 measured
-// the same change made in the header as a tree-wide wash, so it stays parked
-// TU-locally.
-static inline const JGeometry::TVec3<f32>& IgaigaGetPoint(const TPathNode& node)
-{
-	if (node.unk0 != 0)
-		return node.unk0->mPosition;
-
-	return node.unk4;
-}
-
 bool TRollEnemy::isReachedToGoalXZ()
 {
-	JGeometry::TVec3<f32> d(IgaigaGetPoint(getUnk104()));
+	JGeometry::TVec3<f32> d(getUnk104().getPointRaw());
 	d.x -= mPosition.x;
 	d.y -= mPosition.y;
 	d.z -= mPosition.z;
@@ -732,7 +720,7 @@ void TIgaiga::walkBehavior(int param_1, f32 param_2)
 
 bool TIgaiga::isReachedToGoalXZ()
 {
-	JGeometry::TVec3<f32> d(IgaigaGetPoint(getUnk104()));
+	JGeometry::TVec3<f32> d(getUnk104().getPointRaw());
 	d.x -= mPosition.x;
 	d.y -= mPosition.y;
 	d.z -= mPosition.z;

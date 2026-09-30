@@ -43,20 +43,6 @@ void TWalkerEnemy::init(TLiveManager* param_1)
 	getSpine()->initWith(&TNerveWalkerGenerate::theNerve());
 }
 
-// TODO: park for a shared header. `TPathNode::getPoint()` spelled with a
-// direct `unk0->mPosition` read instead of `unk0->getPosition()` is what this
-// function's 8-byte temp pool wants (frame 0x20 vs 0x30, 100% exact); the same
-// spelling also closes `TFireWanwan::isMissMario` and `TNerveBPTouchDown`, but
-// costs `TNerveBPTakeOff` and ~20 small fuzzy drops, so it cannot go into
-// PathNode.hpp unilaterally. Parked TU-locally here.
-static inline const JGeometry::TVec3<f32>& WalkerPathPoint(const TPathNode& node)
-{
-	if (node.unk0 != 0)
-		return node.unk0->mPosition;
-
-	return node.unk4;
-}
-
 // TODO: fake
 static inline JGeometry::TVec3<f32> polarXZ(f32 theta, f32 radius)
 {
@@ -192,7 +178,7 @@ bool TWalkerEnemy::isResignationAttack()
 {
 	f32 fVar1 = getSaveParam2()->mSLGiveUpLength.get();
 
-	if (MsDistance(WalkerPathPoint(unk104), mPosition) > fVar1)
+	if (MsDistance(unk104.getPointRaw(), mPosition) > fVar1)
 		return true;
 	else
 		return false;
@@ -200,7 +186,7 @@ bool TWalkerEnemy::isResignationAttack()
 
 bool TWalkerEnemy::isReachedToGoalXZ()
 {
-	JGeometry::TVec3<f32> tmp = WalkerPathPoint(getUnk104());
+	JGeometry::TVec3<f32> tmp = getUnk104().getPointRaw();
 	tmp -= mPosition;
 	tmp.y = 0.0f;
 

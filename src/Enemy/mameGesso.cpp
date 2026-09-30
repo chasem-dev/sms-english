@@ -494,18 +494,6 @@ DEFINE_NERVE(TNerveMameGessoDamage, TLiveActor)
 	return false;
 }
 
-// PathNode.hpp's getPoint() reaches the node's actor through getPosition();
-// reading mPosition raw instead is low region here. Header round 27 measured
-// the same change made in the header as a tree-wide wash, so it stays parked
-// TU-locally.
-static inline const JGeometry::TVec3<f32>& MameGessoGetPoint(const TPathNode& node)
-{
-	if (node.unk0 != 0)
-		return node.unk0->mPosition;
-
-	return node.unk4;
-}
-
 DEFINE_NERVE(TNerveMameGessoJitabata, TLiveActor)
 {
 	TMameGesso* self = (TMameGesso*)spine->getBody();
@@ -520,7 +508,7 @@ DEFINE_NERVE(TNerveMameGessoJitabata, TLiveActor)
 					self->setBckAnm(5);
 			} else if (self->isBckAnm(5)) {
 				// TODO: operator- inline is wrong here, too much stack frame
-				if ((MameGessoGetPoint(self->unk104) - self->getPosition())
+				if ((self->unk104.getPointRaw() - self->getPosition())
 				        .length()
 				    > 300.0f)
 					self->unk1EC = 0;

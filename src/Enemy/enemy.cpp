@@ -634,18 +634,6 @@ void TSpineEnemy::zigzagToCurPathNode(f32 march_speed, f32 turn_speed,
 	updateStayCount(dVar9);
 }
 
-// PathNode.hpp's getPoint() reaches the node's actor through getPosition();
-// reading mPosition raw instead is low region here. Header round 27 measured
-// the same change made in the header as a tree-wide wash, so it stays parked
-// TU-locally.
-static inline const JGeometry::TVec3<f32>& EnemyGetPoint(const TPathNode& node)
-{
-	if (node.unk0 != 0)
-		return node.unk0->mPosition;
-
-	return node.unk4;
-}
-
 void TSpineEnemy::doShortCut()
 {
 	if (unk114.size() <= 0)
@@ -673,7 +661,7 @@ void TSpineEnemy::doShortCut()
 	TPathNode node;
 	node = unk114.top();
 
-	JGeometry::TVec3<f32> local_28 = EnemyGetPoint(node) - mPosition;
+	JGeometry::TVec3<f32> local_28 = node.getPointRaw() - mPosition;
 	if (local_28.x == 0.0f && local_28.y == 0.0f && local_28.z == 0.0f)
 		local_28.x = 1.0f;
 	local_28.normalize();
