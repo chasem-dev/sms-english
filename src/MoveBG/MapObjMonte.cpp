@@ -818,7 +818,8 @@ void TSwingBoard::swing()
 	}
 }
 
-// TODO: 99.9%, every instruction exact; frame 0x118 against our 0xa8. With
+// TODO: 99.9%, every instruction exact; frame 0x118 against our 0xb0
+// (getInitialPosition() at all three reads gave +8). With
 // swing() inlined, rot sits at the top as in retail (0xd0) but 29 words of
 // dead objects created after it are missing; the discarded cosf/sinf of
 // mAngle are their likely source. Inert or wrong: named unused cos/sin
@@ -877,9 +878,9 @@ void TSwingBoard::control()
 	cosf(3.14f * (mAngle / 180.0f));
 	sinf(3.14f * (mAngle / 180.0f));
 
-	mPosition.x = mInitialPosition.x - mtx[0][1] * mRopeLength;
-	mPosition.y = (mRopeLength + mInitialPosition.y) - mtx[1][1] * mRopeLength;
-	mPosition.z = mInitialPosition.z - mtx[2][1] * mRopeLength;
+	mPosition.x = getInitialPosition().x - mtx[0][1] * mRopeLength;
+	mPosition.y = (mRopeLength + getInitialPosition().y) - mtx[1][1] * mRopeLength;
+	mPosition.z = getInitialPosition().z - mtx[2][1] * mRopeLength;
 	mtx[0][3]   = mPosition.x;
 	mtx[1][3]   = mPosition.y;
 	mtx[2][3]   = mPosition.z;
