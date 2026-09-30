@@ -46,7 +46,8 @@ TGuide::TGuide(const char* name)
 
 // The archive mount is setup(), inlined (retail loads unkD8 straight into the
 // argument's saved register).
-// TODO: frame 0x30 short (0x160 vs 0x190); each of the five decoration
+// TODO: frame 0x10 short (0x180 vs 0x190; getBounds() at the three rect
+// reads took it from 0x160); each of the five decoration
 // JUTTexture constructions keeps `this` in a second register (r25) in retail;
 // naming the texture or the ResTIMG was inert or worse.
 void TGuide::load(JSUMemoryInputStream& stream)
@@ -103,7 +104,7 @@ void TGuide::load(JSUMemoryInputStream& stream)
 		u32 tag           = ((i / 10) << 8) + i % 10 + '00';
 		mStagePanes[i]    = mScreen->search(tag);
 		mPanelsA[i]       = new TExPane(mScreen, (tag << 16) + '_0');
-		mPanelRects[i]    = mPanelsA[i]->getPane()->mBounds;
+		mPanelRects[i]    = mPanelsA[i]->getPane()->getBounds();
 		mPanelsB[i]       = new TExPane(mScreen, (tag << 16) + '_1');
 		((J2DTextBox*)mScreen->search((tag << 16) + '_3'))
 		    ->setFont((JUTFont*)gpSystemFont);
@@ -113,14 +114,14 @@ void TGuide::load(JSUMemoryInputStream& stream)
 
 	mStagePanes[13] = mScreen->search('20');
 	mPanelsA[13]    = new TExPane(mScreen, 'lwin');
-	mPanelRects[13] = mPanelsA[13]->getPane()->mBounds;
+	mPanelRects[13] = mPanelsA[13]->getPane()->getBounds();
 	mPanelsB[13]    = new TExPane(mScreen, 'llin');
 
 	for (int i = 0; i < 10; ++i)
 		mPointPanes[i] = mScreen->search('pn00' + i);
 
 	mMarioMarker = mScreen->search('01mi');
-	mMapRect     = mScreen->search('01_9')->mBounds;
+	mMapRect     = mScreen->search('01_9')->getBounds();
 
 	mStageNameBmg = JKRGetResource("/common/2d/stagename.bmg");
 
