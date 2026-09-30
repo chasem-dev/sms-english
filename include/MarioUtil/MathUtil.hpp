@@ -304,6 +304,24 @@ inline f32 MsAngleDiff(f32 alpha, f32 beta)
 	return alpha - MsWrap(beta, alpha - 180.0f, alpha + 180.0f);
 }
 
+// Fabricated (upstream's name): the XZ-plane vector of length radius at yaw
+// theta degrees, returned by value. It is a helper rather than an expression
+// because the callers that pass a radius of 1.0f keep the multiplication, which
+// MWCC only leaves alone when the constant arrives across an inline boundary,
+// and TVec3::set<f32> is called out of line one level below it
+// (TBWBinder::bind, fruitsboat's two sites, TBGBeakHit and TBGTakeHit's
+// moveRequest, TNerveBPVomit). The map lists no symbol for it.
+// Sites that need another spelling keep a TU-local one: fireWanwan's Fly
+// nerve (named result), tamaNoko's walkBehavior (named angle), and polarXZ in
+// enemy/riccohook/walkerEnemy (cosine and sine named; this body costs
+// goToDirLimitedNextGraphNode and TWalkerEnemy::moveObject 8 bytes of frame).
+inline JGeometry::TVec3<f32> fromPolar(f32 theta, f32 radius)
+{
+	return JGeometry::TVec3<f32>(radius * JMASSin(theta * (65536.0f / 360.0f)),
+	                             0.0f,
+	                             radius * JMASCos(theta * (65536.0f / 360.0f)));
+}
+
 // fabricated
 inline f32 MsAngleWrap(f32 angle) { return MsWrap(angle, 0.0f, 360.0f); }
 

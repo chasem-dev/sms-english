@@ -2344,8 +2344,10 @@ DEFINE_NERVE(TNerveFireWanwanHungTail, TLiveActor)
 	return false;
 }
 
-// TODO: fake
-static inline JGeometry::TVec3<f32> fromPolar(f32 theta, f32 radius)
+// TODO: fake. MathUtil.hpp's fromPolar with the named result; the shared
+// direct-return body costs the Fly nerve 97.57 -> 96.47.
+static inline JGeometry::TVec3<f32> FireWanwanFromPolar(f32 theta,
+                                                        f32 radius)
 {
 	JGeometry::TVec3<f32> v(radius * JMASSin(theta * (65536.0f / 360.0f)),
 	                        0.0f,
@@ -2353,8 +2355,8 @@ static inline JGeometry::TVec3<f32> fromPolar(f32 theta, f32 radius)
 	return v;
 }
 
-// TODO: frame 0xf8, retail 0x100. Retail copies fromPolar's result (built at
-// 0xc4, returned at 0x10 in the low region) into `vel` at 0xdc and into
+// TODO: frame 0xf8, retail 0x100. Retail copies FireWanwanFromPolar's result
+// (built at 0xc4, returned at 0x10 in the low region) into `vel` at 0xdc and into
 // mVelocity both from the 0x10 temporary, and fuses x*x + y*y in the squared
 // test; ours returns at 0xb8 and copies mVelocity from vel.
 DEFINE_NERVE(TNerveFireWanwanFly, TLiveActor)
@@ -2368,7 +2370,7 @@ DEFINE_NERVE(TNerveFireWanwanFly, TLiveActor)
 
 		JGeometry::TVec3<f32> vel;
 		self->mVelocity = vel
-		    = fromPolar(self->mRotation.y, self->unk194->mThrowPow);
+		    = FireWanwanFromPolar(self->mRotation.y, self->unk194->mThrowPow);
 
 		SMS_EasyEmitParticle(PARTICLE_MS_FUMI_C, self->getTailMtx(), self,
 		                     JGeometry::TVec3<f32>(1.0f, 1.0f, 1.0f));

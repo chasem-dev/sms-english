@@ -177,14 +177,6 @@ TBGBeakHit::TBGBeakHit(TBossGesso* owner, const char* name)
 
 MtxPtr TBGBeakHit::getTakingMtx() { return unk74; }
 
-// TODO: fake
-static inline JGeometry::TVec3<f32> fromPolar(f32 theta, f32 radius)
-{
-	return JGeometry::TVec3<f32>(radius * JMASSin(theta * (65536.0f / 360.0f)),
-	                             0.0f,
-	                             radius * JMASCos(theta * (65536.0f / 360.0f)));
-}
-
 // Binding level worth +8 of low region, landing TBGBeakHit::moveRequest's
 // frame at 0x78 (batch 124).
 static inline f32 BossgessoGetIntendedMag(const TMario* p)

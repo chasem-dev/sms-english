@@ -261,14 +261,6 @@ static inline TBossGessoParams* BGGessoSaveParams(TBossGesso* g)
 	return p;
 }
 
-// TODO: fake
-static inline JGeometry::TVec3<f32> fromPolar(f32 theta, f32 radius)
-{
-	return JGeometry::TVec3<f32>(radius * JMASSin(theta * (65536.0f / 360.0f)),
-	                             0.0f,
-	                             radius * JMASCos(theta * (65536.0f / 360.0f)));
-}
-
 BOOL TBGTakeHit::moveRequest(const JGeometry::TVec3<f32>& where_to)
 {
 	JGeometry::TVec3<f32> local_EC = where_to;

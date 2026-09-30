@@ -300,8 +300,9 @@ void TTamaNoko::behaveToWater(THitActor*)
 	}
 }
 
-// TODO: fake
-static inline JGeometry::TVec3<f32> fromPolar(f32 theta, f32 radius)
+// TODO: fake. MathUtil.hpp's fromPolar with the angle named; the shared
+// body drops walkBehavior from exact to a frame 0x10 short.
+static inline JGeometry::TVec3<f32> TamaNokoFromPolar(f32 theta, f32 radius)
 {
 	f32 angle = theta * (65536.0f / 360.0f);
 	return JGeometry::TVec3<f32>(radius * JMASSin(angle), 0.0f,
@@ -336,7 +337,7 @@ void TTamaNoko::walkBehavior(int param_1, f32 param_2)
 	if (param_1 != 5 && param_1 != 3) {
 		JGeometry::TVec3<f32> local_40 = mLinearVelocity;
 		f32 speed = mMarchSpeed * param_2;
-		local_40 += fromPolar(mRotation.y, speed);
+		local_40 += TamaNokoFromPolar(mRotation.y, speed);
 		mLinearVelocity = local_40;
 	}
 

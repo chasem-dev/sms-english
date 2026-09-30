@@ -1712,21 +1712,11 @@ DEFINE_NERVE(TNerveBPCannon, TLiveActor)
 
 	return FALSE;
 }
-
-// fabricated (upstream's fromPolar): the vector built from a short angle and
-// a radius, returned by value. Assigned into a declared `front`, its return
-// temporary is retail's 0xc8 slot below `front`, the (T, T, T) constructor
-// puts TVec3::set<f32> at the depth retail calls it out of line, and 700.0f
-// loads before the table read. Earlier by-value helpers built over the
-// MsSin/MsCos set chain measured 88-91% here.
-static inline JGeometry::TVec3<f32> BosspakkunFromPolar(s16 angle, f32 radius)
-{
-	return JGeometry::TVec3<f32>(radius * JMASSin(angle), 0.0f,
-	                             radius * JMASCos(angle));
-}
-
 // TODO: every instruction matches; the frame is 0x108 against 0x110, so each
-// slot sits 4-8 low.
+// slot sits 4-8 low. `front` is assigned from MathUtil.hpp's fromPolar: its
+// return temporary is retail's 0xc8 slot below `front`, and 700.0f loads
+// before the table read. Helpers built over the MsSin/MsCos set chain
+// measured 88-91% here.
 DEFINE_NERVE(TNerveBPVomit, TLiveActor)
 {
 	TBossPakkun* boss = (TBossPakkun*)spine->getBody();
@@ -1748,7 +1738,7 @@ DEFINE_NERVE(TNerveBPVomit, TLiveActor)
 	if (actor->checkCurBckFromIndex(BOSSPAKU_BCK_POLLUT_END)) {
 		if (MsRandF() < 0.2f && spine->getTime() == 500) {
 			JGeometry::TVec3<f32> front;
-			front = BosspakkunFromPolar(DEG2SHORTANGLE(boss->mRotation.y), 700.0f);
+			front = fromPolar(boss->mRotation.y, 700.0f);
 			gpItemManager->makeObjAppear(boss->mPosition.x + front.x,
 			                             1.0f + boss->mPosition.y,
 			                             boss->mPosition.z + front.z,

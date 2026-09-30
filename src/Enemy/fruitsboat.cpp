@@ -32,18 +32,6 @@
 #include <MSound/MSSetSound.hpp>
 #include <MSound/MSoundBGM.hpp>
 
-// fabricated. Both call sites keep the multiplication by the length argument,
-// even the one that passes 1.0f, and MWCC only leaves a multiply by literal
-// one alone when the constant arrives across an inline boundary -- so the
-// direction vector was built by a helper taking the length. It is local to the
-// TU because the map lists no symbol for it anywhere.
-static inline JGeometry::TVec3<f32> MsGetVecFromRotY(f32 rot_y, f32 length)
-{
-	return JGeometry::TVec3<f32>(length * JMASSin(DEG2SHORTANGLE(rot_y)),
-	                             0.0f,
-	                             length * JMASCos(DEG2SHORTANGLE(rot_y)));
-}
-
 TFruitsBoatParams::TFruitsBoatParams(const char* prm)
     : TSpineEnemyParams(prm)
     , PARAM_INIT(mSLMoveSpeed, 4.0f)
@@ -380,7 +368,7 @@ void TFruitsBoat::moveObject()
 {
 	// Pitch: sample the wave surface 300 units ahead of and behind the hull
 	// and turn the line between the two samples into a rotation.
-	JGeometry::TVec3<f32> dir = MsGetVecFromRotY(mRotation.y, 300.0f);
+	JGeometry::TVec3<f32> dir = fromPolar(mRotation.y, 300.0f);
 
 	JGeometry::TVec3<f32> center = getPosition();
 
@@ -645,7 +633,7 @@ DEFINE_NERVE(TNerveFruitsBoatGraphWander, TLiveActor)
 			boat->mReversed ^= 1;
 
 		boat->goToDirectedNextGraphNode(
-		    MsGetVecFromRotY(boat->mRotation.y, 1.0f));
+		    fromPolar(boat->mRotation.y, 1.0f));
 
 		if (!boat->checkLiveFlag(TFruitsBoat::LIVE_FLAG_UNK10000))
 			FruitsBoatRow(boat);

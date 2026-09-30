@@ -59,17 +59,6 @@ static const char* bwanwan_bastable[] = {
 	nullptr,
 };
 
-// fabricated: TBWBinder::bind and the graph-wander nerve both keep the
-// multiplication by a literal 1.0f and both call TVec3::set<f32> out of line,
-// which only happens one inline level below the direction vector, so the
-// forward vector was built by a helper taking a length. It is local to the TU
-// because the map lists no symbol for it anywhere.
-static inline JGeometry::TVec3<f32> MsGetVecFromRotY(f32 rot_y, f32 length)
-{
-	return JGeometry::TVec3<f32>(length * JMASSin(DEG2SHORTANGLE(rot_y)), 0.0f,
-	                             length * JMASCos(DEG2SHORTANGLE(rot_y)));
-}
-
 TBWParams::TBWParams(const char* path)
     : TSpineEnemyParams(path)
     , PARAM_INIT(mSLMarchSpeed, 6.0f)
@@ -760,7 +749,7 @@ void TBWBinder::bind(TLiveActor* actor)
 			f32 roll = 360.0f * (dist / 3141.5928f);
 
 			JGeometry::TVec3<f32> dir
-			    = MsGetVecFromRotY(actor->mRotation.y, 1.0f);
+			    = fromPolar(actor->mRotation.y, 1.0f);
 			if (dir.dot(velocity) < 0.0f)
 				roll = -roll;
 
@@ -1261,7 +1250,7 @@ void TBossWanwan::rollNextGraphNode()
 		showMessage(BALLOON_MSG_BWANWAN_LEAD_TO_HOT);
 
 	unk124->moveTo(graph->getEscapeDirLimited(
-	    curr, prev, MsGetVecFromRotY(mRotation.y, 1.0f), mPosition, 100.0f,
+	    curr, prev, fromPolar(mRotation.y, 1.0f), mPosition, 100.0f,
 	    -1));
 
 	setGoalPathFromGraph();
@@ -1680,7 +1669,7 @@ DEFINE_NERVE(TNerveBWGraphWander, TLiveActor)
 	if (taken) {
 		// Mario dragging the stake against the boss's own direction slows it
 		// down; dragging with it speeds it up.
-		JGeometry::TVec3<f32> marioDir = MsGetVecFromRotY(
+		JGeometry::TVec3<f32> marioDir = fromPolar(
 		    gpMarioOriginal->mIntendedYaw * (360.0f / 65536.0f), 1.0f);
 
 		JGeometry::TVec3<f32> toBoss(boss->getPosition());
