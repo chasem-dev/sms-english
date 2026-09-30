@@ -1620,11 +1620,11 @@ void TBossGesso::performInContainer(u32 cue, JDrama::TGraphics* graphics)
 	mTentacles[0]->testPerform(cue, graphics);
 }
 
-// TODO: 99.7%, frame 0x228 vs 0x2c8. Left: performInContainer's first
+// TODO: 99.7%, frame 0x240 vs 0x2c8. Left: performInContainer's first
 // setPosition keeps the checked mTentacles[0] where ours reloads it (a named
 // tentacle keeps it for both; direct member stores, set() and a named inner
-// pointer are inert), and MTXCopy loads mMActor before unk178 (a named source
-// matrix, getModel() and a named target model are inert).
+// pointer are inert). c-hs7: getMActor() at every read (+0x10) and the named
+// source matrix for MTXCopy (two instructions, +8) are kept.
 void TBossGesso::perform(u32 cue, JDrama::TGraphics* graphics)
 {
 	if (cue & CUE_CALC_ANIM) {
@@ -1658,13 +1658,13 @@ void TBossGesso::perform(u32 cue, JDrama::TGraphics* graphics)
 
 	if (cue & CUE_ENTRY) {
 		if (getLatestNerve() == &TNerveBGBeakDamage::theNerve()) {
-			SMS_AddDamageFogEffect(mMActor->getModel()->getModelData(),
+			SMS_AddDamageFogEffect(getMActor()->getModel()->getModelData(),
 			                       mPosition, graphics);
 		} else {
-			SMS_ResetDamageFogEffect(mMActor->getModel()->getModelData());
+			SMS_ResetDamageFogEffect(getMActor()->getModel()->getModelData());
 		}
 
-		mMActor->getModel()
+		getMActor()->getModel()
 		    ->getModelData()
 		    ->getMaterialNodePointer(0)
 		    ->getTevBlock()
@@ -1690,7 +1690,7 @@ void TBossGesso::perform(u32 cue, JDrama::TGraphics* graphics)
 	if (cue & CUE_CALC_VIEW) {
 		TCircleShadowRequest request;
 
-		MtxPtr joint = mMActor->getModel()->getAnmMtx(1);
+		MtxPtr joint = getMActor()->getModel()->getAnmMtx(1);
 
 		JGeometry::TVec3<f32> shadowPos;
 		shadowPos.x      = joint[0][3];
@@ -1722,8 +1722,8 @@ void TBossGesso::perform(u32 cue, JDrama::TGraphics* graphics)
 
 	if (unk17C) {
 		if (cue & CUE_CALC_ANIM) {
-			MTXCopy(mMActor->getModel()->getBaseTRMtx(),
-			        unk178->getModel()->getBaseTRMtx());
+			MtxPtr src = getMActor()->getModel()->getBaseTRMtx();
+			MTXCopy(src, unk178->getModel()->getBaseTRMtx());
 			unk178->calcAnm();
 		}
 
@@ -1768,8 +1768,8 @@ void TBossGesso::perform(u32 cue, JDrama::TGraphics* graphics)
 	}
 
 	if (cue & CUE_CALC_ANIM) {
-		if (mMActor->checkCurBckFromIndex(14)
-		    || mMActor->checkCurBckFromIndex(15)) {
+		if (getMActor()->checkCurBckFromIndex(14)
+		    || getMActor()->checkCurBckFromIndex(15)) {
 			SMSGetMSound()->startSoundActorWithInfo(
 			    MSD_SE_BS_GESO_ROLL, &mPosition, nullptr, lenFromToeToMario(),
 			    0, 0, nullptr, 0, 4);
