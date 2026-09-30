@@ -1191,15 +1191,15 @@ void TEnemyMario::emDownAnimation()
 	changePlayerStatus(MARIO_STATUS_NOMOTION, 0, true);
 	setAnimation(ANIM_FALL_DOWN_WAIT, 1.0f);
 
-	if (SMSGetMarDirectorBound()->isDemoMode3() || SMSGetMarDirectorBound()->isDemoMode4()
+	if (SMSGetMarDirector()->isDemoMode3() || SMSGetMarDirector()->isDemoMode4()
 	    || SMSGetMarDirectorBound()->isTalkModeNow()) {
-		mReferencePosition = mPosition;
+		mReferencePosition = getPosition();
 		mDisappearPosition = mReferencePosition;
 		return;
 	}
 
 	++mEMDoingTimer;
-	mReferencePosition = mPosition;
+	mReferencePosition = getPosition();
 	mDisappearPosition = mReferencePosition;
 	if (gpMarDirector->getCurrentMap() != 1
 	    && mEMDoingTimer > getSettingsParams()->mDownTime.get()) {
