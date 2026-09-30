@@ -2679,7 +2679,8 @@ Answer: two functions closed and one unit linked; two more close only with share
 
 ### What landed (wt/c-k23)
 
-- TMario::jumpingBasic: the whole 0x48 of dead frame was accessor words: `getGroundPlane()->getActor()` at both receiveMessage reads, `getWallPlane()` at all seven wall reads, `getCurrentNozzleIndex()` and the short overload for the wall sound (hsearch, 52 s). MarioJump is linked.
+- TMario::jumpingBasic: the whole 0x48 of dead frame was accessor words: `getGroundPlane()->getActor()` at both receiveMessage reads, `getWallPlane()` at all seven wall reads, `getCurrentNozzleIndex()` and the short overload for the wall sound (hsearch, 52 s).
+  MarioJump is linked.
 - TEnemyManager::performShared: its two TTimeRec colours are call-site temporaries of a `startTimer(const JUtility::TColor& = JUtility::TColor(0xff, 0xff, 0xff, 0xff))` overload, parked TU-locally as `EnemyManagerStartTimer` (also used by TEnemyManager::perform, which stays exact).
   A call-site temporary is created while the caller is parsed, so both colours sit together at the top of the pool (0xbc/0xb8) with countLivingEnemy's result below them; the header's four-u8 overload makes the colour an inlined local instead (0xbc/0xb4).
 - TShine::control, partial: the six short sounds, getInitialPosition() at both reads and the idle state's light block as one inline level take the frame 0xa8 -> 0xe8, and the debugger shows retail's six words above the GXColor temporary.
