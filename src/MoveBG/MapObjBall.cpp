@@ -819,10 +819,10 @@ void TResetFruit::checkGroundCollision(JGeometry::TVec3<f32>* param_1)
 
 	if (map == 4) {
 		// Probe from well above so a fruit cannot fall through the deck.
-		mGroundHeight = SMSGetMapBound()->checkGround(param_1->x, 200.0f + param_1->y,
+		mGroundHeight = gpMap->checkGround(param_1->x, 200.0f + param_1->y,
 		                                   param_1->z, &mGroundPlane);
 		mGroundHeight += 1.0f;
-		if (param_1->y <= mGroundHeight) {
+		if (param_1->y <= getGroundHeight()) {
 			touchGround(param_1);
 			return;
 		}
