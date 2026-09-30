@@ -952,9 +952,7 @@ DEFINE_NERVE(TNerveHanaSamboAttack, TLiveActor)
 	} else if (sambo->checkCurAnmEnd(0)) {
 		if (sambo->isBckAnm(3)) {
 			sambo->createPollen();
-			if (SMSGetMSoundBound()->gateCheck(0x291B))
-				MSoundSESystem::MSoundSE::startSoundActor(
-				    0x291B, &sambo->mPosition, 0, nullptr, 0, 4);
+			SMSGetMSound()->startSoundActor(0x291B, &sambo->mPosition);
 			sambo->setBckAnm(1);
 		} else if (sambo->isBckAnm(1)) {
 			s32 attackingTime = sambo->mSaveParams->mSLAttackingTime.get();
