@@ -71,3 +71,15 @@ The `TWaterEmitInfo` ctor's zero defaults for mSize/mHitRadius/mHitHeight are co
 `MSBgmXFade::xFadeBgm` reverses a comparison the ROM has the other way, `isBossDefeated` drops the ROM's default case, and `TSplineRail::getPosAndRot` needs `trash2` padding.
 `TMapWire::getPointPosOnWire` hand-expands the UNUSED `getPointPosAtReleased` with extra temporaries, and `TCardLoad::waitForStart` gains only through a fourth TU-local spelling of `setCenteredSize` (98.09 -> 98.34, frame exact) at its four sites, so neither was taken.
 `setLookDir` in BathWaterManager compiles to the same instructions as ours when upstream is rebuilt (97.48), so its report figure (97.57) is not a real gain.
+
+## Sync c-u5 (2026-09-30)
+
+This sync merged `upstream/main` at `4a07479` (merge base `2df38b9`): 7 commits, 9 conflicted files.
+Upstream built alone under our GMSE01 config scored below ours in every function of the touched units: elecNokonoko (upstream 54 of 69 against our 66 exact), popo (34 of 54 against our 48), smallEnemy, MapObjPlane, Yoshi and MapCheck, so their files kept ours.
+Upstream's `decHpByWater`, `behaveToHitOthers` and `TMapObjPlane::draw` score the same as ours, so nothing was combined per function.
+To build upstream under GMSE01, its 28 `VERSION_SELECT` sites without a `GMSE01(...)` entry were given the JP value in the measurement tree only.
+Yoshi's tongue fix (sound table 22..25, `thinkJumpEnd`, `thinkUpper` on `mTongueAnmSound` with the `unk54` test, `checkFrameMeaning` for B) was already in our tree; `thinkUpper` is exact and `init`'s instructions are exact, so the ROM agrees with it.
+Taken: `BG_CHECK_FLAG_X_FACING` (0x8) in `MapData.hpp`, `MapCheck.cpp` and `MapData.cpp`, and `(uintptr_t)-1` for `J3DMatPacket::unk3C`, both byte-identical on GMSE01.
+The new particle ids 0xA1, 0x13C..0x13F, 0x177 and 0x1D1..0x1D2 were added to our `Particles.hpp`; upstream's `SCENE_BOSSPAKKUN_*` renames were not taken.
+No function changed score and no unit became newly linkable.
+Of the 14 upstream functions that still score higher than ours, all are the c-u4 rejections recorded above (their files did not change in this sync), so none was ported.
