@@ -598,12 +598,12 @@ void TApplication::proc()
 
 		switch (mAppState) {
 		case APP_STATE_BOOT:
-			if (!mGamePads[0]->isSomethingPushed())
+			if (mGamePads[0]->isSomethingPushed() == 0)
 				initialize_bootAfter();
 			break;
 
 		case APP_STATE_NLOGO:
-			if (!mGamePads[0]->isSomethingPushed())
+			if (mGamePads[0]->isSomethingPushed() == 0)
 				initialize_nlogoAfter();
 			break;
 
@@ -613,7 +613,7 @@ void TApplication::proc()
 		}
 
 		SMSRumbleMgr->reset();
-		if (mGamePads[0]->isSomethingPushed()) {
+		if (mGamePads[0]->isSomethingPushed() != 0) {
 			TMarioGamePad::mResetFlag = 0;
 			JUTGamePad::recalibrate(0xf0000000);
 			if (!DVDCheckDisk()) {
