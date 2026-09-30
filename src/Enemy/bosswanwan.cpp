@@ -440,8 +440,7 @@ BOOL TBWPicket::receiveMessage(THitActor* sender, u32 message)
 			TBossWanwan* owner      = BWPicketOwner(this);
 			owner->mIsPicketPlanted = 1;
 			owner->mPulledTimer     = 0;
-			SMSGetMSoundBound()->startSoundActor(MSD_SE_BS_WANWAN_LOCK, &mPosition, 0,
-			                          nullptr, 0, 4);
+			SMSGetMSound()->startSoundActor(MSD_SE_BS_WANWAN_LOCK, &mPosition);
 			return TRUE;
 		}
 
