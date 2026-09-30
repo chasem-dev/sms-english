@@ -1334,9 +1334,7 @@ void TSamboHead::setAfterDeadEffect()
 	                                                   nullptr);
 	if (emitter)
 		setEmitterScale(emitter, 1.5f, 1.5f, 1.5f);
-	if (SMSGetMSoundBound()->gateCheck(0x295F))
-		MSoundSESystem::MSoundSE::startSoundActor(0x295F, &mPosition, 0,
-		                                          nullptr, 0, 4);
+	SMSGetMSound()->startSoundActor(0x295F, &mPosition);
 }
 
 // UNUSED, 0xfc in the map.
