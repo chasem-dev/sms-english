@@ -1144,7 +1144,7 @@ void TBossPakkun::gotHipDropDamage()
 		MSoundSESystem::MSoundSE::startSoundActor(MSD_SE_BS_BSPAKU_DAMAGE, &mPosition, 0,
 		                          nullptr, 0, 4);
 
-	if (SMSGetMarDirectorBound()->unk7D == 4) {
+	if (SMSGetMarDirector()->getCurrentStage() == 4) {
 		// getSpine() at this one reset is the last +8; the sibling
 		// else-arm reset stays on the raw member.
 		getSpine()->reset();
