@@ -697,8 +697,8 @@ void TCannon::bombShoot()
 	if (mHeldBomb == nullptr)
 		return;
 
-	JGeometry::TVec3<f32> dir(gpMarioPos->x - mPosition.x, 0.0f,
-	                          SMS_GetMarioPosBound()->z - mPosition.z);
+	JGeometry::TVec3<f32> dir(gpMarioPos->x - getPosition().x, 0.0f,
+	                          SMS_GetMarioPos().z - getPosition().z);
 	if (dir.x == 0.0f && dir.z == 0.0f)
 		dir.x = 1.0f;
 	MsVECNormalize((Vec*)&dir, (Vec*)&dir);
