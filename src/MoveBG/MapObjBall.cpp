@@ -1344,9 +1344,9 @@ static inline TCubeManagerArea* MapObjBallGetCubeArea()
 
 void TResetFruit::perform(u32 cue, JDrama::TGraphics* graphics)
 {
-	if (SMSGetMarDirectorBound()->mMap == 7) {
+	if (SMSGetMarDirector()->mMap == 7) {
 		if (MapObjBallIsState(this, STATE_HOLDING)
-		    || !JGeometry::TVec3<f32>(mVelocity).isZero()) {
+		    || !JGeometry::TVec3<f32>(getVelocity()).isZero()) {
 			if (checkLiveFlag(LIVE_FLAG_UNK200))
 				offLiveFlag(LIVE_FLAG_UNK200);
 		} else if (!MapObjBallGetCubeArea()->isInAreaCube((const Vec&)mPosition)) {
