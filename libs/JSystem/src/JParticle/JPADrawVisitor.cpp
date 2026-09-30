@@ -796,9 +796,8 @@ void JPADrawExecRotDirectional::exec(const JPADrawContext* dc,
 	GXEnd();
 }
 
-// TODO: The low region is 8 short (frame 0x168 vs 0x160), the same 8 bytes
-// the Rot siblings get from their angle level; FPRs as in
-// JPADrawExecRotDirectional.
+// TODO: frame 0x168 exact through the named invisible bool (as the BillBoard
+// siblings); the slots still differ. FPRs as in JPADrawExecRotDirectional.
 // Direct-return levels over mScaleX/mScaleY at any site subset flip fmuls
 // operand order.
 // Frame-inert (c-m15): no pt.zero(), pt(0,0,0) ctor, header cross for
@@ -806,7 +805,8 @@ void JPADrawExecRotDirectional::exec(const JPADrawContext* dc,
 void JPADrawExecDirectionalCross::exec(const JPADrawContext* dc,
                                        JPABaseParticle* particle)
 {
-	if (particle->isInvisibleParticle())
+	bool invisible = particle->isInvisibleParticle();
+	if (invisible)
 		return;
 
 	JPADrawParams* params = particle->getDrawParamPPtr();
