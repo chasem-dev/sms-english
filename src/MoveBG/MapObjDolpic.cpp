@@ -419,8 +419,7 @@ void TBellDolpic::control()
 void TDptMonteFence::touchPlayer(THitActor* actor)
 {
 	if (SMS_IsMarioStatusThrownDown()) {
-		SMSGetMSoundBound()->startSoundActor(MSD_SE_IT_BARREL_CRASH,
-		                                         &mPosition, 0, nullptr, 0, 4);
+		SMSGetMSound()->startSoundActor(MSD_SE_IT_BARREL_CRASH, &mPosition);
 		SMSGetMSound()->startSoundActor(MSD_SE_OBJ_GLASS_BREAK, &mPosition, 0,
 		                                nullptr, 0, 4);
 
