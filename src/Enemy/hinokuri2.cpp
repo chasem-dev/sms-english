@@ -1248,7 +1248,7 @@ DEFINE_NERVE(TNerveHino2GraphWander, TLiveActor)
 		}
 	}
 
-	if (SMSGetMarDirectorBound()->unk7D >= 2 && self->unk164 <= 0) {
+	if (SMSGetMarDirector()->getCurrentStage() >= 2 && self->unk164 <= 0) {
 		if (self->getLevel() >= 1) {
 			spine->pushAfterCurrent(&TNerveHino2PrePol::theNerve());
 			return 1;
