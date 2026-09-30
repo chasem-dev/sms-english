@@ -39,26 +39,6 @@ void MAnmSound::setSpeedModifySound(JAISound* sound,
 		JAIAnimeSound::setSpeedModifySound(sound, frame_data, speed);
 }
 
-// Fabricated name; fully inlined into MAnmSoundMario::startAnimSound, which is
-// its only user, so the map has no symbol for it. It is `inline` so no local
-// out-of-line copy is emitted either (the map's .text has none).
-static inline u32 get_thing(u32 param_1)
-{
-	u32 uVar1 = param_1 >> 30;
-	u32 uVar2 = param_1 >> 12 & 0xF;
-
-	if (uVar1 == 0)
-		return uVar2;
-
-	if (uVar1 == 2)
-		return 0x10;
-
-	if (uVar1 == 3)
-		return 0x11;
-
-	return 0xffffffff;
-}
-
 // Fabricated name; a TU-local level over the voice-number field (see case 7).
 static inline u32 MarioVoiceNo(u32 groundNo) { return (groundNo >> 24) & 0xF; }
 
@@ -67,7 +47,7 @@ void MAnmSoundMario::startAnimSound(void* interface, u32 sound_id,
                                     u8 camera_idx)
 {
 	if (MSGMSound->gateCheck(sound_id)) {
-		u32 category = get_thing(sound_id);
+		u32 category = MSGetSeCategory(sound_id);
 		switch (category) {
 		case 0:
 			if ((actor->mGroundNumber & 0x1000) == 0x1000)

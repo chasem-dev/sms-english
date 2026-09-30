@@ -1,5 +1,6 @@
 #include <MSound/MSoundSE.hpp>
 #include <MSound/MSound.hpp>
+#include <MSound/MSHandle.hpp>
 #include <MSound/MSRandVol.hpp>
 #include <MSound/MSSetSound.hpp>
 #include <JSystem/JAudio/JALibrary/JALSystem.hpp>
@@ -642,24 +643,6 @@ bool MSoundSE::checkSoundArea(u32 param_1, const Vec& param_2)
 	return result;
 }
 
-// TODO: find a home for this
-static u32 get_thing(u32 param_1)
-{
-	u32 uVar1 = param_1 >> 30;
-	u32 uVar2 = param_1 >> 12 & 0xF;
-
-	if (uVar1 == 0)
-		return uVar2;
-
-	if (uVar1 == 2)
-		return 0x10;
-
-	if (uVar1 == 3)
-		return 0x11;
-
-	return 0xffffffff;
-}
-
 // The switch and the `== 8` test read unkCD through an inline accessor: each
 // leaves one dead forced-load word at the bottom of the frame (0x58), while
 // the two checkSoundArea arguments read it raw.
@@ -672,14 +655,14 @@ JAISound* MSoundSE::startSoundActorInner(u32 id, JAISoundHandle* out_handle,
 		switch (MSGMSound->getUnkCD()) {
 		case 7:
 			if (!checkSoundArea(MSGMSound->unkCD, *actor->mTranslation)) {
-				if (get_thing(id) != 1 && get_thing(id) != 0)
+				if (MSGetSeCategory(id) != 1 && MSGetSeCategory(id) != 0)
 					return nullptr;
 			}
 			break;
 
 		case 8:
 			if (!checkSoundArea(MSGMSound->unkCD, *actor->mTranslation)) {
-				if (get_thing(id) != 1 && get_thing(id) != 0)
+				if (MSGetSeCategory(id) != 1 && MSGetSeCategory(id) != 0)
 					return nullptr;
 			}
 
