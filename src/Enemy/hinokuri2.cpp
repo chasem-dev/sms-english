@@ -1571,14 +1571,14 @@ DEFINE_NERVE(TNerveHino2Squat, TLiveActor)
 		self->changeBck(0x13);
 
 	if (Hino2CurAnmEndsNext(self)) {
-		if (self->mCurrentBck == 0x13) {
+		if (self->getCurrentBck() == 0x13) {
 			f32 js = Hino2SLJumpShake(self);
 			if (!(js * js < self->mDistToMarioSquared))
-				SMSGetCameraShakeBound()->startShake(CAM_SHAKE_MODE_ENEMY2, 0.8f);
+				gpCameraShake->startShake(CAM_SHAKE_MODE_ENEMY2, 0.8f);
 			self->changeBck(0x14);
 		}
 
-		if (self->mCurrentBck == 0x14) {
+		if (self->getCurrentBck() == 0x14) {
 			spine->pushAfterCurrent(&TNerveHino2Burst::theNerve());
 			return true;
 		}
