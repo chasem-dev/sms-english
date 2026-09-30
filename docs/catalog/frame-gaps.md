@@ -2590,3 +2590,40 @@ Dead words per expansion over a raw `gp->` read, measured with `int mk; extp(&mk
 - The Bound sites share no call shape that the plain sites lack (the same `isDemoMode3() || isDemoMode4() || isTalkModeNow()` test is raw in MarioMove and Yoshi and Bound in WaterGun and enemyMario), and most Bound functions carry other fabricated binders (fireWanwan's tail-hit and manager helpers, bosseel's cube-manager binder, MapObjBall's unk1A4 binder).
   The missing words belong to per-function structure (a missing inline level or a different local), which is closure work, one function at a time.
 - The map has no inline evidence for a second director or sound accessor: no `TMarDirector` inline is emitted anywhere, and the weak `SMSGetMSound__Fv` (8 bytes, Option.cpp) and `SMS_GetMarioPos__Fv` (bossgesso) are one-load bodies that the plain and the binder shape both compile to.
+
+## Closure batch c-k21 (2026-09-30): replacing `...Bound` sites one function at a time
+
+Question: for each function that reads a global through a fabricated `...Bound` accessor, which real construct supplies the binder's two stack words?
+Answer: for 76 of the 267 sites (in 44 functions) an existing construct respells the site byte-identically; no `...Bound` accessor lost its last user, so none was deleted.
+Every commit is one function, byte-identical code (per-function disassembly compared against HEAD), the DOL SHA-1 unchanged, `ninja changes_all` clean and validate-symbol-order unchanged.
+
+### What landed (wt/c-k21)
+
+- `SMSGetMSoundBound()->startSoundActor(id, pos, 0, nullptr, 0, 4)` is byte-identical to `SMSGetMSound()->startSoundActor(id, pos)` at 46 sites in 22 functions, and the handle form to the three-argument overload (TMapObjBillboard::swing).
+  The short overload binds its JAISound* result, and that binding is the same two words as the binder's; so these sites are the short call, not a bound receiver.
+- The same short overload also replaces an explicit `if (SMSGetMSoundBound()->gateCheck(id)) MSoundSE::startSoundActor(...)` pair in TNerveHanaSamboAttack::execute and TSamboHead::setAfterDeadEffect.
+  At the other gate pairs (bosspakkun, koopajr, popo, yunbo) it changes code or overshoots, so those gates are real.
+- c-r31's lead holds where the site is not inlined elsewhere: `->mMap` as `getCurrentMap()` in TNerveBGDie::execute (seven sites), TResetFruit::checkGroundCollision and waitingToAppear, and `->unk7D` as `getCurrentStage()` in TBossPakkun::gotHipDropDamage and TNerveHino2GraphWander::execute.
+  TResetFruit::makeObjWaitingToAppear cannot take it: receiveMessage inlines it and drops 100 -> 99.96.
+- hsearch, run on a copy of the tree with every Bound site respelled plain or raw (45 s per function, `-j 1`), found header accessors that supply the words:
+  `getPosition()` (TBossEel::updateTearsCnt, TCogwheelScale::touchPlayer, TCannon::bombShoot, TEnemyMario::startDisappear, TNerveYumboAppearing::execute with SMS_GetMarioPos()), `getLeash()` (TBossWanwan::emitEffects), `getDistToMarioSquared()` (TFireWanwan::updateRumble), `getCurrentBck()` (TNerveHino2Squat::execute), `getDamageStage()` (TNerveTinKoopaDamage::execute), `getActorKeeper()` (TPopo::possessedIn), `SMS_GetMarioAngleY()` (TMapObjGeneral::put).
+  The short sound overload at a neighbouring plain site closes TNerveFireWanwanDie::execute and TDemoCannon::perform.
+  A named `MSound* sound` receiver closes TKoopaJr::receiveMessage.
+- TBathtub::showMessage (UNUSED, 0x64) takes a bit index and shows balloon `0x1E + index`: that body is exactly the map's 0x64 (the old one was 0x60).
+  TBathtub::perform's seven balloon blocks are this body with the index folded (0-5 give 0x1E-0x23, 15 gives 0x2D).
+
+### Measured and rejected
+
+- A named receiver (`T* x = plain; x->f();`) in place of the Bound call is byte-identical at only three of 50 statement-level sites (koopajr, MarioSound, fireRideYoshi); elsewhere the named slot lands in the named block, not the low region.
+- `isDemoModeNow()` for `isDemoMode3() || isDemoMode4()` changes code (the combined inline materialises the bool).
+- Calling showMessage from TBathtub::perform (any of four bodies, plain, raw or bound time read) leaves the frame 0x38-0x60 short of retail's 0x168: the eight Bound sites and the shine fork there are fabricated, and whatever really fills that frame is still missing.
+- TBossPakkun::showMessage(0) is inlined in TNerveBPVomit::execute (spelling the call there keeps every instruction), but with the Bound body the nerve is 8 over and with the plain body its slots move.
+- A named `s64 ticks` inside TMarDirector::startTimer (the getRestTime style) adds no frame.
+- `!isDemoMode3()` for `->unk124 != 3` in TNerveBGDie::execute, `*gpMarioPos`, SMS_GetMarioY/Z and getPosition() variants in TMapObjPuncher::touchPlayer, and plain getCurrentMap() at TResetFruit::perform: all worse.
+- hsearch's other exact results named single-use values (`spine->getTime()`, `isBckAnm(4)`, `getActorType()`, a loop's bool) or mixed getPosition()/mPosition two lines apart (TBossEelAwaCollision::perform); none were taken.
+
+### Reading
+
+- The Bound sites are not one construct: sound sites were the short overload, and many other sites were a raw member read that retail spelled through its header accessor somewhere else in the same function.
+- Before respelling a site, check whether another function inlines it (MapObjBall's makeObjWaitingToAppear into receiveMessage and perform): a byte-identical function can still move its inliners.
+- UNUSED helpers whose bodies fold into a caller (TBathtub::showMessage, TBossPakkun::showMessage, THinokuri2::shakeCamera, TFireWanwanManager's balloon checks) are the next lead for the balloon and shake sites.
