@@ -1757,8 +1757,9 @@ BOOL TMario::broadJumpSlip()
 	return 0;
 }
 
-// TODO: instructions match; frame 0x50 against retail's 0x60. braking's
-// named doBraking result supplies 8 of the original 0x18 gap.
+// TODO: instructions match; frame 0x58 against retail's 0x60. braking's
+// named doBraking result and the two-argument slip sound (as in catching)
+// supply 0x10 of the original 0x18 gap.
 // lever-search closes the rest only by wrapping handlers in one-use binders
 // (+8 frame each): the same class as jumpMain's state-handler gap
 // (MarioJump.cpp); refused, needs one real cause. The +8 is a named local
@@ -1774,8 +1775,7 @@ BOOL TMario::moveMain()
 	if (checkStatusType(MARIO_STATUS_FLAG_UNK40000)
 	    && !checkStatusType(MARIO_STATUS_OIL_RUN)
 	    && !checkStatusType(MARIO_STATUS_OIL_SLIP)) {
-		SMSGetMSound()->startSoundActor(MSD_SE_MA_SLIP, &mPosition, 0, nullptr,
-		                                0, 4);
+		SMSGetMSound()->startSoundActor(MSD_SE_MA_SLIP, &mPosition);
 	}
 
 	switch (mStatus) {
