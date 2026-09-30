@@ -77,28 +77,28 @@ void JPABaseEmitter::deleteParticle(JPABaseParticle* particle)
 	deleteBaseParticle(particle, list);
 }
 
-// TODO: instructions exact, frame 0x48 vs retail 0x40 (8 more low region).
-// Either loop shape for both lists, a named object or next in either loop,
-// declaration order and initialised declarations are inert.
+// `next` is one function-scope local shared by both loops: a block-scope
+// `next` in each loop costs 8 bytes of frame (0x48).
 void JPABaseEmitter::deleteAllParticle()
 {
 	JSUList<JPABaseParticle>* list;
-	JSULink<JPABaseParticle>* it;
+	JSULink<JPABaseParticle>* link;
+	JSULink<JPABaseParticle>* next;
 
 	list = &mParticleList;
-	it   = list->getFirst();
-	while (it) {
-		JSULink<JPABaseParticle>* next = it->getNext();
-		deleteBaseParticle(it->getObject(), list);
-		it = next;
+	link = list->getFirst();
+	while (link) {
+		next = link->getNext();
+		deleteBaseParticle(link->getObject(), list);
+		link = next;
 	}
 
 	list = &mChildParticleList;
-	it   = list->getFirst();
-	while (it) {
-		JPABaseParticle* particle = it->getObject();
-		it                        = it->getNext();
-		deleteBaseParticle(particle, list);
+	link = list->getFirst();
+	while (link) {
+		next = link->getNext();
+		deleteBaseParticle(link->getObject(), list);
+		link = next;
 	}
 }
 
