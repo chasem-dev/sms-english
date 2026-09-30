@@ -60,6 +60,15 @@ class TCameraShake;
 
 extern TCameraShake* gpCameraShake;
 
+// Fabricated: the camera shake bound to a named local before it is returned,
+// +8 of low region per expansion over a raw gpCameraShake read. Formerly
+// parked TU-locally in six units.
+inline TCameraShake* SMSGetCameraShakeBound()
+{
+	TCameraShake* shake = gpCameraShake;
+	return shake;
+}
+
 class TCameraShake {
 public:
 	struct TCamShakeAngle {

@@ -1190,12 +1190,6 @@ static inline TGraphTracer* Hino2Tracer(THinokuri2* self)
 	return tracer;
 }
 
-static inline TCameraShake* Hino2CameraShake()
-{
-	TCameraShake* shake = gpCameraShake;
-	return shake;
-}
-
 static inline bool Hino2CurAnmEndsNext(THinokuri2* self)
 {
 	MActor* actor = self->getMActor();
@@ -1286,7 +1280,7 @@ DEFINE_NERVE(TNerveHino2GraphWander, TLiveActor)
 	    && !self->isAirborne() && (frame == 0x24 || frame == 0x55)) {
 		f32 ws = Hino2Params(self)->mSLWalkShake.get();
 		if (!(ws * ws < self->getDistToMarioSquared()))
-			Hino2CameraShake()->startShake(CAM_SHAKE_MODE_ENEMY, 0.8f);
+			SMSGetCameraShakeBound()->startShake(CAM_SHAKE_MODE_ENEMY, 0.8f);
 
 		JGeometry::TVec3<f32> TStack_3C;
 
@@ -1580,7 +1574,7 @@ DEFINE_NERVE(TNerveHino2Squat, TLiveActor)
 		if (self->mCurrentBck == 0x13) {
 			f32 js = Hino2SLJumpShake(self);
 			if (!(js * js < self->mDistToMarioSquared))
-				Hino2CameraShake()->startShake(CAM_SHAKE_MODE_ENEMY2, 0.8f);
+				SMSGetCameraShakeBound()->startShake(CAM_SHAKE_MODE_ENEMY2, 0.8f);
 			self->changeBck(0x14);
 		}
 
@@ -1665,7 +1659,7 @@ DEFINE_NERVE(TNerveHino2Stamp, TLiveActor)
 	if (!self->isAirborne() && (frame == 0x1C || frame == 0x3E)) {
 		f32 js = Hino2Params(self)->mSLJumpShake.get();
 		if (!(js * js < self->getDistToMarioSquared()))
-			Hino2CameraShake()->startShake(CAM_SHAKE_MODE_ENEMY2, 0.8f);
+			SMSGetCameraShakeBound()->startShake(CAM_SHAKE_MODE_ENEMY2, 0.8f);
 
 		f32 sql = Hino2Params(self)->mSLStampQuakeLen.get();
 		sql     = sql * sql;

@@ -1528,14 +1528,6 @@ DEFINE_NERVE(TNerveTinKoopaWait, TLiveActor)
 	return FALSE;
 }
 
-// Binding level over a raw member read, worth +8 of low region in
-// TNerveTinKoopaDamage::execute (batch 127).
-static inline TCameraShake* TinkoopaGetCameraShake()
-{
-	TCameraShake* cameraShake = gpCameraShake;
-	return cameraShake;
-}
-
 DEFINE_NERVE(TNerveTinKoopaDamage, TLiveActor)
 {
 	TTinKoopa* tinKoopa = (TTinKoopa*)spine->getBody();
@@ -1548,7 +1540,7 @@ DEFINE_NERVE(TNerveTinKoopaDamage, TLiveActor)
 		    tinKoopa->getModel()->getAnmMtx(
 		        TTinKoopa_getJointIndex(TINKOOPA_JOINT_HEAD)),
 		    0, this);
-		TinkoopaGetCameraShake()->startShake(CAM_SHAKE_MODE_KILLER, 1.0f);
+		SMSGetCameraShakeBound()->startShake(CAM_SHAKE_MODE_KILLER, 1.0f);
 	}
 
 	if (tinKoopa->getMActor()->checkCurBckFromIndex(

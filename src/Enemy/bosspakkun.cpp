@@ -1862,12 +1862,6 @@ static inline f32 BosspakkunBckFrame(MActor* actor)
 	return ctrl->getFrame();
 }
 
-static inline TCameraShake* BosspakkunGetCameraShake()
-{
-	TCameraShake* cameraShake = gpCameraShake;
-	return cameraShake;
-}
-
 DEFINE_NERVE(TNerveBPTumbleIn, TLiveActor)
 {
 	TBossPakkun* boss = (TBossPakkun*)spine->getBody();
@@ -1882,7 +1876,7 @@ DEFINE_NERVE(TNerveBPTumbleIn, TLiveActor)
 		    boss);
 
 	if (spine->getTime() == 348) {
-		BosspakkunGetCameraShake()->startShake(
+		SMSGetCameraShakeBound()->startShake(
 		    (EnumCamShakeMode)CAM_SHAKE_MODE_BOPA_DOWN, 1.0f);
 		boss->rumblePad(2, boss->mPosition);
 	}
@@ -1931,7 +1925,7 @@ DEFINE_NERVE(TNerveBPTumbleOut, TLiveActor)
 
 	if (spine->getTime() == 0) {
 		boss->changeBck(BOSSPAKU_BCK_GETUP);
-		BosspakkunGetCameraShake()->startShake(
+		SMSGetCameraShakeBound()->startShake(
 		    (EnumCamShakeMode)CAM_SHAKE_MODE_BOPA_GETUP, 1.0f);
 		boss->rumblePad(0, boss->mPosition);
 	}
@@ -2301,14 +2295,14 @@ DEFINE_NERVE(TNerveBPFall, TLiveActor)
 	} else if (actor->checkCurBckFromIndex(BOSSPAKU_BCK_FALL_LOOP)) {
 		if (!boss->isAirborne()) {
 			boss->changeBck(BOSSPAKU_BCK_FALL_END);
-			BosspakkunGetCameraShake()->startShake(
+			SMSGetCameraShakeBound()->startShake(
 			    (EnumCamShakeMode)CAM_SHAKE_MODE_BOPA_POPO, 1.0f);
 			boss->rumblePad(2, boss->mPosition);
 		}
 	} else if (actor->checkCurBckFromIndex(BOSSPAKU_BCK_FALL_END)) {
 		if (actor->curAnmEndsNext(ANM_TYPE_BCK, nullptr)) {
 			boss->changeBck(BOSSPAKU_BCK_GETUP);
-			BosspakkunGetCameraShake()->startShake(
+			SMSGetCameraShakeBound()->startShake(
 			    (EnumCamShakeMode)CAM_SHAKE_MODE_BOPA_GETUP, 1.0f);
 			boss->rumblePad(0, boss->mPosition);
 		}

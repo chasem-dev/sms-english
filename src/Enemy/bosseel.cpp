@@ -2342,12 +2342,6 @@ DEFINE_NERVE(TNerveBossEelWaitAppear, TLiveActor)
 	return false;
 }
 
-static inline TCameraShake* BosseelCameraShake()
-{
-	TCameraShake* shake = gpCameraShake;
-	return shake;
-}
-
 static inline MSound* BosseelBackSound()
 {
 	MSound* sound = SMSGetMSound();
@@ -2361,7 +2355,7 @@ void ExecSpinNerve_Sub(TBossEel* eel)
 	CLBChaseGeneralConstantSpecifySpeed(
 	    &spinSpeed, maxSpeed, eel->getBossEelParams().mSLSpinAccel.get());
 	eel->mTurnSpeed = spinSpeed;
-	BosseelCameraShake()->keepShake(static_cast<EnumCamShakeMode>(0x18), 1.0f);
+	SMSGetCameraShakeBound()->keepShake(static_cast<EnumCamShakeMode>(0x18), 1.0f);
 
 	if (eel->checkLiveFlag(TBossEel::LIVE_FLAG_UNK10000)) {
 		eel->mRotation.y -= spinSpeed;

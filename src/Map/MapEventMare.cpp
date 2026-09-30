@@ -87,12 +87,6 @@ static inline RumbleMgr* MareWallRockRumbleMgr()
 	return mgr;
 }
 
-static inline TCameraShake* MareWallRockCameraShake()
-{
-	TCameraShake* shake = gpCameraShake;
-	return shake;
-}
-
 // Case 4 declares its translation vector at the top of the block, above the
 // joint, which is what puts it directly under case 2's vector.
 void TMareWallRock::movement()
@@ -116,7 +110,7 @@ void TMareWallRock::movement()
 			SMSGetMSound()->startSoundActor(MSD_SE_OBJ_QUAKE, &mPosition, 0,
 			                                nullptr, 0, 4);
 			MareWallRockRumbleMgr()->start(0x13, -1, (f32*)nullptr);
-			MareWallRockCameraShake()->keepShake(
+			SMSGetCameraShakeBound()->keepShake(
 			    CAM_SHAKE_MODE_BUILDING_APPEAR, 0.5f);
 		}
 

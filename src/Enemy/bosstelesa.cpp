@@ -1869,12 +1869,6 @@ static inline RumbleMgr* BossTelesaRouletteGetRumbleMgr()
 	return rumble;
 }
 
-static inline TCameraShake* BossTelesaRouletteGetCameraShake()
-{
-	TCameraShake* shake = gpCameraShake;
-	return shake;
-}
-
 // The named first speed puts both TMsRange locals at the ROM's 0x50/0x48, and
 // `sign` declared with `direction` gives it f27 above speedUp's f26.
 void TBossTelesa::rouletteStart()
@@ -1918,7 +1912,7 @@ void TBossTelesa::rouletteStart()
 
 	BossTelesaRouletteGetRumbleMgr()->start(0x14, 0xF, (f32*)nullptr);
 	// mCamShakeNameSave[0x23] is "/Camera/shakeBTelesaRoll.prm".
-	BossTelesaRouletteGetCameraShake()->startShake((EnumCamShakeMode)0x23,
+	SMSGetCameraShakeBound()->startShake((EnumCamShakeMode)0x23,
 	                                               1.0f);
 }
 
