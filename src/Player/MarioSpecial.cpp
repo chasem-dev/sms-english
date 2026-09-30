@@ -1054,9 +1054,11 @@ s16 TMario::getNozzleEmitVX()
 	return speed;
 }
 
-// TODO: frame 0x198 against 0x1a0. The stop test ends in changeWireHanging(),
-// whose `ok` flag shares its zero with the mFaceAngle.x/unkF6 stores (c-k15:
-// the written-out copy materialised its own zero; 99.6 -> 99.9).
+// TODO: frame exact (0x1a0) with the input read through getInput(); 45 slot
+// operands still differ. The stop test ends in
+// changeWireHanging(), whose `ok` flag shares its zero with the
+// mFaceAngle.x/unkF6 stores (c-k15: the written-out copy materialised its own
+// zero; 99.6 -> 99.9).
 BOOL TMario::wireRolling()
 {
 	s16 initialAngle = mFaceAngle.x;
@@ -1064,7 +1066,7 @@ BOOL TMario::wireRolling()
 	s16 wireAngle;
 	getOnWirePosAngle(&mPosition, &wireAngle);
 
-	if (mInput & 0x2)
+	if (getInput() & 0x2)
 		mStatusState |= 1;
 
 	s16 rotSpeedMax = mWireParams.mRotSpeedMax.get();
@@ -1080,7 +1082,7 @@ BOOL TMario::wireRolling()
 			return changePlayerStatus(MARIO_STATUS_WIRE_ROLL_JUMP, 1, false);
 	}
 
-	if (mInput & 0x1) {
+	if (getInput() & 0x1) {
 		s16 diff = wireAngle - mIntendedYaw;
 		if (diff > -0x2000 && diff < 0x3555)
 			wireMove(3.0f);
@@ -1096,7 +1098,7 @@ BOOL TMario::wireRolling()
 
 	unkF6 -= (s16)((f32)mWireParams.mRotGravity.get() * JMASSin(mFaceAngle.x));
 
-	if ((mInput & 0x4000) ? true : false)
+	if ((getInput() & 0x4000) ? true : false)
 		unkF6 = (s16)((f32)unkF6 * mWireParams.mRotBrake.get());
 
 	if (unkF6 < -rotSpeedMax)
