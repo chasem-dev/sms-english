@@ -369,20 +369,20 @@ void TMapWire::move()
 
 f32 TMapWire::getPosInWire(const JGeometry::TVec3<f32>& point) const
 {
-	// TODO: This needs stack offset adjustments
+	// TODO: frame and instructions match; flatStart and flatEnd sit 0xc high
+	// (0x9c/0x90 vs retail 0x90/0x84).
 
 	// Position here is only considered in the horizontal plane
-	JGeometry::TVec3<f32> flatStart = mStartPoint;
-	JGeometry::TVec3<f32> flatEnd   = mEndPoint;
+	JGeometry::TVec3<f32> flatStart = getStartPoint();
+	JGeometry::TVec3<f32> flatEnd   = getEndPoint();
 	flatStart.y                     = 0.0f;
 	flatEnd.y                       = 0.0f;
 
 	JGeometry::TVec3<f32> perpPoint
 	    = MsPerpendicFootToLineR(flatStart, flatEnd, point);
 
-	f32 totalLength   = JGeometry::TVec3<f32>(flatEnd - flatStart).length();
-	f32 partialLength = JGeometry::TVec3<f32>(perpPoint - flatStart).length();
-	return partialLength / totalLength;
+	return JGeometry::TVec3<f32>(perpPoint - flatStart).length()
+	     / JGeometry::TVec3<f32>(flatEnd - flatStart).length();
 }
 
 /**
