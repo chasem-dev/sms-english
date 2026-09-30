@@ -1739,8 +1739,8 @@ void TWaterGun::calcAnimation(JDrama::TGraphics* graphics)
 
 void TWaterGun::perform(u32 cue, JDrama::TGraphics* graphics)
 {
-	// TODO: Missing stack space
-	// volatile u32 unused2[24];
+	// TODO: frame 0x70 against retail 0xb0 with every instruction exact
+	// (0x58 before the nozzle actor was read through getMActor(), c-hs5).
 
 	if ((cue & CUE_MOVE) != 0) {
 		if ((mFlags & WATER_GUN_FLAG_UNK10) != 0) {
@@ -1756,7 +1756,7 @@ void TWaterGun::perform(u32 cue, JDrama::TGraphics* graphics)
 	mFluddModel->perform(cue, graphics);
 
 	if ((cue & CUE_CALC_ANIM) != 0) {
-		MActor* p2 = getCurrentNozzle()->unk380;
+		MActor* p2 = getCurrentNozzle()->getMActor();
 		if (p2 != nullptr) {
 			p2->getModel()->setBaseTRMtx(getModel()->getAnmMtx(unk1CD8));
 		}
@@ -1764,8 +1764,8 @@ void TWaterGun::perform(u32 cue, JDrama::TGraphics* graphics)
 		setEmitPt();
 	}
 
-	if (getCurrentNozzle()->unk380) {
-		getCurrentNozzle()->unk380->perform(cue, graphics);
+	if (getCurrentNozzle()->getMActor()) {
+		getCurrentNozzle()->getMActor()->perform(cue, graphics);
 	}
 }
 
