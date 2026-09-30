@@ -1081,8 +1081,8 @@ void TFluff::control()
 		        || mPosition.y < -1000.0f))
 			kill();
 
-		if (SMSGetMapBound()->isTouchedOneWall(mPosition.x, mPosition.y,
-		                                      mPosition.z, 100.0f))
+		if (gpMap->isTouchedOneWall(mPosition.x, mPosition.y,
+		                           mPosition.z, 100.0f))
 			kill();
 
 		if (mPosition.x < -14848.0f || 14848.0f < mPosition.x
@@ -1098,8 +1098,7 @@ void TFluff::control()
 		if (mScaling.x < 0.1f) {
 			gpMarioParticleManager->emitAndBindToPosPtr(0xE5, &mPosition, 0,
 			                                            nullptr);
-			gpMSound->startSoundActor(MSD_SE_SMOKE_EFFECT, &mPosition,
-			                          0, nullptr, 0, 4);
+			gpMSound->startSoundActor(MSD_SE_SMOKE_EFFECT, &mPosition);
 			mScaling.set(0.0001f, 0.0001f, 0.0001f);
 			mStateTimer = 240;
 			mState      = STATE_WAIT_APPEAR;
