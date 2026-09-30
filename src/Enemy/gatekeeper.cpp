@@ -134,20 +134,12 @@ TGateKeeperBase::TGateKeeperBase(const char* name)
 
 void TGateKeeperBase::kill() { onLiveFlag(LIVE_FLAG_DEAD); }
 
-// Binding level over a raw member read, worth +8 of low region in
-// TGateKeeperBase::receiveMessage (batch 127).
-static inline TMarioParticleManager* GatekeeperGetMarioParticleManager()
-{
-	TMarioParticleManager* marioParticleManager = gpMarioParticleManager;
-	return marioParticleManager;
-}
-
 BOOL TGateKeeperBase::receiveMessage(THitActor* sender, u32 message)
 {
 	if (sender->getActorType() == 0x1000001) {
 		if (mVulnerable && message == HIT_MESSAGE_SPRAYED_BY_WATER)
 			unk154++;
-		GatekeeperGetMarioParticleManager()->emit(PARTICLE_MS_ENM_WATHIT, &sender->mPosition,
+		SMSGetParticleManagerBound()->emit(PARTICLE_MS_ENM_WATHIT, &sender->mPosition,
 		                             0, nullptr);
 		SMSGetMSound()->startSoundSet(MSD_SE_EN_COMMON_W_HIT_OK,
 		                              &sender->mPosition, 0, 0.0f, 0, 0, 4);
@@ -679,12 +671,12 @@ void TBiancoGateKeeper::emitParticles()
 			    (u8*)this + 1);
 			if (emitter)
 				SMSSetEmitterPolColor(emitter, 6);
-			emitter = GatekeeperGetMarioParticleManager()->emitAndBindToMtxPtr(
+			emitter = SMSGetParticleManagerBound()->emitAndBindToMtxPtr(
 			    GATEKEEPER_JPA_MS_GKPA_YODARE_L, model->getAnmMtx(5), 1,
 			    (u8*)this + 2);
 			if (emitter)
 				SMSSetEmitterPolColor(emitter, 6);
-			emitter = GatekeeperGetMarioParticleManager()->emitAndBindToMtxPtr(
+			emitter = SMSGetParticleManagerBound()->emitAndBindToMtxPtr(
 			    GATEKEEPER_JPA_MS_GKPA_YODARE_S, model->getAnmMtx(8), 1,
 			    (u8*)this + 3);
 			if (emitter)
@@ -902,7 +894,7 @@ DEFINE_NERVE(TNerveBGKAppear, TLiveActor)
 	}
 
 	if (spine->getTime() == 8) {
-		GatekeeperGetMarioParticleManager()->emitAndBindToMtxPtr(
+		SMSGetParticleManagerBound()->emitAndBindToMtxPtr(
 		    GATEKEEPER_JPA_MS_GKPA_KEMURI, self->getModel()->getAnmMtx(12), 2,
 		    nullptr);
 		self->rumblePad();
@@ -1117,19 +1109,19 @@ DEFINE_NERVE(TNerveBGKDie, TLiveActor)
 				fc->setRate(SMSGetAnmFrameRate());
 			}
 			JPABaseEmitter* emitter
-			    = GatekeeperGetMarioParticleManager()->emitAndBindToMtxPtr(
+			    = SMSGetParticleManagerBound()->emitAndBindToMtxPtr(
 			        GATEKEEPER_JPA_MS_GKPA_DEAD, self->getModel()->getAnmMtx(6),
 			        0, nullptr);
 			if (emitter)
 				SMSSetEmitterPolColor(emitter, 6);
-			GatekeeperGetMarioParticleManager()->emitAndBindToMtxPtr(
+			SMSGetParticleManagerBound()->emitAndBindToMtxPtr(
 			    GATEKEEPER_JPA_MS_GKPA_DEADSMOKE,
 			    self->getModel()->getAnmMtx(0), 0, nullptr);
 		}
 	}
 
 	if (spine->getTime() == 0x154) {
-		GatekeeperGetMarioParticleManager()->emitAndBindToMtxPtr(
+		SMSGetParticleManagerBound()->emitAndBindToMtxPtr(
 		    GATEKEEPER_JPA_MS_GKPA_KEMURI, self->getModel()->getAnmMtx(0), 2,
 		    nullptr);
 		SMSGetMSound()->startSoundActor(MSD_SE_DM_OSEN_DISAPPEAR,

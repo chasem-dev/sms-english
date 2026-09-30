@@ -1295,12 +1295,6 @@ static inline MSound* BossgessoGetMSound()
 	return sound;
 }
 
-static inline TMarioParticleManager* BossgessoGetParticleManager()
-{
-	TMarioParticleManager* manager = gpMarioParticleManager;
-	return manager;
-}
-
 // +8 of low region at its one expansion in TNerveBGPollute (the named
 // TStack_24 there is still 4 bytes low: one 4-byte inline level short).
 static inline MActor* BossgessoGetUnk178(const TBossGesso* p)
@@ -1935,10 +1929,10 @@ DEFINE_NERVE(TNerveBGEyeDamage, TLiveActor)
 		return true;
 	}
 
-	BossgessoGetParticleManager()->emitAndBindToMtxPtr(
+	SMSGetParticleManagerBound()->emitAndBindToMtxPtr(
 	    BGESO_JPA_MS_BOGE_NAMIDA, BossgessoGetModel(self)->getAnmMtx(7), 1,
 	    self);
-	BossgessoGetParticleManager()->emitAndBindToMtxPtr(
+	SMSGetParticleManagerBound()->emitAndBindToMtxPtr(
 	    BGESO_JPA_MS_BOGE_NAMIDA, BossgessoGetModel(self)->getAnmMtx(4), 1,
 	    self);
 
@@ -1987,13 +1981,13 @@ DEFINE_NERVE(TNerveBGBeakDamage, TLiveActor)
 		self->mCork->crush();
 
 	if (spine->getTime() == 12) {
-		BossgessoGetParticleManager()->emitAndBindToMtxPtr(
+		SMSGetParticleManagerBound()->emitAndBindToMtxPtr(
 		    BGESO_JPA_MS_BOGE_HIT_A, BossgessoGetModel(self)->getAnmMtx(27), 0,
 		    nullptr);
-		BossgessoGetParticleManager()->emitAndBindToMtxPtr(
+		SMSGetParticleManagerBound()->emitAndBindToMtxPtr(
 		    BGESO_JPA_MS_BOGE_HIT_C, self->getModel()->getAnmMtx(27), 0,
 		    nullptr);
-		BossgessoGetParticleManager()->emitAndBindToMtxPtr(
+		SMSGetParticleManagerBound()->emitAndBindToMtxPtr(
 		    BGESO_JPA_MS_BOGE_HIT_B, self->getModel()->getAnmMtx(27), 0,
 		    nullptr);
 	}
@@ -2020,15 +2014,15 @@ DEFINE_NERVE(TNerveBGBeakDamage, TLiveActor)
 		local_28.y = BossgessoGetMap()->checkGround(local_28.x, local_28.y + 500.0f,
 		                                local_28.z, &data);
 
-		BossgessoGetParticleManager()->emit(BGESO_JPA_MS_BOGE_HITDOWN, &local_28, 0,
+		SMSGetParticleManagerBound()->emit(BGESO_JPA_MS_BOGE_HITDOWN, &local_28, 0,
 		                             nullptr);
 	}
 
 	if (spine->getTime() == 40) {
-		BossgessoGetParticleManager()->emitAndBindToMtxPtr(
+		SMSGetParticleManagerBound()->emitAndBindToMtxPtr(
 		    BGESO_JPA_MS_BOGE_KIZETSU, BossgessoGetModel(self)->getAnmMtx(7), 0,
 		    nullptr);
-		BossgessoGetParticleManager()->emitAndBindToMtxPtr(
+		SMSGetParticleManagerBound()->emitAndBindToMtxPtr(
 		    BGESO_JPA_MS_BOGE_KIZETSU_R, BossgessoGetModel(self)->getAnmMtx(4), 0,
 		    nullptr);
 	}

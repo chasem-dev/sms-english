@@ -53,12 +53,6 @@ bool SMS_EmitRippleSea(MtxPtr arg0, void* arg1)
 	return ret;
 }
 
-static inline TMarioParticleManager* EffectUtilGetParticleManager()
-{
-	TMarioParticleManager* manager = gpMarioParticleManager;
-	return manager;
-}
-
 static inline void EffectUtilCross(JGeometry::TVec3<f32>& dst,
                                    const JGeometry::TVec3<f32>& a,
                                    const JGeometry::TVec3<f32>& b)
@@ -111,10 +105,10 @@ void SMS_EmitSinkInPollutionEffect(const JGeometry::TVec3<float>& arg0,
 	matrix.mMtx[2][3] = arg0.z;
 
 	if (arg2) {
-		EffectUtilGetParticleManager()->emitAndBindToMtx(0x1D8, matrix.mMtx,
+		SMSGetParticleManagerBound()->emitAndBindToMtx(0x1D8, matrix.mMtx,
 		                                                 2U, nullptr);
 	}
-	EffectUtilGetParticleManager()->emitAndBindToMtx(0x1D9, matrix.mMtx, 2U,
+	SMSGetParticleManagerBound()->emitAndBindToMtx(0x1D9, matrix.mMtx, 2U,
 	                                                 nullptr);
 }
 

@@ -1119,14 +1119,6 @@ void THamuKuri::setWalkAnm() { setBckAnm(4); }
 
 // Binding level over a raw member read, worth +16 of low region in
 // THamuKuri::setDeadAnm (batch 127).
-static inline TMarioParticleManager* HamukuriGetMarioParticleManager()
-{
-	TMarioParticleManager* marioParticleManager = gpMarioParticleManager;
-	return marioParticleManager;
-}
-
-// Binding level over a raw member read, worth +16 of low region in
-// THamuKuri::setDeadAnm (batch 127).
 static inline u8 HamukuriUnk184(const THamuKuri* p)
 {
 	u8 v184 = p->unk184;
@@ -1140,7 +1132,7 @@ void THamuKuri::setDeadAnm()
 
 	if (HamukuriUnk184(this)) {
 		onLiveFlag(LIVE_FLAG_UNK20000);
-		HamukuriGetMarioParticleManager()->emit(PARTICLE_MS_ENM_DISAP_A, &mPosition, 0,
+		SMSGetParticleManagerBound()->emit(PARTICLE_MS_ENM_DISAP_A, &mPosition, 0,
 		                             nullptr);
 	} else {
 		if (isBckAnm(3))
@@ -2194,7 +2186,7 @@ BOOL TDangoHamuKuri::receiveMessage(THitActor* sender, u32 message)
 	// SMSGetMSound()/raw move the frame by at most the binder's 8. The same
 	// 0x20 is missing in TTamaNoko::receiveMessage (TSmallEnemy's is 0x30).
 	if (message == HIT_MESSAGE_SPRAYED_BY_WATER) {
-		HamukuriGetMarioParticleManager()->emit(
+		SMSGetParticleManagerBound()->emit(
 		    PARTICLE_MS_ENM_WATHIT, &sender->mPosition, 0, nullptr);
 		gpMSound->startSoundSet(MSD_SE_EN_COMMON_W_HIT_OK, &mPosition, 0.0f,
 		                        0.0f, 0, 0, 4);

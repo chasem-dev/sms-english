@@ -882,12 +882,6 @@ static inline u32 MarioMoveGetStatus(const TMario* p)
 	return status;
 }
 
-static inline TMarioParticleManager* MarioMoveParticleManager()
-{
-	TMarioParticleManager* manager = gpMarioParticleManager;
-	return manager;
-}
-
 static inline MSound* MarioMoveGetMSound()
 {
 	MSound* sound = SMSGetMSound();
@@ -922,7 +916,7 @@ void TMario::checkGraffitoFire()
 	mInvincibilityFrames = mGraffitoParams.mFireInvincibleTime.get();
 	dropObject();
 	changePlayerStatus(MARIO_STATUS_FIRE_DOWN, 1, false);
-	MarioMoveParticleManager()->emitAndBindToPosPtr(6, &mPosition, 0, nullptr);
+	SMSGetParticleManagerBound()->emitAndBindToPosPtr(6, &mPosition, 0, nullptr);
 	MarioMoveGetMSound()->startSoundActor(MSD_SE_MA_DAMAGE_FIRE, &mPosition, 0,
 	                                      nullptr, 0, 4);
 }

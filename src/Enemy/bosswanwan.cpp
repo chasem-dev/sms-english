@@ -1314,12 +1314,6 @@ void TBossWanwan::control()
 	updateSquareToMario();
 }
 
-static inline TMarioParticleManager* BosswanwanParticles()
-{
-	TMarioParticleManager* manager = gpMarioParticleManager;
-	return manager;
-}
-
 void TBossWanwan::emitEffects()
 {
 	int stomp = 0;
@@ -1333,7 +1327,7 @@ void TBossWanwan::emitEffects()
 	}
 
 	if (stomp) {
-		BosswanwanParticles()->emit(BWANWAN_JPA_MS_BWAN_JUMP_ROCK, &mPosition,
+		SMSGetParticleManagerBound()->emit(BWANWAN_JPA_MS_BWAN_JUMP_ROCK, &mPosition,
 		                             0, nullptr);
 		gpMarioParticleManager->emit(BWANWAN_JPA_MS_BWAN_JUMP_SMOKE,
 		                             &mPosition, 0, nullptr);

@@ -1811,14 +1811,6 @@ DEFINE_NERVE(TNerveBPPivot, TLiveActor)
 	return FALSE;
 }
 
-// Binding level over a raw member read, worth +16 of low region in
-// TNerveBPSwallow::execute (batch 127).
-static inline TMarioParticleManager* BosspakkunGetMarioParticleManager()
-{
-	TMarioParticleManager* marioParticleManager = gpMarioParticleManager;
-	return marioParticleManager;
-}
-
 DEFINE_NERVE(TNerveBPSwallow, TLiveActor)
 {
 	TBossPakkun* boss = (TBossPakkun*)spine->getBody();
@@ -1835,9 +1827,9 @@ DEFINE_NERVE(TNerveBPSwallow, TLiveActor)
 	}
 
 	MtxPtr mouth = boss->getModel()->getAnmMtx(18);
-	BosspakkunGetMarioParticleManager()->emitAndBindToMtxPtr(
+	SMSGetParticleManagerBound()->emitAndBindToMtxPtr(
 	    BOSSPAKKUN_JPA_MS_BOPA_WATHIT, mouth, 1, boss);
-	BosspakkunGetMarioParticleManager()->emitAndBindToMtxPtr(
+	SMSGetParticleManagerBound()->emitAndBindToMtxPtr(
 	    BOSSPAKKUN_JPA_MS_BOPA_WATHIT_W, mouth, 1, (u8*)boss + 1);
 
 	if (boss->unk170 != 0) {

@@ -73,12 +73,6 @@ void TBossHanachan::staticLoadParticle()
 // reference out-parameter level, a direct-return fork, a binder, raw
 // `mSpine->getLatestNerve()` and a named `self` receiver (103 markers each).
 // emitCamShake_'s 4-byte shift was closed by a bool wrapper plus params forks.
-static inline TMarioParticleManager* BHParticles()
-{
-	TMarioParticleManager* manager = gpMarioParticleManager;
-	return manager;
-}
-
 void TBossHanachan::emitParticle_()
 {
 	const TNerveBase<TLiveActor>* nerve = getLatestNerve();
@@ -126,7 +120,7 @@ void TBossHanachan::emitParticle_()
 							position.set(leg[0][3], waterHeight, leg[2][3]);
 							gpMarioParticleManager->emit(0x7C, &position, 0,
 							                            nullptr);
-							BHParticles()->emit(0x7D, &position, 0, nullptr);
+							SMSGetParticleManagerBound()->emit(0x7D, &position, 0, nullptr);
 						} else {
 							position.set(mtx[0][3], mtx[1][3], mtx[2][3]);
 							gpMarioParticleManager->emit(0x77, &position, 0,

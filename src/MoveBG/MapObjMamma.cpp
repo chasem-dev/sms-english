@@ -1116,15 +1116,9 @@ void TShiningStone::endDemo()
 	}
 }
 
-// The three lighting emitters are bound through a level the bare
-// `emit(0x56, ...)` below them does not use: three sites are retail's 0x40,
+// The three lighting emitters read SMSGetParticleManagerBound where the bare
+// `emit(0x56, ...)` below them does not: three sites are retail's 0x40,
 // all four overshoot by 8.
-static inline TMarioParticleManager* ShiningStoneGetMarioParticleManager()
-{
-	TMarioParticleManager* marioParticleManager = gpMarioParticleManager;
-	return marioParticleManager;
-}
-
 void TShiningStone::putOnLight(TLiveActor* mirror)
 {
 	if (strcmp(mirror->getName(), "mirrorS") == 0) {
@@ -1143,7 +1137,7 @@ void TShiningStone::putOnLight(TLiveActor* mirror)
 
 	switch (mLightNum) {
 	case 0:
-		mEmitter = ShiningStoneGetMarioParticleManager()->emit(
+		mEmitter = SMSGetParticleManagerBound()->emit(
 		    0x143, (JGeometry::TVec3<f32>*)&mPosition, 1, this);
 		mEmitter->setRate(3.0f);
 		mEmitterRate = 1.5f;
@@ -1152,7 +1146,7 @@ void TShiningStone::putOnLight(TLiveActor* mirror)
 		break;
 
 	case 1:
-		mEmitter = ShiningStoneGetMarioParticleManager()->emit(
+		mEmitter = SMSGetParticleManagerBound()->emit(
 		    0x144, (JGeometry::TVec3<f32>*)&mPosition, 1, this);
 		mEmitter->setRate(0.4f);
 		mEmitterRate = 0.2f;
@@ -1161,7 +1155,7 @@ void TShiningStone::putOnLight(TLiveActor* mirror)
 		break;
 
 	case 2:
-		mEmitter = ShiningStoneGetMarioParticleManager()->emit(
+		mEmitter = SMSGetParticleManagerBound()->emit(
 		    0x145, (JGeometry::TVec3<f32>*)&mPosition, 1, this);
 		mEmitterRate = 0.0f;
 		gpMSound->startSoundActor(MSD_SE_DM_REFLECTION_3, &mPosition, 0,

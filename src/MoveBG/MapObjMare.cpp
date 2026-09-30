@@ -1191,14 +1191,6 @@ TMuddyBoat::TMuddyBoat(const char* name)
 	unk17C = 0.0f;
 }
 
-// Binding level over a raw member read, worth +16 of low region in
-// TMareFall::calc (batch 127).
-static inline TMarioParticleManager* MapObjMareGetMarioParticleManager()
-{
-	TMarioParticleManager* marioParticleManager = gpMarioParticleManager;
-	return marioParticleManager;
-}
-
 void TMareFall::calc()
 {
 	gpMSound->startSoundActor(MSD_SE_GE_FALL, &mPosition, 0, nullptr, 0, 4);
@@ -1206,8 +1198,8 @@ void TMareFall::calc()
 	                          nullptr, 0, 4);
 
 	// TODO: Particles.hpp has no names for these two; they are
-	MapObjMareGetMarioParticleManager()->emit(MAPOBJ_MAREFALLSPLASH, &mPosition, 1, this);
-	MapObjMareGetMarioParticleManager()->emit(MAPOBJ_MAREFALLSMOKE, &mPosition, 1, this);
+	SMSGetParticleManagerBound()->emit(MAPOBJ_MAREFALLSPLASH, &mPosition, 1, this);
+	SMSGetParticleManagerBound()->emit(MAPOBJ_MAREFALLSMOKE, &mPosition, 1, this);
 }
 
 void TMareFall::load(JSUMemoryInputStream& stream)

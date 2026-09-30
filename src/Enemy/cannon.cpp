@@ -1247,12 +1247,6 @@ DEFINE_NERVE(TNerveCannonClose, TLiveActor)
 	return FALSE;
 }
 
-static inline TMarioParticleManager* CannonDamageParticles()
-{
-	TMarioParticleManager* mgr = gpMarioParticleManager;
-	return mgr;
-}
-
 DEFINE_NERVE(TNerveCannonDamage, TLiveActor)
 {
 	TCannon* cannon = (TCannon*)spine->getBody();
@@ -1260,17 +1254,17 @@ DEFINE_NERVE(TNerveCannonDamage, TLiveActor)
 	if (spine->getTime() == 0) {
 		JGeometry::TVec3<f32> scale(2.0f, 2.0f, 2.0f);
 		JPABaseEmitter* emitter
-		    = CannonDamageParticles()->emitAndBindToPosPtr(
+		    = SMSGetParticleManagerBound()->emitAndBindToPosPtr(
 		        0xC4, &cannon->mPosition, 0, nullptr);
 		if (emitter)
 			emitter->setGlobalScale(scale);
 		// Retail discards these two results and keeps scaling the C4 emitter
 		// (`mr. r29` once, then `cmplwi r29` after each later emit).
-		CannonDamageParticles()->emitAndBindToPosPtr(0xC5, &cannon->mPosition,
+		SMSGetParticleManagerBound()->emitAndBindToPosPtr(0xC5, &cannon->mPosition,
 		                                             0, nullptr);
 		if (emitter)
 			emitter->setGlobalScale(scale);
-		CannonDamageParticles()->emitAndBindToPosPtr(0xC6, &cannon->mPosition,
+		SMSGetParticleManagerBound()->emitAndBindToPosPtr(0xC6, &cannon->mPosition,
 		                                             0, nullptr);
 		if (emitter)
 			emitter->setGlobalScale(scale);
@@ -1286,14 +1280,14 @@ DEFINE_NERVE(TNerveCannonDamage, TLiveActor)
 				SMSRumbleMgr->start(0x17, (f32*)nullptr);
 
 			MActor* actor = cannon->mChorobei->getMActor();
-			emitter = CannonDamageParticles()->emitAndBindToMtxPtr(
+			emitter = SMSGetParticleManagerBound()->emitAndBindToMtxPtr(
 			    0xC8,
 			    // 0x240 = joint 12 * sizeof(Mtx); 8 was 0x180.
 			    actor->getModel()->getAnmMtx(12),
 			    0, nullptr);
 			if (emitter)
 				emitter->setGlobalScale(cannon->getChorobei()->mScaling);
-			emitter = CannonDamageParticles()->emitAndBindToPosPtr(
+			emitter = SMSGetParticleManagerBound()->emitAndBindToPosPtr(
 			    0xC7, &cannon->mEffectPos, 0, nullptr);
 			if (emitter)
 				emitter->setGlobalScale(cannon->getChorobei()->mScaling);

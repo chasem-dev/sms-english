@@ -1201,12 +1201,6 @@ static inline MActor* BosseelEyeMActor(TBossEelEye* p)
 	return actor;
 }
 
-static inline TMarioParticleManager* BosseelEyeParticleManager()
-{
-	TMarioParticleManager* manager = gpMarioParticleManager;
-	return manager;
-}
-
 void TBossEelEye::perform(u32 cue, JDrama::TGraphics* graphics)
 {
 	if (getOwner()->mLiveFlag

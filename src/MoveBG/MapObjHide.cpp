@@ -106,13 +106,7 @@ static inline MtxPtr MapObjHideGetRootMtx(TLiveActor* p)
 	return mtx;
 }
 
-// Named-local fork over the particle singleton, +8 on touchWater.
-static inline TMarioParticleManager* MapObjHideParticles()
-{
-	TMarioParticleManager* mgr = gpMarioParticleManager;
-	return mgr;
-}
-
+// SMSGetParticleManagerBound is +8 on touchWater.
 // Unnamed extra level over gpModelWaterManager, last +8 on touchWater.
 static inline TModelWaterManager* MapObjHideWaterMgr()
 {
@@ -369,7 +363,7 @@ u32 TWaterHitPictureHideObj::touchWater(THitActor* param_1)
 
 	int id = getWaterID(param_1);
 	if (MapObjHideWaterMgr()->checkFlagBottom4Bits(id, 0x1)) {
-		MapObjHideParticles()->emit(PARTICLE_MS_ENM_WATHIT,
+		SMSGetParticleManagerBound()->emit(PARTICLE_MS_ENM_WATHIT,
 		                            &param_1->getPosition(), 0, nullptr);
 		FruitBasketSound()->startSoundSet(MSD_SE_EN_COMMON_W_HIT_OK, &mPosition,
 		                                  0, 0, 0, 0, 4);

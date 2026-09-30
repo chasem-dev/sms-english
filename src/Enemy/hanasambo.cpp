@@ -1318,27 +1318,21 @@ void TSamboHead::initFlower()
 
 void TSamboHead::setDeadAnm() { setBckAnm(3); }
 
-static inline TMarioParticleManager* SamboHeadGetMarioParticleManager()
-{
-	TMarioParticleManager* marioParticleManager = gpMarioParticleManager;
-	return marioParticleManager;
-}
-
 void TSamboHead::setAfterDeadEffect()
 {
 	JPABaseEmitter* emitter;
 	if (isBckAnm(1)) {
-		emitter = SamboHeadGetMarioParticleManager()->emit(0xE5, &mPosition, 0,
+		emitter = SMSGetParticleManagerBound()->emit(0xE5, &mPosition, 0,
 		                                                   nullptr);
 		if (emitter)
 			setEmitterScale(emitter, 1.5f, 1.5f, 1.5f);
 	} else {
-		emitter = SamboHeadGetMarioParticleManager()->emit(0xE4, &mPosition, 0,
+		emitter = SMSGetParticleManagerBound()->emit(0xE4, &mPosition, 0,
 		                                                   nullptr);
 		if (emitter)
 			setEmitterScale(emitter, 1.5f, 1.5f, 1.5f);
 	}
-	emitter = SamboHeadGetMarioParticleManager()->emit(0xE6, &mPosition, 0,
+	emitter = SMSGetParticleManagerBound()->emit(0xE6, &mPosition, 0,
 	                                                   nullptr);
 	if (emitter)
 		setEmitterScale(emitter, 1.5f, 1.5f, 1.5f);
@@ -1357,11 +1351,11 @@ static inline const JGeometry::TVec3<f32>* SamboHeadCrashPos(const TSamboHead* p
 void TSamboHead::setCrashAnm()
 {
 	setBckAnm(1);
-	JPABaseEmitter* emitter = SamboHeadGetMarioParticleManager()->emitWithRotate(
+	JPABaseEmitter* emitter = SMSGetParticleManagerBound()->emitWithRotate(
 	    0xE2, SamboHeadCrashPos(this), 0, (s16)DEG2SHORTANGLE(mRotation.y), 0, 0, nullptr);
 	if (emitter)
 		setEmitterScale(emitter, 1.5f, 1.5f, 1.5f);
-	emitter = SamboHeadGetMarioParticleManager()->emitWithRotate(
+	emitter = SMSGetParticleManagerBound()->emitWithRotate(
 	    0xE3, &mPosition, 0, (s16)DEG2SHORTANGLE(mRotation.y), 0, 0, nullptr);
 	if (emitter) {
 		setEmitterScale(emitter, 1.5f, 1.5f, 1.5f);
@@ -1433,13 +1427,6 @@ const char** TSamboHead::getBasNameTable() const
 	return sambohead_bastable;
 }
 
-// TNerveSamboHeadHide::execute (batch 127).
-static inline TMarioParticleManager* HanasamboGetMarioParticleManager()
-{
-	TMarioParticleManager* marioParticleManager = gpMarioParticleManager;
-	return marioParticleManager;
-}
-
 static inline TSamboFlower* SamboHeadFlower(const TSamboHead* p)
 {
 	TSamboFlower* flower = p->mFlower;
@@ -1459,8 +1446,8 @@ DEFINE_NERVE(TNerveSamboHeadAppear, TLiveActor)
 		} else {
 			head->setBckAnm(0xA);
 		}
-		HanasamboGetMarioParticleManager()->emit(0xB6, &head->mPosition, 0, nullptr);
-		HanasamboGetMarioParticleManager()->emit(0xB7, &head->mPosition, 0, nullptr);
+		SMSGetParticleManagerBound()->emit(0xB6, &head->mPosition, 0, nullptr);
+		SMSGetParticleManagerBound()->emit(0xB7, &head->mPosition, 0, nullptr);
 		flower = SamboHeadFlower(head);
 		flower->onHitFlag(HIT_FLAG_NO_COLLISION);
 		flower->getMActor()->setBck("flower_fwait");
@@ -1572,7 +1559,7 @@ DEFINE_NERVE(TNerveSamboHeadHide, TLiveActor)
 	if (spine->getTime() == 0) {
 		head->setBckAnm(4);
 		head->onHitFlag(HIT_FLAG_NO_COLLISION);
-		HanasamboGetMarioParticleManager()->emit(0xB8, &head->mPosition, 0, nullptr);
+		SMSGetParticleManagerBound()->emit(0xB8, &head->mPosition, 0, nullptr);
 		gpMarioParticleManager->emit(0xB9, &head->mPosition, 0, nullptr);
 	} else if (head->checkCurAnmEnd(0)) {
 		head->onLiveFlag(LIVE_FLAG_HIDDEN);

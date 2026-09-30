@@ -491,12 +491,6 @@ static inline CPolarSubCamera* TShineCalcCamera()
 	return camera;
 }
 
-static inline TMarioParticleManager* TShineCalcParticles()
-{
-	TMarioParticleManager* mgr = gpMarioParticleManager;
-	return mgr;
-}
-
 void TShine::calc()
 {
 	MtxPtr mtxPos = TShineCalcModel(this)->getAnmMtx(2);
@@ -505,9 +499,9 @@ void TShine::calc()
 	                  | LIVE_FLAG_DEAD))
 		return;
 
-	unk198 = TShineCalcParticles()->emitAndBindToMtxPtr(
+	unk198 = SMSGetParticleManagerBound()->emitAndBindToMtxPtr(
 	    PARTICLE_MS_SHINE_SENKO, mtxPos, 1, this);
-	unk19C = TShineCalcParticles()->emitAndBindToMtxPtr(PARTICLE_MS_SHINE_KIRA,
+	unk19C = SMSGetParticleManagerBound()->emitAndBindToMtxPtr(PARTICLE_MS_SHINE_KIRA,
 	                                                    mtxPos, 1, this);
 	if (unk1B4 == 0) {
 		unk194 = gpMarioParticleManager->emitAndBindToMtxPtr(

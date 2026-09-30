@@ -794,14 +794,6 @@ void TYoshi::doSearch()
 	}
 }
 
-// Binding level over a raw member read, worth +16 of low region in
-// TYoshi::doEat (batch 127).
-static inline TMarioParticleManager* YoshiGetMarioParticleManager()
-{
-	TMarioParticleManager* marioParticleManager = gpMarioParticleManager;
-	return marioParticleManager;
-}
-
 void TYoshi::doEat(u32 param_1)
 {
 	int r31;
@@ -825,13 +817,13 @@ void TYoshi::doEat(u32 param_1)
 		break;
 	}
 
-	YoshiGetMarioParticleManager()->emitAndBindToMtxPtr(
+	SMSGetParticleManagerBound()->emitAndBindToMtxPtr(
 	    0x3D, mActor->getModel()->getAnmMtx(unkF6), 0, this);
 
 	if (bVar1 == TRUE) {
 		mType = r31;
 		unkC  = unk8;
-		YoshiGetMarioParticleManager()->emitAndBindToPosPtr(0x3E, &unk108, 0, this);
+		SMSGetParticleManagerBound()->emitAndBindToPosPtr(0x3E, &unk108, 0, this);
 		SMSGetMSound()->startSoundActor(MSD_SE_YO_TONGUE_GOKKUN,
 		                                &mTongue->mTipPos, 0, nullptr, 0, 4);
 	}
@@ -859,7 +851,7 @@ void TYoshi::thinkHoldOut()
 			mFlutterState = 1;
 		break;
 	case 1:
-		YoshiGetMarioParticleManager()->emitAndBindToMtxPtr(
+		SMSGetParticleManagerBound()->emitAndBindToMtxPtr(
 		    0x119, mActor->getModel()->getAnmMtx(unkF6), 1, this);
 		if (mMario->getVel().y < 0.0f
 		    && 0.0f <= mFlutterAcceleration + mMario->getVel().y)

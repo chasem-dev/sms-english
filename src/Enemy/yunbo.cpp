@@ -284,14 +284,6 @@ void TYumbo::updateCollision()
 		offHitFlag(HIT_FLAG_CANNOT_ATTACK);
 }
 
-// A second binding level over the raw global, TU-local because the one beside
-// TNerveYumboAppearing is declared further down the file.
-static inline TMarioParticleManager* YunboEffectParticleManager()
-{
-	TMarioParticleManager* marioParticleManager = gpMarioParticleManager;
-	return marioParticleManager;
-}
-
 void TYumbo::updateEffect()
 {
 	if (isChangedBlock())
@@ -299,14 +291,14 @@ void TYumbo::updateEffect()
 
 	if (isFreeze()) {
 		JPABaseEmitter* emitter
-		    = YunboEffectParticleManager()->emitAndBindToPosPtr(
+		    = SMSGetParticleManagerBound()->emitAndBindToPosPtr(
 		    PARTICLE_MS_POI_KIZETSU, &mPosition, 1, this);
 		if (emitter)
 			emitter->setGlobalScale(mScaling);
 	}
 
 	if (mMActor->checkCurAnm("sambohead_dance", 0)) {
-		YunboEffectParticleManager()->emitAndBindToMtxPtr(
+		SMSGetParticleManagerBound()->emitAndBindToMtxPtr(
 		    PARTICLE_MS_YNB_ONPU, getModel()->getAnmMtx(mCenterJntIndex), 1,
 		    this);
 	}
@@ -586,14 +578,6 @@ DEFINE_NERVE(TNerveYumboHiding, TLiveActor)
 	return FALSE;
 }
 
-// Binding level over a raw member read, worth +8 of low region in
-// TNerveYumboAppearing::execute (batch 127).
-static inline TMarioParticleManager* YunboGetMarioParticleManager()
-{
-	TMarioParticleManager* marioParticleManager = gpMarioParticleManager;
-	return marioParticleManager;
-}
-
 DEFINE_NERVE(TNerveYumboAppearing, TLiveActor)
 {
 	TYumbo* yumbo = (TYumbo*)spine->getBody();
@@ -601,7 +585,7 @@ DEFINE_NERVE(TNerveYumboAppearing, TLiveActor)
 	if (spine->getTime() == 0) {
 		yumbo->changeToYumbo();
 		yumbo->setBckAnm(10);
-		YunboGetMarioParticleManager()->emit(PARTICLE_MS_SMB_AP_ROCK,
+		SMSGetParticleManagerBound()->emit(PARTICLE_MS_SMB_AP_ROCK,
 		                             &yumbo->mPosition, 0, nullptr);
 		gpMarioParticleManager->emit(PARTICLE_MS_SMB_AP_SMOKE,
 		                             &yumbo->mPosition, 0, nullptr);
