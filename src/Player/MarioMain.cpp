@@ -134,7 +134,7 @@ static inline TWaterGun* MarioMainGetFludd(TMario* mario)
 void TMario::perform(u32 cue, JDrama::TGraphics* graphics)
 {
 	if (unk114 & UNK114_FLAG_PROFILE)
-		TTimeRec::startTimer(0xff, 0x00, 0x00, 0x80);
+		TTimeRec::startTimer(JUtility::TColor(0xff, 0x00, 0x00, 0x80));
 
 	if (checkFlag(MARIO_FLAG_IS_PERFORMING))
 		return;
@@ -147,7 +147,7 @@ void TMario::perform(u32 cue, JDrama::TGraphics* graphics)
 			setPositions();
 			if (mCap != nullptr)
 				mCap->perform(CUE_MOVE, graphics);
-			if (mWaterGun != nullptr)
+			if (MarioMainGetFludd(this) != nullptr)
 				MarioMainGetFludd(this)->perform(CUE_MOVE, graphics);
 			if (mYoshi != nullptr)
 				mYoshi->movement();
@@ -216,7 +216,7 @@ void TMario::perform(u32 cue, JDrama::TGraphics* graphics)
 
 	if (cue & CUE_SEMITRANSPARENT_PRIO_1)
 		if (checkFlag(MARIO_FLAG_HAS_FLUDD))
-			MarioMainGetFludd(this)->perform(CUE_SEMITRANSPARENT_PRIO_1, graphics);
+			mWaterGun->perform(CUE_SEMITRANSPARENT_PRIO_1, graphics);
 
 	if (cue & CUE_UNK10000000) {
 		unk394->frameInit();
@@ -291,14 +291,13 @@ void TMario::perform(u32 cue, JDrama::TGraphics* graphics)
 		GXSetZMode(GX_TRUE, GX_GEQUAL, GX_FALSE);
 		GXSetColorUpdate(GX_FALSE);
 		GXSetAlphaUpdate(GX_TRUE);
-		GXSetDstAlpha(GX_ENABLE, gpSilhouetteManager->unk48);
+		GXSetDstAlpha(GX_ENABLE, SMSGetSilhouetteManager()->unk48);
 		j3dSys.setUnk4C(3);
 		unk394->draw();
 		j3dSys.setUnk4C(4);
 		unk398->draw();
 		boxDrawPrepare(graphics->mViewMtx);
-		TSilhouette* sil = gpSilhouetteManager;
-		GXSetChanMatColor(GX_COLOR0A0, sil->unk12);
+		GXSetChanMatColor(GX_COLOR0A0, SMSGetSilhouetteManager()->unk12);
 		GXSetZMode(GX_TRUE, GX_GEQUAL, GX_FALSE);
 		GXSetBlendMode(GX_BM_BLEND, GX_BL_DSTALPHA, GX_BL_INVDSTALPHA,
 		               GX_LO_NOOP);

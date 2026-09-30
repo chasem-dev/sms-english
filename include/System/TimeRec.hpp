@@ -74,15 +74,15 @@ public:
 		_instance->snapGXTime(param_1);
 	}
 
-	static void startTimer(u8 r = 0xff, u8 g = 0xff, u8 b = 0xff, u8 a = 0xff)
+	static void startTimer(const JUtility::TColor& color
+	                       = JUtility::TColor(0xff, 0xff, 0xff, 0xff))
 	{
 		TTimeRec* inst = _instance;
-		JUtility::TColor color(r, g, b, a);
-		u32 col = color;
+		u32 col        = color;
 
 		if (!inst)
 			return;
-		OSTick tick          = OSGetTick();
+		OSTick tick           = OSGetTick();
 		TTimeArray* timeArray = inst->crTimeAry();
 		timeArray->append(tick, col);
 	}

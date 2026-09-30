@@ -282,24 +282,6 @@ void TEnemyManager::copyFromShared()
 	j3dSys.setViewMtx(viewMtx);
 }
 
-// Parked header shape (c-k23): TTimeRec::startTimer taking its colour as a
-// `const JUtility::TColor&` with a white default argument. The colour is then
-// a call-site temporary, created while the caller is parsed, so both of
-// performShared's colours sit together at the top of the pool (0xbc/0xb8)
-// with countLivingEnemy's result below them, as in retail. TimeRec.hpp's
-// four-u8 overload makes it an inlined local instead (0xbc/0xb4).
-static inline void EnemyManagerStartTimer(
-    const JUtility::TColor& color = JUtility::TColor(0xff, 0xff, 0xff, 0xff))
-{
-	TTimeRec* inst = TTimeRec::_instance;
-	u32 col        = color;
-	if (!inst)
-		return;
-	OSTick tick           = OSGetTick();
-	TTimeArray* timeArray = inst->crTimeAry();
-	timeArray->append(tick, col);
-}
-
 // The alive count is the inlined countLivingEnemy() (c-k5): as inliner
 // objects its counter and the loop's byte offset share one zero (retail's
 // `li r5, 0; addi r3, r5, 0`), which the old spelled-out loop with named
@@ -310,7 +292,7 @@ static inline void EnemyManagerStartTimer(
 void TEnemyManager::performShared(u32 param_1, JDrama::TGraphics* param_2)
 {
 	if (unk30 & 1)
-		EnemyManagerStartTimer();
+		TTimeRec::startTimer();
 
 	if (countLivingEnemy() <= 0) {
 		if ((unk30 & 1))
@@ -331,7 +313,7 @@ void TEnemyManager::performShared(u32 param_1, JDrama::TGraphics* param_2)
 
 	if (unk30 & 1) {
 		TTimeRec::endTimer();
-		EnemyManagerStartTimer(JUtility::TColor(0xff, 0x00, 0x00, 0xff));
+		TTimeRec::startTimer(JUtility::TColor(0xff, 0x00, 0x00, 0xff));
 	}
 
 	int num = getActiveObjNum();
@@ -393,7 +375,7 @@ void TEnemyManager::perform(u32 cue, JDrama::TGraphics* graphics)
 	}
 
 	if (unk30 & 1)
-		EnemyManagerStartTimer();
+		TTimeRec::startTimer();
 
 	if (cue & CUE_CALC_ANIM) {
 		clipEnemies(graphics);
@@ -402,7 +384,7 @@ void TEnemyManager::perform(u32 cue, JDrama::TGraphics* graphics)
 
 	if (unk30 & 1) {
 		TTimeRec::endTimer();
-		EnemyManagerStartTimer(JUtility::TColor(0xff, 0x0, 0x0, 0xff));
+		TTimeRec::startTimer(JUtility::TColor(0xff, 0x0, 0x0, 0xff));
 	}
 
 	int num = getActiveObjNum();

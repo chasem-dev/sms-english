@@ -2057,7 +2057,7 @@ void TModelWaterManager::perform(u32 cue, JDrama::TGraphics* graphics)
 
 	if (cue & CUE_CALC_VIEW) {
 		if (unk5D60 & 0x80)
-			TTimeRec::startTimer(0xFF, 0x00, 0x00, 0xFE);
+			TTimeRec::startTimer(JUtility::TColor(0xFF, 0x00, 0x00, 0xFE));
 
 		calcDrawVtx(graphics->mViewMtx);
 		calcVMAll(graphics->mViewMtx);
