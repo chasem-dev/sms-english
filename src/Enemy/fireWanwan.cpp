@@ -2170,6 +2170,8 @@ DEFINE_NERVE(TNerveFireWanwanTired, TLiveActor)
 	return false;
 }
 
+// TODO: every instruction matches; the frame is 8 short (0xe8 vs 0xf0).
+// Naming the target point or the timer is inert on the frame.
 DEFINE_NERVE(TNerveFireWanwanRecoverGraph, TLiveActor)
 {
 	TFireWanwan* self = (TFireWanwan*)spine->getBody();
@@ -2180,7 +2182,7 @@ DEFINE_NERVE(TNerveFireWanwanRecoverGraph, TLiveActor)
 		self->unk124->mCurrIdx = -1;
 		self->goToShortestNextGraphNode();
 
-		self->decideTarget(self->unk104.getPoint());
+		self->decideTarget(self->getUnk104().getPoint());
 	}
 
 	// TODO: inline?
