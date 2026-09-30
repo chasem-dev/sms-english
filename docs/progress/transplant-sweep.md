@@ -240,3 +240,19 @@ The other accepted edits are header accessors at every read of a member in the f
 Hand edits beat hsearch's winners in several rows: its best results usually stacked a machine extract or a lone named value on top of the honest accessor sets, and scoring the accessor set alone with `tools/score-variant.sh` kept the gain.
 Rejected: machine extracts with no UNUSED of their shape (10, including a 0x90 extract that matched UNUSED `TWaterGun::getWillBeEmitted` by size only), lone named values or receivers (8), accessors the file never uses (5), trades (3), and a far hoist of one declaration in both instances of one template body.
 Leads: `TFruitsBoat::moveObject` lands its frame with a named int for the anm switch on getBoatType(), and `TNerveHino2JumpIn::execute` reaches registers 0 at 0x60 with getUnk104() and named curAnmEndsNext() and getTime() values; both read as lone names and stay out of the source.
+
+## hsearch sweep c-hs8
+
+The resumed c-hs5 list (`scratchpad/hs5/targets.tsv`, 200 s per function, `-j 2`, one foreground call per row) ran rows 187 to 245; rows 246 onward are unsearched.
+Row 240 (`checkGroundList`) was not searched: the accessor set accepted for its twin `checkRoofList` (row 229) was applied by hand.
+Review accepted 18 and rejected 26 (the whole c-hs5 list so far: 78 accepted, 107 rejected), and the other 15 rows gave no gain.
+No function became byte-exact and no unit was linked.
+Landed on the retail frame: `TSelectMenu::initData` (getPane()), `TCardSave::waitForChoice` (getUnk2E9(), as waitForChoiceBM), `TMario::calcAnim`, `TFireWanwan::moveObject` and `TMario::setStatusToJumping`.
+`TMario::calcAnim` lands 0x328 with `mModel->getModel()` for the body model (a spelling the file already uses) and the surf gesso's raw mModel; `getM3UModel()->getModel()` overshoots to 0x348.
+`TFireWanwan::moveObject` needs both collision tests as `!= nullptr` beside getUnk8(); the accessor alone is +8.
+`TNerveFireWanwanRecoverGraph::execute` loses all three instruction and three register mismatches with `self->getUnk104()` alone.
+`TKoopa::getFlameDirRate` loses all seven register mismatches with `s32 time` (the step params it is compared with are s32).
+The other accepted edits are header accessors at every read of a member in the function, where the file or the class already uses them: getPlaneDistance(), getNormal(), getPrevPosition(), getMario(), getCurrentNozzleIndex(), getCurrentMap(), getStartPoint() (end raw, as drawUpper), getBounds(), the TBGCheckData triangle accessors, getVideo(), getPosition(), getKillerIndex() and SMS_GetMarioPos().
+As in c-hs7, scoring the accessor set alone kept most of hsearch's gain; the rest usually came from a machine extract or a lone named value.
+Rejected: machine extracts with no UNUSED of their shape (12, one matching UNUSED `JPABaseEmitter::deleteParticle` by size only), accessors the file never uses (8), lone named values or hoists (6), trades (3), and one frame-plus-registers trade that `ninja changes_all` scored as a regression (`TBWLeashNode::calcMatrix`'s getRope()).
+Tool note: `ninja changes_all` scores fuzzy match, so an edit that gains frame but loses registers can read as a regression; score candidates with `hsearch score` first and still gate on changes_all.
