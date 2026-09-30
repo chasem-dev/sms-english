@@ -357,7 +357,7 @@ void TMapObjChangeStage::touchPlayer(THitActor*)
 	gpMarDirector->setNextStage(unk138, nullptr);
 	onHitFlag(HIT_FLAG_NO_COLLISION);
 	mColCount = 0;
-	SMSGetMSoundBound()->startSoundActor(MSD_SE_MA_WARP_EX, &mPosition, 0, nullptr, 0, 4);
+	SMSGetMSound()->startSoundActor(MSD_SE_MA_WARP_EX, &mPosition);
 }
 
 void TMapObjChangeStage::load(JSUMemoryInputStream& stream)
