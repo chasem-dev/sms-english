@@ -1322,15 +1322,15 @@ void TBossWanwan::emitEffects()
 	}
 
 	if (stomp) {
-		SMSGetParticleManagerBound()->emit(BWANWAN_JPA_MS_BWAN_JUMP_ROCK, &mPosition,
+		gpMarioParticleManager->emit(BWANWAN_JPA_MS_BWAN_JUMP_ROCK, &mPosition,
 		                             0, nullptr);
 		gpMarioParticleManager->emit(BWANWAN_JPA_MS_BWAN_JUMP_SMOKE,
 		                             &mPosition, 0, nullptr);
 		if (getHitPoints() == 0) {
-			SMSGetMSound()->startSoundActor(MSD_SE_M_BOSW_CHAIN_CAL_F, mLeash->getRope()->mPoints[0].unkC);
+			SMSGetMSound()->startSoundActor(MSD_SE_M_BOSW_CHAIN_CAL_F, getLeash()->getRope()->mPoints[0].unkC);
 			SMSGetMSound()->startSoundActor(MSD_SE_M_BOSW_CHAIN_CAL_R, &mPicket->mPosition);
 		} else {
-			SMSGetMSound()->startSoundActor(MSD_SE_M_BOSW_CHAIN_ANG_F, mLeash->getRope()->mPoints[0].unkC);
+			SMSGetMSound()->startSoundActor(MSD_SE_M_BOSW_CHAIN_ANG_F, getLeash()->getRope()->mPoints[0].unkC);
 			SMSGetMSound()->startSoundActor(MSD_SE_M_BOSW_CHAIN_ANG_R, &mPicket->mPosition);
 		}
 	}
