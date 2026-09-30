@@ -323,9 +323,11 @@ void TBWLeash::pullTail(const JGeometry::TVec3<f32>& where_to)
 	mOwner->mPullVelocity = before;
 }
 
-// TODO: 98.7%, frame 0xc0 vs retail 0x130. Every block but the first turn
-// clamp is right: retail materialises both arms of `turn > limit ? limit :
-// turn` (ble; b; fmr; fmr), which <=, swapped and if-spellings do not give.
+// TODO: 98.7%, frame 0xd0 vs retail 0x130 (self getRope() at all four reads
+// is 0xd8, but TBWLeash reads mRope raw everywhere else). Every block but the
+// first turn clamp is right: retail materialises both arms of `turn > limit ?
+// limit : turn` (ble; b; fmr; fmr), which <=, swapped and if-spellings do not
+// give.
 void TBWLeash::perform(u32 cue, JDrama::TGraphics* graphics)
 {
 	if (cue & CUE_MOVE) {
@@ -335,7 +337,7 @@ void TBWLeash::perform(u32 cue, JDrama::TGraphics* graphics)
 		mOwner->mIsLeashStretched = 0;
 
 		if (mOwner->mIsPicketPlanted) {
-			pullTail(mOwner->mPicket->mPosition);
+			pullTail(mOwner->getPicket()->mPosition);
 
 			JGeometry::TVec3<f32> toTail = mRope->mPoints[0].unkC;
 			JGeometry::TVec3<f32> headPos(mOwner->mPosition);
