@@ -908,10 +908,10 @@ static inline u8 EnemyMarioGetStopFlag(TEnemyMario* p)
 
 void TEnemyMario::startDisappear(u16 doing)
 {
-	mDisappearPosition = mPosition;
+	mDisappearPosition = getPosition();
 
 	u8 currentMap      = gpMarDirector->getCurrentMap();
-	u8 currentStage    = SMSGetMarDirectorBound()->getCurrentStage();
+	u8 currentStage    = SMSGetMarDirector()->getCurrentStage();
 	bool keepBossLives = false;
 	if (currentMap == 1 && currentStage == 1) {
 		keepBossLives = true;
