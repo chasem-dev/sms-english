@@ -41,6 +41,8 @@ def run_one(args, db, unit, fn):
                 f.write("# hsearch %s %s\n# unit: %s\n# status: %s  %s -> %s\n# moves: %s\n" % (
                     s.u.name, fn, s.u.name, r["status"], r["base"].short(), r["best"].short(),
                     " + ".join(r["moves"])))
+                for line in r.get("unused", []):
+                    f.write("# %s\n" % line)
                 f.write(s.patch(r["text"]))
         r["patch"] = patch
         db.put_run(fn, s.u.name, r["status"], r["base"].short(), r["best"].short(), r.get("builds", 0),

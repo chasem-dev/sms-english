@@ -691,6 +691,9 @@ class Search:
         res["moves"] = best.moves
         res["rejected"] = rejected
         if best.text != self.base_text:
+            res["unused"] = self.unused_check(best.text) if any(m.startswith("extract") for m in best.moves) else []
+            for line in res["unused"]:
+                self.log("  " + line)
             if status == "improved":
                 bad = self.honest(best.text) + self.unit_check(best.text)
                 res["regress"] = bad
@@ -713,10 +716,71 @@ class Search:
             self.log("  moves: " + " + ".join(best.moves))
         return res
 
+    def unused_check(self, text: str) -> List[str]:
+        """Compile each generated helper of an extract winner out of line and set
+        its size against the unit's UNUSED map entries (marioUS.MAP): a machine
+        cut is honest when it is the body of an UNUSED function (c-hs2's
+        TBathtub::liftMario, an empty stub that holds the torque block at 0xe0)."""
+        names = [m.group(1) for m in re.finditer(r"^static inline void (\w+Part\d+)\(", text, re.M)
+                 if m.group(1) not in self.base_text]
+        if not names:
+            return []
+        unused = unused_entries(self.u.rel_src)
+        ool = text
+        for n in names:
+            ool = re.sub(r"^static inline void %s\(" % re.escape(n), "void %s(" % n, ool, flags=re.M)
+        path = os.path.join(self.ev.work, "unused-%s.o" % text_hash(ool)[:12])
+        p, err = self.ev._compile(ool, keep=path)
+        if p is None:
+            return ["unused check: out-of-line compile failed (%s)" % err[:120]]
+        try:
+            fns = Elf(p).functions()
+        finally:
+            os.remove(p)
+        klass = self.info.klass or ""
+        out = []
+        for n in names:
+            sym = next((k for k in fns if k == n or k.startswith(n + "__")), None)
+            if sym is None:
+                out.append("unused check: %s not emitted" % n)
+                continue
+            size = fns[sym]["size"]
+            same = [u for u, sz in unused if sz == size]
+            near = [u for u, sz in unused if u not in same and abs(sz - size) <= 8]
+            same.sort(key=lambda u: klass not in u)
+            if same:
+                out.append("unused check: %s is 0x%x, the size of UNUSED %s" % (n, size, ", ".join(same)))
+            else:
+                out.append("unused check: %s is 0x%x; no UNUSED of that size%s" % (
+                    n, size, (" (near: %s)" % ", ".join("%s 0x%x" % (u, dict(unused)[u]) for u in near))
+                    if near else ""))
+        return out
+
     def patch(self, text: str) -> str:
         a = self.base_text.splitlines(keepends=True)
         b = text.splitlines(keepends=True)
         return "".join(difflib.unified_diff(a, b, "a/" + self.u.rel_src, "b/" + self.u.rel_src))
+
+
+_UNUSED = {}
+
+
+def unused_entries(rel_src: str) -> List[Tuple[str, int]]:
+    """(symbol, size) of every UNUSED .text entry of this source's unit in the US map."""
+    if "tus" not in _UNUSED:
+        import importlib.util
+        spec = importlib.util.spec_from_file_location(
+            "validate_symbol_order", os.path.join(ROOT, "tools", "validate-symbol-order.py"))
+        vso = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(vso)
+        _UNUSED["vso"] = vso
+        _UNUSED["tus"] = vso.parse_text_layout(os.path.join(ROOT, "orig", "GMSE01", "files", "marioUS.MAP"))
+    vso, tus = _UNUSED["vso"], _UNUSED["tus"]
+    base = os.path.basename(rel_src)
+    cands = [t for t in tus if t.endswith(" " + base) or t == base]
+    if len(cands) != 1:
+        return []
+    return [(m.name, m.size) for m in tus[cands[0]] if m.unused]
 
 
 def _count(it):
