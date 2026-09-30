@@ -49,7 +49,8 @@ static int TKoopaJr_jointIndexTable[5];
 
 #define TWO_PI 6.2831855f
 
-// Fabricated, but the ROM's shape: every wrap in this file computes
+// Fabricated, but the ROM's shape: every wrap in this file goes through
+// MathUtil.hpp's WrapDirection or WrapDirectionF, which compute
 // `l + mod((r - l) + (t - l), r - l)`, keeping the `t - l` subtraction and
 // the `l +` that a literal zero bound would let MWCC fold. Two levels are
 // needed rather than one because JGeometry::TUtil<f32>::mod and std::fmodf
@@ -57,12 +58,6 @@ static int TKoopaJr_jointIndexTable[5];
 // The wrapped value is named at both levels: each named result is +8 of low
 // region in every caller that expands the pair, which is what lands
 // TDirectionCalc::absDirection (0x40) and TDirectionCalc::sub (0x38).
-static inline f32 WrapDirection(f32 t, f32 l, f32 r)
-{
-	f32 wrapped = l + JGeometry::TUtil<f32>::mod((r - l) + (t - l), r - l);
-	return wrapped;
-}
-
 static inline f32 WrapRadian(f32 t)
 {
 	f32 wrapped = WrapDirection(t, 0.0f, TWO_PI);

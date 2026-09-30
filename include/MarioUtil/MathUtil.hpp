@@ -319,6 +319,17 @@ inline f32 WrapDirectionF(f32 t, f32 l, f32 r)
 	return l + std::fmodf((r - l) + (t - l), r - l);
 }
 
+// Fabricated name: the JGeometry::TUtil<f32>::mod twin of WrapDirectionF, for
+// koopajr's WrapRadian and TKoopa::turnBody. The wrapped value is named: that
+// is +8 of low region in every caller that expands it, which is what lands
+// TDirectionCalc::absDirection (0x40) and TDirectionCalc::sub (0x38), and the
+// Koopa Turn nerves' frames 0x10 closer to retail than the unnamed return.
+inline f32 WrapDirection(f32 t, f32 l, f32 r)
+{
+	f32 wrapped = l + JGeometry::TUtil<f32>::mod((r - l) + (t - l), r - l);
+	return wrapped;
+}
+
 /**
  * @brief Checks whether the point \p target is within the line of sight of
  * an \p eye looking in direction \p sight, given a sight cone \p angle and

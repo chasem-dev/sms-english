@@ -3,6 +3,7 @@
 
 #include <Enemy/Enemy.hpp>
 #include <Enemy/EnemyManager.hpp>
+#include <MarioUtil/MathUtil.hpp>
 #include <Strategic/HitActor.hpp>
 #include <Strategic/Spine.hpp>
 #include <System/ParamInst.hpp>
@@ -192,14 +193,6 @@ public:
 	/* 0x94 */ f32 mHeight;
 };
 
-// The wrap in TKoopa::turnBody, the TUtil<f32>::mod twin of MathUtil.hpp's
-// WrapDirectionF: this level is what makes the Turn nerves `bl` the weak
-// mod copy the map records for Koopa.cpp instead of expanding it.
-static inline f32 KoopaModDirection(f32 t, f32 l, f32 r)
-{
-	return l + JGeometry::TUtil<f32>::mod((r - l) + (t - l), r - l);
-}
-
 class TKoopa : public TSpineEnemy {
 public:
 	TKoopa(const char* name = "クッパ");
@@ -278,7 +271,7 @@ public:
 			changeAnm(KOOPA_ANM_TURN_L, 0,
 			          -delta * getTurnAnim());
 		f32 dir = mRotation.y + delta;
-		mRotation.y = KoopaModDirection(dir, -180.0f, 180.0f);
+		mRotation.y = WrapDirection(dir, -180.0f, 180.0f);
 		return true;
 	}
 
