@@ -179,9 +179,9 @@ int TMapCollisionData::checkWalls(TBGWallCheckRecord* param_1) const
 
 // The roof and ground lists test the three edges inline, sharing the corner
 // loads between edges (z before x for each corner after the first).
-// TODO: roof frame 0x60 vs 0x70 (0x38 before its corner, normal and
-// distance reads went through the TBGCheckData accessors), ground 98.9%
-// (0x38 vs 0x78); only slots differ. A shared edge helper with four named corner reads gives the
+// TODO: roof frame 0x60 vs 0x70, ground 0x60 vs 0x78 (both 0x38 before their
+// corner, normal and distance reads went through the TBGCheckData
+// accessors); only slots differ. A shared edge helper with four named corner reads gives the
 // 0x70 roof frame but loses retail's register pairing (97.6-98.5).
 // Retail tests the water flag with a signed `cmpwi` hoisted out of the loop:
 // `param_4 &= 0x4` plus `(s32)param_4 != 0` gives roof 99.9 (slots only) but
@@ -282,17 +282,17 @@ f32 TMapCollisionData::checkGroundList(f32 x, f32 y, f32 z, u8 flags,
 		if ((flags & IGNORE_WATER_SURFACE) && data->isWaterSurface())
 			continue;
 
-		f32 point1x = data->mPoint1.x;
-		f32 point1z = data->mPoint1.z;
-		f32 point2z = data->mPoint2.z;
-		f32 point2x = data->mPoint2.x;
+		f32 point1x = data->getPoint1().x;
+		f32 point1z = data->getPoint1().z;
+		f32 point2z = data->getPoint2().z;
+		f32 point2x = data->getPoint2().x;
 		if ((point1z - z) * (point2x - point1x)
 		        - (point1x - x) * (point2z - point1z)
 		    < -1.0f)
 			continue;
 
-		f32 point3z = data->mPoint3.z;
-		f32 point3x = data->mPoint3.x;
+		f32 point3z = data->getPoint3().z;
+		f32 point3x = data->getPoint3().x;
 		if ((point2z - z) * (point3x - point2x)
 		        - (point2x - x) * (point3z - point2z)
 		    < -1.0f)
@@ -304,8 +304,8 @@ f32 TMapCollisionData::checkGroundList(f32 x, f32 y, f32 z, u8 flags,
 			continue;
 
 		f32 tmp
-		    = x * data->mNormal.x + z * data->mNormal.z + data->mPlaneDistance;
-		f32 dVar10 = -tmp / data->mNormal.y;
+		    = x * data->getNormal().x + z * data->getNormal().z + data->getPlaneDistance();
+		f32 dVar10 = -tmp / data->getNormal().y;
 
 		if (!(y - (dVar10 + -78.0f) < 0.0f)) {
 			*result = data;
