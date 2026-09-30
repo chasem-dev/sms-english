@@ -1246,12 +1246,6 @@ static inline TBGBeakHit* BossgessoGetBeak(const TBossGesso* p)
 	return beak;
 }
 
-static inline TItemManager* BossgessoGetItemManager()
-{
-	TItemManager* manager = gpItemManager;
-	return manager;
-}
-
 // Mario's ear is 75 units above his feet.  Retail copies the vector into a
 // second slot before the getInCubeNo() call, which is this by-value return.
 static inline JGeometry::TVec3<f32> BossgessoMarioEarPos()
@@ -2189,7 +2183,7 @@ DEFINE_NERVE(TNerveBGDie, TLiveActor)
 		}
 
 		if (SMSGetMarDirectorBound()->mMap == 3 || SMSGetMarDirectorBound()->mMap == 59) {
-			BossgessoGetItemManager()->makeShineAppearWithDemo(
+			SMSGetItemManagerBound()->makeShineAppearWithDemo(
 			    "シャイン（ボス用）", "ボスシャインカメラ", self->mPosition.x,
 			    6000.0f + self->mPosition.y, self->mPosition.z);
 		}

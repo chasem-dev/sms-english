@@ -116,14 +116,6 @@ void TMonumentShine::hitByWater(THitActor* actor)
 	}
 }
 
-// Binding level over a raw member read, worth +8 of low region in
-// TMonumentShine::receiveMessage (batch 127).
-static inline TItemManager* MapObjDolpicGetItemManager()
-{
-	TItemManager* itemManager = gpItemManager;
-	return itemManager;
-}
-
 BOOL TMonumentShine::receiveMessage(THitActor* sender, u32 message)
 {
 	if (sender->isActorType(0x01000001)) {
@@ -141,7 +133,7 @@ BOOL TMonumentShine::receiveMessage(THitActor* sender, u32 message)
 		unk138.a = (u8)(unk13C * 100 / 1000);
 
 		if (unk13C == 0) {
-			MapObjDolpicGetItemManager()->makeShineAppearWithDemo(
+			SMSGetItemManagerBound()->makeShineAppearWithDemo(
 			    "シャイン（モニュメントシャイン用）",
 			    "モニュメントシャインカメラ", mPosition.x, mPosition.y,
 			    mPosition.z);
