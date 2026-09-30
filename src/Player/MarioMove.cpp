@@ -2369,7 +2369,7 @@ void TMario::thinkYoshiHeadCollision()
 	if (!onYoshi())
 		return;
 
-	JGeometry::TVec3<f32> headPos = mPosition;
+	JGeometry::TVec3<f32> headPos = getPosition();
 
 	f32 front = mYoshiParams.mHeadFront.value;
 	s16 angle = mFaceAngle.y;
@@ -2380,7 +2380,7 @@ void TMario::thinkYoshiHeadCollision()
 	                          mYoshiParams.mHeadRadius.get(), 4, 0);
 	f32 z = headPos.z;
 
-	if (SMSGetMapBound()->isTouchedWallsAndMoveXZ(&record) == true) {
+	if (gpMap->isTouchedWallsAndMoveXZ(&record) == true) {
 		f32 dx = record.mCenter.x - headPos.x;
 		f32 dz = record.mCenter.z - z;
 		f32 f4 = std::sqrtf(dx * dx + dz * dz);
