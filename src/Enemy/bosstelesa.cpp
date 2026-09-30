@@ -2518,7 +2518,7 @@ DEFINE_NERVE(TNerveBossTelesaHideWait, TLiveActor)
 // site in the object) while inlining it in TTelesaSlot::initMapObj: the call
 // sits one inline level down here, where its body is over the budget.
 //
-// TODO: TNerveBossTelesaAppear is instruction-exact but its frame is 0x58
+// TODO: TNerveBossTelesaAppear is instruction-exact but its frame is 0x68
 // against the ROM's 0x80; moving the scaling reset or the whole first arm into
 // this level, or naming the slot, leaves the frame where it is.
 static inline void BosstelesaResetSlot(TBossTelesa* boss)
@@ -2553,8 +2553,8 @@ DEFINE_NERVE(TNerveBossTelesaAppear, TLiveActor)
 	    && boss->getMActor()->getFrameCtrl(ANM_TYPE_BCK)->checkPass(40.0f)) {
 		// mCamShakeNameSave[0x22] is "/Camera/shakeBTelesaAppear.prm".
 		gpCameraShake->startShake((EnumCamShakeMode)0x22, 1.0f);
-		SMSGetMSound()->startSoundActor(MSD_SE_BS_TELESA_SLT_LAND, &boss->mPosition,
-		                          0, nullptr, 0, 4);
+		SMSGetMSound()->startSoundActor(MSD_SE_BS_TELESA_SLT_LAND,
+		                                &boss->mPosition);
 	}
 
 	if (spine->getTime() > 800) {
