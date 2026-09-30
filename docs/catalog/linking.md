@@ -255,3 +255,13 @@ Diffing the DOLs showed it (SDA offsets and `lis/addi` of a vtable in one functi
 - Weak order: retail emits `changeByJuice`, `isEatenByYosshi`, `forceKill`, the `TSmallEnemy` inlines, then `__dt__10TMameGesso`.
 Moving the `changeByJuice` override above `isEatenByYosshi` fixed the pair; the implicit destructor was flushed first, and declaring `virtual ~TMameGesso() { }` (at any position) moved it after the base inlines.
 - Without the map, `cmp` of the rebuilt and original DOL plus `config/GMSE01/symbols.txt` (it keeps map order and binding) was enough to prove retail's order.
+
+## Link batch c-l1 (2026-09-30): enemymanager linked
+
+- On a fresh build only `Enemy/enemymanager` had every function at 100% and was not in `objects.json`; every other unlinked unit still has at least one non-matching function.
+- Its only blocker was `.sdata2` order: retail's int-to-float double `@3073` comes first, ours came fifth from `TSharedMActorSet::init`.
+- The pool follows code-generation order (map order under `-inline deferred`), so the double had to be requested by a body emitted before `getFarOutEnemy`'s `-1.0f`; the UNUSED `createCopyAnmMtx` (0x15c) was the only candidate with a use for `(f32)frame`.
+- The weak `TPosition3` ctor the map lists as UNUSED right after `createCopyAnmMtx` is the `__construct_new_array` argument of a `new TPosition3f[n]`, which also fixes `unk48`'s type as `TPosition3f**`.
+- With `TPosition3f**`, `copyAnmMtx` must read the element as `unk48[f][i].mMtx`: the implicit conversion operator adds an inline level that moves the concat scratch from 0x64 to 0x68.
+- The UNUSED bodies between the double's owner and the next literal (`killOtherEnemies`) must request no float literal at all, which constrains their reconstruction.
+- Retail ids between two already-matching literals differ from ours by up to 6, so id gaps say only roughly how much code an UNUSED body holds.
