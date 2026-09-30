@@ -444,6 +444,15 @@ bool TConsoleStr::processReady(int param_1)
 
 extern JPAEmitterManager* gpEmitterManager4D2;
 
+// Emits a particle at the centre of a rectangle.
+static inline void EmitAtRectCentre(const JUTRect& rect, s32 id)
+{
+	JGeometry::TVec3<f32> pos(rect.x1 + rect.getWidth() * 0.5f,
+	                          rect.y1 + rect.getHeight() * 0.5f, 0.0f);
+	JPAEmitterManager* manager = gpEmitterManager4D2;
+	manager->createEmitter(pos, id, nullptr, nullptr);
+}
+
 // TODO: the frame is 0x30 short, all in the dead low region below the
 // setPanePosition points; the 95.0f branch also swaps r28/r29 (the 0x4330
 // conversion constant and the unk34 row base). The 0x1FD emitter pos spellings
@@ -496,11 +505,7 @@ bool TConsoleStr::processGo(f32 param_1)
 				}
 
 				JUTRect rect = unk28[i]->getPane()->getBounds();
-				JGeometry::TVec3<f32> pos(rect.x1 + rect.getWidth() * 0.5f,
-				                          rect.y1 + rect.getHeight() * 0.5f,
-				                          0.0f);
-				JPAEmitterManager* manager = gpEmitterManager4D2;
-				manager->createEmitter(pos, 0x1FD, nullptr, nullptr);
+				EmitAtRectCentre(rect, 0x1FD);
 				unk2A8[i] = gpEmitterManager4D2->unkC8[0][0];
 			}
 		} else if (param_1 < 175.0f) {
@@ -566,11 +571,7 @@ bool TConsoleStr::processShineGet(int param_1)
 			unk244[i]->setPanePosition(0x28, cShineGetRight1, cShineGetLeft1,
 			                           cShineGetLeft1);
 			JUTRect local_74 = unk244[i]->getPane()->getBounds();
-			JGeometry::TVec3<f32> local_80(
-			    local_74.x1 + local_74.getWidth() * 0.5f,
-			    local_74.y1 + local_74.getHeight() * 0.5f, 0.0f);
-			JPAEmitterManager* manager = gpEmitterManager4D2;
-			manager->createEmitter(local_80, 0x1FE, nullptr, nullptr);
+			EmitAtRectCentre(local_74, 0x1FE);
 		}
 
 		if (param_1 == i * 6 + 40) {
@@ -580,11 +581,7 @@ bool TConsoleStr::processShineGet(int param_1)
 
 		if (param_1 == i * 6 + 60) {
 			JUTRect local_94 = unk244[i]->getPane()->getBounds();
-			JGeometry::TVec3<f32> local_80(
-			    local_94.x1 + local_94.getWidth() * 0.5f,
-			    local_94.y1 + local_94.getHeight() * 0.5f, 0.0f);
-			JPAEmitterManager* manager = gpEmitterManager4D2;
-			manager->createEmitter(local_80, 0x1FF, nullptr, nullptr);
+			EmitAtRectCentre(local_94, 0x1FF);
 		}
 
 		if (param_1 == i * 6 + 200) {
@@ -627,6 +624,9 @@ bool TConsoleStr::processShineGet(int param_1)
 // 0x1a0 (the unnamed vec was 0x198 but misschedules the conversions). A
 // TU-local manager accessor gives 0x198; a `PaneCentre(JUTRect)` helper
 // returning the vec landed the frame at the old schedule (95.4).
+// EmitAtRectCentre at all four emitter sites takes slots here (99.6 -> 99.8)
+// but no frame; named int width/height inside it or in the caller, the
+// centre passed as two floats, and a J2DPane-taking level are inert (c-hs4).
 bool TConsoleStr::processMiss(int param_1)
 {
 	bool result = true;
@@ -640,11 +640,7 @@ bool TConsoleStr::processMiss(int param_1)
 
 		if (param_1 == i * 10 + 1) {
 			JUTRect local_9c = unk25C[i]->getPane()->getBounds();
-			JGeometry::TVec3<f32> pos(local_9c.x1 + local_9c.getWidth() * 0.5f,
-			                          local_9c.y1 + local_9c.getHeight() * 0.5f,
-			                          0.0f);
-			JPAEmitterManager* manager = gpEmitterManager4D2;
-			manager->createEmitter(pos, 0x1F9, nullptr, nullptr);
+			EmitAtRectCentre(local_9c, 0x1F9);
 		}
 
 		if (param_1 == i * 10 + 60) {
