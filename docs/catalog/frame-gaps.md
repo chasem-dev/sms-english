@@ -2844,3 +2844,8 @@ The drivers `hv.py`, `bvrun.sh` and `score7.sh` are in the session scratchpad `r
 - `getPosition()` on the right operand makes a depth-d binding: the frame is right, but `addi r4` is hoisted to the top (95.9%).
 - Next: retail's d+1 object must be an inline call whose argument is non-simple and that inlines at every depth, since the map has no weak conversion.
   Look for one among the plausible TVec3 members (a `Vec`-typed accessor used for the copy, or a copy routed through a `set`/`operator=` level that takes the operand by pointer) before any further site search; the seven functions do not close on site spellings under the stock header.
+
+## Research batch c-r34 (2026-09-30): looking for an honest body that makes c-r33's per-site operator word
+
+Question: which honest construct inside the TVec3 `operator-`/`operator+`/`operator*` bodies creates c-r33's late per-site stack word, with no out-of-line symbol the map lacks?
+In progress; results are appended below as they are measured.
