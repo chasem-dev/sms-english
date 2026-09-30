@@ -470,6 +470,9 @@ void TBossGessoMtxCalc::calc(u16 param_1)
 
 TBGBinder::TBGBinder() { }
 
+// TODO: every instruction matches; the frame is 0xd8 against retail 0x100
+// (c-hs7: getCurrentMap(), the file's spelling, is +8). getLinearVelocity()
+// and getVelocity(), never used in this file, are +8 each.
 void TBGBinder::bind(TLiveActor* param_1)
 {
 	TBossGesso* gesso = (TBossGesso*)param_1;
@@ -492,7 +495,7 @@ void TBGBinder::bind(TLiveActor* param_1)
 
 		gesso->mLinearVelocity = local_3c - gesso->mPosition;
 
-		if (gpMarDirector->mMap != 9
+		if (gpMarDirector->getCurrentMap() != 9
 		    && gesso->mPosition.y - local_3c.y > 0.0f) {
 
 			// TODO: this is likely an inline where xyz are passed as separate
