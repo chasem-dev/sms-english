@@ -1061,10 +1061,13 @@ void TEnemyMario::emReplayWaiting()
 
 void TEnemyMario::emReplayJumpToNearestNode()
 {
-	// TODO: every instruction matches; the frame is 0x18 short. Retail's
-	// extra saved GPR is the uninitialised `selected`, and indexing
-	// replayLinks directly (no `links` row local) keeps it in its own register.
-	if (canJumpToNode()) {
+	// TODO: every instruction matches and the frame is 0x2c0 as retail
+	// (c-hs6: getStatus(), both canJumpToNode() tests as `!= 0` and a named
+	// randomFlag, which also cut the slot mismatches 132 -> 76; any of them
+	// alone is 0 or +0x10). The loop's TVec3 temporaries still sit 0x80 off.
+	// Indexing replayLinks directly (no `links` row local) keeps the
+	// uninitialised `selected` in its own register.
+	if (canJumpToNode() != 0) {
 		unk108->mFrameInput |= TMarioControllerWork::A;
 		unk108->mInput |= TMarioControllerWork::A;
 		if (mVel.y > mReplayJumpSpeed)
@@ -1082,8 +1085,8 @@ void TEnemyMario::emReplayJumpToNearestNode()
 	mPosition.z = mPosition.z + 0.05f * (currentPoint.z - mPosition.z);
 	mPosition.y = mPosition.y + 0.05f * (currentPoint.y - mPosition.y);
 
-	if (mStatus != MARIO_STATUS_WAIT)
-		if (canJumpToNode())
+	if (getStatus() != MARIO_STATUS_WAIT)
+		if (canJumpToNode() != 0)
 			return;
 
 	mPosition = currentPoint;
@@ -1096,7 +1099,8 @@ void TEnemyMario::emReplayJumpToNearestNode()
 	TGraphNode* nextNode = nullptr;
 	f32 smallestDot      = 1.0f;
 
-	if (mSettingParams->mRandomFlag.get() == 0) {
+	u8 randomFlag = mSettingParams->mRandomFlag.get();
+	if (randomFlag == 0) {
 		for (int i = 0; i < 3; ++i) {
 			TReplayLink& link = replayLinks[nodeIndex][i];
 			if (link.mNodeIndex == 0xFF) {
