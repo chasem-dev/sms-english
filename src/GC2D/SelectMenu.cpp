@@ -276,8 +276,9 @@ TSelectMenu::TSelectMenu(const char* pName)
 // ours reuses r25; and every loop counter is r25 in retail but r26/r28 here
 // (the loop `new` result takes r25 instead). Inert: header ctor spellings,
 // shared/int/outer loop counters, coinDigits placement, getGlbResource.
-// Frame 0x20 short: a TU-local `JUTTexture* tex = new ...; return tex;`
-// loader at all four sites lands 0x538 exactly but is a multi-site binder.
+// The frame is exact (0x538) with getPane() at the three scenario-pane bounds
+// reads; before that it was 0x20 short, and a TU-local `JUTTexture* tex = new
+// ...; return tex;` loader at all four sites also landed it but is a binder.
 void TSelectMenu::initData(u8 stage, JKRArchive* pArch,
                            TSelectShineManager* pShineMgr,
                            TSelectDir* pSelectDir)
@@ -305,7 +306,7 @@ void TSelectMenu::initData(u8 stage, JKRArchive* pArch,
 	mScenarioPane2   = new TExPane(mMenuScreen, '0_0');
 
 	mScenarioPane2->getPane()->hide();
-	unk58            = mScenarioPane1->mPane->getBounds();
+	unk58            = mScenarioPane1->getPane()->getBounds();
 	mScenarioImg1    = (J2DPicture*)mMenuScreen->search('s_2a');
 	mScenarioShadow1 = (J2DPicture*)mMenuScreen->search('s_2b');
 	mScenarioImg2    = (J2DPicture*)mMenuScreen->search('0_2a');
@@ -325,8 +326,8 @@ void TSelectMenu::initData(u8 stage, JKRArchive* pArch,
 	mScenarioText2 = (J2DTextBox*)mMenuScreen->search('0ttx');
 	SMSMakeTextBuffer(mScenarioText2, 0x80);
 
-	mScenarioPaneDist = mScenarioPane2->mPane->getBounds().x1
-	                    - mScenarioPane1->mPane->getBounds().x1;
+	mScenarioPaneDist = mScenarioPane2->getPane()->getBounds().x1
+	                    - mScenarioPane1->getPane()->getBounds().x1;
 
 	mShineList = mMenuScreen->search('i_0');
 	mScorePane = mMenuScreen->search('sc_0');
