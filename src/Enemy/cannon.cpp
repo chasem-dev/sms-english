@@ -603,16 +603,17 @@ void TCannon::perform(u32 cue, JDrama::TGraphics* graphics)
 	}
 }
 
-// TODO: every instruction matches; the frame is 0x28 short and every slot,
-// from the inlined calcObjCollision copy up, sits 0x24-0x28 low.
+// TODO: every instruction matches; the frame is 0x20 short (0x28 before
+// getSpine(), c-hs5) and every slot, from the inlined calcObjCollision copy
+// up, sat 0x24-0x28 low.
 void TCannon::calcRootMatrix()
 {
-	if (mSpine->getCurrentNerve() != &TNerveCannonObject::theNerve())
+	if (getSpine()->getCurrentNerve() != &TNerveCannonObject::theNerve())
 		calcObjCollision();
 
 	if (mHolder) {
 		MtxPtr mtx = mHolder->getTakingMtx();
-		if (mSpine->getCurrentNerve() == &TNerveCannonObject::theNerve()) {
+		if (getSpine()->getCurrentNerve() == &TNerveCannonObject::theNerve()) {
 			getModel()->setBaseTRMtx(mtx);
 			mPosition.set(mtx[0][3], mtx[1][3], mtx[2][3]);
 		} else {
