@@ -1788,7 +1788,7 @@ void TBossEel::updateTearsCnt()
 
 	++mTearCycleTimer;
 	s32 interval = mSaveParams->mSLGenTearsTime.get();
-	f32 height   = fabsf(mPosition.y - SMS_GetMarioPosBound()->y);
+	f32 height   = fabsf(getPosition().y - SMS_GetMarioPos().y);
 	if (height > 30000.0f)
 		interval *= 4;
 	else if (height > 15000.0f)
