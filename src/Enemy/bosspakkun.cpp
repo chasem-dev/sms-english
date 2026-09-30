@@ -1130,7 +1130,7 @@ void TBossPakkun::gotHipDropDamage()
 
 		mSpine->setNext(&TNerveBPPreDie::theNerve());
 
-		if (SMSGetMSoundBound()->gateCheck(MSD_SE_BS_BSPAKU_DOWN))
+		if (SMSGetMSound()->gateCheck(MSD_SE_BS_BSPAKU_DOWN))
 			MSoundSESystem::MSoundSE::startSoundActor(MSD_SE_BS_BSPAKU_DOWN, &mPosition, 0,
 			                          nullptr, 0, 4);
 		return;
@@ -1140,13 +1140,14 @@ void TBossPakkun::gotHipDropDamage()
 	if (mSpine->getLatestNerve() == tumbleOut)
 		return;
 
-	if (SMSGetMSoundBound()->gateCheck(MSD_SE_BS_BSPAKU_DAMAGE))
+	if (SMSGetMSound()->gateCheck(MSD_SE_BS_BSPAKU_DAMAGE))
 		MSoundSESystem::MSoundSE::startSoundActor(MSD_SE_BS_BSPAKU_DAMAGE, &mPosition, 0,
 		                          nullptr, 0, 4);
 
 	if (SMSGetMarDirector()->getCurrentStage() == 4) {
-		// getSpine() at this one reset is the last +8; the sibling
-		// else-arm reset stays on the raw member.
+		// getSpine() at this reset and at every spine call of the else
+		// arm: those reads carry the frame words the plain gate checks
+		// above do not.
 		getSpine()->reset();
 		mSpine->setNext(&TNerveBPTakeOff::theNerve());
 		const TNerveBase<TLiveActor>* getUp = &TNerveBPGetUp::theNerve();
@@ -1154,12 +1155,12 @@ void TBossPakkun::gotHipDropDamage()
 		const TNerveBase<TLiveActor>* stomp = &TNerveBPStompReact::theNerve();
 		mSpine->pushNerve(stomp);
 	} else {
-		mSpine->reset();
-		mSpine->setNext(&TNerveBPWait::theNerve());
+		getSpine()->reset();
+		getSpine()->setNext(&TNerveBPWait::theNerve());
 		const TNerveBase<TLiveActor>* getUp = &TNerveBPGetUp::theNerve();
-		mSpine->pushNerve(getUp);
+		getSpine()->pushNerve(getUp);
 		const TNerveBase<TLiveActor>* stomp = &TNerveBPStompReact::theNerve();
-		mSpine->pushNerve(stomp);
+		getSpine()->pushNerve(stomp);
 	}
 }
 
