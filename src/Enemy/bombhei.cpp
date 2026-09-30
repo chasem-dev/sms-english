@@ -591,8 +591,7 @@ DEFINE_NERVE(TNerveBombHeiWaitExplosion, TLiveActor)
 		                   ->getFrameCtrl(ANM_TYPE_BTP)
 		                   ->getFrame();
 		if (btpFrame % 40 == 0)
-			SMSGetMSoundBound()->startSoundActor(MSD_SE_EN_BOMBHEI_COUNT,
-			                          &bombHei->mPosition, 0, nullptr, 0, 4);
+			SMSGetMSound()->startSoundActor(MSD_SE_EN_BOMBHEI_COUNT, &bombHei->mPosition);
 
 		gpMarioParticleManager->emitAndBindToMtxPtr(
 		    PARTICLE_MS_BOMB_LIMIT,
