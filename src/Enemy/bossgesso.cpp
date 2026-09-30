@@ -1953,7 +1953,7 @@ DEFINE_NERVE(TNerveBGBeakDamage, TLiveActor)
 
 		self->getMActor()->resetDL();
 
-		if (gpMarDirector->mMap == 3 || gpMarDirector->mMap == 59) {
+		if (SMSGetMarDirector()->mMap == 3 || SMSGetMarDirector()->mMap == 59) {
 			MSBgm::stopBGM(MSD_BGM_BOSS, 10);
 			MSMainProc::setBossNotDamagedFlag(false);
 		}
@@ -1963,13 +1963,13 @@ DEFINE_NERVE(TNerveBGBeakDamage, TLiveActor)
 		self->mCork->crush();
 
 	if (spine->getTime() == 12) {
-		SMSGetParticleManagerBound()->emitAndBindToMtxPtr(
+		gpMarioParticleManager->emitAndBindToMtxPtr(
 		    BGESO_JPA_MS_BOGE_HIT_A, BossgessoGetModel(self)->getAnmMtx(27), 0,
 		    nullptr);
-		SMSGetParticleManagerBound()->emitAndBindToMtxPtr(
+		gpMarioParticleManager->emitAndBindToMtxPtr(
 		    BGESO_JPA_MS_BOGE_HIT_C, self->getModel()->getAnmMtx(27), 0,
 		    nullptr);
-		SMSGetParticleManagerBound()->emitAndBindToMtxPtr(
+		gpMarioParticleManager->emitAndBindToMtxPtr(
 		    BGESO_JPA_MS_BOGE_HIT_B, self->getModel()->getAnmMtx(27), 0,
 		    nullptr);
 	}
@@ -2018,7 +2018,7 @@ DEFINE_NERVE(TNerveBGBeakDamage, TLiveActor)
 		ctrl4->setFrame(0.0f);
 
 		spine->pushAfterCurrent(&TNerveBGPollute::theNerve());
-		if (gpMarDirector->mMap == 3 || gpMarDirector->mMap == 59) {
+		if (SMSGetMarDirector()->mMap == 3 || SMSGetMarDirector()->mMap == 59) {
 			MSBgm::startBGM(MSD_BGM_BOSSGESO_2DN3RD);
 
 			// Outside every sound cube the boss theme plays on a muted
@@ -2028,7 +2028,7 @@ DEFINE_NERVE(TNerveBGBeakDamage, TLiveActor)
 			    && gpCubeSoundChange->getInCubeNo(BossgessoMarioEarPos())
 			           == -1) {
 				MSBgm::setTrackVolume(1, 0.0f, 0, 0);
-			} else if (gpMarDirector->mMap == 59
+			} else if (SMSGetMarDirector()->mMap == 59
 			           && MSStageCubeFade::smInstance != nullptr) {
 				MSStageCubeFade::smInstance->setBgmVolumeForce();
 			}
