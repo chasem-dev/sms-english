@@ -1034,8 +1034,10 @@ DEFINE_NERVE(TNerveCannonOpen, TLiveActor)
 	return FALSE;
 }
 
-// TODO: instruction-identical; frame 0x170 vs 0x198, the setGoalPathMario
-// TPathNode temporary sitting 0x28 lower than retail's.
+// TODO: instruction-identical and frame-exact once the yaw reads go through
+// getRotation() (c-hs5); the stage-5 CannonRotYToPoint block's three vectors
+// still sit at 0x108/0x114/0xfc against retail's 0xe8/0x140/0x168 (the
+// by-value `to - from` class).
 DEFINE_NERVE(TNerveCannonSearch, TLiveActor)
 {
 	TCannon* cannon = CannonBody(spine);
@@ -1083,8 +1085,8 @@ DEFINE_NERVE(TNerveCannonSearch, TLiveActor)
 		}
 	}
 
-	if (cannon->mPrevYaw != cannon->mRotation.y) {
-		cannon->mPrevYaw = cannon->mRotation.y;
+	if (cannon->mPrevYaw != cannon->getRotation().y) {
+		cannon->mPrevYaw = cannon->getRotation().y;
 		if (gpMSound->gateCheck(MSD_SE_EN_CANNON_MOVE))
 			MSoundSESystem::MSoundSE::startSoundActor(
 			    MSD_SE_EN_CANNON_MOVE, &cannon->mPosition, 0, nullptr, 0, 4);
