@@ -211,3 +211,18 @@ The one exact candidate, `TYoshi::init`, needed a machine extract of only the se
 `TMarDirector::changeState` lands its frame only with a machine extract of the card-save restore/next-area block; that block is not the map's UNUSED `decideNextStageOfMiss` (0x10c), which it compiles to at 0x8c.
 Rejected: lone named values or `!getTime()` among identical calls (9), two-argument sounds in files that spell every sound with six (bosseel, fireWanwan, MarioReceiveMsg, MarioMove), machine extracts with no UNUSED of their shape (7), accessor subsets that leave the other sites raw, and one step the function's TODO had already measured and declined (`considerSetAnm_`'s getRotation()).
 Tool note: `raw->acc` subsets such as "sites 3+4 of 4" and single `name-call`s dominate the improved results; filtering them out before the beam would save most of the review time.
+
+## hsearch sweep c-hs6
+
+The resumed c-hs5 list (`scratchpad/hs5/targets.tsv`, 200 s per function, `-j 2`, one foreground call per row) ran rows 65 to 133 in two legs, the second after a container restart; rows 134 onward are unsearched.
+First, hsearch now refuses `raw->acc` subsets that leave the other spelling of a member in the function and named values that leave an identical read elsewhere.
+Review accepted 23 and rejected 31 (the whole c-hs5 list so far: 46 accepted, 54 rejected), and the other 15 rows gave no gain.
+No function became byte-exact and no unit was linked.
+`TNerveKoopaWait::execute` keeps its frame but loses all 15 register mismatches once the single-use bathtub search is passed straight to `KoopaFindGrip`, as the tumble test below it already does.
+`TEnemyMario::emReplayJumpToNearestNode` lands its frame (0x2c0) and cuts slot mismatches 132 to 76 with getStatus(), both `canJumpToNode()` tests as `!= 0` and one named u8 random flag; each alone is 0 or +0x10.
+`TCannon::init` and `TMarDirector::setMario` fix their register mismatches with C-style top declarations of their case or resource locals (hsearch hoisted one of each group; hoisting the whole group scores the same and reads consistently).
+`TBathtubGrip::receiveMessage` goes from 0x38 to 0x118 of 0x150 with `getUnk16C()->x.get()` at all ten param reads, TBathtub::hipdrop's spelling; `.get()` on the raw member had been measured as reordering loads, but through the accessor it does not.
+The other accepted edits read a member through its header accessor at every read in the function, in files that already use that accessor: SMS_GetMarioSpeed*(), getNormal(), getTracer(), getGroundPlane(), getHolder(), getObj(i)/getObjNum(), getStage(), getTag(), getTranslation(), getPosition(), plus one pair of identical early returns as `?:` in `MSound::startMarioVoice`.
+Rejected: machine extracts with no UNUSED of their shape (10), accessors the file never uses (getBodyScale, getSpine/getLeash in bosswanwan, getRotation in Koopa, getLinearVelocity, getDamageHeight/Radius), lone named values including two uncast `TNameRef*` temporaries, register trades (NpcChange, bgtentacle, Tongue, J3DCluster's x/z/y sign order), and pairs whose parts are each inert.
+Lead: `CPolarSubCamera::ctrlLButtonCamera_` is byte-exact with four stacked single-use names (u32 copies of both freeze counters, a bool for the FLUDD flag test, a const reference to the notice actor's getPosition()); any three are 8 short, and the recipe is in its TODO rather than the source.
+The disk filled once mid-leg (not this batch's files) and cleared on its own; hsearch then resumed from its database.
