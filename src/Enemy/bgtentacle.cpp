@@ -371,8 +371,8 @@ void TBGTakeHit::perform(u32 cue, JDrama::TGraphics* graphics)
 
 		ensureTakeSituation();
 
-		if (mHolder != nullptr) {
-			J3DModel* model = mOwner->unk2C->getModel();
+		if (getHolder() != nullptr) {
+			J3DModel* model = mOwner->getUnk2C()->getModel();
 			MtxPtr mtx
 			    = model->getAnmMtx(model->getModelData()->getJointNum() - 1);
 
@@ -417,10 +417,10 @@ void TBGTakeHit::perform(u32 cue, JDrama::TGraphics* graphics)
 				local_8c += unk74;
 			}
 
-			local_8c += mHolder->getPosition();
+			local_8c += getHolder()->getPosition();
 			gpMap->isTouchedOneWallAndMoveXZ(&local_8c.x, local_8c.y,
 			                                 &local_8c.z, 150.0f);
-			mHolder->moveRequest(local_8c);
+			getHolder()->moveRequest(local_8c);
 			unk74.zero();
 		}
 
@@ -443,8 +443,8 @@ void TBGTakeHit::perform(u32 cue, JDrama::TGraphics* graphics)
 		}
 
 		if (mOwner->getState() != 3 && mOwner->getState() != 4
-		    && mHolder != nullptr)
-			mHolder->receiveMessage(this, HIT_MESSAGE_UNK8);
+		    && getHolder() != nullptr)
+			getHolder()->receiveMessage(this, HIT_MESSAGE_UNK8);
 	}
 }
 
