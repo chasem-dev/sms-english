@@ -1192,7 +1192,7 @@ void TEnemyMario::emDownAnimation()
 	setAnimation(ANIM_FALL_DOWN_WAIT, 1.0f);
 
 	if (SMSGetMarDirector()->isDemoMode3() || SMSGetMarDirector()->isDemoMode4()
-	    || SMSGetMarDirectorBound()->isTalkModeNow()) {
+	    || SMSGetMarDirector()->isTalkModeNow()) {
 		mReferencePosition = getPosition();
 		mDisappearPosition = mReferencePosition;
 		return;
@@ -1201,7 +1201,7 @@ void TEnemyMario::emDownAnimation()
 	++mEMDoingTimer;
 	mReferencePosition = getPosition();
 	mDisappearPosition = mReferencePosition;
-	if (gpMarDirector->getCurrentMap() != 1
+	if (SMSGetMarDirector()->getCurrentMap() != 1
 	    && mEMDoingTimer > getSettingsParams()->mDownTime.get()) {
 		mWaterCounter = getSettingsParams()->mWaterCtMax.get();
 		changeEMDoing(EM_DOING_RUN_AWAY_TO_NEAREST_NODE);
