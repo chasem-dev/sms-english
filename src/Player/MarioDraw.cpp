@@ -1182,8 +1182,9 @@ void TMario::loadAnmTexPattern(J3DAnmTexPattern** param_1, char* param_2,
 	(*param_1)->searchUpdateMaterialID(param_3);
 }
 
-// TODO: frame 0x5c0 retail, 0x4f0 here (the named Mtx sits above transformInfo
-// in retail, plus 0xdc more low temporaries). Every non-stack difference is
+// TODO: frame 0x5c0 retail, 0x538 here (the named Mtx sits above transformInfo
+// in retail, plus 0x94 more low temporaries; c-hs7's getModel() and
+// getCurrentStage() at every read took it from 0x4f0). Every non-stack difference is
 // one allocation: retail colours anmTransform r22 (below the texture-loop
 // temporaries and sharing r22 with eyeIdxL), ours r27, which shifts the loop,
 // frameCtrl and marioCommon registers by one. Top declarations of
@@ -1366,17 +1367,17 @@ void TMario::initModel()
 	transformInfo.mTranslate.z = mPosition.z;
 	Mtx transform;
 	J3DGetTranslateRotateMtx(transformInfo, transform);
-	getM3UModel()->unk8->setBaseTRMtx(transform);
+	getM3UModel()->getModel()->setBaseTRMtx(transform);
 
 	getM3UModel()->updateInMotion();
 
-	getM3UModel()->unk8->calc();
+	getM3UModel()->getModel()->calc();
 
 	calcAnimHands();
 
 	mSurfGesso = nullptr;
 	if (gpMarDirector->getCurrentMap() == 58
-	    && (gpMarDirector->unk7D == 0 || gpMarDirector->unk7D == 1)) {
+	    && (gpMarDirector->getCurrentStage() == 0 || gpMarDirector->getCurrentStage() == 1)) {
 		MActorAnmData* anmData = new MActorAnmData();
 		anmData->init("/scene/map/map/Torocco", nullptr);
 		mTorocco = new MActor(anmData);
@@ -1390,7 +1391,7 @@ void TMario::initModel()
 		            J3DMLF_MaterialPEFull | (4 << J3DMLF_TevStageNumShift)),
 		        0, 1),
 		    0);
-		if (gpMarDirector->unk7D == 0) {
+		if (gpMarDirector->getCurrentStage() == 0) {
 			mRailType              = 0;
 			MActorAnmData* anmData = new MActorAnmData();
 			anmData->init("/scene/map/map/Pinna_rail", nullptr);
@@ -1415,7 +1416,7 @@ void TMario::initModel()
 			mTorocco->getModel()->setBaseTRMtx(
 			    mPinaRail->getModel()->getAnmMtx(0));
 		}
-		if (gpMarDirector->unk7D == 1) {
+		if (gpMarDirector->getCurrentStage() == 1) {
 			mRailType              = 1;
 			MActorAnmData* anmData = new MActorAnmData();
 			anmData->init("/scene/map/map/Koopa_rail", nullptr);
@@ -1465,10 +1466,10 @@ void TMario::initModel()
 	mtxTypes[1]                     = 0;
 	mtxTypes[2]                     = 0;
 	mMultiMtxEffect->mMtxEffectType = mtxTypes;
-	mMultiMtxEffect->setup(getM3UModel()->unk8, "Mario");
+	mMultiMtxEffect->setup(getM3UModel()->getModel(), "Mario");
 
 	mTrembleModelEffect = new TTrembleModelEffect();
-	mTrembleModelEffect->init(getM3UModel()->unk8);
+	mTrembleModelEffect->init(getM3UModel()->getModel());
 
 	unk3A4 = new SampleCtrlModelData(mBodyModelData);
 }
