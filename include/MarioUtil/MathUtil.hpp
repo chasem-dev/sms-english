@@ -360,6 +360,32 @@ inline f32 MsSquaredDistXZ(const JGeometry::TVec3<f32>& a,
 	return JGeometry::TVec3<f32>(a.x - b.x, 0.0f, a.z - b.z).squared();
 }
 
+// Fabricated name: the squared distance between a and b with the three
+// products named apart and summed in two statements, one inline level below
+// the caller. TBaseNPC's camera-distance tests and
+// CPolarSubCamera::getNoticeActor_ use it (97.08 -> 97.13 there against a
+// `sum = sqZ + sum` copy). Other spellings stay TU-local because this body
+// costs them: enemyMario's EMarioSquaredDist (one-expression sum; consider
+// 99.93 -> 97.49, checkReturn and emWaitingToInviteMario exact -> 99.0/99.2),
+// CameraMultiPlayer's sqDistance (products unnamed; ctrlMultiPlayerCamera_
+// exact -> 99.31) and MapObjSirena's PictureTelesaSquaredDist (dz reused;
+// touchActor exact -> 98.01). The map has no symbol for any of them.
+inline f32 MsSquaredDist(const JGeometry::TVec3<f32>& a,
+                         const JGeometry::TVec3<f32>& b)
+{
+	f32 dx = a.x - b.x;
+	f32 dy = a.y - b.y;
+	f32 dz = a.z - b.z;
+
+	f32 sqX = dx * dx;
+	f32 sqY = dy * dy;
+	f32 sqZ = dz * dz;
+
+	f32 sum = sqX + sqY;
+	sum += sqZ;
+	return sum;
+}
+
 // fabricated
 inline f32 MsAngleWrap(f32 angle) { return MsWrap(angle, 0.0f, 360.0f); }
 

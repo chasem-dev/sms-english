@@ -316,8 +316,8 @@ BOOL TModelGate::receiveMessage(THitActor* sender, u32 message)
 // level that squares it and calls TUtil<f32>::sqrt out of line (the same
 // shape as TYoshiTongue::movement's grab-range test).
 // Retail keeps the three squares apart (three `fmuls`, two `fadds`), so the
-// level names them as CameraNoticeSquaredDist does; `v.squared()` contracts
-// into an `fmadds`, which shifts the @3054 jump table's targets by one word.
+// level names them as MathUtil.hpp's MsSquaredDist does; `v.squared()`
+// contracts into an `fmadds`, which shifts the @3054 jump table's targets by one word.
 // Declared z, y, x, the squares take retail's f2/f0/f1.
 // TODO: ours still loads y before x and adds `y*y + x*x` where retail loads x
 // first and adds `x*x + y*y`; every other declaration order and sum grouping

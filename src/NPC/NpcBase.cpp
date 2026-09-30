@@ -664,22 +664,6 @@ inline f32 TBaseNPC::getAnmOffDistSquared_()
 // shape of CameraNotice.cpp's helper; parked TU-local. The two-step sum is
 // what keeps it computed before the CLBSquared call (one expression is
 // forwarded past the call; perform 94.7 -> 96.9).
-static inline f32 NpcSquaredDist(const JGeometry::TVec3<f32>& a,
-                                  const JGeometry::TVec3<f32>& b)
-{
-	f32 dx = a.x - b.x;
-	f32 dy = a.y - b.y;
-	f32 dz = a.z - b.z;
-
-	f32 sqX = dx * dx;
-	f32 sqY = dy * dy;
-	f32 sqZ = dz * dz;
-
-	f32 sum = sqX + sqY;
-	sum += sqZ;
-	return sum;
-}
-
 // Retail calls execMotionBlend_ and isPartsAnmNpc from perform but inlines
 // execMotionBlend_ into calcRootMatrix: the animation-skip block sits one
 // inline level below perform. The name is ours.
@@ -712,7 +696,7 @@ inline bool TBaseNPC::calcAnmOff_()
 			// Named first: retail calls getAnmOffDist_ before the squared
 			// camera distance and CLBSquared after it.
 			f32 dist = getAnmOffDist_();
-			if (NpcSquaredDist(mPosition, gpCamera->unk124) > CLBSquared(dist) && !bVar6
+			if (MsSquaredDist(mPosition, gpCamera->unk124) > CLBSquared(dist) && !bVar6
 			    && mSpine->getTime() > 2) {
 				r31 = true;
 				execMotionBlend_();
@@ -855,7 +839,7 @@ void TBaseNPC::perform(u32 cue, JDrama::TGraphics* graphics)
 		}
 	}
 
-	// TODO: NpcSquaredDist's two-step sum now lands the sum in f31 before
+	// TODO: MsSquaredDist's two-step sum now lands the sum in f31 before
 	// the CLBSquared call as retail does, but retail adds z*z first
 	// (`fadds f31, f3, f0`) where ours adds it last. The frame is still
 	// 0xb8 short of retail's: retail's low region is dead (no stores), so
@@ -876,7 +860,7 @@ void TBaseNPC::perform(u32 cue, JDrama::TGraphics* graphics)
 	// copy folded into MsIsInSight's argument 96.1.
 	if (cue & CUE_ENTRY) {
 		offLiveFlag(LIVE_FLAG_UNK1000000);
-		if (NpcSquaredDist(mPosition, gpCamera->unk124) > CLBSquared(mIndividualParams->mAllDLLockDist.get())
+		if (MsSquaredDist(mPosition, gpCamera->unk124) > CLBSquared(mIndividualParams->mAllDLLockDist.get())
 		    && !isSunflower()) {
 			getModel()->lock();
 		} else {
