@@ -722,9 +722,7 @@ void TWoodBox::kill()
 	mStateTimer = -1;
 	mState      = 2;
 
-	MSound* sound = SMSGetMSoundBound();
-	sound->startSoundActor(MSD_SE_IT_BARREL_CRASH, &mPosition, 0, nullptr, 0,
-	                       4);
+	SMSGetMSound()->startSoundActor(MSD_SE_IT_BARREL_CRASH, &mPosition);
 
 	killNearWoodBox(-50.0f, -50.0f);
 	killNearWoodBox(50.0f, -50.0f);
