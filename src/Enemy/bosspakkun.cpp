@@ -731,10 +731,11 @@ void TBossPakkunMtxCalc::calcBellyScale(u16 joint)
 	MTXCopy(jointMtx, J3DSys::mCurrentMtx);
 }
 
-// TODO: 96.9%. Frame 0xd0 against retail's 0x120 with the named block
-// shifted (toMario 0xdc, rot 0xa0 in retail), and retail loads the head axis
-// before the mHeadYaw owner load. Inert: yaw read after the axis, the axis
-// declared first, a named jointPos/marioPos, ternary step clamps (worse).
+// TODO: frame 0xd0 against retail's 0x120 with the named block shifted
+// (toMario 0xdc, rot 0xa0 in retail). Building the head axis before the
+// toMario subtraction (upstream's order) is what loads it ahead of the
+// mHeadYaw owner load. Inert: a named jointPos/marioPos; ternary step
+// clamps are worse.
 void TBossPakkunMtxCalc::calcHeadDir(u16 joint)
 {
 	if (joint != 0x12)
@@ -743,14 +744,12 @@ void TBossPakkunMtxCalc::calcHeadDir(u16 joint)
 	MtxPtr jointMtx = mOwner->getModel()->getAnmMtx(joint);
 
 	JGeometry::TVec3<f32> toMario = *gpMarioPos;
+	JGeometry::TVec3<f32> headAxis(jointMtx[0][1], jointMtx[1][1], jointMtx[2][1]);
 	toMario.x -= jointMtx[0][3];
 	toMario.y -= jointMtx[1][3];
 	toMario.z -= jointMtx[2][3];
 
-	f32 yaw = mOwner->mHeadYaw;
-
-	JGeometry::TVec3<f32> headAxis(jointMtx[0][1], jointMtx[1][1],
-	                               jointMtx[2][1]);
+	f32 yaw    = mOwner->mHeadYaw;
 	f32 anmYaw = MsGetRotFromZaxisY(headAxis);
 
 	f32 goal;
