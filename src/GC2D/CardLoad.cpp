@@ -34,20 +34,10 @@ extern JPAEmitterManager* gpEmitterManager4D2;
 
 // Some sites spell the centred-size computation with the width read before
 // the height; ExPane.hpp's setCenteredSize has the other order, which is the
-// one TConsoleStr::processReady matches. The order is per site.
-static inline void setCenteredSizeWHh(TExPane* pane, s32 time, s32 target_w,
-                                      s32 target_h, s32 initial_w,
-                                      s32 initial_h)
-{
-	pane->setPaneSize(time, target_w, target_h, initial_w, initial_h);
-	s32 initH = pane->mInitialBounds.getHeight();
-	pane->setPaneOffset(
-	    time, (pane->mInitialBounds.getWidth() - target_w) * 0.5f,
-	    (initH - target_h) * 0.5f,
-	    (pane->mInitialBounds.getWidth() - initial_w) * 0.5f,
-	    (initH - initial_h) * 0.5f);
-}
-
+// one TConsoleStr::processReady matches. The order is per site: each named or
+// accessor-read bound is one more frame slot, and no single spelling serves
+// every site in CardLoad, CardSave, ConsoleStr and Guide (research batch
+// c-sh1 in docs/catalog/frame-gaps.md).
 static inline void setCenteredSizeWr(TExPane* pane, s32 time, s32 target_w,
                                      s32 target_h, s32 initial_w,
                                      s32 initial_h)
@@ -62,16 +52,20 @@ static inline void setCenteredSizeWr(TExPane* pane, s32 time, s32 target_w,
 	    (initH - initial_h) * 0.5f);
 }
 
-static inline void setCenteredSizeWw(TExPane* pane, s32 time, s32 target_w,
+// Every bound read raw, upstream's ExPane.hpp body: waitForStart's four sites
+// want it (frame 0x1c0 -> retail's 0x1a8); every other mix of the spellings
+// here leaves it 8 to 0x40 long, and it costs the Wr sites 8 bytes each.
+static inline void setCenteredSizeRr(TExPane* pane, s32 time, s32 target_w,
                                      s32 target_h, s32 initial_w,
                                      s32 initial_h)
 {
 	pane->setPaneSize(time, target_w, target_h, initial_w, initial_h);
 	pane->setPaneOffset(
-	    time, (pane->mInitialBounds.getWidth() - target_w) * 0.5f,
-	    (pane->mInitialBounds.getHeight() - target_h) * 0.5f,
-	    (pane->mInitialBounds.getWidth() - initial_w) * 0.5f,
-	    (pane->mInitialBounds.getHeight() - initial_h) * 0.5f);
+	    time,
+	    (pane->mInitialBounds.x2 - pane->mInitialBounds.x1 - target_w) * 0.5f,
+	    (pane->mInitialBounds.y2 - pane->mInitialBounds.y1 - target_h) * 0.5f,
+	    (pane->mInitialBounds.x2 - pane->mInitialBounds.x1 - initial_w) * 0.5f,
+	    (pane->mInitialBounds.y2 - pane->mInitialBounds.y1 - initial_h) * 0.5f);
 }
 
 static void clearBookmark(u32 bm)
@@ -1602,9 +1596,9 @@ s8 TCardLoad::waitForAnyKeyBM(TEProgress param_1)
 	return result;
 }
 
-// TODO: instruction-identical. Our frame is 0x1c0, retail's 0x1a8, and
-// `this`/`result` take r30/r31 where retail gives them r26/r27 below the
-// setMessage temporaries. Dropping the cMessageID setMessage pair alone
+// TODO: instruction-identical and the frame exact (0x1a8) with
+// setCenteredSizeRr at all four sites, but `this`/`result` take r30/r31 where
+// retail gives them r26/r27 below the setMessage temporaries. Dropping the cMessageID setMessage pair alone
 // restores retail's order, but no spelling of that pair (mask, local,
 // pointer, scope) moves it; case helpers and brace scopes are inert too.
 s8 TCardLoad::waitForStart(TEProgress param_1)
@@ -1619,13 +1613,13 @@ s8 TCardLoad::waitForStart(TEProgress param_1)
 		setMessage(unk564, 0x400, 13);
 
 		unk524->getPane()->show();
-		unk524->setCenteredSize(20, unk528.getWidth(), unk528.getHeight(), 0,
-		                        0);
+		setCenteredSizeRr(unk524, 20, unk528.getWidth(), unk528.getHeight(), 0,
+		                  0);
 		unk564->hide();
 		if (unk1C == 12 || unk1C == 13) {
 			unk54C->getPane()->show();
-			unk54C->setCenteredSize(20, unk550.getWidth(), unk550.getHeight(),
-			                        0, 0);
+			setCenteredSizeRr(unk54C, 20, unk550.getWidth(), unk550.getHeight(),
+			                  0, 0);
 		}
 		unk10 = 1;
 		break;
@@ -1653,10 +1647,10 @@ s8 TCardLoad::waitForStart(TEProgress param_1)
 		unk53C->hide();
 		for (int i = 0; i < 3; ++i)
 			unk540[i]->hide();
-		setCenteredSizeWr(unk524, 20, 0, 0, unk528.getWidth(),
+		setCenteredSizeRr(unk524, 20, 0, 0, unk528.getWidth(),
 		                  unk528.getHeight());
 		unk564->hide();
-		setCenteredSizeWr(unk54C, 20, 0, 0, unk550.getWidth(),
+		setCenteredSizeRr(unk54C, 20, 0, 0, unk550.getWidth(),
 		                  unk550.getHeight());
 		unk10 = 4;
 		break;
