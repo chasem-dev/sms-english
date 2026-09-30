@@ -37,6 +37,7 @@
     "Enemy/effectEnemy.cpp",
     "Enemy/egggen.cpp",
     "Enemy/enemyinterp.cpp",
+    "Enemy/enemymanager.cpp",
     "Enemy/enemytable.cpp",
     "Enemy/generator.cpp",
     "Enemy/launcher.cpp",
