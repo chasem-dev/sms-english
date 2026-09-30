@@ -284,10 +284,10 @@ bool TAmiNoko::isHitValid(u32 message)
 }
 
 // TODO: 99.5%, every instruction in place. The named block is laid out as
-// retail's but the whole frame sits 0x78 low (a uniform shift: the original
-// reserves 0x78 more compiler temporaries below it), and the three plane
-// distances keep the dot product in f1 where retail uses f2, plus one FPR
-// swap in the side cross product. Inert on the FPRs: a shared distance helper,
+// retail's but the whole frame sits 0x50 low (0x170 vs 0x1c0; getPlaneDistance()
+// at the three distances took it from 0x148 and 8 of 22 register mismatches),
+// and the three plane distances keep the dot product in f1 where retail uses
+// f2, plus one FPR swap in the side cross product. Inert on the FPRs: a shared distance helper,
 // `dist += mPlaneDistance` as its own statement, fabsf on a named dist.
 // c-m18: distance-first sums inert; mPosition.dot(normal) is worse (99.3).
 void TAmiNoko::calcDirection()
@@ -310,7 +310,7 @@ void TAmiNoko::calcDirection()
 	for (int i = 0; i < wallNum; ++i) {
 		plane    = record.mResultWalls[i];
 		f32 dist = fabsf(record.mResultWalls[i]->getNormal().dot(mPosition)
-		                 + record.mResultWalls[i]->mPlaneDistance);
+		                 + record.mResultWalls[i]->getPlaneDistance());
 		if (nearestIdx < 0 || nearest > dist || nearest < 0.0f) {
 			mFenceKind = AMINOKO_SURFACE_WALL;
 			nearest    = dist;
@@ -324,7 +324,7 @@ void TAmiNoko::calcDirection()
 	mGroundPlane = plane;
 	if (mGroundPlane != nullptr) {
 		plane    = mGroundPlane;
-		f32 dist = plane->getNormal().dot(mPosition) + plane->mPlaneDistance;
+		f32 dist = plane->getNormal().dot(mPosition) + plane->getPlaneDistance();
 		if (dist >= 0.0f) {
 			if (nearest > dist || nearest < 0.0f) {
 				found      = plane;
@@ -336,7 +336,7 @@ void TAmiNoko::calcDirection()
 
 	gpMap->checkRoof(mPosition, &plane);
 	if (plane != nullptr) {
-		f32 dist = plane->getNormal().dot(mPosition) + plane->mPlaneDistance;
+		f32 dist = plane->getNormal().dot(mPosition) + plane->getPlaneDistance();
 		if (dist >= 0.0f) {
 			if (nearest > dist || nearest < 0.0f) {
 				found      = plane;
