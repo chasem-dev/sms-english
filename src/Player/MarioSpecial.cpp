@@ -1381,6 +1381,9 @@ BOOL TMario::fenceJumpCatch()
 	return 0;
 }
 
+// TODO: instructions and registers match; frame 0x1a8 vs retail 0x1b8.
+// Naming both SMSGetCamera() and mIntendedMag reaches 0x1b0 (each alone is
+// inert), not taken as two lone named values (c-hs6).
 BOOL TMario::fenceMove()
 {
 	JGeometry::TVec3<f32> frontPos = mPosition;
@@ -1398,11 +1401,11 @@ BOOL TMario::fenceMove()
 			s16 camDelta = mFaceAngle.y - SMSGetCamera()->unk258;
 			f32 normX, normZ;
 			if (camDelta > -0x4000 && camDelta < 0x4000) {
-				normX = -wall->mNormal.z;
-				normZ = wall->mNormal.x;
+				normX = -wall->getNormal().z;
+				normZ = wall->getNormal().x;
 			} else {
-				normZ = -wall->mNormal.x;
-				normX = wall->mNormal.z;
+				normZ = -wall->getNormal().x;
+				normX = wall->getNormal().z;
 			}
 
 			f32 stickH = 0.015625f * work->mStickH;
@@ -1432,7 +1435,7 @@ BOOL TMario::fenceMove()
 			changePlayerStatus(MARIO_STATUS_FENCE_MOVE, 0, false);
 		}
 
-		mFaceAngle.y = matan(wall->mNormal.z, wall->mNormal.x) + 0x8000;
+		mFaceAngle.y = matan(wall->getNormal().z, wall->getNormal().x) + 0x8000;
 	} else {
 		mFaceAngle.y += 0x8000;
 		mModelFaceAngle = mFaceAngle.y;
