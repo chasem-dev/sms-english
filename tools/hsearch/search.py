@@ -726,6 +726,11 @@ class Search:
         if not names:
             return []
         unused = unused_entries(self.u.rel_src)
+        try:  # an UNUSED our build already emits at its map size has its body
+            have = Elf(os.path.join(ROOT, self.u.obj)).functions()
+            unused = [(u, sz) for u, sz in unused if have.get(u, {}).get("size") != sz]
+        except (OSError, ValueError):
+            pass
         ool = text
         for n in names:
             ool = re.sub(r"^static inline void %s\(" % re.escape(n), "void %s(" % n, ool, flags=re.M)
