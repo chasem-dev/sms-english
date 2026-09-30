@@ -1367,7 +1367,7 @@ static void evAppearReadyGo(TSpcTypedInterp<TEventWatcher>* interp, u32 arg_num)
 // push; binding the console leaves one of them below it.
 static inline TGCConsole2* EventWatcherTimerConsole()
 {
-	TGCConsole2* console = gpMarDirector->getConsole();
+	TGCConsole2* console = SMSGetMarDirector()->getConsole();
 	return console;
 }
 
@@ -1399,7 +1399,7 @@ static void evAppear8RedCoinsAndTimer(TSpcTypedInterp<TEventWatcher>* interp,
 		                             &coin->getUnk158(), 0, nullptr);
 	}
 	EventWatcherTimerConsole()->startAppearTimer(1, iVar9 * 0.008333334f);
-	SMSGetMarDirectorBound()->startTimer();
+	SMSGetMarDirector()->startTimer();
 	EventWatcherTimerConsole()->startMoveTimer(10);
 	interp->push();
 }
