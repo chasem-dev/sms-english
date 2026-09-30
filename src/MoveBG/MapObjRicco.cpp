@@ -273,7 +273,7 @@ void TRiccoWatermill::control()
 			mSubmarine->mPosition.y = mSubmarineMaxTransY;
 
 			if (!isStateTimerEngaged()) {
-				SMSGetMSoundBound()->startSoundActor(
+				SMSGetMSound()->startSoundActor(
 				    0x3832, &mSubmarine->mPosition);
 
 				if (!mCoinThrown) {
@@ -316,8 +316,7 @@ void TRiccoWatermill::control()
 			mSubmarine->onMapObjFlag(MAP_OBJ_FLAG_UNK100);
 			onMapObjFlag(MAP_OBJ_FLAG_UNK100);
 
-			SMSGetMSound()->startSoundActor(0x3833, &mSubmarine->mPosition, 0,
-			                                nullptr, 0, 4);
+			SMSGetMSound()->startSoundActor(0x3833, &mSubmarine->mPosition);
 
 			mState = STATE_DOWN;
 		}
