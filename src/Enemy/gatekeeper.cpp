@@ -657,9 +657,9 @@ const char** TBiancoGateKeeper::getBasNameTable() const
 void TBiancoGateKeeper::emitParticles()
 {
 	const TNerveBase<TLiveActor>* sleep = &TNerveBGKSleep::theNerve();
-	if (mSpine->getLatestNerve() != sleep) {
+	if (getSpine()->getLatestNerve() != sleep) {
 		const TNerveBase<TLiveActor>* goro = &TNerveBGKLaunchGoro::theNerve();
-		if (mSpine->getLatestNerve() != goro) {
+		if (getSpine()->getLatestNerve() != goro) {
 			J3DModel* model = getModel();
 			JPABaseEmitter* emitter;
 			emitter = gpMarioParticleManager->emitAndBindToMtxPtr(
@@ -671,7 +671,7 @@ void TBiancoGateKeeper::emitParticles()
 			    (u8*)this + 1);
 			if (emitter)
 				SMSSetEmitterPolColor(emitter, 6);
-			emitter = SMSGetParticleManagerBound()->emitAndBindToMtxPtr(
+			emitter = gpMarioParticleManager->emitAndBindToMtxPtr(
 			    GATEKEEPER_JPA_MS_GKPA_YODARE_L, model->getAnmMtx(5), 1,
 			    (u8*)this + 2);
 			if (emitter)
