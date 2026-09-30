@@ -104,15 +104,15 @@ void TMapObjGeneral::put()
 	s32 preservedTimeTilAppear = getStateTimer();
 	makeObjAppeared();
 	mStateTimer = preservedTimeTilAppear;
-	mPosition.x = JMASSin(*gpMarioAngleY)
+	mPosition.x = JMASSin(SMS_GetMarioAngleY())
 	                  * (getDamageRadius() + SMS_GetMarioDamageRadius() + 10.0f)
 	              + SMS_GetMarioPos().x;
 	mPosition.y = SMS_GetMarioPos().y;
-	mPosition.z = JMASCos(*gpMarioAngleY)
+	mPosition.z = JMASCos(SMS_GetMarioAngleY())
 	                  * (getDamageRadius() + SMS_GetMarioDamageRadius() + 10.0f)
 	              + SMS_GetMarioPos().z;
 	offLiveFlag(LIVE_FLAG_UNK10);
-	mGroundHeight = SMSGetMapBound()->checkGround(mPosition, &mGroundPlane);
+	mGroundHeight = SMSGetMap()->checkGround(mPosition, &mGroundPlane);
 }
 
 // TODO: 99.5%, frame exact. The accessors (Mario position, angles, one
