@@ -203,9 +203,7 @@ void TManhole::appeared()
 	if (animationFinished()) {
 		if (unk152 == 1 && mColCount == 0) {
 			unk152 = 0;
-			SMSGetMSoundBound()->startSoundActor(MSD_SE_OBJ_MANHOLE_UP,
-			                                       &mPosition, 0, nullptr, 0,
-			                                       4);
+			SMSGetMSound()->startSoundActor(MSD_SE_OBJ_MANHOLE_UP, &mPosition);
 		}
 		if (unk14C > mVibrationEndHeight) {
 			mPosition.y = unk14C * JMASCos((s16)(unk148 * 32768.0f))
