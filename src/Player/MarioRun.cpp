@@ -775,9 +775,11 @@ void TMario::doPushingAnimation(const Vec& vec)
 	mModelFaceAngle = wallAngle + 0x8000;
 }
 
-// TODO: frame 0x58 against retail's 0x90, and retail keeps `pushed`'s zero in
-// r30 and stores it to mStatusState (ours `li r0`). bool/int/BOOL/u8/u16 for
-// `pushed`, `mStatusState = pushed`, and every declaration order were inert.
+// TODO: retail keeps `pushed`'s zero in r30 and stores it to mStatusState
+// (ours `li r0`). The frame (0x58) reached retail's 0x90 with getInput(),
+// getForwardVel(), getWallPlane() and getFludd() at every read (c-hs7).
+// bool/int/BOOL/u8/u16 for `pushed`, `mStatusState = pushed`, and every
+// declaration order were inert.
 // The squat exit through UNUSED changePlayerPower(0.0f, SQUAT, 0) (a
 // setPlayerVelocity + changePlayerStatus body, 0x58 of the map's 0x60) is
 // inert on the frame.
@@ -791,26 +793,27 @@ BOOL TMario::running()
 	if (isRunningSlipStart())
 		return changePlayerStatus(MARIO_STATUS_SLIP, 0, false);
 
-	if (mInput & 0x10)
+	if (getInput() & 0x10)
 		return changePlayerWaiting();
 
-	if (checkFlag(MARIO_FLAG_FLUDD_EMITTING) && (mInput & 0x2)
-	    && mForwardVel > mDeParams.mDashMax.get() - 1.0f)
+	if (checkFlag(MARIO_FLAG_FLUDD_EMITTING) && (getInput() & 0x2)
+	    && getForwardVel() > mDeParams.mDashMax.get() - 1.0f)
 		return changePlayerJumping(MARIO_STATUS_BROAD_JUMP, 0);
 
-	if (mInput & 0x2)
+	if (getInput() & 0x2)
 		return changePlayerTriJump();
 
-	if (!onYoshi() && (mInput & 0x8000)) {
+	if (!onYoshi() && (getInput() & 0x8000)) {
 		if (unknown_inline_10(this))
 			return 1;
 		changePlayerStatus(MARIO_STATUS_TAKE_POSE, 0, false);
 	}
 
-	if (mInput & 0x20)
+	if (getInput() & 0x20)
 		return changePlayerWaiting();
 
-	if (isRunningTurnning() && mForwardVel >= mRunParams.mTurnNeedSp.get()) {
+	if (isRunningTurnning()
+	    && getForwardVel() >= mRunParams.mTurnNeedSp.get()) {
 		emitParticle(PARTICLE_MS_MARIWALK1_A, mFaceAngle.y + 0x8000);
 		emitParticle(PARTICLE_MS_MARIWALK1_C, mFaceAngle.y + 0x8000);
 		emitParticle(PARTICLE_MS_MARIWALK1_B, mFaceAngle.y + 0x8000);
@@ -823,8 +826,8 @@ BOOL TMario::running()
 	}
 
 	if (rocketCheck()) {
-		unk314
-		    = mFloorPosition.y + mWaterGun->mWatergunParams.mHHoverHeight.get();
+		unk314 = mFloorPosition.y
+		         + getFludd()->mWatergunParams.mHHoverHeight.get();
 		return changePlayerStatus(MARIO_STATUS_ROCKET, 0, false);
 	}
 
@@ -852,13 +855,13 @@ BOOL TMario::running()
 			pushed = true;
 
 		if (!pushed) {
-			if (mForwardVel > mDeParams.mClashSpeed.get()) {
+			if (getForwardVel() > mDeParams.mClashSpeed.get()) {
 				emitParticle(PARTICLE_MS_DMG_C);
 				return changePlayerDropping(MARIO_STATUS_JUMP_SHORT_BACK_DOWN,
 				                            0);
 			}
 
-			if ((mInput & 0x2)
+			if ((getInput() & 0x2)
 			    && gpMap->isTouchedOneWall(
 			           mPosition.x,
 			           mPosition.y + mDeParams.mJumpWallHeight.get(),
@@ -870,7 +873,7 @@ BOOL TMario::running()
 				return changePlayerStatus(MARIO_STATUS_WALL_JUMP, 0, false);
 			}
 
-			if (mWallPlane != nullptr && mWallPlane->isFence())
+			if (getWallPlane() != nullptr && getWallPlane()->isFence())
 				return changePlayerCatching();
 
 			doPushingAnimation(prevPos);
