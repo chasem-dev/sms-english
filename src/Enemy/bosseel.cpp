@@ -1581,8 +1581,9 @@ void TBossEelTearsRecoverCollision::perform(u32 cue,
 
 // The heart coin takes its model data straight from the `new` expression:
 // naming it (at any scope) costs retail's missing pointer copy.
-// TODO: instruction-exact; the frame is 0x318 vs retail 0x310, with skin/eye
-// register differences. mMActor->getModel() for the skin-deform model cut
+// TODO: instruction-exact with skin/eye register differences; the raw
+// mJointNum in the joint loop gives retail's 0x310 frame (getJointNum() is
+// 8 long, as in SMS_MakeJointsToArc). mMActor->getModel() for the skin-deform model cut
 // markers 90->75. Tried without effect: unnamed/split-declared deform,
 // hoisted skin deform.
 void TBossEel::init(TLiveManager* manager)
@@ -1734,7 +1735,7 @@ void TBossEel::init(TLiveManager* manager)
 	mouthCube->unk24.set(7000.0f, 10000.0f, 7000.0f);
 
 	if (mInstanceIndex == 0) {
-		for (u8 i = 0; i < getModel()->getModelData()->getJointNum(); ++i)
+		for (u8 i = 0; i < getModel()->getModelData()->mJointNum; ++i)
 			; // assert?
 	}
 
