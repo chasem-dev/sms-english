@@ -387,118 +387,17 @@ void J3DSkinDeform::initMtxIndexArray(J3DModelData* modelData)
 			     (dl - displayListStart) < modelData->getShapeNodePointer(i)
 			                                   ->getShapeDraw(j)
 			                                   ->getDisplayListSize();) {
-				u8 cmd = dl[0];
+				u8 cmd = *dl;
+				dl++;
 				if (cmd != GX_TRIANGLEFAN && cmd != GX_TRIANGLESTRIP)
 					break;
 
-				u16 vtxCount = *(u16*)&dl[1];
+				u16 vtxCount = *(u16*)dl;
+				dl += 2;
 
 				u16 useMtxIdxBuf[10];
 				for (s32 k = 0; k < vtxCount; k++) {
-					// TODO: the only residue in this function is the operand
-					// order of this one `add`: retail emits
-					// `add r4, dl, vtxSize*k`, we emit the reverse, and the
-					// following `addi r4, r4, 3` and the three indexed loads
-					// all match. Every other spelling costs an extra
-					// instruction (`dl + 3 + vtxSize * k`,
-					// `&dl[vtxSize * k] + 3`, `(dl + vtxSize * k) + 3`) or
-					// perturbs the frame (a named `int ofs`); `vtx += ...`,
-					// `dl + (3 + ...)` and `&dl[vtxSize * k + 3]` are all
-					// identical to this one.
-					// Closure round 2026-09-18: `dl + vtxSize * k + 3`,
-					// `(dl + vtxSize * k) + 3`, `dl + 3 + vtxSize * k` and
-					// `&(dl + vtxSize * k)[3]` are all 248 instructions;
-					// `&dl[k * vtxSize + 3]` flips the `mullw` operands
-					// instead; the `(u32)` cast forms, dropping the `vtx`
-					// local for three spelled-out indices (248) and
-					// splitting off a `vtxBase` local (frame 0x118) are all
-					// no better.
-					// Research 215 (2026-09-19), ~60 spellings measured in a
-					// scratch TU carrying this loop nest: the operand order
-					// is not an index spelling at all, it is the statement
-					// form. A single address expression whose constant sits
-					// inside the index (`&dl[3 + p]`, `dl + (p + 3)`) gives
-					// `add rD, rIndex, rPtr` then `addi 3`; a constant left
-					// outside (`dl + p + 3`, `&(dl + p)[3]`, a struct member
-					// offset such as `((Hdr*)(dl + p))->data`) gives `addi 3`
-					// then `add rD, rPtr, rIndex`, which costs one extra `mr`
-					// here because the product lives in r0; and a compound
-					// assignment `p += index` gives `add rD, rPtr, rIndex` --
-					// retail's order. So
-					// `u8* base = dl; base += vtxSize * k; u8* vtx = base + 3;`
-					// reproduces retail's two instructions exactly (247
-					// instructions, frame 0x110, operand order right) and
-					// leaves only the destination register: retail keeps one
-					// register (`add r4, r25, r0; addi r4, r4, 3`), the
-					// two-object chain gets r3 then r4. One object with a
-					// separate `vtx += 3` instead sinks the 3 into the three
-					// load displacements (249 instructions), and every
-					// one-object two-step form tried sinks the same way, so
-					// the single-expression spelling below is kept as the
-					// closer one (1 differing operand, not 2). Refuted for
-					// the register: declaration order and scope of the two
-					// locals, a TU-local `p += n; return p;` helper,
-					// `(base += n) + 3`, `(vtx += n) += 3` (spills vtx to the
-					// stack), the comma operator.
-					// Closure 217: the sink is a *use* property, not a
-					// statement-form one.  This loop's own outer step
-					// `dl += vtxSize * vtxCount; dl += 3;` compiles to
-					// exactly retail's `add rD, rPtr, rIndex; addi rD, rD, 3`
-					// because `dl` also has non-indexed uses; the inner
-					// pointer's only three uses are indexed, so any form that
-					// materialises `vtx` before the `+ 3` lets MWCC fold the
-					// 3 into three separate `add`s plus `lbz/lhz 3(rX)`
-					// (+2 instructions, 249).  `vtx += vtxSize * k + 3`,
-					// `vtx += 3 + vtxSize * k` and the int-first
-					// `(3 + vtxSize * k) + dl` all canonicalise back to this
-					// line's index-first `add`; `dl + 3` before the compound
-					// (either order) is 248 with the `addi` and `add` merely
-					// swapped.  The two-object form
-					// `u8* base = dl; base += vtxSize * k; u8* vtx = base + 3;`
-					// is 247 with retail's operand order and its *only*
-					// residue is the intermediate register (r3 for retail's
-					// r4, 2 markers against this line's 1), so the last step
-					// is a volatile-register knob, not another spelling.
-					// Research 219 (2026-09-19) names the mechanism and
-					// closes the question as unreachable from the source.
-					// The `+ 3` sink is MWCC's *address flattening*: inside
-					// one basic block every `p[reg]` use of a pointer whose
-					// definition is a chain of adds is rewritten to
-					// `add rX, base, reg` plus a displacement load, so a
-					// separate `addi 3` only survives when the flattener
-					// cannot see the definition.  Measured in a scratch TU
-					// carrying this loop nest (~40 further spellings): the
-					// sink is insensitive to the number of uses (1, 2 and 3
-					// indexed uses all sink), to an extra non-address use
-					// (`f(vtx)` sinks *and* pays its own `addi`), to a
-					// constant-0 index, to `++vtx` x3, `vtx = vtx + 3`,
-					// `vtx += sizeof(T)`, a `u8**`/`u8*&` helper,
-					// `do { } while (0)` and a later `vtx - dl` use.
-					// The chain also coalesces into ONE register the moment
-					// there is no second SSA value, which is exactly retail's
-					// `add r4, r25, r0; addi r4, r4, 3`:
-					// `u8* vtx = dl; vtx += vtxSize * k;` alone compiles to
-					// `add r4, r25, r0` -- retail's operand order *and*
-					// retail's register.  Everything that keeps the `+ 3`
-					// alive introduces a second value, and a second value
-					// that dies immediately always takes the lowest free
-					// volatile (r3) while the long-lived one takes r4: the
-					// two-object form, a `(J3DDLHdr*)vtx + 1` retype (which
-					// does block the sink), `u32` arithmetic, an inlined
-					// `p += off; return p + 3;` helper, `register`, and both
-					// declaration scopes all give r3/r4 = 2 markers.
-					// The ONE construct that reproduces retail exactly is a
-					// basic-block boundary between the two steps
-					// (`vtx += vtxSize * k; if (c) vtx += 3;`): the flattener
-					// stops at the block edge and the phi forces both defs
-					// into r4.  There is no branch there in retail's stream,
-					// so no honest source reaches it; the single-expression
-					// spelling below (1 marker, the add's operand order) is
-					// the closest form and is kept.
-					// Closure c1 (2026-09-22): `dl - -(...)`, `(u32)`/`(s32)` index casts
-					// are identical; `3 + k * vtxSize` also flips the `mullw`; every
-					// `(dl + 3) + ...`/`3 + dl + ...` reorder is 248 instructions.
-					u8* vtx     = &dl[3 + vtxSize * k];
+					u8* vtx     = &dl[vtxSize * k];
 					u8 pnmtxIdx = ((u32)(*(u8*)&vtx[pnmtxIdxOffs])) / 3;
 					u16 posIdx  = *(u16*)&vtx[posOffs];
 					u16 nrmIdx  = *(u16*)&vtx[nrmOffs];
@@ -515,8 +414,10 @@ void J3DSkinDeform::initMtxIndexArray(J3DModelData* modelData)
 						mNrmUseMtx[nrmIdx] = useMtxIdx;
 				}
 
-				dl += vtxSize * vtxCount;
-				dl += 3;
+				// The `(u8*)` on an already-`u8*` pointer is zeldaret/tww's spelling
+				// of this line and is load-bearing: `dl += ...` or `dl = dl + ...`
+				// is +1 instruction and reorders the loop header.
+				dl = (u8*)dl + vtxSize * vtxCount;
 			}
 		}
 
