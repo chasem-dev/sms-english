@@ -94,8 +94,8 @@ void TCogwheelScale::touchPlayer(THitActor* player)
 	if (marioIsOn())
 		mRiderWeight = mMarioWeight;
 
-	if (mPosition.y - getObjCollisionHeightOffset()
-	        > 150.0f + SMS_GetMarioPosBound()->y
+	if (getPosition().y - getObjCollisionHeightOffset()
+	        > 150.0f + SMS_GetMarioPos().y
 	    && ((mIsUpper && CogwheelSpeed(mCogwheel) > 0.0f)
 	        || (!mIsUpper && CogwheelSpeed(mCogwheel) < 0.0f))) {
 		mCogwheel->rebound();
