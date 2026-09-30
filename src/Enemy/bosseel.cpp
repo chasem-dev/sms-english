@@ -1074,6 +1074,9 @@ TBossEelVortex::TBossEelVortex(TBossEel* owner, const char* name)
 	offHitFlag(HIT_FLAG_NO_COLLISION);
 }
 
+// TODO: every instruction matches; the frame is 0x140 against retail 0x1b0.
+// c-hs7: getMActor() at every owner-actor read took it from 0x108; a lone
+// named isActorType() bool in the collision loop is +8 more.
 void TBossEelVortex::perform(u32 cue, JDrama::TGraphics* graphics)
 {
 	if (mInactive)
@@ -1098,8 +1101,8 @@ void TBossEelVortex::perform(u32 cue, JDrama::TGraphics* graphics)
 
 		++mTimer;
 		if (mTimer > 30) {
-			if (mOwner->mMActor->checkCurBckFromIndex(14)
-			    || mOwner->mMActor->checkCurBckFromIndex(17)) {
+			if (mOwner->getMActor()->checkCurBckFromIndex(14)
+			    || mOwner->getMActor()->checkCurBckFromIndex(17)) {
 				for (s32 i = 0; i < mColCount; ++i) {
 					if (!mCollisions[i]->isActorType(0x80000001))
 						continue;
@@ -1120,7 +1123,7 @@ void TBossEelVortex::perform(u32 cue, JDrama::TGraphics* graphics)
 
 					power *= wave;
 					SMSRumbleMgr->start(8, &mPosition);
-					if (mOwner->mMActor->checkCurBckFromIndex(17))
+					if (mOwner->getMActor()->checkCurBckFromIndex(17))
 						power *= 0.5f;
 					marioTarget.scale(power);
 					marioTarget.add(*gpMarioPos);
@@ -1133,12 +1136,12 @@ void TBossEelVortex::perform(u32 cue, JDrama::TGraphics* graphics)
 	}
 
 	if (cue & CUE_CALC_ANIM) {
-		mPosition.x = mOwner->mMActor->getModel()->getAnmMtx(
+		mPosition.x = mOwner->getMActor()->getModel()->getAnmMtx(
 		    mOwner->mMapCollisionJointIndices[2])[0][3];
-		mPosition.y = mOwner->mMActor->getModel()->getAnmMtx(
+		mPosition.y = mOwner->getMActor()->getModel()->getAnmMtx(
 		                  mOwner->mMapCollisionJointIndices[2])[1][3]
 		              + 1000.0f;
-		mPosition.z = mOwner->mMActor->getModel()->getAnmMtx(
+		mPosition.z = mOwner->getMActor()->getModel()->getAnmMtx(
 		    mOwner->mMapCollisionJointIndices[2])[2][3];
 	}
 	THitActor::perform(cue, graphics);
