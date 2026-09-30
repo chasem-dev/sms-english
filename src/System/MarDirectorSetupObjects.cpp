@@ -154,7 +154,7 @@ static inline void MarDirectorLoadEventWatchers(TMarDirector* director, const ch
 	}
 }
 
-// TODO: instruction-exact; the frame is 0x158 short (0x9d0 vs 0xb28).
+// TODO: instruction-exact; the frame is 0x150 short (0x9d8 vs 0xb28).
 // Retail has 0xf8 more created below every object we have (about three
 // words per list insert site), 9 words created between the stream-pointer
 // and the per-insert iterator groups that we create after the 1-byte
@@ -170,7 +170,7 @@ bool TMarDirector::setupObjects()
 	TFlagManager::getInstance()->resetStage();
 	TFlagManager::getInstance()->setFlag(0x60003, 1);
 	TGameSequence& currArea = gpApplication.mCurrArea;
-	switch (currArea.unk0) {
+	switch (currArea.getStage()) {
 	case 1: {
 		TFlagManager::getInstance()->setBool(false, 0x3000D);
 		TFlagManager::getInstance()->setBool(false, 0x30005);
@@ -246,7 +246,7 @@ bool TMarDirector::setupObjects()
 		break;
 	}
 
-	u32 bVar28 = SMS_getShineStage(currArea.unk0);
+	u32 bVar28 = SMS_getShineStage(currArea.getStage());
 	u32 flag = 0x103A5 + bVar28;
 	TFlagManager::getInstance()->setBool(true, flag);
 
