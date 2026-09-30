@@ -735,13 +735,8 @@ void THinokuri2::shakeCamera(int mode)
 	else
 		range = ((THino2Params*)getSaveParam())->mSLJumpShake.get();
 
-	f32 dist = getDistToMarioSquared();
-	if (range * range < dist)
-		return;
-
-	TCameraShake* shake = gpCameraShake;
-	shake->startShake((EnumCamShakeMode)mode, 0.8f);
-	// TODO: map size 0xA8, we emit 0xA4 (4 short).
+	if (getDistToMarioSquared() <= range * range)
+		gpCameraShake->startShake((EnumCamShakeMode)mode, 0.8f);
 }
 
 void THinokuri2::makeQuake(f32 len)
