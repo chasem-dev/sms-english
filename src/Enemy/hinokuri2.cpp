@@ -1024,8 +1024,10 @@ static inline const JGeometry::TVec3<f32>& Hino2NodePoint(const TPathNode& node)
 	return node.unk4;
 }
 
-// TODO: frame is 0xa8 short (0xd0 vs 0x178) with every instruction exact;
+// TODO: frame is 0xa0 short (0xd8 vs 0x178) with every instruction exact;
 // a deficit that size is a missing inline level or helper, not a lever.
+// getBodyScale() at all six reads (+0x10) and getMapCollisionManager()
+// with getUnk8() (+0x10) add frame too, but the file never uses them.
 void THinokuri2::moveObject()
 {
 	if (checkLiveFlag(LIVE_FLAG_DEAD))
@@ -1034,7 +1036,7 @@ void THinokuri2::moveObject()
 	if (unk164 > 0)
 		--unk164;
 
-	if (mLevel == 1) {
+	if (getLevel() == 1) {
 		f32 dhp    = calcHitPoints() - mHitPoints;
 		f32 fVar12 = 1.0f
 		             + (((THino2Params*)getSaveParam())->getSLDamageHeadScale() - 1.0f)
@@ -1069,7 +1071,7 @@ void THinokuri2::moveObject()
 	f32 headHitH = ((THino2Params*)getSaveParam())->mSLHeadHitH.value;
 	mHead->setDamageHeight(unk194 * (headHitH * mBodyScale));
 
-	if (mLevel == 0) {
+	if (getLevel() == 0) {
 		f32 bodyHitR0 = ((THino2Params*)getSaveParam())->mSLBodyHitR0.value;
 		mBody->setDamageRadius(unk194 * (bodyHitR0 * mBodyScale));
 		f32 bodyHitH0 = ((THino2Params*)getSaveParam())->mSLBodyHitH0.value;
