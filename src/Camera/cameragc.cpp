@@ -1083,8 +1083,11 @@ inline void CPolarSubCamera::ctrlGameCamera_()
 // is why perform calls MsClamp, TVec3::set, TUtil::one and setLength while
 // loadAfter expands the first three (the UNUSED calcExternalData_ is then
 // exactly its map size, 0x13c). perform 94.7 -> 99.66, instruction-exact.
-// TODO: frame 0x40 against the ROM's 0x68; the argument setup of
+// TODO: frame 0x58 against the ROM's 0x68; the argument setup of
 // TCameraBck::updateDemo and of the view-matrix copy follows the frame.
+// c-hs7: getCamMode() at every mode test (CameraWarp's spelling) is +0x18;
+// getUnk16C() at the three projection reads is +8 more but is never used in
+// this file.
 inline void CPolarSubCamera::ctrlCamera_()
 {
 	if (SMS_isOptionMap())
@@ -1109,18 +1112,18 @@ void CPolarSubCamera::perform(u32 cue, JDrama::TGraphics* graphics)
 		}
 		mUp.set(CLBConstUpVec);
 		unk254 = 0;
-		if (mMode != CAMERA_MODE_REPRODUCE_DEMO) {
+		if (getCamMode() != CAMERA_MODE_REPRODUCE_DEMO) {
 			ctrlCamera_();
 		}
 
-		if (mMode != CAMERA_MODE_REPRODUCE_DEMO) {
+		if (getCamMode() != CAMERA_MODE_REPRODUCE_DEMO) {
 			C_MTXPerspective(unk16C, mFovy, mAspect, mNear, mFar);
 			C_MTXLookAt(unk1EC, &unk124, &mUp, &unk148);
 		}
 
 		bool flag2 = (graphics->unk0 & 2) ? true : false;
 		if (flag2) {
-			if (mMode != CAMERA_MODE_REPRODUCE_DEMO) {
+			if (getCamMode() != CAMERA_MODE_REPRODUCE_DEMO) {
 				if (!(unk64 & CAMERA_FLAG_DEAD_DEMO)) {
 					if (unk64 & CAMERA_FLAG_GATE_DEMO) {
 						updateGateDemoCamera_();
@@ -1131,8 +1134,8 @@ void CPolarSubCamera::perform(u32 cue, JDrama::TGraphics* graphics)
 				}
 			}
 			if (!SMS_isOptionMap()) {
-				if (mMode != CAMERA_MODE_JET_COASTER
-				    && mMode != CAMERA_MODE_REPRODUCE_DEMO)
+				if (getCamMode() != CAMERA_MODE_JET_COASTER
+				    && getCamMode() != CAMERA_MODE_REPRODUCE_DEMO)
 					calcInHouseNo_(false);
 			}
 		}
