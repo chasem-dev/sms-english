@@ -487,7 +487,19 @@ void TEnemyManager::killChildrenWithin(const JGeometry::TVec3<f32>& p, f32 r)
 	}
 }
 
-void TEnemyManager::killOtherEnemies() { }
+// UNUSED (0xa4). Kills the enemies beyond the active count; it requests no
+// literal, as retail's .sdata2 order requires of everything between
+// createCopyAnmMtx and getFarOutEnemy.
+// TODO: 0xa8, one instruction over the map; the conductor-list spelling
+// (killing every other manager's children) is 0xbc and plain onLiveFlag 0x70.
+void TEnemyManager::killOtherEnemies()
+{
+	for (int i = getActiveObjNum(); i < mObjNum; ++i) {
+		TSpineEnemy* enemy = getObj(i);
+		if (!enemy->checkLiveFlag(LIVE_FLAG_DEAD))
+			enemy->kill();
+	}
+}
 
 int TEnemyManager::countLivingEnemy() const
 {
@@ -502,7 +514,37 @@ int TEnemyManager::countLivingEnemy() const
 	return result;
 }
 
-void TEnemyManager::createCopyAnmMtx(int) { }
+// UNUSED (0x15c). Bakes bck `idx` of the first enemy into per-frame joint
+// matrices, which copyAnmMtx concatenates with each enemy's scaled base
+// matrix. `new TPosition3f[]` is what emits the dead-stripped weak
+// TPosition3 ctor the map lists right after this function, and the (f32)
+// frame index requests the int-to-float double that retail's .sdata2 puts
+// first. The body is reconstructed from the map size and copyAnmMtx's use of
+// unk48/unk4C/unk50, not from retail code.
+// TODO: 0x160, one instruction over the map.
+void TEnemyManager::createCopyAnmMtx(int idx)
+{
+	unk4C = idx;
+
+	MActor* actor = getObj(0)->getMActor();
+	int prev = actor->getCurAnmIdx(ANM_TYPE_BCK);
+	actor->setBckFromIndex(idx);
+	J3DModel* model = actor->getModel();
+	unk50           = model->getModelData()->getJointNum();
+
+	J3DFrameCtrl* ctrl = actor->getFrameCtrl(ANM_TYPE_BCK);
+	int frames         = ctrl->getEnd();
+	unk48              = new TPosition3f*[frames];
+	for (int f = 0; f < frames; ++f) {
+		unk48[f] = new TPosition3f[unk50];
+		ctrl->setFrame(f);
+		MTXIdentity(model->getBaseTRMtx());
+		actor->calc();
+		for (int i = 0; i < unk50; ++i)
+			MTXCopy(model->getAnmMtx(i), unk48[f][i]);
+	}
+	actor->setBckFromIndex(prev);
+}
 
 // Binding level that lands copyAnmMtx's frame at retail's 0xc0 (0xb0
 // without it). Applied at one site only -- the level saturates per receiver.
@@ -546,7 +588,7 @@ bool TEnemyManager::copyAnmMtx(TSpineEnemy* enemy)
 	mtx[2][2] *= enemy->mScaling.z;
 
 	for (int i = 0; i < unk50; ++i) {
-		MTXConcat(mtx, unk48[f][i], concat);
+		MTXConcat(mtx, unk48[f][i].mMtx, concat);
 		enemy->getMActor()->getModel()->setAnmMtx(i, concat);
 	}
 
