@@ -130,8 +130,11 @@ static inline u8 KoopaFindGrip(TKoopa* koopa, TBathtub* bathtub)
 	return onGrip;
 }
 
-// TODO: 99.4%. Frame 0x88 short (retail 0x260) and one scheduling swap of
-// the spine load at entry; instructions otherwise match.
+// TODO: every instruction and register matches; frame 0x1d8 vs retail 0x260
+// (the estimated-position copies sit low). Passing the bathtub search
+// straight to KoopaFindGrip, as the tumble test below does, fixed the
+// registers (c-hs6); getRotation() for the yaw adds 8 but the file reads
+// mRotation raw everywhere.
 BOOL TNerveKoopaWait::execute(TSpineBase<TLiveActor>* spine) const
 {
 	TKoopa* koopa = (TKoopa*)spine->getBody();
@@ -142,8 +145,8 @@ BOOL TNerveKoopaWait::execute(TSpineBase<TLiveActor>* spine) const
 		return FALSE;
 	}
 
-	TBathtub* bathtub = (TBathtub*)JDrama::TNameRefGen::search2("バスタブ");
-	u8 onGrip = KoopaFindGrip(koopa, bathtub);
+	u8 onGrip = KoopaFindGrip(
+	    koopa, (TBathtub*)JDrama::TNameRefGen::search2("バスタブ"));
 
 	f32 diff = KOOPA_WRAP_DEGREES(koopa->mTargetDir - koopa->mRotation.y);
 	f32 focusRange = koopa->getParam()->focusRange.get();
