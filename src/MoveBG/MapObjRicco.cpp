@@ -114,7 +114,7 @@ void TCraneUpDown::control()
 
 	case STATE_TIPPING_UP:
 		mRotation.x += mRotSpeed;
-		if (mRotation.x > mRotXMax) {
+		if (getRotation().x > mRotXMax) {
 			mStateTimer = mWaitTime;
 			mState      = STATE_WAIT_AT_END;
 		}
@@ -127,7 +127,7 @@ void TCraneUpDown::control()
 
 	case STATE_TIPPING_DOWN:
 		mRotation.x -= mRotSpeed;
-		if (mRotation.x < mRotXMin) {
+		if (getRotation().x < mRotXMin) {
 			mStateTimer = mWaitTime;
 			mState      = STATE_WAIT_AT_START;
 		}
@@ -153,7 +153,7 @@ void TCraneUpDown::control()
 
 	if (MapObjRiccoIsState(this, STATE_TIPPING_DOWN)
 	    || MapObjRiccoIsState(this, STATE_TIPPING_UP))
-		SMSGetMSoundBound()->startSoundActor(mSoundId, &mPosition);
+		SMSGetMSound()->startSoundActor(mSoundId, &mPosition);
 }
 
 void TCraneUpDown::initMapObj()
