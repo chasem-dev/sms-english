@@ -1534,13 +1534,13 @@ DEFINE_NERVE(TNerveTinKoopaDamage, TLiveActor)
 
 	if (spine->getTime() == 0) {
 		tinKoopa->changeBck(
-		    TTinKoopa_getDamageAnimationIndex(tinKoopa->mDamageStage));
+		    TTinKoopa_getDamageAnimationIndex(tinKoopa->getDamageStage()));
 		gpMarioParticleManager->emitAndBindToMtxPtr(
 		    TINKOOPA_JPA_MS_MKP_HIBANA_D1HE,
 		    tinKoopa->getModel()->getAnmMtx(
 		        TTinKoopa_getJointIndex(TINKOOPA_JOINT_HEAD)),
 		    0, this);
-		SMSGetCameraShakeBound()->startShake(CAM_SHAKE_MODE_KILLER, 1.0f);
+		gpCameraShake->startShake(CAM_SHAKE_MODE_KILLER, 1.0f);
 	}
 
 	if (tinKoopa->getMActor()->checkCurBckFromIndex(
