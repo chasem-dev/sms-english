@@ -2892,3 +2892,4 @@ In progress; results are appended below as they are measured.
 - The debugger shows why: our extra word is the comma temporary at the bottom, while retail's extra word sits between `diff` and `operator*`'s return temporary, a parse-time position.
 - A comma in `*` as well (`return ((void)0, r)`) is worse (55 markers).
 - So at keepDistance retail has no late word for `operator-`, and at the coaster it has one: the count is per site (c-r20 already found 0, 1 and 2), and no single operator body can supply it.
+- Caveat: the bottom words are dead, so which one retail lacks is inferred from the count, not read from a slot reference; what is certain is that retail has one word more above `operator*`'s return temporary and one fewer somewhere below it.
