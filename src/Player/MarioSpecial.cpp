@@ -471,7 +471,10 @@ TBGCheckData* TMario::findNearestWall(const TBGWallCheckRecord& record)
 // 160 bytes, so that is not its body. c-k15: findNearestWall's distance as
 // `mNormal.dot(pos)` is +0x10; through getNormal()/getPlaneDistance() it is
 // +0x40 with every instruction still in place but more slots off (99.5 ->
-// 99.4, not landed).
+// 99.4, not landed). c-hs8: getNormal() at the four side-step wall reads and
+// getPrevPosition() at both anmRate reads bring the frame to 0x200; also
+// reading mIntendedMag through getIntendedMag() (never used in this file)
+// is another +0x10.
 BOOL TMario::hanging()
 {
 	BOOL pulledUp = FALSE;
@@ -535,17 +538,17 @@ BOOL TMario::hanging()
 			Vec newPos;
 			if (yawDiff > 0x400 && yawDiff < 0x71c7) {
 				newPos.x = mPosition.x
-				           - moveSp * (mIntendedMag * foundWall->mNormal.z);
+				           - moveSp * (mIntendedMag * foundWall->getNormal().z);
 				newPos.y = mPosition.y;
 				newPos.z = mPosition.z
-				           + moveSp * (mIntendedMag * foundWall->mNormal.x);
+				           + moveSp * (mIntendedMag * foundWall->getNormal().x);
 			}
 			if (yawDiff > -0x71c7 && yawDiff < -0x400) {
 				newPos.x = mPosition.x
-				           + moveSp * (mIntendedMag * foundWall->mNormal.z);
+				           + moveSp * (mIntendedMag * foundWall->getNormal().z);
 				newPos.y = mPosition.y;
 				newPos.z = mPosition.z
-				           - moveSp * (mIntendedMag * foundWall->mNormal.x);
+				           - moveSp * (mIntendedMag * foundWall->getNormal().x);
 			}
 
 			TBGCheckData* foundWall2 = nullptr;
@@ -608,8 +611,8 @@ BOOL TMario::hanging()
 	mModelFaceAngle = mFaceAngle.y;
 
 	if (pulledUp == TRUE) {
-		f32 dx = mPosition.x - mPrevPosition.x;
-		f32 dz = mPosition.z - mPrevPosition.z;
+		f32 dx = mPosition.x - getPrevPosition().x;
+		f32 dz = mPosition.z - getPrevPosition().z;
 		f32 anmRate
 		    = MsSqrtf(dx * dx + dz * dz) * mHangingParams.mAnmRate.get();
 		if (yawDiff < 0)
