@@ -1368,24 +1368,22 @@ DEFINE_NERVE(TNerveHino2Turn, TLiveActor)
 {
 	THinokuri2* self = (THinokuri2*)spine->getBody();
 
-	const TPathNode& node         = self->unkF4;
+	const TPathNode& node         = self->getUnkF4();
 	JGeometry::TVec3<f32> posDiff = Hino2NodePoint(node);
 
-	posDiff -= self->mPosition;
+	posDiff -= self->getPosition();
 
 	f32 angleDiff = MsAngleDiff(
 	    MsWrap(MsGetRotFromZaxisY(posDiff), 0.0f, 360.0f), self->mRotation.y);
 
 	if (spine->getTime() == 0 && fabsf(angleDiff) > 15.0f
-	    && self->mCurrentBck != 0x15) {
+	    && self->getCurrentBck() != 0x15) {
 		self->changeBck(0x15);
 	}
 
-	// TODO: instruction-exact; frame 0x70 vs 0x78 (posDiff 0x48 vs 0x50),
-	// so retail has two more dead words created after posDiff. Here angleDiff
-	// is an IRO temp (its named slot dead); the old symmetric_clamp helper had
-	// the frame but merged the two arms' `fmr f4, f31`. Inert: a named angle,
-	// getRotation().y, getCurrentBck(), any helper around the clamp.
+	// Reading the path node, position and current bck through their
+	// accessors gives retail's 0x78 frame; mRotation stays raw, read and
+	// written (getRotation().y as well is 8 over).
 	f32 turnSpeed = self->mTurnSpeed;
 	f32 fVar3;
 	if (angleDiff > 0.0f)
