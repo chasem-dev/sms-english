@@ -88,15 +88,6 @@ void SMS_SetMarioAccessParams();
 // Real, see bossgesso
 inline JGeometry::TVec3<f32>& SMS_GetMarioPos() { return *gpMarioPos; }
 
-// Fabricated: the Mario position pointer bound to a named local before it is
-// returned, +8 of low region per expansion over a raw gpMarioPos read.
-// Formerly parked TU-locally in three units under four names.
-inline JGeometry::TVec3<f32>* SMS_GetMarioPosBound()
-{
-	JGeometry::TVec3<f32>* pos = gpMarioPos;
-	return pos;
-}
-
 inline f32 SMS_GetMarioX() { return gpMarioPos->x; }
 inline f32 SMS_GetMarioY() { return gpMarioPos->y; }
 inline f32 SMS_GetMarioZ() { return gpMarioPos->z; }
