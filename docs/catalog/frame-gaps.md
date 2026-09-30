@@ -2734,3 +2734,51 @@ Answer: one function closed (TSelectDir::direct); no unit reached 100%, because 
 
 - A named local that is never live across a call (a constant result, a switch value) still takes a named-block slot, and its word can hide in alignment slack until a second one arrives, so test such names in pairs.
 - CameraChange stays blocked on changeCamModeSub_'s missing `bgt; b` pair (its data is gated on that function's size), MSoundScene on the three unreconstructed UNUSED helpers, and MapWarp, SelectDir::rsetup and MenuDir::rsetup on the known-open operator and JGadget classes.
+
+## Research batch c-r32 (2026-09-30): no JGadget header construct closes the pool-word class
+
+Question: which header-level construct does retail's JGadget have that ours lacks, behind the pool words of the eight functions blocked on the "JGadget iterator stride"?
+Answer: none was found; every candidate from the brief is inert, already refuted, or closes one site and breaks the functions that pin today's header.
+Nothing was committed apart from this entry.
+
+### Method
+
+- A header-overlay harness compiles every object that depends on a JGadget header (291 objects, deps from `ninja -t deps`) with the overlay ahead of `-i include`, then classifies each function against retail and against the base build (about 60 s tree-wide; 7543 exact functions in those units).
+- A single-unit scorer compiles one unit with an overlay and source variants and prints, per variant, the histogram of `retail - ours` r1 displacements; one displacement value means the grouping is right and only the count of objects below it differs.
+- `tools/mwcc-stack/dbg.sh` (with `OVL=`) dumps showed which object each slot is.
+
+### The target list is not one class
+
+- MapWarp is not a JGadget case: `init` differs by an r12/r19 and r8/r9 register swap in the warp-table copy loop, and `watchToWarp` is the by-value `operator+` class its TODO already records.
+- TDrawSyncManager::setCallback closes with one more reference-returning inline level between the site and `TVector::operator[]` (a TU-local `v[i]` wrapper, or a named `T* p = pBegin_ + u; return *p;` inside `operator[]`): the level's result object is the missing word below the temporary.
+- The header form is 4 up / 8 down tree-wide (CPolarSubCamera `controlByCameraCode_` and `ctrlOptionCamera_`, `SMS_IsInSameCameraCube`, `TCubeManagerArea::isInAreaCube`, `TMapWireManager::load`, `TLeafBoat::control`, `TMapObjWave::updateHeightAndAlpha` lose exactness and `watchToWarp` gets worse), so `operator[]` is right and the level belongs to the site.
+- The TU-local wrapper is a pass-through helper and the map has no TDrawSyncManager element accessor, so setCallback stays open.
+- `*(mCallbacks.begin() + i)`, `mCallbacks.begin()[i]`, a named `TDrawSyncTokenRange&` or `T*` for the element and a named range are all 4 or 8 off.
+- TVector::insert, SelectDir and MenuDir `rsetup` and MirrorActor `init` keep the residues their TODOs record (the insert depth surcharge, the director pool, the per-site bindings of cc39).
+
+### TPerformList::perform: the receiver, not the iterator, splits the chain
+
+- `forEachPerform(begin(), end(), graphics, cue)`, calling the inherited list directly with no `getChildren()`, gives retail's grouping for all but the last copy pair: top block [4], 3 dead, `it`, the end and begin chains contiguous, 1 dead, the `!=` copies, all at one displacement (0x40).
+- The dump shows why: `getChildren()` is a non-simple receiver, so each `begin()`/`end()` expansion binds it, and those two dead bindings sit between and under the chains, where retail has nothing.
+- What stays off on that site: retail has 3 dead words between the `!=` copies and the `==` copies where we have none, and 13 more words below them (frame 0xa8 against 0xe8).
+- Research 161's named result in `TSingleNodeLinkList::begin()`/`end()` supplies two of those three: the named `r` locals are depth-2 callee locals, created after the `!=` body's copies and before the `==` body's.
+- With the `getChildren()` site that lever lands 0xe8 with 12 slots off; on the direct site one word between the pairs and five below are still missing.
+- It stays unusable: `return r;` makes both `push_back` overloads call the out-of-line copy constructor, where retail copies the temporary bitwise, so retail's `TSingleNodeLinkList::end()` is `return iterator(mTail);`.
+- `begin()` is used only by `perform`, so it is free; a 5 x 4 grid of base and derived `begin()` bodies (temporary, named `r`, `const` `r`, named node pointer, `iterator(r)`; derived temporary, named base iterator, named derived result, `const` base) on both sites reaches 12 slots off at best, never exact.
+- 63 site spellings (receiver `getChildren().`, none or qualified; body `it->perform`, `(*it).perform` or the raw `mPerformer->testPerform`; `it++`, `++it`, `!(it == e)`, `while`, declare-then-assign with default constructors, looping on `b` itself) are no better; the `b`-loops and the raw body change instructions.
+
+### Header candidates, each measured
+
+- On `singlelinklist.hpp` (both sites of `perform` plus the 8 other dependents): an empty base on the base iterator (TP's `std::iterator`) and default constructors at both levels are byte-identical.
+- Also inert: the derived `operator==` as a `const&` cast, `operator!=` as `!operator==(a, b)` or `(a == b) == false`, `operator++(int)` spelled non-`const`, copy-initialised or through the base `operator++`, and `void` pre-increments.
+- Changing instructions: derived `operator==` by slicing copies or on `unk0`, `!=` through value casts, member comparisons, deleting both derived comparisons, a ternary `!=`, by-value pre-increments, and the base `operator++` through `operator->`.
+- Moving the pool but not onto retail's: deleting only the derived `==`, `operator!=` through the base operators, `operator->` reading `*unk0` or through a named node.
+- The map rules out an iterator destructor: `push_back` runs out of inline depth and calls both iterator constructors out of line, so a destructor would be emitted and called too, and the map has none.
+- On `std-list.hpp`, `TList_pointer<T>::iterator::operator==` written like TLinkList's and TSingleLinkList's (`(Base&)fst == (Base&)snd`) is 0 up / 12 down (the eight template loops, JDRNameRefGen and MarNameRefGen, and ObjHitCheck), so the direct `p_` compare is pinned.
+- Brief candidates already refuted and not re-run: by-reference iterator members, containment instead of inheritance and the TP/MKDD/pikmin2 shapes (cc39, c-r22); a derived `operator++` returning by value (js1); a named `end()` and an iterator-returning `push_back` (c-r4); by-value `insert`/`erase` iterator parameters are what the map mangles.
+
+### Reading
+
+- In MWCC a callee's named local is created later than its temporaries: a named local of an inline expanded inside an argument expression lands after the enclosing body's depth-2 copies, while a temporary lands with the argument's chain.
+- Retail's `perform` therefore has depth-2 objects in the `begin()`/`end()` chains that are not named iterators (those would change `push_back`) and a receiver that binds nothing between the chains; neither has been found.
+- Treat the eight functions as separate per-site residues, as cc39 concluded; no header round is pending for them.
