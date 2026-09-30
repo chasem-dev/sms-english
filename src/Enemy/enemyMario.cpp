@@ -1286,8 +1286,7 @@ void TEnemyMario::emRunAwayToNearestNode()
 		mDisappearPosition.y += 80.0f;
 		gpMarioParticleManager->emit(SCENE_KAGEMARIO_JPA_MS_KGM_CHANGE,
 		                             &mDisappearPosition, 0, nullptr);
-		SMSGetMSoundBound()->startSoundActor(MSD_SE_MA_KAGE_FIELD_AWAY,
-		                                       &mPosition, 0, nullptr, 0, 4);
+		SMSGetMSound()->startSoundActor(MSD_SE_MA_KAGE_FIELD_AWAY, &mPosition);
 		break;
 	case 8:
 		break;
@@ -1311,8 +1310,7 @@ void TEnemyMario::emRunAwayToNearestNode()
 	case 220:
 		gpMarioParticleManager->emit(SCENE_KAGEMARIO_JPA_MS_KGM_CHANGE,
 		                             &mDisappearPosition, 0, nullptr);
-		SMSGetMSoundBound()->startSoundActor(MSD_SE_MA_KAGE_FIELD_APPEAR,
-		                                       &mPosition, 0, nullptr, 0, 4);
+		SMSGetMSound()->startSoundActor(MSD_SE_MA_KAGE_FIELD_APPEAR, &mPosition);
 		break;
 	case 300:
 		if (SMSGetMarDirectorBound()->getCurrentMap() == 1) {
