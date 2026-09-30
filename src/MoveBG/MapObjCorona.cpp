@@ -1122,12 +1122,14 @@ u8 TBathtub::getNextGrip(const JGeometry::TVec3<f32>& pos,
 	return false;
 }
 
-// Unused; TODO: no call site survives, so the bit-per-message shape is a
-// guess constrained only by the map's 0x64.
+// UNUSED, 0x64 in the map. The message is a bit index into unk2A0 and the
+// balloon is 0x1E past it: TBathtub::perform's seven balloon blocks are this
+// body with the index folded (0-5 give balloons 0x1E-0x23, 15 gives 0x2D),
+// and the offset is what brings the body to the map's size.
 void TBathtub::showMessage(u32 message)
 {
 	if (!(unk2A0 & (1 << message)))
-		gpMarDirector->getConsole()->startAppearBalloon(message, true);
+		gpMarDirector->getConsole()->startAppearBalloon(message + 0x1E, true);
 	unk2A0 |= 1 << message;
 }
 
