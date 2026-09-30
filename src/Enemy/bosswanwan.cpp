@@ -1327,17 +1327,11 @@ void TBossWanwan::emitEffects()
 		gpMarioParticleManager->emit(BWANWAN_JPA_MS_BWAN_JUMP_SMOKE,
 		                             &mPosition, 0, nullptr);
 		if (getHitPoints() == 0) {
-			SMSGetMSoundBound()->startSoundActor(MSD_SE_M_BOSW_CHAIN_CAL_F,
-			                          mLeash->getRope()->mPoints[0].unkC, 0,
-			                          nullptr, 0, 4);
-			SMSGetMSoundBound()->startSoundActor(MSD_SE_M_BOSW_CHAIN_CAL_R,
-			                          &mPicket->mPosition, 0, nullptr, 0, 4);
+			SMSGetMSound()->startSoundActor(MSD_SE_M_BOSW_CHAIN_CAL_F, mLeash->getRope()->mPoints[0].unkC);
+			SMSGetMSound()->startSoundActor(MSD_SE_M_BOSW_CHAIN_CAL_R, &mPicket->mPosition);
 		} else {
-			SMSGetMSoundBound()->startSoundActor(MSD_SE_M_BOSW_CHAIN_ANG_F,
-			                          mLeash->getRope()->mPoints[0].unkC, 0,
-			                          nullptr, 0, 4);
-			SMSGetMSoundBound()->startSoundActor(MSD_SE_M_BOSW_CHAIN_ANG_R,
-			                          &mPicket->mPosition, 0, nullptr, 0, 4);
+			SMSGetMSound()->startSoundActor(MSD_SE_M_BOSW_CHAIN_ANG_F, mLeash->getRope()->mPoints[0].unkC);
+			SMSGetMSound()->startSoundActor(MSD_SE_M_BOSW_CHAIN_ANG_R, &mPicket->mPosition);
 		}
 	}
 
