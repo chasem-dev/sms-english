@@ -2345,17 +2345,17 @@ void ExecSpinNerve_Sub(TBossEel* eel)
 	CLBChaseGeneralConstantSpecifySpeed(
 	    &spinSpeed, maxSpeed, eel->getBossEelParams().mSLSpinAccel.get());
 	eel->mTurnSpeed = spinSpeed;
-	SMSGetCameraShakeBound()->keepShake(static_cast<EnumCamShakeMode>(0x18), 1.0f);
+	gpCameraShake->keepShake(static_cast<EnumCamShakeMode>(0x18), 1.0f);
 
 	if (eel->checkLiveFlag(TBossEel::LIVE_FLAG_UNK10000)) {
 		eel->mRotation.y -= spinSpeed;
-		if (eel->mRotation.y <= 0.0f)
+		if (eel->getRotation().y <= 0.0f)
 			BosseelBackSound()->startSoundActorWithInfo(
 			    MSD_SE_BS_UNG_ROLL, &eel->mPosition, nullptr, spinSpeed, 0, 0,
 			    nullptr, 0, 4);
 	} else {
 		eel->mRotation.y += spinSpeed;
-		if (eel->mRotation.y >= 360.0f)
+		if (eel->getRotation().y >= 360.0f)
 			BosseelBackSound()->startSoundActorWithInfo(
 			    MSD_SE_BS_UNG_ROLL, &eel->mPosition, nullptr, spinSpeed, 0, 0,
 			    nullptr, 0, 4);
