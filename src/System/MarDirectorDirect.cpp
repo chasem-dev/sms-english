@@ -565,9 +565,16 @@ void TMarDirector::currentStateFinalize(u8 next_state)
 	}
 }
 
+// TODO: every instruction and register matches; frame 0x78 vs retail 0xb0.
+// Naming the previous area's stage as a u8 for SMS_getShineStage adds 8
+// (c-hs6, one lone named value, not taken).
 void TMarDirector::setMario()
 {
 	bool cVar4 = false;
+	f32 fVar1;
+	const JGeometry::TVec3<f32>* pos;
+	int iVar9;
+	TWaterGun* waterGun;
 	if (TFlagManager::getInstance()->getBool(0x30006)) {
 		TFlagManager::getInstance()->setBool(false, 0x30006);
 		cVar4 = true;
@@ -582,9 +589,9 @@ void TMarDirector::setMario()
 
 	switch (unkD1) {
 	case 1: {
-		f32 fVar1 = 0.0f;
+		fVar1 = 0.0f;
 
-		const JGeometry::TVec3<f32>* pos = nullptr;
+		pos = nullptr;
 
 		if (uVar10) {
 			fVar1 = marioSetPosition->getUnk70(uVar10 - 1).y;
@@ -594,7 +601,7 @@ void TMarDirector::setMario()
 	} break;
 
 	case 2: {
-		int iVar9 = 0;
+		iVar9 = 0;
 		switch (SMS_getShineStage(gpApplication.mPrevArea.getStage())) {
 		case 5:
 		case 6:
@@ -605,9 +612,9 @@ void TMarDirector::setMario()
 			iVar9 = 2;
 			break;
 		}
-		f32 fVar1 = 0.0f;
+		fVar1 = 0.0f;
 
-		const JGeometry::TVec3<f32>* pos = nullptr;
+		pos = nullptr;
 
 		if (uVar10) {
 			fVar1 = marioSetPosition->getUnk70(uVar10 - 1).y;
@@ -622,7 +629,7 @@ void TMarDirector::setMario()
 
 	case 0:
 	default:
-		const JGeometry::TVec3<f32>* pos = nullptr;
+		pos = nullptr;
 		if (uVar10)
 			pos = &marioSetPosition->getUnk10(uVar10 - 1);
 		gpMarioOriginal->waitingStart(pos, 0.0f);
@@ -651,16 +658,16 @@ void TMarDirector::setMario()
 			break;
 
 		case 0x3C:
-			gpMarioOriginal->mWaterGun->changeNozzle(TWaterGun::Rocket, true);
+			gpMarioOriginal->getFludd()->changeNozzle(TWaterGun::Rocket, true);
 			break;
 
 		default: {
-			TWaterGun* waterGun = gpMarioOriginal->mWaterGun;
+			waterGun = gpMarioOriginal->getFludd();
 			waterGun->changeNozzle(
 			    (TWaterGun::TNozzleType)TFlagManager::getInstance()->getFlag(
 			        0x40004),
 			    true);
-			gpMarioOriginal->mWaterGun->changeNozzle(TWaterGun::Spray, true);
+			gpMarioOriginal->getFludd()->changeNozzle(TWaterGun::Spray, true);
 		} break;
 		}
 	}
