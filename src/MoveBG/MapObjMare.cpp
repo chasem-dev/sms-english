@@ -879,8 +879,7 @@ void TMuddyBoat::kill()
 
 	SMS_EasyEmitParticle(PARTICLE_MS_M_AMIATTACK, &mEffectPos, nullptr,
 	                     JGeometry::TVec3<f32>(1.0f, 1.0f, 1.0f));
-	SMSGetMSoundBound()->startSoundActor(MSD_SE_OBJ_DORO_BROKEN, &mPosition, 0, nullptr,
-	                          0, 4);
+	SMSGetMSound()->startSoundActor(MSD_SE_OBJ_DORO_BROKEN, &mPosition);
 
 	MTXCopy(MapObjMareGetModel(this)->getAnmMtx(0), getModel()->getBaseTRMtx());
 
