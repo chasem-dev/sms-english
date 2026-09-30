@@ -82,14 +82,16 @@ void TPoiHanaManager::perform(u32 cue, JDrama::TGraphics* graphics)
 
 // TODO: retail's frame is 0xe0 against our 0x40 with identical instructions
 // (hauntLeg and tamaNoko share the 0xe0 frame); the carrier is unknown.
+// TODO: instruction-exact; frame 0x50 vs retail 0xe0 (getObjNum() and
+// getObj(i) in the loop, as TTamaNokoManager reads them, +0x10, c-hs6).
 void TPoiHanaManager::initSetEnemies()
 {
 	int bodyIdx
 	    = getObj(0)->getModel()->getModelData()->getMaterialName()->getIndex(
 	        "_body");
 
-	for (int i = 0; i < mObjNum; ++i) {
-		TPoiHana* poiHana = (TPoiHana*)unk18[i];
+	for (int i = 0; i < getObjNum(); ++i) {
+		TPoiHana* poiHana = (TPoiHana*)getObj(i);
 		SMS_InitPacket_OneTevColor(poiHana->getMActor()->getModel(), bodyIdx,
 		                           GX_TEVREG0, &poiHana->unk1C0);
 	}
