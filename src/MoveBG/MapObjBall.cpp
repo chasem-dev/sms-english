@@ -1597,7 +1597,7 @@ void TBigWatermelon::touchActor(THitActor* param_1)
 
 	// A moving poihana bounces it back up instead.
 	if (param_1->isActorType(0x10000015) && ((TPoiHana*)param_1)->isMoving()) {
-		if (abs(mVelocity.y) < mMapObjData->getPhysicalData()->unkC) {
+		if (abs(mVelocity.y) < getMapObjData()->getPhysicalData()->unkC) {
 			mVelocity.y += 30.0f;
 			mState = STATE_LIVING;
 		}
