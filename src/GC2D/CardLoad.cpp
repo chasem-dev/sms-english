@@ -122,7 +122,21 @@ TCardLoad::TCardLoad(const char* name)
 	gpCardLoad = this;
 }
 
-void TCardLoad::changePattern(J2DPicture*, s16, u32) { }
+// UNUSED (0xc8): the same blink as TGuide::changePattern, which is 0xc8 in
+// the map too.
+void TCardLoad::changePattern(J2DPicture* pane, s16 timer, u32 period)
+{
+	u16 t = timer;
+	if (t % period == 0) {
+		if ((t / period) % 2 == 0) {
+			pane->setBlendKonstColor(0.0f, 1.0f, 0.0f, 0.0f);
+			pane->setBlendKonstAlpha(0.0f, 1.0f, 0.0f, 0.0f);
+		} else {
+			pane->setBlendKonstColor(1.0f, 0.0f, 0.0f, 0.0f);
+			pane->setBlendKonstAlpha(1.0f, 0.0f, 0.0f, 0.0f);
+		}
+	}
+}
 
 // TODO: frame 0x228 vs retail 0x240 (0x220 before getCurrentMap()): the low
 // temporary region is short (buffer and local_90 sit adjacent in both);

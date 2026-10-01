@@ -1653,7 +1653,21 @@ void TCardSave::selectBookmarks(TEProgress, TEProgress, TEProgress, TEProgress)
 {
 }
 
-void TCardSave::changePattern(J2DPicture*, s16, u32) { }
+// UNUSED (0xc8): the same blink as TGuide::changePattern, which is 0xc8 in
+// the map too.
+void TCardSave::changePattern(J2DPicture* pane, s16 timer, u32 period)
+{
+	u16 t = timer;
+	if (t % period == 0) {
+		if ((t / period) % 2 == 0) {
+			pane->setBlendKonstColor(0.0f, 1.0f, 0.0f, 0.0f);
+			pane->setBlendKonstAlpha(0.0f, 1.0f, 0.0f, 0.0f);
+		} else {
+			pane->setBlendKonstColor(1.0f, 0.0f, 0.0f, 0.0f);
+			pane->setBlendKonstAlpha(1.0f, 0.0f, 0.0f, 0.0f);
+		}
+	}
+}
 
 // TODO: 99.3%, instruction-exact (only `~` rows). Frame 0x5d8 vs 0x5e8.
 // Slot pairing: every bookmark read is `getBookmarkInfo(unk2EA)` (one dead
