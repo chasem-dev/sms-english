@@ -847,8 +847,13 @@ int TTelesaSlot::getResultFromAng(f32 angle)
 // TODO: incorrect size. Map records 412 bytes.
 void TTelesaSlot::calcObjCollision() { }
 
-// TODO: incorrect size. Map records 88 bytes.
-void TTelesaSlot::entryObjCollision() { }
+// UNUSED (0x58): TMameGesso::entryObjCollision's two triangles over the same
+// collision-plus-four-vertices layout, 0x58 in the map too.
+void TTelesaSlot::entryObjCollision()
+{
+	unk1DC->setVertexData(0, unk1AC[2], unk1AC[1], unk1AC[0]);
+	unk1DC->setVertexData(1, unk1AC[0], unk1AC[3], unk1AC[2]);
+}
 
 f32 TBossTelesa::mEnemyGenRate           = 0.5f;
 f32 TBossTelesa::mItemGenRate            = 0.1f;
