@@ -139,8 +139,7 @@ void TSamboFlowerCoinUnit::checkGenCoin()
 			if (flower->mCoin == nullptr)
 				continue;
 
-			TSamboFlowerSaveLoadParams* dropParams = flower->mSaveParams;
-			f32 radius = dropParams->mSLCoinCircleR.get();
+			f32 radius = flower->mSaveParams->mSLCoinCircleR.get();
 			JGeometry::TVec3<f32> offset;
 			offset.x = 0.0f;
 			offset.y = 0.0f;
