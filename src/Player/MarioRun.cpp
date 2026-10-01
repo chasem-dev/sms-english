@@ -1260,8 +1260,11 @@ BOOL TMario::slipForeCommon(int arg0, int arg1, int arg2, int arg3)
 
 BOOL TMario::slipFore()
 {
-	return slipForeCommon(MARIO_STATUS_SLIP_END, MARIO_STATUS_JUMP,
-	                      MARIO_STATUS_SLIP_FALL, 0x91);
+	// Named: 8 bytes of moveMain's frame (see there); the UNUSED copy keeps
+	// its 0xc8.
+	BOOL result = slipForeCommon(MARIO_STATUS_SLIP_END, MARIO_STATUS_JUMP,
+	                             MARIO_STATUS_SLIP_FALL, 0x91);
+	return result;
 }
 
 BOOL TMario::slipBackCommon(int arg0, int arg1, int arg2)
@@ -1761,14 +1764,12 @@ BOOL TMario::broadJumpSlip()
 	return 0;
 }
 
-// TODO: instructions match; frame 0x58 against retail's 0x60. braking's
-// named doBraking result and the two-argument slip sound (as in catching)
-// supply 0x10 of the original 0x18 gap.
-// lever-search closes the rest only by wrapping handlers in one-use binders
-// (+8 frame each): the same class as jumpMain's state-handler gap
-// (MarioJump.cpp); refused, needs one real cause. The +8 is a named local
-// whose value an inline body returns (`BOOL r = ...; return r;`); a
-// direct-return forwarder is +0 and per-case `return f();` is -8.
+// braking's named doBraking result and the two-argument slip sound (as in
+// catching) supply 0x10 of the original 0x18 frame gap; slipFore's named
+// result is the last 8 (c-t3). Lever-search had found only one-use binders
+// around the handlers for it; the +8 is a named local whose value an inline
+// body returns (`BOOL r = ...; return r;`), and a direct-return forwarder is
+// +0. slipBack's result named instead is byte-identical; both overshoot (0x68).
 BOOL TMario::moveMain()
 {
 	BOOL ret = 0;
