@@ -19,7 +19,17 @@ u16* __peReg;
 u16* __cpReg;
 u32* __piReg;
 
-// asm function got removed here
+asm BOOL IsWriteGatherBufferEmpty(void)
+{
+#ifdef __MWERKS__ // clang-format off
+	nofralloc
+	sync
+	mfspr r3, WPAR
+	andi. r3, r3, 1
+	blr
+#endif // clang-format on
+}
+
 #pragma peephole off
 
 static void EnableWriteGatherPipe(void)
