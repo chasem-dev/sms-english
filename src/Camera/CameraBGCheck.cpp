@@ -71,7 +71,7 @@ void CPolarSubCamera::calcInHouseNo_(bool param_1)
 					const TBGCheckData* local_138;
 					gpMap->checkGroundIgnoreWaterSurface(local_12C, &local_138);
 					if (local_138 && local_138->isOob()) {
-						unk2CA = local_138->getData();
+						unk2CA = local_138->mData;
 						calcInHouseNoSub_();
 						return;
 					}
