@@ -78,7 +78,7 @@ class TrialDB:
     def put(self, fn, unit, h, score: Score, moves: str, secs: float):
         row = score.to_row() if score.ok else "FAIL " + score.err[:200]
         with self.lock:
-            self.db.execute("INSERT OR IGNORE INTO trials VALUES (?,?,?,?,?,?,?,?)",
+            self.db.execute("INSERT OR REPLACE INTO trials VALUES (?,?,?,?,?,?,?,?)",
                             (fn, unit, h, row, score.sig, moves, secs, time.time()))
             self.db.commit()
 
@@ -195,6 +195,8 @@ class Evaluator:
             if h in self.mem:
                 return self.mem[h]
         row = self.db.get(self.fn, h)
+        if row is not None and not row[0].startswith("FAIL") and row[0].count(",") < 8:
+            row = None  # recorded before the fuzzy match was kept: rescore it
         if row is not None:
             sc = Score.from_row(row[0], row[1])
             with self.lock:
@@ -273,7 +275,7 @@ NO_DBG = (10 ** 6,) * 4
 
 
 class RK:
-    """Rank of a state: exactness, instructions and frame first; then the
+    """Rank of a state: exactness, fuzzy match, instructions and frame first; then the
     layout distance when both sides have one (dumps are only taken for the
     best candidates), else the register and slot counts."""
     __slots__ = ("k", "d")
@@ -282,11 +284,11 @@ class RK:
         self.k, self.d = k, d
 
     def __lt__(self, o: "RK") -> bool:
-        if self.k[:3] != o.k[:3]:
-            return self.k[:3] < o.k[:3]
+        if self.k[:4] != o.k[:4]:
+            return self.k[:4] < o.k[:4]
         if self.d is not None and o.d is not None and self.d != o.d:
             return self.d < o.d
-        return self.k[3:] < o.k[3:]
+        return self.k[4:] < o.k[4:]
 
     def __gt__(self, o: "RK") -> bool:
         return o < self
@@ -466,7 +468,7 @@ class Search:
                 if cur is None or rk(st) < rk(cur):
                     states[st.score.sig] = st
                 if rk(st) < rk(best):
-                    if st.score.key[:3] < best.score.key[:3] or (st.dbg or NO_DBG) < (best.dbg or NO_DBG):
+                    if st.score.key[:4] < best.score.key[:4] or (st.dbg or NO_DBG) < (best.dbg or NO_DBG):
                         self.best_at = (time.time() - t_start, self.ev.builds)
                     best = st
 
@@ -526,7 +528,7 @@ class Search:
         text_of = {i: t for t, i in move_of.items()}
         if self.dumper:
             cands = [State(t, sc, [mv]) for t, mv, sc in res1
-                     if sc.ok and sc.sig != base.sig and sc.key[:3] <= base.key[:3]]
+                     if sc.ok and sc.sig != base.sig and sc.key[:4] <= base.key[:4]]
             dumped = self.dump_top(cands, self.dbg_k * 2, deadline, force=True)
             note_dbg(dumped)
             self.log("  singles layout: %s" % ", ".join(
@@ -539,7 +541,7 @@ class Search:
         # ---- 2. beam over useful singles on the base text
         base_rk = rk(states[base.sig])
         useful = [i for i, s in singles.items() if i >= 0 and s.ok and
-                  (s.key < base.key or (s.sig != base.sig and s.key[:2] <= base.key[:2]) or srk(i) < base_rk)]
+                  (s.key < base.key or (s.sig != base.sig and s.key[:3] <= base.key[:3]) or srk(i) < base_rk)]
         useful.sort(key=srk)
         pool, sigs = [], set()
         for i in useful:
@@ -577,7 +579,7 @@ class Search:
                     sg.add(sc.sig)
                     nxt.append((combo_of.get(text, ()), State(text, sc, mv.split(" + "))))
             if self.dumper:
-                note_dbg(self.dump_top([st for _, st in nxt if st.score.key[:3] <= best.score.key[:3]],
+                note_dbg(self.dump_top([st for _, st in nxt if st.score.key[:4] <= best.score.key[:4]],
                                        self.dbg_k, beam_deadline))
             nxt.sort(key=lambda x: rk(x[1]))
             beam_states = [(c, st.score) for c, st in nxt if c][:6]
@@ -659,10 +661,10 @@ class Search:
                         return self._finish(res, best, "exact", t_start, rejected_exact)
                     if sc.ok:
                         oks.append(State(text, sc, mv.split(" + ")))
-                if self.dumper and oks and oks[0].score.key[:3] <= cur.score.key[:3]:
+                if self.dumper and oks and oks[0].score.key[:4] <= cur.score.key[:4]:
                     if cur.dbg is None and text_hash(cur.text) not in self.dbgmem and self.dump_ok():
                         cur.dbg = self.dbg_of(cur.text)
-                    note_dbg(self.dump_top([o for o in oks if o.score.key[:3] == oks[0].score.key[:3]],
+                    note_dbg(self.dump_top([o for o in oks if o.score.key[:4] == oks[0].score.key[:4]],
                                            1, deadline))
                 step = min(oks, key=rk) if oks else None
                 if step and rk(step) < rk(cur):

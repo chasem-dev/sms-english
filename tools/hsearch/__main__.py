@@ -133,7 +133,7 @@ def cmd_stats(args):
 def cmd_score(args):
     u = find_unit(args.unit)
     T = Target(u.target)
-    sc = T.score_elf(Elf(os.path.join(ROOT, u.obj)), args.function, detail=True)
+    sc = T.score(os.path.join(ROOT, u.obj), args.function, detail=True)
     print(sc.short())
     for d in sc.detail[:60]:
         print("  " + d)

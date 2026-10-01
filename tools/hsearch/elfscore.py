@@ -1,5 +1,8 @@
 """In-process scoring of one function against the retail object.
 
+Ranking leads with objdiff's fuzzy match percent (`fuzzy_match`), the metric
+`ninja changes_all` gates on; the finer in-process counts break its ties.
+
 No objdiff: both objects are parsed here (ELF32 big-endian, MWCC output and
 the dtk-split retail objects), the function's words are compared with every
 relocated field masked, and relocation targets are compared by identity
@@ -7,13 +10,17 @@ relocated field masked, and relocation targets are compared by identity
 bytes they point at, `name$NNN` statics by their name without the number).
 
 The score is lexicographic, lower is better:
-    (not exact, differing instructions, |frame delta|, register mismatches,
-     r1 slot-offset mismatches)
+    (not exact, -fuzzy match percent, differing instructions, |frame delta|,
+     register mismatches, r1 slot-offset mismatches)
 """
 
 import difflib
+import json
+import os
 import re
 import struct
+import subprocess
+import tempfile
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple
 
@@ -247,13 +254,15 @@ class Score:
     n_t: int = 0
     n_o: int = 0
     sig: str = ""
+    fuzzy: Optional[float] = None  # objdiff's fuzzy_match_percent, as report.json has it
     detail: List[str] = field(default_factory=list)
 
     @property
     def key(self) -> tuple:
         if not self.ok:
-            return (2, 10 ** 6, 0, 0, 0)
-        return (0 if self.exact else 1, self.n_struct, abs(self.frame_t - self.frame_o), self.n_reg, self.n_slot)
+            return (2, 0.0, 10 ** 6, 0, 0, 0)
+        return (0 if self.exact else 1, -round(self.fuzzy or 0.0, 4), self.n_struct,
+                abs(self.frame_t - self.frame_o), self.n_reg, self.n_slot)
 
     @property
     def match(self) -> float:
@@ -270,19 +279,22 @@ class Score:
             return "EXACT"
         fr = "frame %#x" % self.frame_o if self.frame_t == self.frame_o else "frame %#x/%#x" % (self.frame_t, self.frame_o)
         sz = "" if self.n_t == self.n_o else " len %d/%d" % (self.n_t, self.n_o)
-        return "insn %d reg %d slot %d %s%s" % (self.n_struct, self.n_reg, self.n_slot, fr, sz)
+        fz = "" if self.fuzzy is None else "fuzzy %.2f%% " % self.fuzzy
+        return "%sinsn %d reg %d slot %d %s%s" % (fz, self.n_struct, self.n_reg, self.n_slot, fr, sz)
 
     def to_row(self) -> str:
-        return "%d,%d,%#x,%#x,%d,%d,%d,%d" % (self.exact, self.n_struct, self.frame_t, self.frame_o,
-                                              self.n_reg, self.n_slot, self.n_t, self.n_o)
+        return "%d,%d,%#x,%#x,%d,%d,%d,%d,%s" % (self.exact, self.n_struct, self.frame_t, self.frame_o,
+                                                 self.n_reg, self.n_slot, self.n_t, self.n_o,
+                                                 "" if self.fuzzy is None else "%.5f" % self.fuzzy)
 
     @classmethod
     def from_row(cls, row: str, sig: str = "") -> "Score":
         if row.startswith("FAIL"):
             return cls(False, row[5:])
         v = row.split(",")
+        fz = float(v[8]) if len(v) > 8 and v[8] else None
         return cls(True, "", bool(int(v[0])), int(v[1]), int(v[2], 0), int(v[3], 0), int(v[4]), int(v[5]),
-                   int(v[6]), int(v[7]), sig)
+                   int(v[6]), int(v[7]), sig, fuzzy=fz)
 
 
 def _frame(words: List[int]) -> int:
@@ -368,10 +380,37 @@ def compare(t: Func, o: Func, detail: bool = False) -> Score:
     return sc
 
 
+OBJDIFF = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "build", "tools", "objdiff-cli")
+
+
+def fuzzy_match(target_path: str, obj_path: str) -> Dict[str, float]:
+    """objdiff's fuzzy match percent of every function in `obj_path` against
+    the retail object, with the options `objdiff-cli report generate` uses
+    (function relocation diffs off), so the values equal report.json's
+    `fuzzy_match_percent` and what `ninja changes_all` compares.
+    Empty when objdiff-cli is missing or fails."""
+    fd, out = tempfile.mkstemp(suffix=".json")
+    os.close(fd)
+    try:
+        r = subprocess.run([OBJDIFF, "diff", "-c", "functionRelocDiffs=none", "-1", target_path,
+                            "-2", obj_path, "-o", out], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        if r.returncode != 0:
+            return {}
+        with open(out) as f:
+            d = json.load(f)
+    except (OSError, ValueError):
+        return {}
+    finally:
+        os.remove(out)
+    return {s["name"]: float(s.get("match_percent") or 0.0) for s in d.get("right", {}).get("symbols", [])
+            if s.get("kind") == "SYMBOL_FUNCTION"}
+
+
 class Target:
     """The retail object of one unit, parsed once."""
 
     def __init__(self, path: str):
+        self.path = path
         self.elf = Elf(path)
         self.funcs = {n: extract(self.elf, n) for n in self.elf.functions()}
         self.data = self._data_sections(self.elf)
@@ -384,12 +423,15 @@ class Target:
                 out[s["name"]] = elf.sec_bytes(i)
         return out
 
-    def score(self, obj_path: str, fn: str) -> Score:
+    def score(self, obj_path: str, fn: str, detail: bool = False) -> Score:
         try:
             elf = Elf(obj_path)
         except (OSError, ValueError) as ex:
             return Score(False, str(ex))
-        return self.score_elf(elf, fn)
+        sc = self.score_elf(elf, fn, detail)
+        if sc.ok:
+            sc.fuzzy = 100.0 if sc.exact else fuzzy_match(self.path, obj_path).get(fn)
+        return sc
 
     def score_elf(self, elf: Elf, fn: str, detail: bool = False) -> Score:
         t = self.funcs.get(fn)
@@ -403,10 +445,16 @@ class Target:
     def profile(self, obj_path: str) -> Dict[str, tuple]:
         """Score key of every retail function, plus data-section equality."""
         elf = Elf(obj_path)
+        fz = fuzzy_match(self.path, obj_path)
         out = {}
         for n, t in self.funcs.items():
             o = extract(elf, n)
-            out[n] = compare(t, o).key if o is not None else (3, 0, 0, 0, 0)
+            if o is None:
+                out[n] = (3, 0.0, 0, 0, 0, 0)
+                continue
+            sc = compare(t, o)
+            sc.fuzzy = fz.get(n)
+            out[n] = sc.key
         ours = self._data_sections(elf)
         for n, b in self.data.items():
             out["[data]" + n] = (0,) if ours.get(n) == b else (1,)

@@ -33,10 +33,15 @@ The machine has four cores shared with other agents: keep `-j` at 2 or 3.
 The score is lexicographic, lower is better:
 
 1. byte-exact or not;
-2. differing instructions (opcode, immediate or relocation target differ, plus the length difference);
-3. the frame-size delta;
-4. register-operand mismatches;
-5. `r1` slot-offset mismatches.
+2. objdiff's fuzzy match percent for the function, higher is better: the value `report.json` records and `ninja changes_all` compares (`objdiff-cli diff -c functionRelocDiffs=none`, the option `report generate` uses), so a candidate ranked better is never one changes_all reads as a regression;
+3. differing instructions (opcode, immediate or relocation target differ, plus the length difference);
+4. the frame-size delta;
+5. register-operand mismatches;
+6. `r1` slot-offset mismatches.
+
+The counts below the fuzzy match only break its ties: before it led, an edit that landed the frame but lost registers ranked as a gain and then read as a regression in changes_all.
+The unit profile behind the exact-variant check ranks every other function the same way.
+Trials recorded before the fuzzy match was kept are rescored on first use.
 
 On the full tree the scorer agrees with `tools/mwcc-stack/census.py` on 11992 of 11998 exact functions (the rest are relocation-name artefacts of the split, and a few functions census calls `other` that are byte-exact).
 Scoring a function takes milliseconds; the compile dominates.
