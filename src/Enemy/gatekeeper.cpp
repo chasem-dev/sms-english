@@ -350,6 +350,18 @@ TBiancoGateKeeper::TBiancoGateKeeper(const char* name)
 // ctor and `getActorKeeper()` for the anmData fetch -- frame 0x1c8 exact but
 // the pool still 0x1c low at the bottom and one word short above the own-site
 // group (score 288 from 2000+), and `this` stays in r28. Not applied.
+// c-k31 slot map (hsearch dbg + statement tagger, gap 22): every mapped
+// iterator group sits 11-14 words higher in retail, with nine one-word
+// boundaries. Depth 1: retail has one more object before the own push
+// (lines 355-389), one fewer between it and the TBGKObstacle `new` (ours:
+// the initWith/getMActor/getMActorAnmData/getAnmPtr bindings), and one more
+// between that `new` and the TGKHitObj `new` (ours: only the
+// SMS_ChangeTextureAll argument's getMActor()/getModel() bindings).
+// Deeper: retail has none of the three search chains' TNameRefGen
+// bindings where ours puts them (just above each push's deepest iterator
+// pair), and one more word after the own push's depth-2 group, after the
+// initWith nerve's deeper binding and after the HitObj list binding; 13
+// words more below everything.
 void TBiancoGateKeeper::init(TLiveManager* manager)
 {
 	mManager = manager;

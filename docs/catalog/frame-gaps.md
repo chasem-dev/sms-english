@@ -3148,3 +3148,52 @@ Nothing was committed apart from this entry, the two TODO notes and the frame-mo
 ### Rule for the next agent
 
 - Before trying any JGadget header shape, tag the words between push_back's depth groups with the statements that made them; the residue names a statement, and the fix is that statement's depth.
+
+## Closure batch c-k31 (2026-10-01): reading c-r38's depth markers per statement
+
+Targets: the last open function of MirrorActor, PerformList, MarDirectorSetupObjects, SelectDir and gatekeeper.
+None closed; SelectDir's rsetup moved 99.63 -> 99.67 (frame 0x618 -> 0x638 of 0x648, register webs 2 -> 0) in one commit.
+
+### Method
+
+- `tools/hsearch/dbgobj.py` deletes its dump directory, and its `@N` numbers differ from `tools/mwcc-stack/dbg.sh` (dbgobj prepends the unit's precompiled header), so c-r38's tagger cannot be joined to `hsearch dbg` output from a separate dump.
+- A scratch wrapper that runs dbgobj's `Dumper` and `layout`, keeps the dump, and joins `tag.py`'s statement lines to the retail offsets gives one table per object: our slot, retail slot, source line and type.
+- dbgobj's dump timeout is 300 s; setupObjects needs about 7 minutes.
+
+### SelectDir rsetup (applied)
+
+- Retail has three more depth-1 words between the seventh and eighth `push_back` groups, where the only statements are the two gamepad stores: reading them as `getGamePad()->mFlags = 1; getSelectMenu()->mGamePad = getGamePad();` (the existing header accessors) lands those three words.
+- The three `TLookAtCamera` TVec3 temporaries were created position, target, up in ours and position, up, target in retail; reordering the constructor's parameters to `(position, up, target, ...)` (the JSG accessor order and the member order) fixes the slot order and the f2/f3/f4 constant registers. rsetup is its only caller.
+- Gap 34 -> 14 words, webs 2 -> 0, symbol order PASS.
+
+### The TDStageDisp screen-list site (owner decision)
+
+- At every `stageDisp->getUnk14()->getChildren().push_back(screen)` site, retail creates the TDStageDisp receiver binding at depth 2 and the list's `getChildren()` binding at depth 3; ours has both at depth 2.
+- Replacing the fabricated `getUnk14()` with `JGadget::TList_pointer<TViewObj*>& getUnk14Children() { return ((TViewObjPtrListT<TViewObj>*)unk14)->getChildren(); }` in `JDRDStage.hpp`, and the sites with `stageDisp->getUnk14Children().push_back(x)`, fixes that boundary in all four users.
+- Measured: SelectDir rsetup gap 14 -> 4 (99.67 -> 99.76); MovieDirector rsetup gap 14 -> 12 and MenuDir rsetup 50 -> 48 at unchanged percentages; GCLogoDir setup gap 6 -> 4 but 99.94 -> 99.86, because its other two one-word errors no longer cancel.
+- So it was not applied; GCLogoDir's remaining depth-1 error is one word more in retail around `mProgSelect`'s two stores (lines 100-102) and one fewer after the last push (the `getFader()` binding at line 125), and getProgSelect()/raw-mFader spellings there cost 8-16 bytes.
+- Two-level spellings are worse: `getUnk14()->getChildren()` inside the accessor leaves five words below the pool, and a named local in `getUnk14()` adds one depth-2 word per site.
+- Still open in rsetup after it: one word above `group3D`, one depth-2 word between the seventh and eighth push, and two depth-2 words after the last push (the `unkC.off`/`on` statements are the only candidates; `on`/`off` through `set()` changes code).
+
+### MirrorActor init
+
+- Spelling entryMirrorDrawBufferAlways's two searches unnamed through any one-level wrapper (`TNameRefGen::search<TDrawBufObj>`, `getInstance()->search<TDrawBufObj>`, a cast of `search2`) makes `init` byte-exact.
+- Each of those leaves the function's own out-of-line copy 8-16 bytes of frame over; that copy is exact only with the raw chain and a named `dbOpa` (dbXlu named or not), so the body is pinned and the missing level belongs to the call site, as c-r38 found.
+- Writing the body into `init`'s `if` (MapStaticObject's ReflectSky shape) changes code (93.7%).
+- No real enclosing member was found in the map or the headers.
+
+### gatekeeper init
+
+- Mapped per statement (gap 22): at depth 1 retail has one more object before its own push, one fewer between that push and the TBGKObstacle `new` (ours: the initWith, getMActor, getMActorAnmData and getAnmPtr bindings) and one more between that `new` and the TGKHitObj `new`.
+- Deeper, retail has none of the three search chains' TNameRefGen bindings where ours puts them and one more word at three other boundaries; 13 words more below.
+- Each of the three constructors (TBGKObstacle, TGKHitObj, TBGKMtxCalc) is UNUSED in this unit in the map, so all are .cpp-defined and their own sizes already match; the constructor location is not the lever here.
+
+### setupObjects and PerformList
+
+- setupObjects: `hsearch dbg` gives order 6, gap 488, with the named block wrong first; the inline pool cannot be read until the named block is.
+- PerformList: `TSingleLinkList` is used only by PerformList.cpp and the library's own singlelinklist.cpp, so no other TU gives evidence for c-r38's `operator->`/`operator!=` spellings; nothing new was tried.
+
+### Rule for the next agent
+
+- Join the statement tagger to `hsearch dbg` output from the same dump before reading a gap: the per-line attribution named both rsetup fixes in two runs.
+- A one-word move between depth bands at every site of one accessor is that accessor's real shape; check the accessor's other users and their percentages before applying it.

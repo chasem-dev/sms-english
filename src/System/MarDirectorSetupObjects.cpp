@@ -166,6 +166,11 @@ static inline void MarDirectorLoadEventWatchers(TMarDirector* director, const ch
 // typing it as a TNameRefPtrListT wrote every insert 4 bytes low and
 // corrupted the group at boot. Spelling the inserts as push_back or
 // getChildren().push_back breaks >100 instructions.
+// c-k31: `hsearch dbg` needs ~7 minutes here (dbgobj's 300 s dump timeout
+// must be raised); it reports order 6, gap 488: the named block is the
+// first problem (all four `stream` and three `leftoversStream` locals map
+// to one retail slot each, which may be the mapper merging same-named
+// locals), so the inline pool cannot be read before the named block is.
 bool TMarDirector::setupObjects()
 {
 	TFlagManager::getInstance()->resetStage();

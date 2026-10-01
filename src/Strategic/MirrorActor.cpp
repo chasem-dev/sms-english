@@ -160,6 +160,13 @@ void TMirrorActor::entryMirrorDrawBufferAlways(J3DModel* model)
 // every slot and swaps the search root to r29. Retail's enclosing inline is
 // not identified. Inert: `this->`/qualified call, raw unk14, entry defined
 // after init (also breaks map order); `insert(this)` changes code.
+// c-k31: spelling entryMirrorDrawBufferAlways's two searches unnamed through
+// any one-level wrapper (`TNameRefGen::search<TDrawBufObj>`,
+// `getInstance()->search<TDrawBufObj>` or a cast of `search2`) makes this
+// function byte-exact, but its own out-of-line copy is then 8-16 bytes of
+// frame over; that copy is exact only with the raw chain and a named dbOpa,
+// so the body is pinned and the extra level belongs to the call site. Copying
+// the body into this `if` (MapStaticObject's ReflectSky shape) changes code.
 void TMirrorActor::init(J3DModel* param_1, u16 param_2)
 {
 	unk1A = param_2;
