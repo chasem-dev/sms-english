@@ -143,9 +143,11 @@ void FeetInvCalc(J3DModel* model, u16 jnt_hip, u16 jnt_knee, u16 jnt_foot,
 
 	f32 f28 = FeetInvAngleBetween(toFoot, toKnee);
 
-	f32 knee = FeetInvAcosDeg((f30 * f30 + f31 * f31 - f29 * f29)
-	                          / (2.0f * f30 * f31));
-	f32 hip  = FeetInvAsinDeg(f31 * JMASin(knee) / f29);
+	f32 hip = FeetInvAsinDeg(
+	    f31
+	    * JMASin(FeetInvAcosDeg((f30 * f30 + f31 * f31 - f29 * f29)
+	                            / (2.0f * f30 * f31)))
+	    / f29);
 
 	f32 rz    = -(hip - f28);
 	f32 sinRz = JMASin(rz);
