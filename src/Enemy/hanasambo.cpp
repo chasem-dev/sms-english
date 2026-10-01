@@ -1484,22 +1484,28 @@ SamboHeadGetPoint(const TSamboHead* p)
 }
 
 // Hops toward Mario, one jump every mSLJumpPrepareTime frames.
-// TODO: instruction-exact; retail's stack block sits 0xc lower for goal and
-// 0x14 lower for the call temporaries (a 12-byte hole above goal and another
-// between goal and the calcVelocityToJumpToY result). A by-value getPoint,
-// a top-declared goal and a temporary for goal.set were all inert or worse.
+// TODO: instruction-exact, frame 0x118 against 0x120. The named prepareTime
+// (raw params read) and the marioPos/dx/dz offsets put goal, the
+// calcVelocityToJumpToY result and the three TVec3 temporaries at retail's
+// offsets (c-k28); retail homes one more word above goal (after airborne and
+// prepareTime). Adding `f32 dy = 0.0f` for goal.set lands the frame but puts a
+// fourth word between goal and the result (17 markers against 9); a named
+// `const TVec3& point` for goal's copy moves a low word up (0x120, 14 markers,
+// slots off by one); marioPos declared above goal changes the code.
 DEFINE_NERVE(TNerveSamboHeadAttack, TLiveActor)
 {
 	TSamboHead* head = (TSamboHead*)spine->getBody();
 	bool airborne    = head->isAirborne();
 	if (!airborne) {
-		if (head->mJumpTimer > SamboHeadAtkParams(head)->mSLJumpPrepareTime.get()
-		    && head->checkCurAnmEnd(0)) {
+		s32 prepareTime = head->mSaveParams->mSLJumpPrepareTime.get();
+		if (head->mJumpTimer > prepareTime && head->checkCurAnmEnd(0)) {
 			head->mJumpTimer = 0;
 			head->updateSquareToMario();
 			JGeometry::TVec3<f32> goal(SamboHeadGetPoint(head));
-			goal.set(SMS_GetMarioPos().x - head->mPosition.x, 0.0f,
-			         SMS_GetMarioPos().z - head->mPosition.z);
+			const JGeometry::TVec3<f32>& marioPos = SMS_GetMarioPos();
+			f32 dx = marioPos.x - head->mPosition.x;
+			f32 dz = marioPos.z - head->mPosition.z;
+			goal.set(dx, 0.0f, dz);
 			if (goal.x == 0.0f && goal.y == 0.0f && goal.z == 0.0f)
 				goal.x += 1.0f;
 			MsVECNormalize(&goal, &goal);
