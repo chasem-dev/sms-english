@@ -220,7 +220,11 @@ f32 TDirectionCalc::d2r(f32 deg)
 {
 	// TUtil<f32>::PI(), not the literal: an inlined call returning the
 	// constant keeps the parameter as the multiply's first operand.
-	return deg * JGeometry::TUtil<f32>::PI() / 180.0f;
+	// The named result (c-t3) is one more web where makeRelativeAngle expands
+	// this into checkNerve, which gives retail's registers in both; it
+	// coalesces into calcNearerDirection's f1 argument and costs no frame.
+	f32 rad = deg * JGeometry::TUtil<f32>::PI() / 180.0f;
+	return rad;
 }
 
 f32 TDirectionCalc::r2d(f32 rad)
@@ -1193,7 +1197,8 @@ const char** TKoopaJrSubmarine::getBasNameTable() const
 }
 
 // Turns the round direction away from Koopa's flame and towards Mario.
-// TODO: 99.6%; frame 0xd8 against 0xf0 with every instruction right. The
+// TODO: 99.8%; frame 0xe8 against 0xf0 with every instruction and register
+// right (registers since d2r's named result, c-t3). The
 // ROM has 4 more bytes above toMario and its atan2f copy 0x10 lower with
 // 0x24 more above it. Raw mDirection reads (all sites: 0xb8), raw tub
 // position (0xc8), SMS_GetMarioPos(), and declaring toMarioDir first or
@@ -1285,9 +1290,9 @@ void TKoopaJrSubmarine::makeDirection()
 		// Named: the ROM copies the vector once (makeDirection's by-value
 		// parameter), calls atan2f and keeps the result in f31 before it
 		// fetches the rotation speed.
-		// TODO: in checkNerve's expansion the frame now matches (c-hs7:
-		// getSpine() and getKillerIndex() there), but v sits 4 low and the
-		// by-value copy 0x30 high.
+		// TODO: in checkNerve's expansion the frame and registers now match
+		// (c-hs7: getSpine() and getKillerIndex() there; c-t3: d2r's named
+		// result), but the by-value copy sits 0x34 low.
 		TDirectionCalc calc;
 		calc.makeDirection(v);
 		f32 dir                   = calc.get();
