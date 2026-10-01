@@ -569,3 +569,10 @@ Their named locals are kept, and so is each initialiser's inline expansion with 
 - A word retail has more or fewer between two such groups is therefore another statement's object at that depth, and a run of matching gaps shifted by one group means that statement's whole expansion sits one level deeper or shallower in retail.
 - `TMirrorActor::init` shows it: retail expands the `entryMirrorDrawBufferAlways` call after the push_back one level deeper, and a forwarding level around that call alone makes every slot exact.
 - The c-r37 rule holds inside iterator operators: a named local in an inlined `operator->` body is created at that body's depth, after the previous depth's comparison copies and before the next depth's.
+
+## By-value temporaries consumed at statement level (research c-r39, 2026-10-01)
+
+- A by-value inline call passed to a statement-level inline consumer (`m = a - b`, `setX(a - b)`; `m += v * k` is hoisted the same way) is hoisted into the consumer's expansion, so the operator's body is expanded one depth below the statement: its local `r` is created after the depth-1 objects of later statements (CameraDemo's L89 `r` follows L91's bindings).
+- Copy-initialisation (`T v = a - b;`) is not hoisted: the operator body is depth 1 there.
+- So a by-value operator's live object is a depth-2 object at copy-outs and a depth-1 object at copy-initialisations; read the per-line map with that in mind before counting words between statements.
+- Under that header retail has one more dead word per `operator=` copy-out of such a temporary, created after the depth-2 objects, and none at `+=` consumption or copy-initialisation (frame-gaps.md, "Research batch c-r39").

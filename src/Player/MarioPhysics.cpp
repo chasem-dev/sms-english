@@ -33,6 +33,11 @@ void TMario::playerRefrection(int param_1)
 // `newPos - mPosition` copy (0x44) and the product (0x34); ours keeps the
 // three TVec3 temporaries together above the volatiles. The by-value
 // operator-/operator* header class (frame-gaps.md c-r20/c-r21).
+// c-r39: under by-value `TVec3 r(fst); r op= snd; return r;` operators for
+// -, + and * (uncast operator=) this function is byte-exact with the clamp
+// written `f32 max = 50.0f; if (max < step) step = max;` (the named limit is
+// retail's one word under `diff`); under today's header that is 24 -> 55
+// markers, so it waits for the header migration.
 void TMario::keepDistance(const JGeometry::TVec3<f32>& target, f32 param_2,
                           f32 param_3)
 {

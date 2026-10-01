@@ -3242,3 +3242,47 @@ None closed; BossHanachan's emitParticle_ moved 0x10 of frame at identical instr
 
 - A word retail has inside the named block is a named local whose value was propagated (c-t4); look for a quantity the code reads twice or passes to an inline (here the movie number) before trying new locals.
 - Patch a private debugger copy before mapping: without names.txt the IRO temporaries at the bottom are anonymous, and they are often the words that move.
+
+## Research batch c-r39 (2026-10-01): the operator temporaries read per statement under a by-value header
+
+Question: with c-k32's per-statement slot map, what object order does retail have in the last open function of wireBinder, enemyAttachment, MapWireManager, spider, MarioPhysics and CameraDemo, and which TVec3 operator header shape reproduces it?
+Answer: under the by-value local-`r` shape (c-r33's V1) four of the six reduce to one clean residue each, keepDistance closes with a site spelling, and the copy-out word is still unexplained; no header changed.
+Committed: this entry, the frame-model rule and a TODO line in keepDistance.
+
+### Method
+
+- `python3 -m tools.hsearch dbg --by-line` with a private patched debugger, once under the stock header and once under "V1s": `friend TVec3 operator-(const TVec3& fst, const TVec3& snd) { TVec3 r(fst); r -= snd; return r; }`, the same for `+` and `*`, and the uncast `operator=` (`*(Vec*)this = other`).
+- Header candidates were then scored on the six functions (build plus `decomp-diff --clusters`), and V1s tree-wide with `tools/mwcc-stack/census.py` against a fresh baseline (12058 exact).
+
+### Per-function residue under V1s
+
+- TWireBinder::bind and TEnemyAttachment::bind: every mapped slot is retail's shifted by one word, and retail has exactly one more word created after the live `r` (the bottom of the frame).
+- CPolarSubCamera::updateDemoCamera_: every mapped slot uniformly two words low, and retail has two more words below the second `r`: one per `unk124 = origin + posOffset` / `unk148 = origin + atOffset` copy-out.
+- TMario::keepDistance: everything from `diff * step`'s return temporary down is retail's exactly, and retail has one more word between `diff` and that temporary.
+  Writing the clamp `f32 max = 50.0f; if (max < step) step = max;` (a named constant is homed, c-k28) makes it byte-exact under V1s; under today's header the same spelling is 24 -> 55 markers, so it is recorded in the function's TODO for the migration.
+  `f32 length = diff.length(); ... f32 step = length;` lands the frame but changes one instruction.
+- TSpider::bind: 13-16 words short in the named region under either header (frame 0x118-0x120 against 0x158), so its residue is not the operator class.
+- TMapWireActor::getPosInWire: the `(a - b).length()` pool; under V1s it has 118 instructions against 106 (88.1%), so the map does not apply.
+
+### New facts about the copy-out word
+
+- At a copy-out (`m = a - b`, `setX(a - b)`) `operator-` is hoisted into the consumer's expansion and expanded one depth down: in CameraDemo the L89 `r` is created after L91's depth-1 bindings.
+- Retail's two CameraDemo words are created after both depth-2 `r`s, so the word is a depth-3 object or an IRO temporary, as c-r33 inferred from C1/C2.
+- A by-value temporary consumed by `+=` has no word: keepDistance's `mPosition += diff * step` (V1s `*`, hoisted the same way) is exact without one.
+- Copy-initialisation has none either (keepDistance's `diff`), so the word comes only with `operator=` consuming a hoisted temporary.
+  Against copy-initialisation the frontend dumps differ only in the destination: the copy constructor's plain object against the `ETYPCON` the uncast `operator=` puts on `this`.
+- Consistent with c-r2: retail's plain lvalue assignments have no such word, so the object belongs to the propagated copy chain, not to `operator=` itself.
+
+### Header shapes measured (all with V1s operators)
+
+- `TVec3& operator=(TVec3&)` (non-const copy assignment, so rvalues and `const` sources take `operator=(const Vec&)`): the rvalue copy-outs lose the elision (+6 instructions per site; enemyAttachment 95.8, CameraDemo 93.7).
+- The TVec3 overload delegating to the `Vec` one (`return operator=((const Vec&)other);` or as a statement): +6 per copy-out at wireBinder, enemyAttachment and CameraDemo.
+- c-r2's assignment-expression return (`return static_cast<TVec3&>(*(Vec*)this = other);`): +5 instructions in wireBinder, frame +8 in enemyAttachment and CameraDemo.
+- Site spellings under V1s, all inert or worse: `setLinearVelocity(local_1C - mPosition)` (inert), `mLinearVelocity.set(a - b)` and `unk124.set(origin + posOffset)` (code changes), an explicit `TVec3<f32>(a - b)` around the copy-out (+8 frame, a 12-byte temporary on top), `m = a; m -= b` (86%).
+- V1s tree-wide against 12058 exact: 12051, 7 up and 59 down, the same picture as c-r33.
+  About 25 of the 59 are `slots` functions going `frame` 8 short (the bind family, the TBossTelesa and gesso nerves, TCannon::moveObject, TLeanMirror::loadAfter, TMapWarp::watchToWarp), i.e. one missing copy-out word each; the rest are the `.length()` sites, the wire family, Tongue's `__ami__` (MISSING) and keepDistance before its site fix.
+
+### Owner decision and next step
+
+- The migration is unchanged: it needs the copy-out word, and with it the bind family, CameraDemo, wireBinder and enemyAttachment would close; keepDistance closes with its site fix.
+- Look for the word in what IRO does with the `@tmp = r; m = @tmp` chain when the destination is under an `ETYPCON` (the uncast `operator=`), not in operator bodies (c-r34's grammar) or in operator= shapes that bind or convert the source (c-r2's grid and the three above).
