@@ -104,8 +104,8 @@ void TKukkuBall::perform(u32 cue, JDrama::TGraphics* graphics)
 		// Spelled out: behind translation() the identity33() expansion would be
 		// one level deeper and retail keeps it inline.
 		mtx.identity33();
-		mtx.setTrans(mPosition);
-		mMActor->getModel()->setBaseScale(mScaling);
+		mtx.setTrans(getPosition());
+		mMActor->getModel()->setBaseScale(getScaling());
 		MTXCopy(mtx, mMActor->getModel()->getBaseTRMtx());
 		mMActor->getModel()->calc();
 	}
