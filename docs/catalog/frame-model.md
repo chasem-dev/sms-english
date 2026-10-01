@@ -540,3 +540,17 @@ Their named locals are kept, and so is each initialiser's inline expansion with 
 - `float z = ga->f; V v; v.x = 0; v.y = 0; v.z = z;` (or `v.set(0, 0, z)`, or an unnamed `v.set(0, 0, ga->f)` binding) keeps z in f1 and homes nothing, while `float z = gf;` in the same place, or a store with no store before it (`w = a->f`, `y[0] = z`), homes it.
 - So in `s16 x = p.x; s16 y = p.y; s16 z = p.z; e->setRotation(x, y, z);` only x is homed, and in `TVec3 v(a - p->x, k, b - p->z)` only the first named component is.
 - Before naming a value to fill a frame hole, check that its store is the first store after its definition; if not, the name costs nothing and supplies nothing.
+
+## Constants, conditions and named references (closure c-k28, lever sweep c-t5, 2026-10-01)
+
+- A named constant component is homed even when stores come between its definition and its use: a constant has no source a store could alias, so the c-t4 exception never applies (`f32 dy = 10.0f;` feeding `TVec3 away(dx, dy, dz)` in TSamboHead::attackToMario, c-k28).
+- A named value whose only use is a condition is homed (`s32 prepareTime = ...get(); if (timer > prepareTime && ...)`, TNerveSamboHeadAttack, c-k28; `flameDiff`/`marioDiff` in TKoopaJrSubmarine::makeRelativeAngle are the same case).
+- A by-value vector copy-initialised from an inline accessor that returns `const T&` (`TVec3 toGoal = node.getPoint();`) leaves the accessor's result pointer as a dead word created after the named block, directly below the copy's neighbours.
+- Naming the reference first (`const TVec3& goal = node.getPoint(); TVec3 toGoal = goal;`) moves that word into the named block above the copy at identical code: one word up, one word down, same frame (TNerveAmiNokoWalkOnFence closed, c-t5).
+- The dbg mapper's signature for it is "-1 words above X (named)" with "+1 words between X and the next inline object".
+- Enemy.hpp's `isReachedToGoal` and AnimalNerve's `calcDist` sites already use that spelling, so it is retail's habit for path-node goals.
+- A reference to Mario's position passed to an inline vector operation (`toMario.sub(marioPos, ...)`) behaves differently by initialiser.
+- `const TVec3& marioPos = SMS_GetMarioPos();` is homed (+1 named word), and the accessor's result object replaces the argument binding that `sub(*gpMarioPos, ...)` made, so the low region keeps its size (makeRelativeAngle: frame 0xe8 -> 0xf0, retail's).
+- `const TVec3& marioPos = *gpMarioPos;` is homed as well, but the simple argument also removes sub()'s binding, so every object below it moves 4 down; the two spellings are a 4-byte knob on the low region under a fixed named block.
+- A named constant passed straight to an out-of-line call (`f32 height = 50.0f; calcVelocityToJumpToY(v, height, g)`) changes the code: the literal's load is scheduled earlier (TNerveBGDie, `<1 >4`), so the constant rule is for constants that feed stores or inline arguments only.
+- The frame moves only when the locals cross the 8-byte boundary of the first backend temporary above them: TPakkunSeed::rebirth's int-to-float temporary sits at 0x60 above locals ending at 0x5c, so one more homed word (0x60) leaves the frame at 0x70 and only a second one reaches retail's 0x78.

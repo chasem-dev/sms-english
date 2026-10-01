@@ -2995,3 +2995,23 @@ In progress; results are appended below as they are measured.
 - A `TVec3<s16> rot` assigned member by member scalarises to identical code but homes rot plus the three setRotation argument bindings (0x58; 0x60 with a constructor), so retail has fewer than that; reversed declarations, f32/s32 locals and direct or vector setRotation arguments change the code.
 - Skipped as recorded deep searches tied to the by-value operator class: beam `calcVertices`, boid `calcBoids`; feetinv `FeetInvCalc` also differs by five instructions (scheduling and the reload-x register pattern), so the layout mapper cannot run on it.
 - hsearch `dbg` adds the J3DModel/J3DJoint includes a hanasambo dump needs; `tools/mwcc-stack/dbg.sh` on the bare source fails there, so prefix those two includes to a scratch copy when the raw dump is needed.
+
+## Lever sweep c-t5 (2026-10-01)
+
+- Question: where do c-k28's rules (a named constant component is homed after earlier stores, a condition-only value is homed) and c-t4's propagated-local rule give an honest carrier in the census frame and slots classes?
+- Selection: every frame-short function up to 0x18 (59) and the 68 slots functions whose body has a TVec3 constructor, a `set`, a Mario position or a nerve body, each mapped with `hsearch dbg` (about 25 s each, run in chunks of 20 in the foreground); kept those whose retail-only words sit in or above the named block.
+- Two functions improved, one closed; no regressions, DOL unchanged.
+- TNerveAmiNokoWalkOnFence (amiNoko) 99.96 -> 100: `const JGeometry::TVec3<f32>& goal = amiNoko->unkF4.getPoint(); JGeometry::TVec3<f32> toGoal = goal;`.
+- The named goal reference is retail's word above toGoal, and with it getPoint()'s result pointer no longer sits below toGoal (frame-model.md, "Constants, conditions and named references").
+- TKoopaJrSubmarine::makeRelativeAngle (koopajr) 99.84 -> 99.96, frame 0xe8 -> 0xf0 (retail): `const JGeometry::TVec3<f32>& marioPos = SMS_GetMarioPos();` declared above toMario and passed to `toMario.sub`.
+- marioPos is homed at 0xb4 above toMario, flameDiff moves to 0xb8, toMario stays at retail's 0xa8; left: the atan2f by-value copy 0x14 above retail's, the same class as TKoopaJrSubmarine::checkNerve's makeDirection copy.
+- `const TVec3& marioPos = *gpMarioPos;` there drops toMario 4 (0xe8); a named tub position reference is inert.
+- Not committed, recorded in the TODOs or here:
+- TChuuHana::setGoal: c-d2's `f32 dist = 1000.0f;` (used for both goal components) homes exactly retail's word between goal and swing, but the named block then only loses its alignment pad, so frame (0x90), fuzzy score and layout distance are unchanged; the 12 bytes below the TPathNode temporary remain.
+- TNerveBGDie (bossgesso): retail has three named words between local_24 and zero, created before every inline object.
+- `f32 y = -5000.0f;` for the goal's height homes one (layout gap 4 -> 2, markers 24 unchanged); naming x as well swaps set()'s x binding for a named word (55 markers); `f32 height = 50.0f` for calcVelocityToJumpToY changes the code; a `const TVec3& pos` reference is 0x1b0.
+- TBossGesso::lenFromToeToMario: retail has two more words above tipPos and nothing else differs; a named tentacle or `TNode* toe` receiver is 0x38, a named `toePos` reference moves tipPos (14 markers), a named state in the fabricated isThing2 moves tipPos too.
+- TPakkunSeed::rebirth: retail's locals end one or two words higher (only the conversion temporary maps); `s32 generateTime = ...getSLGenerateSeedTime();` for the condition homes one word but the frame needs two (see the temp-boundary note in frame-model.md), so with no second carrier it is not committed.
+- Calling the UNUSED `TPakkun::seedPollute(mPosition)` for the stay branch's stamp is code-identical but 8 smaller (0x68); with getManager()/getUnk158() inside seedPollute and generateTime it is 0x70 again.
+- Mapped and left (by-value operator, TPathNode or iterator classes, or recorded deep searches): moveRun (limitkoopajr; dir is created after an inline vector in retail), TMovieDirector::rsetup (three single named words in retail around push_back'd pointers and the THP locals), TResetFruit::kicked and TShine::control (low region only), getPosAndRot, calcFarthestVertex, getNearestPosOnGraphLink, TMuddyBoat::calc, TMareWallRock::appear (retail has one word fewer below trans), TMonumentShine::hitByWater, TTelesa/TDangoHamuKuri::behaveToWater, the `bind` family.
+- Tool notes: `tools/mwcc-stack/census.py` plus `hsearch dbg` over a TSV, keeping lines that say "words above" or "between ... (named)", is a cheap way to find named-block holes; only one debugger may run at a time, so never start a dump while a batch runs in the background.
