@@ -117,6 +117,23 @@ A run whose best has the same in-process score as the base but a closer layout r
 
 `dbg -u UNIT -f SYMBOL [--file VARIANT]` prints the mapping for one text: our objects top-down with their kind (named, inline, argument or the IR optimiser's F/P/S temporaries), retail's offset for each mapped one, and the regions where retail has words we lack or lacks words we have.
 
+### The per-statement slot map
+
+`dbg ... --by-line` adds, per object, retail's displacement from ours in words and the source line and type of the first statement that references it (from the front end's initial code in the same dump, so the `@N` numbers always agree).
+An object an inlined body creates carries the line of the caller's statement that expanded it, so a stray word between two mapped objects names the statement whose inline depth is off (docs/catalog/frame-model.md, "Iterator groups as depth markers").
+Back-end temporaries (int/float conversions) and spills have no statement and print `(back-end temp)` / `(back-end spill)`.
+
+```sh
+source <scratchpad>/env.sh   # MWCC_DEBUGGER, RETROWIN32
+python3 -m tools.hsearch dbg -u System/GCLogoDir -f 'setup__10TGCLogoDirFPQ26JDrama8TDisplayP13TMarioGamePad' \
+    --by-line --keep <scratch>/gl [--file variant.cpp] [--timeout 900] --work <scratch>
+python3 -m tools.hsearch dbg -u System/GCLogoDir -f 'setup__...' --by-line --load <scratch>/gl
+```
+
+`--keep DIR` keeps the dump (all front-end and back-end passes, `variables.txt`, the register-allocator logs), our compiled object, the variant text and `meta.json` in `DIR`; `--load DIR` re-prints a kept dump without compiling or running the debugger, so a slow dump is read as often as needed.
+`--timeout` is the debugger's time limit per run (default 300 s); `MarDirector::setupObjects` needs about 7 minutes, so give it 900.
+The symbol is the mangled name as `powerpc-eabi-nm` prints it for our object.
+
 ## Applying a winner
 
 `apply PATCH` applies the patch to this checkout, then runs `build/venv/bin/ninja -k 0`, checks the DOL SHA-1, runs `ninja changes_all` and fails on any lowered value, and compares `tools/validate-symbol-order.py` before and after.

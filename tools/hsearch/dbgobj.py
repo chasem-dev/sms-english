@@ -115,7 +115,7 @@ def object_kinds(dumpdir: str) -> Dict[str, str]:
 class Dumper:
     """Runs the debugger on variant texts of one unit."""
 
-    def __init__(self, unit: str, work: str):
+    def __init__(self, unit: str, work: str, timeout: int = 300):
         short = unit.split("/", 1)[1] if unit.startswith("mario/") else unit
         self.src, self.flags, self.prefix = regsweep.unit_flags(short)
         self.unit = "mario/" + short
@@ -125,6 +125,8 @@ class Dumper:
         self.secs = 0.0
         self.extra = ""  # includes GC/1.1 needs ahead of the unit (docs/catalog/register-model.md, c-f1)
         self.last_error = ""
+        self.timeout = timeout  # seconds per debugger run (setupObjects needs about 7 minutes)
+        self.pre_lines = 0  # lines prepended to the variant text in the last dump
 
     def close(self):
         shutil.rmtree(self.work, ignore_errors=True)
@@ -161,6 +163,7 @@ class Dumper:
                 text = self.extra + body
                 if self.prefix:
                     text = "#include <%s>\n" % re.sub(r".mch$", ".pch", self.prefix) + text
+                self.pre_lines = text[:len(text) - len(body)].count("\n")
                 with open(tmp, "wb") as f:
                     f.write(text.encode("shift_jis", errors="ignore"))
                 shutil.rmtree(out, ignore_errors=True)
@@ -170,16 +173,11 @@ class Dumper:
                     try:
                         subprocess.run([sys.executable, os.environ["MWCC_DEBUGGER"], "-e",
                                         os.environ["RETROWIN32"], "-a", args, sym, out],
-                                       stdout=log, stderr=subprocess.STDOUT, timeout=300, cwd=ROOT)
+                                       stdout=log, stderr=subprocess.STDOUT, timeout=self.timeout, cwd=ROOT)
                     except subprocess.TimeoutExpired:
                         pass
-                vp = os.path.join(out, "variables.txt")
-                if os.path.exists(vp):
-                    objs = parse_variables(vp)
-                    kinds = object_kinds(out)
-                    for o in objs:
-                        if o.kind != "arg":
-                            o.kind = kinds.get(o.name, "inline" if o.name.startswith("@") else "named")
+                objs = load(out)
+                if objs is not None:
                     self.last_webs = self.webs(out, sym)
                     self.dumps += 1
                     self.secs += time.time() - t0
@@ -196,6 +194,71 @@ class Dumper:
                 time.sleep(20)
         self.secs += time.time() - t0
         return None
+
+
+def load(dumpdir: str) -> Optional[List[Obj]]:
+    """The objects of a kept dump (as Dumper.dump returns them)."""
+    vp = os.path.join(dumpdir, "variables.txt")
+    if not os.path.exists(vp):
+        return None
+    objs = parse_variables(vp)
+    kinds = object_kinds(dumpdir)
+    for o in objs:
+        if o.kind != "arg":
+            o.kind = kinds.get(o.name, "inline" if o.name.startswith("@") else "named")
+    return objs
+
+
+def statement_lines(dumpdir: str, pre_lines: int = 0) -> Dict[str, Tuple[int, str]]:
+    """Per object, the source line of the first statement that references it, and its type.
+
+    Read from the front end's initial code (frontend-00), whose statements carry
+    the line of the variant text the debugger compiled; `pre_lines` (the lines
+    Dumper prepended) is subtracted so the line is the unit source's.  Objects an
+    inlined body creates carry the line of the caller's statement that expanded
+    it, so this names the statement whose depth a stray word belongs to.
+    """
+    out: Dict[str, Tuple[int, str]] = {}
+    p = os.path.join(dumpdir, "frontend-00-ast-initial-code.txt")
+    if not os.path.exists(p):
+        return out
+    line = 0
+    for s in open(p, encoding="latin-1"):
+        m = re.match(r"^(\d+) ST_", s)
+        if m:
+            line = int(m.group(1)) - pre_lines
+        for name, typ in re.findall(r"EOBJREF \[([^\]\s]+)\] (.*)", s):
+            if name not in out:
+                out[name] = (line, typ.strip())
+    # objects the back end made (int/float conversion temporaries, spills) have no statement
+    vp = os.path.join(dumpdir, "variables.txt")
+    sec = ""
+    for s in open(vp, encoding="latin-1") if os.path.exists(vp) else ():
+        if s.strip().endswith(":"):
+            sec = s.strip()[:-1]
+            continue
+        m = re.search(r"r1\+0x[0-9a-f]+-0x[0-9a-f]+\s+(\S+)\s*$", s)
+        if m and m.group(1) not in out and sec in ("temps", "spills"):
+            out[m.group(1)] = (0, "(back-end %s)" % sec[:-1])
+    return out
+
+
+def describe_lines(lay: Layout, lines: Dict[str, Tuple[int, str]]) -> List[str]:
+    """describe() with, per object, retail's displacement in words and the statement line."""
+    rows = ["frame retail %#x ours %#x; %d%% of r1 accesses mapped; %s" % (
+        lay.frame_t, lay.frame_o, round(100 * lay.coverage), lay.short()),
+        "  %-10s %-6s %-6s %-6s %5s  %-6s %s" % ("object", "kind", "ours", "retail", "words", "line", "type")]
+    for o in sorted(lay.objs, key=lambda o: -o.lo):
+        if o.hi <= o.lo:
+            continue
+        t = lay.retail.get(o.name)
+        ln, typ = lines.get(o.name, (0, ""))
+        rows.append("  %-10s %-6s %#06x %-6s %5s  %-6s %s" % (
+            o.name, o.kind, o.lo, "%#06x" % t if t is not None else "-",
+            "%+d" % ((t - o.lo) // 4) if t is not None and t != o.lo else "",
+            "L%d" % ln if ln > 0 else "?", typ[:70]))
+    rows += ["  " + r for r in lay.regions]
+    return rows
 
 
 def _q(a: str) -> str:

@@ -163,15 +163,33 @@ def cmd_try(args):
 
 def cmd_dbg(args):
     """Show which of our stack objects retail keeps elsewhere (needs the MWCC debugger)."""
+    import json
+    import shutil
     from . import dbgobj
     from .search import Evaluator
     from .elfscore import extract
+    u = find_unit(args.unit)
+    target = Target(u.target).funcs[args.function]
+    if args.load:
+        # re-read a dump kept with --keep: no compile, no debugger
+        meta = json.load(open(os.path.join(args.load, "meta.json")))
+        objs = dbgobj.load(os.path.join(args.load, "dump"))
+        if objs is None:
+            raise SystemExit("no dump in %s" % args.load)
+        lay = dbgobj.layout(objs, extract(Elf(os.path.join(args.load, "dbg.o")), args.function), target)
+        if lay is None:
+            raise SystemExit("instruction counts differ; the layout map needs equal lengths")
+        lay.webs = meta.get("webs", -1)
+        lay.key = lay.key[:3] + (lay.webs,)
+        lines = dbgobj.statement_lines(os.path.join(args.load, "dump"), meta.get("pre_lines", 0))
+        print("\n".join(dbgobj.describe_lines(lay, lines) if args.by_line else dbgobj.describe(lay)))
+        return 0
     if not dbgobj.available():
         raise SystemExit("set MWCC_DEBUGGER and RETROWIN32 (see tools/mwcc-stack/README.md)")
-    u = find_unit(args.unit)
-    text = open(args.file or os.path.join(ROOT, u.rel_src), encoding="utf-8", newline="").read()
+    src = args.file or os.path.join(ROOT, u.rel_src)
+    text = open(src, encoding="utf-8", newline="").read()
     ev = Evaluator(u, args.function, 1, args.work, TrialDB(args.db))
-    d = dbgobj.Dumper(u.name, args.work)
+    d = dbgobj.Dumper(u.name, args.work, timeout=args.timeout)
     try:
         obj = os.path.join(ev.work, "dbg.o")
         p, err = ev._compile(text, keep=obj)
@@ -179,13 +197,33 @@ def cmd_dbg(args):
             raise SystemExit("compile failed: " + err)
         objs = d.dump(text, args.function)
         if objs is None:
-            raise SystemExit("debugger dump failed; see %s/dump.log" % d.work)
-        lay = dbgobj.layout(objs, extract(Elf(obj), args.function), Target(u.target).funcs[args.function])
+            if args.keep:
+                os.makedirs(args.keep, exist_ok=True)
+                shutil.copy(os.path.join(d.work, "dump.log"), os.path.join(args.keep, "dump.log"))
+                raise SystemExit("debugger dump failed (timeout %ds); see %s/dump.log" % (args.timeout, args.keep))
+            raise SystemExit("debugger dump failed (timeout %ds); rerun with --keep DIR to keep its log"
+                             % args.timeout)
+        if args.keep:
+            os.makedirs(args.keep, exist_ok=True)
+            dst = os.path.join(args.keep, "dump")
+            shutil.rmtree(dst, ignore_errors=True)
+            shutil.copytree(os.path.join(d.work, "dump"), dst)
+            shutil.copy(obj, os.path.join(args.keep, "dbg.o"))
+            with open(os.path.join(args.keep, "source.cpp"), "w", encoding="utf-8", newline="") as f:
+                f.write(text)
+            with open(os.path.join(args.keep, "meta.json"), "w") as f:
+                json.dump({"unit": u.name, "function": args.function, "source": src,
+                           "pre_lines": d.pre_lines, "webs": d.last_webs}, f, indent=1)
+        lay = dbgobj.layout(objs, extract(Elf(obj), args.function), target)
         if lay is None:
             raise SystemExit("instruction counts differ; the layout map needs equal lengths")
         lay.webs = d.last_webs
         lay.key = lay.key[:3] + (lay.webs,)
-        print("\n".join(dbgobj.describe(lay)))
+        if args.by_line:
+            lines = dbgobj.statement_lines(os.path.join(d.work, "dump"), d.pre_lines)
+            print("\n".join(dbgobj.describe_lines(lay, lines)))
+        else:
+            print("\n".join(dbgobj.describe(lay)))
         print("dump %.1fs" % d.secs)
     finally:
         d.close()
@@ -327,6 +365,14 @@ def main():
     p.add_argument("-u", "--unit", required=True)
     p.add_argument("-f", "--function", required=True)
     p.add_argument("--file", help="a variant of the unit's source (default: the source itself)")
+    p.add_argument("--by-line", action="store_true",
+                   help="per object: retail's displacement in words, the source line of the first "
+                        "statement that references it, and its type")
+    p.add_argument("--keep", metavar="DIR",
+                   help="keep the dump, our object and the variant text in DIR (re-read with --load)")
+    p.add_argument("--load", metavar="DIR", help="re-print a dump kept with --keep (no compile, no debugger)")
+    p.add_argument("--timeout", type=int, default=300,
+                   help="seconds per debugger run (default %(default)s; setupObjects needs about 600)")
     p.add_argument("--db", default=DEFAULT_DB)
     p.add_argument("--work", default=tempfile.gettempdir())
     p.set_defaults(func=cmd_dbg)
