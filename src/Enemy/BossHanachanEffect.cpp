@@ -43,7 +43,16 @@ void TBossHanachan::staticLoadParticle()
 	SMS_LoadParticle("ms_boha_kizetsu.jpa", 0x16F);
 }
 
-// TODO: 99.6%, frame 0xc8 vs 0xa8. The `this`/nerve rotation below is now
+// TODO: 99.6%, frame 0xc8 vs 0xb8. c-k32: the class's existing getHead(),
+// getChangeParams() and getMarchSpeed() accessors (instead of the raw members)
+// move the frame 0xa8 -> 0xb8 at identical instructions; the per-statement
+// slot map (hsearch dbg --by-line) then leaves retail 5 words more below
+// `position` (ours there: the inline bindings of the water-hit test, both
+// position copies, the two getMActor() sites, the SL probability, the two
+// position.set() calls and the bound manager, plus the homed forced loads
+// of the nerve, head, march speed, probability and the MActor sites), and
+// no existing accessor is left for the unk178/mBodies/gpSunMgr chains.
+// The `this`/nerve rotation below is now
 // CLOSED: `getMActor()` at the two frame-control sites plus the named
 // particle-manager level at the 0x7D emit put `this` in r31 and the nerve in
 // r30 as retail does. Left: 0x20 of low frame, `position` 4 bytes low
@@ -81,19 +90,19 @@ void TBossHanachan::emitParticle_()
 	f32 waterHeight = gpSunMgr->unk20;
 	JGeometry::TVec3<f32> position;
 	if (nerve != &TNerveBossHanachanSnort::theNerve()
-	    && mHead->unk100->getWaterHitCounter() > 0) {
+	    && getHead()->unk100->getWaterHitCounter() > 0) {
 		gpMarioParticleManager->emitAndBindToMtxPtr(
-		    0x169, mHead->mRightNoseMtx, 1, mHead);
+		    0x169, getHead()->mRightNoseMtx, 1, getHead());
 		gpMarioParticleManager->emitAndBindToMtxPtr(
-		    0x16B, mHead->mLeftNoseMtx, 1, mHead);
+		    0x16B, getHead()->mLeftNoseMtx, 1, getHead());
 		gpMarioParticleManager->emitAndBindToMtxPtr(
-		    0x16A, mHead->mRightNoseMtx, 1, mHead);
+		    0x16A, getHead()->mRightNoseMtx, 1, getHead());
 		gpMarioParticleManager->emitAndBindToMtxPtr(
-		    0x16C, mHead->mLeftNoseMtx, 1, mHead);
+		    0x16C, getHead()->mLeftNoseMtx, 1, getHead());
 	}
 	if (nerve == &TNerveBossHanachanTumble::theNerve()
 	    || (nerve == &TNerveBossHanachanDamage::theNerve()
-	        && mMarchSpeed > 0.001f)) {
+	        && getMarchSpeed() > 0.001f)) {
 		for (int i = 0; i < 8; ++i) {
 			position = unk178->mPoints[i].mPosition;
 			if (position.y > waterHeight)
@@ -114,7 +123,7 @@ void TBossHanachan::emitParticle_()
 				if (ctrl->checkPass(sEmitSandFrameFoot[foot])) {
 					MtxPtr mtx = mBodies[i]->mFeet[foot]->mJointMtx;
 					if (MsRandF()
-					    < mChangeParams->mSLParticleProbability.get()) {
+					    < getChangeParams()->mSLParticleProbability.get()) {
 						if (mtx[1][3] < waterHeight) {
 							MtxPtr leg = mBodies[i]->mLegMtx[foot];
 							position.set(leg[0][3], waterHeight, leg[2][3]);
@@ -133,18 +142,18 @@ void TBossHanachan::emitParticle_()
 			}
 		}
 	} else if (nerve == &TNerveBossHanachanSnort::theNerve()) {
-		if (mHead->getMActor()->getFrameCtrl(0)->checkPass(134.0f)) {
+		if (getHead()->getMActor()->getFrameCtrl(0)->checkPass(134.0f)) {
 			gpMarioParticleManager->emitAndBindToMtxPtr(
-			    0x78, mHead->mRightNoseMtx, 0, nullptr);
+			    0x78, getHead()->mRightNoseMtx, 0, nullptr);
 			gpMarioParticleManager->emitAndBindToMtxPtr(
-			    0x7A, mHead->mLeftNoseMtx, 0, nullptr);
+			    0x7A, getHead()->mLeftNoseMtx, 0, nullptr);
 			gpMarioParticleManager->emitAndBindToMtxPtr(
-			    0x79, mHead->mRightNoseMtx, 0, nullptr);
+			    0x79, getHead()->mRightNoseMtx, 0, nullptr);
 			gpMarioParticleManager->emitAndBindToMtxPtr(
-			    0x7B, mHead->mLeftNoseMtx, 0, nullptr);
+			    0x7B, getHead()->mLeftNoseMtx, 0, nullptr);
 		}
 	} else if (nerve == &TNerveBossHanachanDown::theNerve()) {
-		gpMarioParticleManager->emitAndBindToMtxPtr(0x16F, mHead->unk108, 1,
+		gpMarioParticleManager->emitAndBindToMtxPtr(0x16F, getHead()->unk108, 1,
 		                                             mHead);
 	}
 }
