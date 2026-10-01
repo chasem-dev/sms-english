@@ -20,6 +20,8 @@
 #include <JSystem/J3D/J3DGraphAnimator/J3DModel.hpp>
 #include <System/Particles.hpp>
 #include <System/FlagManager.hpp>
+#include <System/MarDirector.hpp>
+#include <GC2D/GCConsole2.hpp>
 #include <MSound/MSound.hpp>
 #include <MSound/MSoundSE.hpp>
 #include <MSound/SoundEffects.hpp>
@@ -477,11 +479,11 @@ void TKoopaJr::calcRootMatrix()
 	model->setBaseScale(getScaling());
 }
 
-// UNUSED, 0x2c in the map.
+// UNUSED, 0x2c in the map: TTinKoopa::startTinKoopaMessage is the same size
+// and is inlined at its exact balloon sites.
 void TKoopaJr::startKoopaJrMessage(u32 message)
 {
-	// TODO: body unknown; nothing in the TU inlines a 0x2c helper.
-	receiveMessage(this, message);
+	SMSGetMarDirector()->getConsole()->startAppearBalloon(message, true);
 }
 
 // UNUSED, 0x4 in the map.
@@ -621,11 +623,11 @@ void TKoopaJr::checkNerveKillerHit()
 	}
 }
 
-// UNUSED, 0x34 in the map.
+// UNUSED, 0x34 in the map: TBathtubKiller::getBathtubY (BathtubKiller.cpp) at
+// the same size, reading the same TBathtub's root joint height.
 f32 TKoopaJr::getBathtubY()
 {
-	// TODO: body unknown.
-	return mBathtub->mPosition.y;
+	return (*mBathtub->getRootJointMtx())[1][3];
 }
 
 DEFINE_NERVE(TNerveKoopaJrWait, TLiveActor)
