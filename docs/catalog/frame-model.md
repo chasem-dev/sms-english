@@ -530,3 +530,13 @@ Their named locals are kept, and so is each initialiser's inline expansion with 
   Left: 2 words above the return temporary, 2 between the unk124 conversion and `rot` (writing LensSetTRS's angle locals in calcAnim supplies one), 6 below entry()'s colour copy, 28 at the bottom.
 - `TConeBeam::calcVertices`: a coneInPlane-local `TVec3 pos` (copied into the caller's `local_f8`) lands retail's 0x1c8 frame, so retail has one more 12-byte object there, but the origin reloads stay and the extra copy costs 93.9; `dir * t + origin` spellings push `scale`/`add` out of line.
 - `TBaseNPC::perform`: retail copies `local_4C` float by float through a kept `&unk124`, the `TVec3(const Vec&)` copy (`(const Vec&)gpCamera->unk124` reproduces it, 96.6); with lensflare's casts, a lead that `CPolarSubCamera::unk124`/`unk148` are plain `Vec` in retail (Camera.hpp, shared, not changed).
+
+## Propagated named locals in C++, and the aliasing exception (lever sweep c-t4, 2026-10-01)
+
+- c-k26's C finding holds for C++ with the game flags; it is rule 4 above, re-measured with the marker method on GC/1.2.5 objects and GC/1.1 dumps (same offsets in both).
+- `int t = x + 1; g = t;`, `float r = (float)x; gf = r;`, `int m = ga->m; if (m) ...`, a block-scoped `int t` and a non-simple inline argument (`setg(ga->m)`) each home one word; `ext(t)` and a simple inline argument (`setg(x + 1)`) home none.
+- Two propagated locals are homed in declaration order, first-declared highest (`int a, b;`: a 0x10, b 0x0c).
+- Exception: a named value is propagated into its store only when no store that may alias its source comes between its definition and that store.
+- `float z = ga->f; V v; v.x = 0; v.y = 0; v.z = z;` (or `v.set(0, 0, z)`, or an unnamed `v.set(0, 0, ga->f)` binding) keeps z in f1 and homes nothing, while `float z = gf;` in the same place, or a store with no store before it (`w = a->f`, `y[0] = z`), homes it.
+- So in `s16 x = p.x; s16 y = p.y; s16 z = p.z; e->setRotation(x, y, z);` only x is homed, and in `TVec3 v(a - p->x, k, b - p->z)` only the first named component is.
+- Before naming a value to fill a frame hole, check that its store is the first store after its definition; if not, the name costs nothing and supplies nothing.

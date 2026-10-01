@@ -2958,3 +2958,24 @@ In progress; results are appended below as they are measured.
 - The 12 initialiser orders with `done = 0` ahead of the zero store score 12-14 markers, since scheduling hoists the zero store anyway, and Melee's public decomp body (including its `(0, TRKRequestSend(...))`) is inert.
 - Bird `doFlyToCurPathNode` (95.4, open): `toGoal.sub(getPosition())` fixes the slots (90 markers to 54) but Bird.cpp reads mPosition raw everywhere; `-=` is inert and a two-argument `sub` is worse. The remaining 54 markers are the quaternion's register numbering, so the function would not close on the slot fix alone.
 - Not started: `TBossGesso::changeAllTentacleState`, whose comment block records a deep fold search.
+
+## Lever sweep c-t4 (2026-10-01)
+
+- Question: does c-k26's C rule (a copy-propagated named local or inline argument binding keeps its 4-byte slot, in declaration order) hold for C++ with the game flags?
+- Yes, and frame-model.md already says so (rules 2-4 and 8a); it is re-measured there with GC/1.2.5 objects and GC/1.1 dumps, together with the one exception found here (an aliasing store between definition and use).
+- Selection: `census.py` frame and slots classes, mapped with `hsearch dbg` (19 functions 8 short, 45 small slots functions, 20 functions 16 short, 17 functions where ours is longer), keeping those whose retail-only words sit at or inside the named block with no stores in them.
+- Nothing committed: no candidate gave retail's frame and slots with a named value that passes the acceptance rule.
+- TSamboHead `attackToMario` (hanasambo, 0x50 against 0x60): retail has three or four words above `away` and none below.
+- `const TVec3& marioPos = SMS_GetMarioPos();` with `f32 dx`, `f32 dz` for the two horizontal offsets is code-identical and gives 0x58; marioPos and dx are homed, dz keeps a register (the aliasing exception).
+- The sibling spelling `getPosition().x - SMS_GetMarioPos().x` (behaveToWater's) gives 0x60 but puts its accessor words below `away` (away 0x10 high); named `pos`/`marioPos` references give 0x60 with away 4 high.
+- So retail's top words are named values, and one more homed word than marioPos + dx is needed; only an alias of `mPosition` supplies it, which the rule refuses.
+- TMapObjBase `emitAndSRT` (MapObjLib, 0x48 against 0x50): retail's fctiwz temporaries start at 0x28, so retail homes at least three more bytes of locals than our `s16 x` (at 0x1c).
+- Our y and z are not homed because each one's store follows the store of x through the emitter (the aliasing exception); `setRotation(param_4)` and direct arguments change the code, C-style declarations are inert and a `TVec3<s16>` local overshoots to 0x58.
+- MSRandPlay `randPlay` (MSoundSE, slots): a named `u32 id = mSoundID` switch operand supplies retail's word above `actor`, and `Vec* trans = vec->mTrans` for the three actor arguments removes both dead bindings, so actor lands at 0x10 against retail 0x14 (one binding word short).
+- Calling `MSoundSE::startSoundActor` there is not inlined (96.2).
+- TMareWallRock `appear`: `f32 z = unkFC;` declared above `trans` stays in a register (`trans.set` stores x and y first), so it cannot supply retail's word above trans.
+- TNameKuri `setDeadAnm`: writing the matrix chain as named `mActor`/`model` locals in the function gives 0x38, below the unnamed spelling's 0x40, so retail's ten extra words are not named single-use values.
+- JPABaseField `loadFieldBlock` (0x48 against 0x50, two words above `value`): naming the raw data pointer removes the ctor bindings (0x40); a named size is inert; JPAConvertFixToFloat is out of line, so the words are not conversion temporaries.
+- CPolarSubCamera `execGroundCheck_`: a named lerp ratio adds an instruction; named lerp endpoints cost +8.
+- TLightCommon `perform`: the 12 bytes sit between `light` and the getLightColor return temporary, below every named object and above every inline one; retail calls getLightPosition three times, so any named copy changes the code and only an unused `Vec` fits (as cc37 found).
+- Already recorded as deep searches and not retried: TLampSeesawMain `loadAfter`, THamuKuri `jumpToSearchActor`, TBathtubData `getGravityDir`, `decideNextStage`, TMenuBase `perform`, TMario `slopeProcess`, the `operator-` binds (coasterkiller, koopajr, limitkoopa) and TLeanMirror `loadAfter`/TBathtub `quake` (`a = b - c`).
