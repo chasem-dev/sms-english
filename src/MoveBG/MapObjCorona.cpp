@@ -764,11 +764,13 @@ void TBathtub::control()
 	}
 }
 
-// TODO: frame 0x170 against retail's 0x150. rotateQ stands in for the
-// one-level member-read rotate body JGQuat4.hpp's TODO describes (the header
-// rotate's q/q2 locals cost 0x20 more here); retail keeps the
-// normalised axis in a fifth saved FPR (f27). Inert: angle spellings (named
-// too), `.value`, setLength(1.0f), cross2 for the axis (worse).
+// TODO: rotateQ stands in for the one-level member-read rotate body
+// JGQuat4.hpp's TODO describes (the header rotate's q/q2 locals cost 0x20
+// more here); retail keeps the normalised axis in a fifth saved FPR (f27).
+// The frame lands with getUnk16C()->x.value at every param read (as
+// updatePosture_ spells them); `.value` or getUnk16C() alone misses it.
+// Inert: angle spellings (named too), setLength(1.0f), cross2 for the axis
+// (worse).
 void TBathtub::calcBathtubData()
 {
 	const TPosition3f& mtx = *(TPosition3f*)getRootJointMtx();
@@ -783,9 +785,9 @@ void TBathtub::calcBathtubData()
 
 	f32 upY  = mBathtubData.unk18.at(1, 1);
 	f32 tilt = JGeometry::TUtil<f32>::sqrt(1.0f - upY * upY);
-	mBathtubData.unk44
-	    = mBathtubData.unk3C * JGeometry::max(unk16C->watermark.get(), tilt);
-	mBathtubData.unk48 = unk16C->outerHeight.get();
+	mBathtubData.unk44 = mBathtubData.unk3C
+	                     * JGeometry::max(getUnk16C()->watermark.value, tilt);
+	mBathtubData.unk48 = getUnk16C()->outerHeight.value;
 	mBathtubData.unk0C.x = mBathtubData.unk18.at(0, 1);
 	mBathtubData.unk0C.y = mBathtubData.unk18.at(1, 1);
 	mBathtubData.unk0C.z = mBathtubData.unk18.at(2, 1);
@@ -801,9 +803,9 @@ void TBathtub::calcBathtubData()
 		if (!axis.isZero()) {
 			JGeometry::TQuat4<f32> shake;
 			shake.setRotate(
-			    axis, unk16C->maxAngle.get() * 6.2831855f / 360.0f);
+			    axis, getUnk16C()->maxAngle.value * 6.2831855f / 360.0f);
 			shake.rotateQ(mBathtubData.unk0C, mBathtubData.unk0C);
-			mBathtubData.unk58.set(0.0f, unk16C->shake.get(), 0.0f);
+			mBathtubData.unk58.set(0.0f, getUnk16C()->shake.value, 0.0f);
 		}
 	} else {
 		mBathtubData.unk0C.set(0.0f, 1.0f, 0.0f);
