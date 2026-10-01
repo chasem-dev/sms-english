@@ -429,7 +429,31 @@ void J3DMtxProjConcat(register Mtx param_1, register Mtx param_2,
 
 void PSSqrtfv(f32*, f32*, u32) { }
 
-void J3DPSMtx23Copy(MtxPtr, MtxPtr) { }
+// UNUSED. The first two rows of J3DPSMtx33Copy: six floats in three pairs
+// (0x1c).
+void J3DPSMtx23Copy(register ROMtxPtr src, register ROMtxPtr dst)
+{
+	register f32 x1_y1;
+	register f32 z1_x2;
+	register f32 y2_z2;
+#ifdef __MWERKS__ // clang-format off
+	asm {
+		psq_l x1_y1, 0(src),  0, qr0
+		psq_l z1_x2, 8(src),  0, qr0
+		psq_l y2_z2, 16(src), 0, qr0
+
+		psq_st x1_y1, 0(dst),  0, qr0
+		psq_st z1_x2, 8(dst),  0, qr0
+		psq_st y2_z2, 16(dst), 0, qr0
+	}
+#else
+	for (int r = 0; r < 2; r++) {
+		dst[r][0] = src[r][0];
+		dst[r][1] = src[r][1];
+		dst[r][2] = src[r][2];
+	}
+#endif // clang-format on
+}
 
 void J3DPSMtx33Copy(register ROMtxPtr src, register ROMtxPtr dst)
 {
