@@ -293,3 +293,21 @@ Those four are `TGuide::resetObjects` (hsearch's split `mShineNum` store, insn 5
 `TBossHanachan::execDamage` is exact with its dying block's collision-off loop (head, eight bodies and their feet) moved into an inline level, but no UNUSED is 0x13c, so it stays a lead.
 `TGuide::resetObjects`'s etcShines and blueCoins clamps are ternaries whose result retail coalesces into the counter (`bge; b; li r24, 9`); `etcShines = etcShines < 10 ? etcShines : 9` gets insn 51 -> 7 but keeps an `mr` and reads 97.77 -> 97.74.
 `TKoopaBody::receiveMessage` is 8 short like `TKoopaHead::receiveMessage` and has no sound call, so both gaps likely sit in the shared `stagger()` path; the head's `(Vec*)&mOwner->getPosition()` lands its frame only by coincidence.
+
+## hsearch sweep c-hs11
+
+The resumed c-hs5 list (`scratchpad/hs5/targets.tsv`, 200 s per function, `-j 2`, one foreground call per row) ran rows 357 to 432, which completes the list.
+A tool fix landed first: hsearch now ranks and reports candidates by objdiff's fuzzy match percent for the function (`objdiff-cli diff -c functionRelocDiffs=none`, which reproduces report.json exactly), with its instruction, frame, register and slot counts as tie-breaks, so a candidate it ranks better is no longer one `ninja changes_all` reads as a regression.
+Search gave 39 candidates (one exact, 37 improved, one improved-regresses), 20 rows with no gain, and 17 rows that are weak or local-class functions our objects do not emit (the ShadowUtil `TSetup`/`TCylinder` makeDL and dtors, the J3DShapeMtx getters, `SMS_GetMarioPos`, `getCurGraphIndex`, `TVec3::set<f>`).
+Review accepted 10 rows (one by hand ahead of its row) and rejected 30.
+`AudioDecoderForOnMemory` is byte-exact and `THPPlayer/THPAudioDecode.c` is linked: with every declaration at its block's top (C89), `readSize, size, frame` at function scope and `remaining` at the loop-body top, MWCC ranks retail's frame > &AudioDecodeThread > &ActivePlayer > readSize rotation.
+Only `frame` declared after both readSize and size gives it; the other orders are 89.3% or 86.3%, and `remaining` at function scope too is 99.8% with seven slots off.
+The loadAfter that the old comment paired it with (`TMapObjRevivalPollution::loadAfter`) has no locals to order, and search found nothing there.
+`TLimitKoopa::setUpHitActors` gains the most of the accepted partials: the flame height read unnamed at the `set()` call takes it from 94.90 to 98.98%; `along *= spread` on its own line reaches 99.70% but reads as a split and stays out.
+The three nozzle `emit()`s take the same spelling: the facing sine and cosine named as a pair, `getMario()` at every read and the reaction unnamed into `addVelocity` (TNozzleBase 94.15 -> 97.45, TNozzleTrigger 94.64 -> 97.47, TNozzleDeform 94.00 -> 96.35); each part alone is inert or worse.
+`TAnimalBase::perform` gains with the draw-matrix flag and index named as a pair in its shared-animation loop (92.54 -> 93.52).
+The other accepted edits are accessors the file or class already uses, at every read in the function: getUnk30(), getRealoid(), getStatus() and `mOwner->getPosition()`.
+Rejected: machine order (split accumulates, hoists, declaration swaps, asymmetric spellings: 8), lone named values or receivers (6), machine extracts with no UNUSED of their shape (6), accessors the file never uses or reads raw elsewhere (6), raw fields against the file's accessor (2), one edit that cost the exact frame, and one that regressed its inliners.
+`TBossGesso::changeAllTentacleState` reaches 99.73% with `getTentacle(i)`, but the three nerves that inline it fall from exact or 99.95% to about 98.5%, so the nerves want the raw spelling.
+Lead: `TAnimalBird::doFlyToCurPathNode` loses all 46 slot mismatches with `getPosition()` at the subtrahend, but Bird.cpp never uses getPosition().
+Whole c-hs5 list (c-hs5 to c-hs11, 432 rows, 431 searched and one applied by hand): 6 exact, 294 improved, 5 improved-regresses, 109 no gain and 17 base failures; review accepted 126 rows and rejected 184, and one unit was linked.
