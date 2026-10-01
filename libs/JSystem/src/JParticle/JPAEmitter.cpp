@@ -386,7 +386,7 @@ JPABaseParticle* JPABaseEmitter::createParticle()
 			r27_param168 = JPAEmitterInfoObj.mVolumeEmitIdx;
 			r26_param164 = JPAEmitterInfoObj.mEmitCount;
 
-			if (mVolumeType == VOLUME_TYPE_SPHERE) {
+			if (getVolumeType() == VOLUME_TYPE_SPHERE) {
 				r24_param174 = JPAEmitterInfoObj.mSphereCurrentPitch;
 				r25_param176 = JPAEmitterInfoObj.mSphereCurrentYaw;
 
@@ -434,7 +434,7 @@ JPABaseParticle* JPABaseEmitter::createParticle()
 
 		particle->unk68.zero();
 
-		switch (mVolumeType) {
+		switch (getVolumeType()) {
 		case VOLUME_TYPE_POINT: {
 			local_468.zero();
 			break;
@@ -564,7 +564,7 @@ JPABaseParticle* JPABaseEmitter::createParticle()
 		}
 		}
 
-		if (mVolumeType != VOLUME_TYPE_TORUS)
+		if (getVolumeType() != VOLUME_TYPE_TORUS)
 			f31_f30_f29.set(local_468.x, 0.0f, local_468.z);
 
 		JGeometry::TVec3<f32> f21_f20_f19;
@@ -581,7 +581,7 @@ JPABaseParticle* JPABaseEmitter::createParticle()
 		JGeometry::TVec3<f32> add3_vec(0.0f, 0.0f, 0.0f);
 
 		if (unk1FC != 0.0f) {
-			if (mVolumeType == VOLUME_TYPE_POINT) {
+			if (getVolumeType() == VOLUME_TYPE_POINT) {
 				f26_f25_f28.set(getRandomSF(), getRandomSF(), getRandomSF());
 				f26_f25_f28.setLength(unk1FC);
 			} else {
@@ -591,7 +591,7 @@ JPABaseParticle* JPABaseEmitter::createParticle()
 		}
 
 		if (unk200 != 0.0f) {
-			if (mVolumeType == VOLUME_TYPE_POINT) {
+			if (getVolumeType() == VOLUME_TYPE_POINT) {
 				if (checkFlag(EMIT_FLAG_FIXED_INTERVAL)) {
 					s16 ang = (s16)((r27_param168 << 16) / r26_param164);
 					f22_f23_f24.set(JMASSin(ang), 0.0f, JMASCos(ang));
