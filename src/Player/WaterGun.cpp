@@ -410,18 +410,19 @@ void TNozzleBase::emit(int param_1)
 
 			JGeometry::TVec3<f32> const& dirVec = emitInfo->mDir.get();
 
-			f32 dirScale = -dirVec.x * JMASSin(mFludd->mMario->mFaceAngle.y)
-			               - dirVec.z * JMASCos(mFludd->mMario->mFaceAngle.y);
+			f32 sinY = JMASSin(mFludd->getMario()->mFaceAngle.y);
+			f32 cosY = JMASCos(mFludd->getMario()->mFaceAngle.y);
+			f32 dirScale = -dirVec.x * sinY - dirVec.z * cosY;
 			f32 reactionPow
 			    = refEmitPow * mEmitParams.mReactionPow.get();
-			mFludd->mMario->addVelocity(dirScale * reactionPow);
+			mFludd->getMario()->addVelocity(dirScale * reactionPow);
 
-			mFludd->mMario->mVel.x -= dirVec.x * reactionPow;
-			mFludd->mMario->mVel.z -= dirVec.z * reactionPow;
+			mFludd->getMario()->mVel.x -= dirVec.x * reactionPow;
+			mFludd->getMario()->mVel.z -= dirVec.z * reactionPow;
 
 			f32 velocityY
 			    = -dirVec.y * refEmitPow * mEmitParams.mReactionY.get();
-			mFludd->mMario->mVel.y += velocityY;
+			mFludd->getMario()->mVel.y += velocityY;
 		}
 	}
 }
