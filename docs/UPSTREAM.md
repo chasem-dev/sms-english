@@ -83,3 +83,16 @@ Taken: `BG_CHECK_FLAG_X_FACING` (0x8) in `MapData.hpp`, `MapCheck.cpp` and `MapD
 The new particle ids 0xA1, 0x13C..0x13F, 0x177 and 0x1D1..0x1D2 were added to our `Particles.hpp`; upstream's `SCENE_BOSSPAKKUN_*` renames were not taken.
 No function changed score and no unit became newly linkable.
 Of the 14 upstream functions that still score higher than ours, all are the c-u4 rejections recorded above (their files did not change in this sync), so none was ported.
+
+## UNUSED restoration c-u6 (2026-10-01)
+
+Nine UNUSED bodies were restored, each from an exact-size copy elsewhere in the binary or a sibling class whose body is already verified.
+limitkoopa (16 -> 13 mismatches): `setAnimationIndex` is TKoopaJr's 0x70 body, and `getDown` (0x2a0, exact) and `stagger` (0x240) are TKoopa's without the Fall and Provoke tests, as `getShowered` already was.
+`stagger`'s Flame test compiles to 0x240 in any position after the Tumble test, so its place is left as a TODO.
+CardLoad (2 -> 1) and CardSave (2 -> 1): `changePattern` is TGuide's 0xc8 blink.
+bosstelesa (10 -> 9): `TTelesaSlot::entryObjCollision` is TMameGesso's two `setVertexData` triangles over the same collision-plus-four-vertices layout (0x58).
+cannon (5 -> 3): the same split lands both of TCannon's helpers at their map sizes: the triangles move from `calcObjCollision` (now 0x12c) into `entryObjCollision` (0x58), `calcRootMatrix` calls both, and `init` allocates the collision itself.
+fireWanwan (22 -> 21): `emitTailHitEffect` (0x54) is the Fly nerve's `li r3, 9 ... bl SMS_EasyEmitParticle` tail puff, 21 instructions; calling it from the nerve moves the (1, 1, 1) temporary 4 bytes (97.57 -> 97.55), so the nerve keeps its spelled-out copy.
+Rejected: TKoopaParts::set with TLimitKoopaParts' `height <= 0` default reaches the map's 0x84 but adds six instructions to TKoopa::setUpHitActors (98.1 -> 94.1), so retail's has none.
+No scored function changed and unit data stayed at 100%.
+MarioMove's 13 stubs and fireWanwan's `calcShadowPos`, `clipNodes` and `receiveMessageFromTail` have no call site or inlined copy; they carry TODOs with their map sizes.
