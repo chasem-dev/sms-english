@@ -1563,7 +1563,14 @@ void TFireWanwan::checkHungTail()
 	}
 }
 
-void TFireWanwan::emitTailHitEffect() { }
+// UNUSED (0x54): the Fly nerve's launch puff at the tail joint; the nerve's
+// copy (li r3, 9 ... bl SMS_EasyEmitParticle) is exactly these 21
+// instructions.
+void TFireWanwan::emitTailHitEffect()
+{
+	SMS_EasyEmitParticle(PARTICLE_MS_FUMI_C, getTailMtx(), this,
+	                     JGeometry::TVec3<f32>(1.0f, 1.0f, 1.0f));
+}
 
 // correct but popCurr is incorrect
 void TFireWanwan::initTurnNextGraphNode()
@@ -2348,6 +2355,8 @@ DEFINE_NERVE(TNerveFireWanwanFly, TLiveActor)
 		self->mVelocity = vel
 		    = FireWanwanFromPolar(self->mRotation.y, self->unk194->mThrowPow);
 
+		// emitTailHitEffect(), spelled out: calling it moves the (1, 1, 1)
+		// temporary 4 bytes down (97.57 -> 97.55, same instructions).
 		SMS_EasyEmitParticle(PARTICLE_MS_FUMI_C, self->getTailMtx(), self,
 		                     JGeometry::TVec3<f32>(1.0f, 1.0f, 1.0f));
 
