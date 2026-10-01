@@ -408,7 +408,7 @@ static int MarioHeadCtrl(J3DNode* param_1, int param_2)
 	// volatile u32 padding[34];
 	Mtx transform;
 	if (param_2 == 0) {
-		if (gpMarioForCallBack->mStatus == MARIO_STATUS_READ_BILLBOARD) {
+		if (gpMarioForCallBack->getStatus() == MARIO_STATUS_READ_BILLBOARD) {
 			TBaseNPC* npc = gpMarDirector->getTalkingNPC();
 			if (npc == nullptr)
 				return 0;
@@ -424,12 +424,12 @@ static int MarioHeadCtrl(J3DNode* param_1, int param_2)
 
 			s16 angle = -matan(mult, other.y);
 			MsMtxSetRotRPH(transform, 0.0f, 0.0f, SHORTANGLE2DEG(angle));
-		} else if (gpMarioForCallBack->mStatus == MARIO_STATUS_ROCKET
+		} else if (gpMarioForCallBack->getStatus() == MARIO_STATUS_ROCKET
 		           && gpMarioForCallBack->mWaterGun->isEmitting() == true) {
 			s16 headAngle
 			    = gpMarioForCallBack->mUpperBodyParams.mHoverHeadAngle.get();
 			MsMtxSetRotRPH(transform, 0.0f, 0.0f, SHORTANGLE2DEG(headAngle));
-		} else if (gpMarioForCallBack->mStatus == MARIO_STATUS_WAIT
+		} else if (gpMarioForCallBack->getStatus() == MARIO_STATUS_WAIT
 		           && (gpMarioForCallBack->unk370
 		                       > gpMarioForCallBack->mDeParams.mFeelDeep.get()
 		                   ? true
@@ -437,7 +437,7 @@ static int MarioHeadCtrl(J3DNode* param_1, int param_2)
 			s16 headAngle
 			    = gpMarioForCallBack->mUpperBodyParams.mFeelDeepHeadAngle.get();
 			MsMtxSetRotRPH(transform, 0.0f, 0.0f, SHORTANGLE2DEG(headAngle));
-		} else if (gpMarioForCallBack->mStatus == MARIO_STATUS_WAIT
+		} else if (gpMarioForCallBack->getStatus() == MARIO_STATUS_WAIT
 		           && gpMarioForCallBack->isWallInFront()) {
 			// TODO: retail tests the WAIT status once for both arms (any
 			// other status jumps straight to the default); ours re-tests it.
