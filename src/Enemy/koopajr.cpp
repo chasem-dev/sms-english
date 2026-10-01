@@ -1199,12 +1199,15 @@ const char** TKoopaJrSubmarine::getBasNameTable() const
 }
 
 // Turns the round direction away from Koopa's flame and towards Mario.
-// TODO: 99.8%; frame 0xe8 against 0xf0 with every instruction and register
-// right (registers since d2r's named result, c-t3). The
-// ROM has 4 more bytes above toMario and its atan2f copy 0x10 lower with
-// 0x24 more above it. Raw mDirection reads (all sites: 0xb8), raw tub
-// position (0xc8), SMS_GetMarioPos(), and declaring toMarioDir first or
-// before toMario are inert or move the wrong way.
+// The named Mario position is the ROM's word above toMario (c-t5): the
+// propagated reference keeps a slot, and SMS_GetMarioPos()'s result object
+// replaces the `*gpMarioPos` binding sub() made below toMario.
+// TODO: frame and registers exact; the atan2f copy sits 0x14 above the ROM's
+// (five objects created after it in ours are created before it there), as
+// in TKoopaJrSubmarine::checkNerve's makeDirection copy. A `*gpMarioPos`
+// reference drops toMario 4 (0xe8), a named tub position reference is inert,
+// and unnamed SMS_GetMarioPos(), raw mDirection reads and declaring
+// toMarioDir first are inert or worse.
 void TKoopaJrSubmarine::makeRelativeAngle()
 {
 	f32 flameDir
@@ -1212,8 +1215,9 @@ void TKoopaJrSubmarine::makeRelativeAngle()
 	f32 nearerFlame = mDirection.calcNearerDirection(flameDir);
 	f32 flameDiff   = fabsf(mDirection.get() - nearerFlame);
 
+	const JGeometry::TVec3<f32>& marioPos = SMS_GetMarioPos();
 	JGeometry::TVec3<f32> toMario;
-	toMario.sub(*gpMarioPos, mKoopaJr->mBathtub->getPosition());
+	toMario.sub(marioPos, mKoopaJr->mBathtub->getPosition());
 	toMario.y = 0.0f;
 	// The by-value TVec3 parameter is the copy the ROM makes before atan2f.
 	TDirectionCalc toMarioDir(toMario);
