@@ -927,8 +927,9 @@ void TKoopaJrSubmarine::calcRootMatrix()
 		JGeometry::TQuat4<f32> q;
 		q.mul(yaw, swing);
 		// TODO: 98.5%. Since the no-locals TQuat4::mul(a, b) both products
-		// load in retail's order; left are the frame (0x1c8 against 0x1e0:
-		// 4 more above q, 0x14 more below mtx) and the ROM loading
+		// load in retail's order; left are the frame (0x1d0 against 0x1e0
+		// since setEulerZ's set() binds two words, c-t7; setEulerX/Y through
+		// set() would land it but overshoot exact callers elsewhere) and the ROM loading
 		// mWavePhase before saving the first cosf. Inert or worse
 		// (2026-09-23): a second quaternion for the product (frame exact,
 		// 88.5), named angles, one-argument mul(wave), q = yaw then

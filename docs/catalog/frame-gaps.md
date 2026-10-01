@@ -3085,3 +3085,25 @@ In progress; results are appended below as they are measured.
 - The s16 setEular (JMASSin) also calls the setters; both of its emitted weak copies (MapWire, PollutionCount) are exact, its inlined copies (if any) were not searched, and it was left alone.
 - tinkoopa's UNUSED makeEyeBeamEffect still expands setEular (frame 0x1a8 -> 0x160 with the new body); retail's weak out-of-line copy there stays unexplained.
 - TMapObjBase::makeMtxRotByAxis (0x90 against 0x80) is the nearest relative: setRotate's sin/cos wrapper locals are fine there too, and its three extra words are the S temporaries of the `f2f3f0.mul()` vector already recorded in its TODO.
+
+## Lever sweep c-t7 (2026-10-01)
+
+- Question: does c-r37's rule (an inline body's setter call with its own locals binds every argument, one dead word each per inlined expansion) explain other frame gaps in the shared headers, either way round?
+- Method: each candidate header body was respelled in the worktree, the whole tree rebuilt, and every function's frame (from `objdump` of our objects) and fuzzy score compared with the base build and with retail's frame from the asm; `changes_all` alone does not see a frame move.
+- Landed: TQuat4::setEulerZ stores through `this->set(0.0f, 0.0f, s, c)` instead of four member stores.
+- All three callers move 8 toward retail and nothing else changes: SMS_Eular2Quat 0xd0 -> 0xd8 (retail's frame, 97.54 -> 97.68), TKumokun::initAttachPlane 0x168 -> 0x170 (retail 0x178), TKoopaJrSubmarine::calcRootMatrix 0x1c8 -> 0x1d0 (retail 0x1e0); DOL unchanged, `changes_all` no regression, symbol order 116 FAIL before and after.
+- So the rule runs both ways: a body written as direct stores where retail called a setter is two words short per expansion, and the frames that are short by 8 at every caller of one body are the tell.
+- The same set() in setEulerX or setEulerY is refused: X moves SMS_Eular2Quat, TKoopaJrSubmarine::calcRootMatrix and TYumbo::shotSeeds toward retail but costs TBeeHive::calcRootMatrix (exact, 0xa0 -> 0xa8) and TKukku::dropCoins (0x158 -> 0x160); Y moves nine functions toward retail but costs TLimitKoopaJr::calcRootMatrix (exact, 0x70 -> 0x78) and overshoots both fireWanwan FindMario and RecoverGraph nerves.
+- Since the X and Y callers disagree with each other, their remaining words are caller-side, not in those bodies.
+- Refused, the setter call is retail's (writing the stores out shortens frames that are exact or already short):
+- TQuat4::getXDir/getYDir/getZDir (`rDest.set(_x, _y, _z)`): fourteen frames shrink by 8 to 0x18; TNerveBeeHiveFall 100 -> 97.04, TNerveKumokunWalk 100 -> 96.29, makeInitialVelocity 100 -> 99.88.
+- TQuat4::mul(const TQuat4&) (`this->set(_x, _y, _z, _w)`): SMS_Eular2Quat and shotSeeds lose 0x10 each, both already short.
+- TQuat4::setRotate(from, to, amount) (`this->xyz().scale(s, axis)` as three stores): eight functions lose, the weak BeeHive copy included (100 -> 99.83), so an out-of-line copy is not always blind: a scalar local passed beside a vector is bound at depth 0 too.
+- TVec3::setLength (`scale(length * inv_sqrt(lsq), v)` as a named factor and three stores): 41 exact functions lose.
+- Inert (no expanding caller, or nothing bound): TMatrix33::mult's `dst.set(x, y, z)`, TMatrix34::multTranspose (no caller), and TRotation3::setRotate's `f2f3f0.mul(f27f28f29, f27f28f29)` written out, which moves no frame anywhere: references to the body's own local objects bind nothing.
+- That last one refutes c-r37's reading of TMapObjBase::makeMtxRotByAxis (0x90 against 0x80): hsearch dbg shows ours with makeMtxRotByAxis's three parameter homes plus three inline words below the normalized vector, where retail has three words in all.
+- The s16 setEular (JMASSin) has no scored inlined copy: retail calls it out of line from TMapWire::init and the PollutionCount site, and a scan of the retail asm for functions with three sin-table and three cos-table loads finds only bodies whose source does not call it.
+- Its only inlined copies are in the UNUSED TMapWire::initTipPoints (0x170 -> 0x150 with the stores written out) and initCountObjDegree (0xc8 -> 0xa0), whose map sizes do not depend on the frame (0x1f4 against the map's 0x1f0, and 0x190, either way), so the body was left with its setters: nothing in the binary decides it.
+- TVec2::rotate, TRotation3::mult33, TMatrix33::mult(v) and TMatrix34::mult/concat pass arithmetic of their parameters, and a written-out body would change their results when the source and destination alias, so they were not respelled.
+- The game headers (MathUtil, MtxUtil, DrawUtil, Camera, LiveActor, BathWaterManager) and the J3D/JDrama/J2D/JUtility headers have no other inline body that passes its own locals to an inline setter; their remaining setter calls take parameters, members or constants.
+- TMapWire::init (0x180 against retail 0x1b0) is short by eleven words below initTipPoints' half-wire vector, all in the low region before it; no header body tried here moves it.
