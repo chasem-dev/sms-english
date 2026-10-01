@@ -265,3 +265,22 @@ Moving the `changeByJuice` override above `isEatenByYosshi` fixed the pair; the 
 - With `TPosition3f**`, `copyAnmMtx` must read the element as `unk48[f][i].mMtx`: the implicit conversion operator adds an inline level that moves the concat scratch from 0x64 to 0x68.
 - The UNUSED bodies between the double's owner and the next literal (`killOtherEnemies`) must request no float literal at all, which constrains their reconstruction.
 - Retail ids between two already-matching literals differ from ours by up to 6, so id gaps say only roughly how much code an UNUSED body holds.
+
+## Link readiness c-r35 (2026-10-01): `tools/rodata-order.py`, fourteen `.rodata` blobs ordered
+
+- `tools/rodata-order.py` compares every unlinked unit's `.rodata`, `.sdata2`, `.data` and `.sdata` with the split retail object and prints `same`, `order` (same contents, different order) or `diff` per section; `-u <unit>` lists both sides object by object with float values, `--all` adds the linked units.
+- It models MWLD's dead-stripping: each unreferenced data object is dropped on its own (the map's UNUSED rows), so it compares only our objects that the map places in the unit or that relocations reach from them without passing through a weak symbol the map gives another unit.
+- A `.rodata` block that live code addresses through `...rodata.0` (the map's `...rodata.0 (entry of .rodata)` row) is kept whole and compared as raw bytes; otherwise its unreferenced leading objects are stripped too (effectEnemy keeps only its own three strings).
+- Checked against the 543 linked units: no `order` or `diff` in `.rodata`, `.sdata2` or `.data`; the one `.sdata` report is sunmodel's archived duplicate `cSunVolumeName` pair.
+- Run it before any link attempt: an `order` or `diff` there means a different DOL even when objdiff shows 100% data.
+- Fourteen of c-k29's fifteen `.rodata` cases were include order only, in two shapes.
+- Dummy strings, collision pair, mtx-calc names (smallEnemy, fireWanwan, bosswanwan, MapWire): include `System/DummyStrings.hpp` above the first collision header.
+- Dummy strings, mtx-calc names, collision pair (bosspakkun, cannon, fruitsboat, BossHanachanMain, Koopa, Amenbo, limitkoopa, MapEventSink, MapObjBianco, MapObjMare): move the explicit collision includes below `M3DUtil/InfectiousStrings.hpp`.
+- BathWaterManager is not an include-order case: retail has the no-memory message first, a 12-byte zero object seven ids later and no `@1490`, which the current DummyStrings/DummyMactorString nesting cannot produce.
+- Static data definition order fixed from the map: bossManta (`.data`, `sFrameRate` before `sScale`), MapObjTree and PollutionLayer (`.sdata`).
+- The `.sdata2` differences c-k29 saw in MathUtil, NpcBase and MarioCap are not real: they are the 0.5f and 3.0f of the discarded weak `JGeometry::TUtil<f>::sqrt` copy and floats of UNUSED helpers, all UNUSED in the map.
+- BathtubPeach and Koopa: the first requester of WrapDegreesF's -180f and 360f is an UNUSED body (`faceTo`, exactly 0x12c; `checkMarioWhichSide`, 0x1b0 against 0x1a0); retail requests 360f first there, our WrapDegreesF-based reconstructions request -180f first.
+- So those bodies, not the matched code, decide the order; a named `range` local in WrapDirectionF gives retail's order but changes the frame of matched callers in MapObjCorona, wireTrap, koopajr and Koopa, and reordered or direct spellings are inert or change code.
+- beam (`calcVertices`: 0.5f, 182.04f, 360f) and MarioParticle (`TWarpInCallBack::execute`: the signed int-to-float double before the unsigned one) are in the open function itself; retail's FPR assignment follows the same request order, so they close with it.
+- NpcAnm: `MsRandI` reached through `doThing3(240, 360)` requests the folded 120f before 1/32768 where retail does the reverse, while AnimalNerve's direct `MsRandI` already matches; `(r - l) * (rand() * c)` is inert.
+- Still open after this batch, unlinked units only: `.sdata2` order in 25 units and diff in 4, `.data` order in 6 (vtable emission order: Amenbo, Kukku, yunbo, tinkoopa, MSoundSE, MSoundStruct) and diff in 1.
