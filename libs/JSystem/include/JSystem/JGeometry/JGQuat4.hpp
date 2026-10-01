@@ -117,12 +117,16 @@ public:
 	}
 	void setEulerZ(T _z)
 	{
-		f32 s   = sin(0.5f * _z);
-		f32 c   = cos(0.5f * _z);
-		this->x = 0.0f;
-		this->y = 0.0f;
-		this->z = s;
-		this->w = c;
+		f32 s = sin(0.5f * _z);
+		f32 c = cos(0.5f * _z);
+		// One set() call, not four member stores (lever sweep c-t7): the call
+		// binds s and c, two dead words in every caller that inlines this
+		// body, and all three callers want them (SMS_Eular2Quat 0xd0 -> 0xd8,
+		// retail's frame; TKumokun::initAttachPlane and
+		// TKoopaJrSubmarine::calcRootMatrix each 8 closer). The same call in
+		// setEulerX or setEulerY overshoots exact frames
+		// (TBeeHive::calcRootMatrix, TLimitKoopaJr::calcRootMatrix).
+		this->set(0.0f, 0.0f, s, c);
 	}
 
 	// A `f32 halfAngle = pAngle * 0.5f` local for sinf/cosf (c-h13) fixes
