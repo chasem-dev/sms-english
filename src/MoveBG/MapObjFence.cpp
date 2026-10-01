@@ -438,6 +438,16 @@ void TFenceWater::initMapObj()
 // 0x38/0x40, so the excess is setEular's expansion pool. Inert (cc37): raw
 // `.mMtx` arguments to MTXConcat/MTXCopy, dropping the MtxPtr local, both
 // matrices as TPosition3, declaring both at the top in either order.
+// c-k30: the 12 extra words are setEular's own f3..f8 locals, homed in both
+// expansions because each holds the forced-load result of the MSL `sin`/`cos`
+// wrapper. With JGRotation3.hpp's setEular(f32) calling sinf/cosf directly
+// this function is byte-exact (0xf8), but MapObjLib's out-of-line
+// TRotation3<TMatrix33>::setEular copy then loses the same six words (0x78
+// against retail's 0x90), so retail's header body does use the wrappers and
+// something unmodelled keeps them unhomed here. Inert or worse: named angles
+// at either call, operand order, a depth-2 wrapper (not inlined), a non-inline
+// template member (not inlined), and `float r = sinf(x); return r;` wrappers
+// (both contexts grow).
 void TFenceWaterH::control()
 {
 	TMapObjBase::control();

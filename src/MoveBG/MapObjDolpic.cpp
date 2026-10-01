@@ -104,6 +104,9 @@ void TMonumentShine::hitByWater(THitActor* actor)
 	// pair `actor->getPosition()` (+8) with the dot unnamed (-8) lands the
 	// slots; `waterDir.dot(cross)`, `-=`, isZero() and the three-argument
 	// sub() were inert on the colouring.
+	// c-k30: condition-only names are not homed here (named `squared()` of
+	// either vector, a named dot), and scalar cross components drop the frame
+	// to 0x50, so the missing word is not cross's components either.
 	JGeometry::TVec3<f32> cross;
 	cross.x = up.y * marioDir.z - up.z * marioDir.y;
 	cross.y = up.z * marioDir.x - up.x * marioDir.z;

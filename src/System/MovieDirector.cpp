@@ -195,6 +195,12 @@ void TMovieDirector::setup(JDrama::TDisplay* param_1, TMarioGamePad* param_2)
 // creates default-argument temporaries last, c-r28). Inert: explicit
 // (f32) casts, splitting the camera declaration; raw `rect.x2 - rect.x1` is
 // -8 frame (0x308), named f32/int width/height before `new` change code.
+// c-k30 (hsearch dbg): retail has one more word above group2d (ours there:
+// the homed rootViewObjs plus a pad), one between group2d and thpRender and
+// one between screen and audioInfo. Inert: a named switch operand, a named
+// DVD entry number for the condition, a named `new u8[]` buffer, a named
+// THPPlayerPrepare result; a named `TMovieSubTitle* subTitle` is homed but
+// lands between thpRender and stageDisp, where retail has nothing.
 int TMovieDirector::rsetup()
 {
 	void* subtitleArcBlob
