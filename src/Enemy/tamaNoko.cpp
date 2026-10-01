@@ -143,10 +143,11 @@ void TTamaNokoFlower::perform(u32 cue, JDrama::TGraphics* graphics)
 	unk18->perform(cue, graphics);
 }
 
-// TODO: 4 bytes too big
+// UNUSED (0xa8): TCannonDom::setBckAnm (cannon.cpp) is the same TSharedParts
+// body at the same map size.
 void TTamaNokoFlower::setBckAnm(int idx)
 {
-	getMActor()->setBckFromIndex(0);
+	getMActor()->setBckFromIndex(idx);
 	const char** basTable = unk10->getBasNameTable();
 	unk30                 = !basTable ? nullptr : basTable[idx];
 	if (unk30 != nullptr) {
@@ -602,6 +603,7 @@ void TTamaNoko::landEffect()
 	SMSRumbleMgr->start(8, 1, (float*)nullptr);
 }
 
+// TODO: UNUSED (0xf8 in the map); no call site or inlined copy, body unknown.
 void TTamaNoko::forceWakeUp() { }
 
 void TTamaNoko::forceSleep()
