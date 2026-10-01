@@ -799,7 +799,7 @@ void TBGTentacle::setAttackTarget()
 		}
 
 		JGeometry::TVec3<f32> local_148 = unk84;
-		local_148 -= mOwner->mPosition;
+		local_148 -= mOwner->getPosition();
 
 		JGeometry::TVec3<f32> local_3c;
 		local_3c.cross(JGeometry::TVec3<f32>(0.0f, 1.0f, 0.0f), local_148);
@@ -809,9 +809,7 @@ void TBGTentacle::setAttackTarget()
 		// header item: retail stores x and y, reloads local_148.x and then
 		// stores z, while our header computes all three before storing.
 		// Nothing at this call site changes it (JGVec3.hpp item).
-		// The frame is 112 bytes short, all of it low region, and
-		// getOwner()->mPosition for the subtrahend buys 8 of that with no
-		// instruction change.
+		// The frame is 80 bytes short, all of it low region.
 		// TODO: retail makes four 12-byte copies around the two out-of-line
 		// scale() calls (parameter, result, parameter, result); the named
 		// intermediate below makes five and the single-expression form
@@ -821,8 +819,8 @@ void TBGTentacle::setAttackTarget()
 		unk84 += local_cc * 80.0f;
 	}
 
-	if (mOwner->is2ndFightNow() && unk84.y < mOwner->mPosition.y + 20.0f)
-		unk84.y = mOwner->mPosition.y + 20.0f;
+	if (mOwner->is2ndFightNow() && unk84.y < mOwner->getPosition().y + 20.0f)
+		unk84.y = mOwner->getPosition().y + 20.0f;
 
 	if (mOwner->getAttackMode() == 2) {
 		if (gpMarioOriginal->isTouchGround4cm()
