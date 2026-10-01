@@ -337,7 +337,7 @@ static inline f32 ModelGateDist(JGeometry::TVec3<f32> a,
 	return ModelGateLength(a);
 }
 
-// TODO: frame 0x160 against retail's 0x220 (0xc0 short) and the callee-saved
+// TODO: frame 0x178 against retail's 0x220 (0xa8 short) and the callee-saved
 // and volatile register choices around the swirl stage references differ;
 // the instruction stream and the @3054 jump table match. The swirl fields
 // are written through `u8&` locals: retail hoists every field address the
@@ -353,7 +353,7 @@ void TModelGate::perform(u32 cue, JDrama::TGraphics* graphics)
 		// Point the gate's three YUV textures at the current movie frame.
 		if (ActivePlayer.open && ActivePlayer.dispTextureSet) {
 			THPTextureSet* set = ActivePlayer.dispTextureSet;
-			J3DTexture* tex    = unk78->getModel()->getModelData()->unkAC;
+			J3DTexture* tex    = unk78->getModel()->getModelData()->getTexture();
 			tex->mResources[0].imageDataOffset
 			    = (u32)set->ytexture - (u32)&tex->mResources[0];
 			tex->mResources[1].imageDataOffset
@@ -367,7 +367,7 @@ void TModelGate::perform(u32 cue, JDrama::TGraphics* graphics)
 
 	if (cue & CUE_MOVE) {
 		if (!(mFlags & GATE_FLAG_OPENING)) {
-			if (ModelGateDist(*gpMarioPos, mPosition) < 1000.0f) {
+			if (ModelGateDist(*gpMarioPos, getPosition()) < 1000.0f) {
 				mOpenRate += 0.01f;
 				if (mOpenRate > 1.0f) {
 					mOpenRate     = 1.0f;
@@ -399,8 +399,8 @@ void TModelGate::perform(u32 cue, JDrama::TGraphics* graphics)
 				}
 			} else {
 				// Blow Mario away from the gate.
-				f32 dx  = gpMarioPos->x - mPosition.x;
-				f32 dz  = gpMarioPos->z - mPosition.z;
+				f32 dx  = gpMarioPos->x - getPosition().x;
+				f32 dz  = gpMarioPos->z - getPosition().z;
 				f32 len = std::sqrtf(dx * dx + dz * dz);
 				if (len < unk100) {
 					JGeometry::TVec3<f32> target(*gpMarioPos);
