@@ -86,7 +86,19 @@ public:
 	}
 };
 
-DECLARE_LIMITKOOPA_NERVE(TNerveLimitKoopaFlame)
+// The map's UNUSED destructor for the flame nerve is 0x6c, the size of the
+// ones that walk TNerveLimitKoopaTurn's vtable, as TNerveKoopaFlame derives
+// from TNerveKoopaTurn in Koopa.
+class TNerveLimitKoopaFlame : public TNerveLimitKoopaTurn {
+public:
+	virtual BOOL execute(TSpineBase<TLiveActor>*) const;
+	static const TNerveLimitKoopaFlame& theNerve()
+	{
+		static TNerveLimitKoopaFlame nerve;
+		return nerve;
+	}
+};
+
 DECLARE_LIMITKOOPA_NERVE(TNerveLimitKoopaGetDown)
 DECLARE_LIMITKOOPA_NERVE(TNerveLimitKoopaStagger)
 DECLARE_LIMITKOOPA_NERVE(TNerveLimitKoopaFall)

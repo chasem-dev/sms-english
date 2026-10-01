@@ -794,15 +794,15 @@ void TLimitKoopa::getShowered()
 }
 
 // UNUSED (0x240): TKoopa::stagger without the Fall and Provoke tests, as
-// getShowered and getDown above are TKoopa's without them.
-// TODO: the Flame test's place is unproven. Any position after the Tumble test
-// compiles to the map's 0x240; first, as in TKoopa, it is 0x234.
+// getShowered and getDown above are TKoopa's without them. With the flame
+// nerve on TNerveLimitKoopaTurn (its 0x6c destructor) the Flame test sits
+// first, as in TKoopa, at the map's size.
 void TLimitKoopa::stagger(bool force)
 {
-	if (&TNerveLimitKoopaTumble::theNerve() == mSpine->getCurrentNerve())
-		return;
 	if (!force
 	    && mSpine->getCurrentNerve() == &TNerveLimitKoopaFlame::theNerve())
+		return;
+	if (&TNerveLimitKoopaTumble::theNerve() == mSpine->getCurrentNerve())
 		return;
 	if (&TNerveLimitKoopaGetDown::theNerve() == mSpine->getCurrentNerve())
 		return;
