@@ -1072,7 +1072,7 @@ f32 TMario::setAnimation(int anm_id, f32 rate)
 			check = true;
 		}
 
-		if (mStatus == MARIO_STATUS_READ_BILLBOARD) {
+		if (getStatus() == MARIO_STATUS_READ_BILLBOARD) {
 			check = true;
 		}
 
