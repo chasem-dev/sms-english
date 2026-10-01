@@ -1303,13 +1303,9 @@ static inline void Hx_TexVtx(f32 x, f32 y, f32 u, f32 v)
 // Dividing the corner arguments in place gives retail's saved-FPR colouring:
 // arguments colour last, last-declared first, so y2/x2/y1/x1 take f25-f22
 // below the named dx, dy, ox, oy, sy, sx (f31-f26) in declaration order.
-// TODO: retail's low region is 0x10 larger (d at 0x38, ours 0x28) and three
-// volatile pairs differ (the sy/sx divisor loads, the 0.5f/magic-double
-// order, the first vertex's sums). Calling GXPosition3f32/GXColor1u32/
-// GXTexCoord2f32 directly gives retail's frame (each texcoord call's
-// propagated first-argument binding keeps a 4-byte slot) but reorders the
-// vertex stores; Hx_TexVtx with a z, colour or swapped parameter list is
-// inert, as is reassigning px/py per vertex.
+// The single-use w, h, du and dv are copy-propagated away but each keeps a
+// 4-byte slot, which is retail's 0x10 of low region under d; sx computed
+// before sy and py declared before px give the volatile registers.
 static void Hxs_Logo_TexDraw(f32 x1, f32 y1, f32 x2, f32 y2, f32 wd, f32 ht)
 {
 	Vec d;
@@ -1321,24 +1317,32 @@ static void Hxs_Logo_TexDraw(f32 x1, f32 y1, f32 x2, f32 y2, f32 wd, f32 ht)
 	f32 sx;
 	f32 cx;
 	f32 cy;
-	f32 px;
 	f32 py;
+	f32 px;
+	f32 du;
+	f32 dv;
+	u32 w;
+	u32 h;
 
-	sy = ht / 1.924138f;
 	sx = wd / 1.9230769f;
+	sy = ht / 1.924138f;
 	y1 /= sy;
 	y2 /= sy;
 	x1 /= sx;
 	x2 /= sx;
-	cx = hx.width >> 1;
-	cy = hx.height >> 1;
+	w = hx.width;
+	h = hx.height;
+	cx = w >> 1;
+	cy = h >> 1;
 	ox = cx - (sx / 2.0f);
 	oy = (cy - (sy / 2.0f)) - 32.0f;
 
 	// The pen stroke is a quad two units wide around the segment, so the
 	// offset is the segment's normal: (-dv, du).
-	d.y = x2 - x1;
-	d.x = -(y2 - y1);
+	du = x2 - x1;
+	dv = y2 - y1;
+	d.y = du;
+	d.x = -dv;
 	d.z = 0.0f;
 
 	if ((0.0f != d.y) || (0.0f != d.x)) {
