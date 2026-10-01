@@ -122,6 +122,8 @@ A run whose best has the same in-process score as the base but a closer layout r
 `dbg ... --by-line` adds, per object, retail's displacement from ours in words and the source line and type of the first statement that references it (from the front end's initial code in the same dump, so the `@N` numbers always agree).
 An object an inlined body creates carries the line of the caller's statement that expanded it, so a stray word between two mapped objects names the statement whose inline depth is off (docs/catalog/frame-model.md, "Iterator groups as depth markers").
 Back-end temporaries (int/float conversions) and spills have no statement and print `(back-end temp)` / `(back-end spill)`.
+With a debugger patched by `tools/mwcc-stack/patch-debugger.py` (patch a copy in your own scratch directory and point `MWCC_DEBUGGER` at it, never the shared one), the kind column also names the IR optimiser's temporaries (F, P, S, ...) and the F/P ones get `tools/mwcc-stack/iro.py`'s statement line; a `~` before their type marks iro.py's approximate pairing.
+Dead objects the inliner made and never referenced (an unpatched dump's unlabelled `@N` rows at the bottom) have no line either way.
 
 ```sh
 source <scratchpad>/env.sh   # MWCC_DEBUGGER, RETROWIN32

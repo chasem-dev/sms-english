@@ -214,7 +214,10 @@ def statement_lines(dumpdir: str, pre_lines: int = 0) -> Dict[str, Tuple[int, st
 
     Read from the front end's initial code (frontend-00), whose statements carry
     the line of the variant text the debugger compiled; `pre_lines` (the lines
-    Dumper prepended) is subtracted so the line is the unit source's.  Objects an
+    Dumper prepended) is subtracted so the line is the unit source's.  With a
+    patched debugger (tools/mwcc-stack/patch-debugger.py) the IR optimiser's F
+    and P temporaries get iro.py's line too ("~" marks an approximate pairing).
+    Objects an
     inlined body creates carry the line of the caller's statement that expanded
     it, so this names the statement whose depth a stray word belongs to.
     """
@@ -230,6 +233,15 @@ def statement_lines(dumpdir: str, pre_lines: int = 0) -> Dict[str, Tuple[int, st
         for name, typ in re.findall(r"EOBJREF \[([^\]\s]+)\] (.*)", s):
             if name not in out:
                 out[name] = (line, typ.strip())
+    # the IR optimiser's forced-load and comma temporaries (a patched debugger's names.txt)
+    if os.path.exists(os.path.join(dumpdir, "names.txt")):
+        try:
+            fp, exact = iro.fp_lines(dumpdir)
+        except (OSError, IndexError, ValueError):
+            fp, exact = {}, True
+        for name, (st, t) in fp.items():
+            if name not in out and st and st.isdigit():
+                out[name] = (int(st) - pre_lines, ("" if exact else "~") + t)
     # objects the back end made (int/float conversion temporaries, spills) have no statement
     vp = os.path.join(dumpdir, "variables.txt")
     sec = ""

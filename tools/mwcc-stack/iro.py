@@ -33,44 +33,21 @@ def kind_of(chain):
     return '?%x' % chain[1]
 
 
-def main(o):
-    kinds = {}
-    iro_order = []
-    for line in open(o + '/names.txt'):
-        p = line.split()
-        if len(p) < 3:
-            continue
-        chain = [int(x, 16) for x in p[2:]]
-        if p[1] == 'iro':
-            k = kind_of(chain)
-            if k:
-                kinds[p[0]] = k
-                iro_order.append((p[0], k))
-        elif chain and chain[0] == TEMP_OBJECT_RET:
-            kinds[p[0]] = 'inline'
-    rows = []
-    sec = None
-    for line in open(o + '/variables.txt'):
-        s = line.rstrip()
-        if s.strip().endswith(':'):
-            sec = s.strip()
-            continue
-        if sec != 'locals:':
-            continue
-        nm = s.split()[-1]
-        m = re.search(r'r1\+0x([0-9a-f]+)-0x([0-9a-f]+)', s)
-        where = 'r1+0x%s' % m.group(1) if (m and '->' not in s) else 'reg'
-        k = kinds.get(nm, 'inline' if nm.startswith('@') else 'named')
-        rows.append((nm, k, where))
-    dead = [r for r in rows if r[2] != 'reg']
-    print('locals (top of the list is created first):')
-    for nm, k, where in rows:
-        print('  %-8s %-6s %s' % (nm, k, where))
-    count = {}
-    for nm, k, where in dead:
-        count[k] = count.get(k, 0) + 1
-    print('dead words by kind:', ' '.join('%s=%d' % kv for kv in sorted(count.items())))
+def fp_lines(o, iro_order=None):
+    """Attribute the IR optimiser's F and P temporaries to statement lines.
 
+    Returns ({name: (line, tree text)}, exact), lines as frontend-00 prints
+    them; exact is False when the tree and IRO counts differ (the pairing is
+    then approximate).
+    """
+    if iro_order is None:
+        iro_order = []
+        for line in open(o + '/names.txt'):
+            p = line.split()
+            if len(p) >= 3 and p[1] == 'iro':
+                k = kind_of([int(x, 16) for x in p[2:]])
+                if k:
+                    iro_order.append((p[0], k))
     # F/P attribution: IRO linearises each statement's tree bottom-up, making an
     # F for every EFORCELOAD and a P for every ECOMMA whose value is used.
     fps = [(nm, k) for nm, k in iro_order if k in 'FP']
@@ -111,11 +88,55 @@ def main(o):
             out.append(('F', st, t))
     for root in seq:
         post(root, False)
-    where = {nm: w for nm, k, w in rows}
     ok = [k for _, k in fps] == [k for k, _, _ in out]
+    return {nm: (st, t) for (nm, k), (_, st, t) in zip(fps, out)}, ok
+
+
+def main(o):
+    kinds = {}
+    iro_order = []
+    for line in open(o + '/names.txt'):
+        p = line.split()
+        if len(p) < 3:
+            continue
+        chain = [int(x, 16) for x in p[2:]]
+        if p[1] == 'iro':
+            k = kind_of(chain)
+            if k:
+                kinds[p[0]] = k
+                iro_order.append((p[0], k))
+        elif chain and chain[0] == TEMP_OBJECT_RET:
+            kinds[p[0]] = 'inline'
+    rows = []
+    sec = None
+    for line in open(o + '/variables.txt'):
+        s = line.rstrip()
+        if s.strip().endswith(':'):
+            sec = s.strip()
+            continue
+        if sec != 'locals:':
+            continue
+        nm = s.split()[-1]
+        m = re.search(r'r1\+0x([0-9a-f]+)-0x([0-9a-f]+)', s)
+        where = 'r1+0x%s' % m.group(1) if (m and '->' not in s) else 'reg'
+        k = kinds.get(nm, 'inline' if nm.startswith('@') else 'named')
+        rows.append((nm, k, where))
+    dead = [r for r in rows if r[2] != 'reg']
+    print('locals (top of the list is created first):')
+    for nm, k, where in rows:
+        print('  %-8s %-6s %s' % (nm, k, where))
+    count = {}
+    for nm, k, where in dead:
+        count[k] = count.get(k, 0) + 1
+    print('dead words by kind:', ' '.join('%s=%d' % kv for kv in sorted(count.items())))
+
+    lines, ok = fp_lines(o, iro_order)
+    where = {nm: w for nm, k, w in rows}
     print('F/P temporaries by line%s:' % ('' if ok else ' (approximate: tree and IRO counts differ)'))
-    for (nm, k), (_, st, t) in zip(fps, out):
-        print('  %-8s %s line %-5s %-10s %s' % (nm, k, st, where.get(nm, '?'), t))
+    for nm, k in iro_order:
+        if nm in lines:
+            st, t = lines[nm]
+            print('  %-8s %s line %-5s %-10s %s' % (nm, k, st, where.get(nm, '?'), t))
 
 
 if __name__ == '__main__':
