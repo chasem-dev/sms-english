@@ -36,6 +36,24 @@ void __OSResetSWInterruptHandler(__OSInterrupt exception,
 	__PIRegs[0] = 2;
 }
 
+OSResetCallback OSSetResetCallback(OSResetCallback callback)
+{
+	BOOL enabled;
+	OSResetCallback prevCallback;
+
+	enabled       = OSDisableInterrupts();
+	prevCallback  = ResetCallback;
+	ResetCallback = callback;
+	if (callback) {
+		__PIRegs[0] = 2;
+		__OSUnmaskInterrupts(OS_INTERRUPTMASK_PI_RSW);
+	} else {
+		__OSMaskInterrupts(OS_INTERRUPTMASK_PI_RSW);
+	}
+	OSRestoreInterrupts(enabled);
+	return prevCallback;
+}
+
 BOOL OSGetResetButtonState(void)
 {
 	BOOL enabled = OSDisableInterrupts();
