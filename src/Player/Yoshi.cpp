@@ -44,7 +44,9 @@ static const GXColor bodyColor[4] = {
 	{ 0xFF, 0xA0, 0xBE, 0xFF },
 };
 
-void TYoshi::startVoice(u32 param_1) { }
+// UNUSED (0x2c): movement's dismount plays MSD_SE_YV_YOSHI1 through
+// startMarioVoice(id, 1, 1), which is this body at the map size.
+void TYoshi::startVoice(u32 id) { gpMSound->startMarioVoice(id, 1, 1); }
 
 // Binding level worth +8 of low region, landing YoshiHeadCtrl's frame at
 // 0x50 (batch 124).
@@ -908,7 +910,7 @@ void TYoshi::movement()
 		if (mActor->curAnmEndsNext(ANM_TYPE_BCK, nullptr)) {
 			mState = STATE_UNMOUNTED;
 			changeAnimation(0x17);
-			gpMSound->startMarioVoice(MSD_SE_YV_YOSHI1, 1, 1);
+			startVoice(MSD_SE_YV_YOSHI1);
 		}
 		break;
 
