@@ -178,7 +178,7 @@ void CPolarSubCamera::execNoticeOnOffProc_(EnumNoticeOnOffMode mode)
 // absolute angle is CLBAbs<int> of the truncated difference.
 // Left: retail sign-extends matan's result (`extsh r4, r3`) and redoes the
 // `extsh` in each abs arm (3 instructions); `(s16)ang`, `(int)ang`, an int
-// ang and CLBAbs<s16> are inert or worse. Frame 0xa8 vs 0x90.
+// ang and CLBAbs<s16> are inert or worse. Frame 0xa8 vs 0x98.
 // The named 500.0f distance is what keeps the fmadds operands exact.
 void CPolarSubCamera::calcNoticeTargetYrot_(const Vec& target)
 {
@@ -202,12 +202,9 @@ void CPolarSubCamera::calcNoticeTargetYrot_(const Vec& target)
 		int absAngle = CLBAbs<int>((s16)(mCurrentTarget.mYaw - ang));
 		f32 ratio    = (f32)absAngle * (2.0f / 65536.0f);
 
-		f32 chase;
-		if (dist2 > fastDist2) {
-			chase = 1.0f;
-		} else {
-			chase = CLBCalcRatio<f32>(minDist2, fastDist2, dist2);
-		}
+		f32 chase = dist2 > fastDist2
+		                ? 1.0f
+		                : CLBCalcRatio<f32>(minDist2, fastDist2, dist2);
 		f32 base = CLBLinearInbetween<f32>(
 		    1.0f, mSaveNotice->mRotateMagnifXmax.get(), mCurrentTarget.unk28);
 		f32 speed
