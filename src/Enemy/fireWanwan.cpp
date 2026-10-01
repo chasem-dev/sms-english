@@ -404,6 +404,7 @@ void TFireWanwanManager::checkShineAppear()
 	}
 }
 
+// TODO: UNUSED (0x2c), body unknown: no call site or inlined copy survives.
 void TFireWanwanManager::receiveMessageFromTail(int) { }
 
 // TODO: 0x20 against the map's 0xac. A second case holding Die's kill
@@ -683,6 +684,7 @@ void TFireWanwanTailHit::performNodes(u32 param_1, JDrama::TGraphics* param_2)
 	}
 }
 
+// TODO: UNUSED (0x118), body unknown: no call site or inlined copy survives.
 void TFireWanwanTailHit::clipNodes(JDrama::TGraphics*) { }
 
 // TODO: literal-pool order. Retail asks for 4.0f (@7688) and 0.25f (@7689)
@@ -2009,6 +2011,7 @@ bool TFireWanwan::behaveHitWallOnFlying(const TBGCheckData* check_data)
 	return false;
 }
 
+// TODO: UNUSED (0x4c), body unknown: no call site or inlined copy survives.
 void TFireWanwan::calcShadowPos() { }
 
 void TFireWanwan::calcRipplePos()

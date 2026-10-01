@@ -237,8 +237,10 @@ BOOL TMario::canBendBody()
 	return TRUE;
 }
 
+// TODO: UNUSED (0x38), body unknown: no call site or inlined copy survives.
 void TMario::isSpeedZero() { }
 
+// TODO: UNUSED (0x1c), body unknown: no call site or inlined copy survives.
 void TMario::changePos(const Vec&) { }
 
 void TMario::setNormalAttackArea()
@@ -388,6 +390,7 @@ f32 TMario::getSlideStopCatch()
 	return mSlipParamsNormal.mSlideStopCatch.get();
 }
 
+// TODO: UNUSED (0x20), body unknown: no call site or inlined copy survives.
 void TMario::isSlipLimit() { }
 
 BOOL TMario::isJumpMiss()
@@ -422,8 +425,10 @@ f32 TMario::checkPlayerAround(int angleOffset, f32 distance)
 	                          mPosition.z + oy, &outPlane);
 }
 
+// TODO: UNUSED (0x50), body unknown: no call site or inlined copy survives.
 void TMario::isTurnStart() { }
 
+// TODO: UNUSED (0x2c), body unknown: no call site or inlined copy survives.
 void TMario::isTurnning() { }
 
 void TMario::setMissJumping()
@@ -860,6 +865,7 @@ void TMario::makeGraffitoDamage(const TMario::TEParams& params)
 	           params.mInvincibleTime.get());
 }
 
+// TODO: UNUSED (0x1d0), body unknown: no call site or inlined copy survives.
 void TMario::checkGraffitoDamage() { }
 
 // Binding level worth +8 of low region, landing TMario::checkGraffitoSlip's
@@ -914,6 +920,7 @@ void TMario::checkGraffitoFire()
 	MarioMoveGetMSound()->startSoundActor(MSD_SE_MA_DAMAGE_FIRE, &mPosition);
 }
 
+// TODO: UNUSED (0x218), body unknown: no call site or inlined copy survives.
 void TMario::checkGraffitoLava() { }
 
 void TMario::checkGraffitoSlip()
@@ -1364,6 +1371,7 @@ void TMario::checkEnforceJump()
 	}
 }
 
+// TODO: UNUSED (0x9c), body unknown: no call site or inlined copy survives.
 void TMario::doReturn() { }
 
 void TMario::checkReturn()
@@ -1685,6 +1693,7 @@ int TMario::checkStickRotate(int* outDir)
 	return 0;
 }
 
+// TODO: UNUSED (0x24), body unknown: no call site or inlined copy survives.
 void TMario::checkStickSmash() { }
 
 void TMario::makeHistory()
@@ -1830,6 +1839,7 @@ void TMario::checkCurrentPlane()
 	offFlag(MARIO_FLAG_GROUND_POUND_SIT_UP);
 }
 
+// TODO: UNUSED (0xf0), body unknown: no call site or inlined copy survives.
 void TMario::getActorMtx(const THitActor&, Mtx) { }
 
 static inline bool MarioMoveStatusType(const TMario* p, u32 i)
@@ -1954,10 +1964,13 @@ void TMario::stateMachine()
 	}
 }
 
+// TODO: UNUSED (0x70), body unknown: no call site or inlined copy survives.
 void TMario::canReadBillboard(int) { }
 
+// TODO: UNUSED (0x5c), body unknown: no call site or inlined copy survives.
 void TMario::talkMove() { }
 
+// TODO: UNUSED (0xa8), body unknown: no call site or inlined copy survives.
 void TMario::view1stMove() { }
 
 void TMario::calcGroundMtx(const JGeometry::TVec3<f32>& param_1)
