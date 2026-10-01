@@ -399,7 +399,7 @@ void TBeeHive::bind()
 void TBeeHive::controlCollision()
 {
 	int index           = mCheckBeeIndex;
-	TRealoidActor* bee  = unk154[index];
+	TRealoidActor* bee  = getRealoid(index);
 	int num             = mBeeNum;
 
 	bee->checkHitActors();
@@ -413,7 +413,7 @@ void TBeeHive::controlCollision()
 	if (num <= index)
 		index = 0;
 
-	bee = unk154[index];
+	bee = getRealoid(index);
 	if (!bee->checkFlag(TRealoidActor::FLAG_UNK2_OR_UNK4))
 		bee->offHitFlag(HIT_FLAG_CANNOT_ATTACK);
 }
