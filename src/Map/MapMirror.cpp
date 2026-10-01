@@ -181,7 +181,7 @@ TMirrorCamera::TMirrorCamera(const char* name)
 	Vec local_20 = (Vec) { 10000.0f, 10000.0f, 10000.0f };
 	Vec local_2C = (Vec) { 0.0f, 1.0f, 0.0f };
 	Vec local_38 = (Vec) { 20000.0f, 20000.0f, 20000.0f };
-	C_MTXLookAt(unk30, &local_20, &local_2C, &local_38);
+	C_MTXLookAt(getUnk30(), &local_20, &local_2C, &local_38);
 	unk98.zero();
 }
 
