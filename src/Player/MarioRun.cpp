@@ -143,7 +143,7 @@ f32 TMario::getRunningInWaterBrake()
 
 BOOL TMario::doRunningAnimation()
 {
-	// TODO: frame 0x88 against retail's 0xd8 (0x50 short, every register
+	// TODO: frame 0xa0 against retail's 0xd8 (0x38 short, every register
 	// right); retail compares the soft-step copy of `sp` after the fmr and
 	// schedules the loop's second `addi` before the `bgt`. Inert: reusing
 	// `rate`, a C-style `rate2`, and a while loop with the increment in the body;
@@ -155,7 +155,8 @@ BOOL TMario::doRunningAnimation()
 	f32 rate;
 	f32 sp;
 
-	sp = mIntendedMag > mForwardVel ? mIntendedMag : mForwardVel;
+	sp = getIntendedMag() > getForwardVel() ? getIntendedMag()
+	                                        : getForwardVel();
 
 	if (sp < 4.0f)
 		sp = 4.0f;
@@ -166,7 +167,7 @@ BOOL TMario::doRunningAnimation()
 		switch (mAnimationId) {
 		default:
 		case ANIM_RUN2:
-			if (mForwardVel >= mDeParams.mDashMax.get() - 1.0f) {
+			if (getForwardVel() >= mDeParams.mDashMax.get() - 1.0f) {
 				setAnimation(ANIM_TURBO_DASH, 1.0f);
 				loop = false;
 			} else if (sp < mRunParams.mWalk2Soft.get()) {
@@ -215,7 +216,7 @@ BOOL TMario::doRunningAnimation()
 			}
 			break;
 		case ANIM_TURBO_DASH:
-			if (mForwardVel < mDeParams.mDashMax.get() - 1.0f) {
+			if (getForwardVel() < mDeParams.mDashMax.get() - 1.0f) {
 				setAnimation(ANIM_RUN2, 1.0f);
 				loop = false;
 			} else {
