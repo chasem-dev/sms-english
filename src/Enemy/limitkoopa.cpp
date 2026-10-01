@@ -637,13 +637,15 @@ void TLimitKoopa::breathFlame()
 	LimitKoopaEmitFlame(this, KOOPA_JPA_MS_KP_FIRE_A, scale);
 }
 
-// TODO: 94.9%. The flame and head boxes go through TLimitKoopaParts::set
+// TODO: 99.0%. The flame and head boxes go through TLimitKoopaParts::set
 // (which defaults a non-positive height to twice the radius; the head passes
 // 0) and remove, both at their map sizes. The flame position is the head
 // matrix's rows 0 and 2 dotted with an `(along, 0, 0)` offset, built in the
 // TVec3 constructor; the row temporaries are what fill retail's 0x1a0 frame.
-// Left: the loop's FPR assignment (retail gives the 0.0f constant f31 and
-// spread f27; ours f27 and f28) and the head's x/z load order. Inert: an else
+// The flame height is read at the set() call, unnamed (94.9 -> 99.0).
+// Left: the spread product, which retail forms after loading mPosition.y
+// (`along *= spread` on its own line gets that, 99.7%, but reads as a split),
+// and the head's x/z load order. Inert: an else
 // arm for spread, along folded into the offset, a zero-initialised offset,
 // headPos through set() or a temporary; also (c-lkoopa) the -200 folded into
 // headPos's constructor, headRadius read first or passed unnamed, spread as
@@ -664,7 +666,6 @@ void TLimitKoopa::setUpHitActors()
 
 		for (int i = 0; i < 10; i++) {
 			TLimitKoopaParams* params = getParam();
-			f32 height                = params->flameHeight.get();
 			f32 radius                = params->flameRadius.get();
 			f32 along = 0.8f * ((2.0f + (f32)(i * 2)) * radius) * spread;
 			JGeometry::TVec3<f32> offset(along, 0.0f, 0.0f);
@@ -676,7 +677,7 @@ void TLimitKoopa::setUpHitActors()
 			    headMtx[2][3]
 			        + offset.dot(JGeometry::TVec3<f32>(
 			            headMtx[2][0], headMtx[2][1], headMtx[2][2])));
-			mFlames[i]->set(pos, radius, height);
+			mFlames[i]->set(pos, radius, params->flameHeight.get());
 		}
 	} else {
 		for (int i = 0; i < 10; i++)
