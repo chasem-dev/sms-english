@@ -274,3 +274,22 @@ The other accepted edits are header accessors at every read in the function wher
 Rejected: machine extracts with no UNUSED of their shape (7), lone named values or receivers (6), spellings at odds with the rest of the file (4: a lone `!= nullptr`, raw `mData` beside `end()`, one commuted store of a parallel pair, raw `.value` at three of five reads), accessors the file never uses (2), and trades (2).
 `MSSeCallBack::setParameterSeqSync`'s raw `mChildren[i]->mChildren[j]` drops the `mr` (18 instructions) but `ninja changes_all` reads it as 98.75 -> 98.32%, and `zigzagToCurPathNode`'s earlier `fVar2` declaration (insn 36 -> 10) reads 97.96 -> 97.62%: both are recorded in review.log, not kept.
 Lead: `TKoopaHead::receiveMessage` lands its frame with `&sender->getPosition()` (the MapObjBlock and bossgesso water-hit spelling), but Koopa.cpp never uses getPosition().
+
+## hsearch sweep c-hs10
+
+The resumed c-hs5 list (`scratchpad/hs5/targets.tsv`, 200 s per function, `-j 2`, one foreground call per row) ran rows 302 to 356; rows 357 onward are unsearched.
+Search gave 43 candidates (one exact, 42 improved) and 12 rows with no gain.
+Review accepted 18 rows and rejected 25, plus the c-hs9 lead on `TKoopaHead::receiveMessage`, rejected by hand.
+No function became byte-exact and no unit was linked.
+`TKukku::dropCoins` is the closest: raw `mPosition` at both `JSGSetTranslation` calls and the coin velocity initialised straight from `KukkuVecFromRotY` clear all ten instruction mismatches and land the frame (96.57 -> 99.68%); four slots and the helper's FPR order are left.
+That removed the only `getPosition()` precedent in Kukku.cpp, so the `TKukkuBall::perform` translation accepted earlier in this batch went back to raw `mPosition`; its `getScaling()` stays.
+`TGorogoroManager::perform` gains the most frame (0xb8 -> 0x150 of 0x170, registers 80 -> 29, 96.59 -> 97.45%) with `getObj()`, `getTracer()->getGraph()->getGraphNode(n)` and `getPosition()`, both seated Gorogoros spelled alike.
+Landed on the retail frame: `TBathtub::calcBathtubData` (`getUnk16C()->x.value`, as `updatePosture_`; each half alone misses), `CPolarSubCamera::calcInHouseNo_` (raw `mData`) and `TBigWatermelon::touchActor` (`getMapObjData()`).
+Unnaming also paid: `SamboHeadRollCallback`'s projections passed straight to the `TVec3` constructor (MWCC evaluates arguments right to left, the order the named locals forced), the flower params in `checkGenCoin` and the knee angle in `FeetInvCalc`.
+`calcNoticeTargetYrot_` gains 8 with `chase` initialised by `?:`.
+The other accepted edits are accessors at every read in the function where the file already uses them: getStatus(), SMS_GetMarioPos(), getIntendedMag()/getForwardVel(), getVolumeType(), getFludd()/getBounds(), getActorType()/getHolder(), getActor() on the ground plane, and getPathDir() with the reverse speed through get().
+Rejected: accessors the file never uses (8), machine extracts with no UNUSED of their shape (7, one of them exact), lone named values or hoists (6), and four edits that `ninja changes_all` scored as regressions despite a better hsearch score.
+Those four are `TGuide::resetObjects` (hsearch's split `mShineNum` store, insn 51 -> 8, reads 97.77 -> 95.09), `TGCConsole2::processAppearStar` (`s32 blueCoinValue`, insn 17 -> 15), `TCogwheel::draw` and `TMapCollisionData::intersectLine` (frame landed, registers or slots worse).
+`TBossHanachan::execDamage` is exact with its dying block's collision-off loop (head, eight bodies and their feet) moved into an inline level, but no UNUSED is 0x13c, so it stays a lead.
+`TGuide::resetObjects`'s etcShines and blueCoins clamps are ternaries whose result retail coalesces into the counter (`bge; b; li r24, 9`); `etcShines = etcShines < 10 ? etcShines : 9` gets insn 51 -> 7 but keeps an `mr` and reads 97.77 -> 97.74.
+`TKoopaBody::receiveMessage` is 8 short like `TKoopaHead::receiveMessage` and has no sound call, so both gaps likely sit in the shared `stagger()` path; the head's `(Vec*)&mOwner->getPosition()` lands its frame only by coincidence.
