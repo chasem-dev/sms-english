@@ -284,3 +284,31 @@ Moving the `changeByJuice` override above `isEatenByYosshi` fixed the pair; the 
 - beam (`calcVertices`: 0.5f, 182.04f, 360f) and MarioParticle (`TWarpInCallBack::execute`: the signed int-to-float double before the unsigned one) are in the open function itself; retail's FPR assignment follows the same request order, so they close with it.
 - NpcAnm: `MsRandI` reached through `doThing3(240, 360)` requests the folded 120f before 1/32768 where retail does the reverse, while AnimalNerve's direct `MsRandI` already matches; `(r - l) * (rand() * c)` is inert.
 - Still open after this batch, unlinked units only: `.sdata2` order in 25 units and diff in 4, `.data` order in 6 (vtable emission order: Amenbo, Kukku, yunbo, tinkoopa, MSoundSE, MSoundStruct) and diff in 1.
+
+## Data order c-u12 (2026-10-01): vtables by key function, two parse-order fixes, the pool's request rule
+
+- **A class's vtable is emitted with its key function, the first non-inline virtual in declaration order**, and `.data` holds vtables in code-generation order (reverse definition order under `-inline deferred`).
+- Amenbo, Kukku and yunbo define `getBasNameTable` after the manager; declaring that override first in the class makes it the key function and puts the enemy's vtable after the manager's, as retail has it.
+- tinkoopa: declaring `init` first does the same against the parts' bodies.
+- Only overrides can move (their slots belong to the base), and an inline virtual destructor ahead of them does not count.
+- The same edits fixed the weak-symbol order warnings of Amenbo, Kukku and yunbo, and shortened tinkoopa's.
+- MSoundSE and MSoundStruct: retail emits `MSSetSoundTL`'s constructor with the deferred template members after every real function, and its vtable before `MSSetSound`'s/`MSSetSoundGrp`'s and `JALListFrameLoop`'s.
+- Defining that constructor out of class (a non-inline template member) gives both orders and clears both units' symbol-order warnings; no other object changed.
+- **Static data and compound literals take their ids and pool slots at parse time, in source order**, so a local `static const` table declared after a `(GXColor){...}` literal lands after it: GCConsole2's `drawWater` declares `height`/`topDiff` between the ambient colour and `alpha`.
+- MapObjInit's block collision tables (warp, move, move-centre data and info) are defined together in retail's `.sdata2` order; all four sections now compare `same`, but `makeMActors` and `initMActor` still keep it from linking.
+- **Float literals are pooled when the optimised AST is lowered (`frontend-02` in the MWCC debugger), in pre-order, left operand first, statement by statement**; instruction order says nothing, and int-to-float doubles come later, at lowering.
+- So `WrapDegreesF` always requests -180 before 360: its tree is `-180 + fmodf(360 + (t - -180), 360)`.
+- Retail's 360-first order in BathtubPeach `faceTo` and Koopa `checkMarioWhichSide` needs a statement that requests 360 before the wrap.
+- A named `range` gives that order but costs +8 of frame per site; other spellings were inert or changed code: argument orders, an extra `WrapRange(t, l, r - l)` level, `r -= l`, `fmodf(...) + l`, `(t - l) + (r - l)`, `-mRotation.y + goal`.
+- A plain-variable argument (`diff = WrapDegreesF(diff)`) also gives 360 first, but it drops the inliner's temporary for `t`, so `std::fmodf` expands and faceTo grows to 0x158 and stops inlining into the Escape nerve.
+- Option: `TPaneScalingControl::update` is UNUSED, so retail also expands it inside `movementCommon` at depth 2, which needs nine statements or fewer.
+- Dropping the named width and height does that: movementCommon goes from 0x188 to 0x570 of its 0x6a0, and 182.04f, 57.30f and 2pi are requested ahead of `load`'s "option", as in retail.
+- It was not landed: the two names are +8 of frame in the Rumble and Subtitle `update` expansions (99.81 -> 99.68, 99.68 -> 99.51), so it needs a nine-statement spelling that keeps that frame.
+- NpcAnm: replacing `doThing3` at the (240, 360) site with `resetRandom` or a spelled-out body is inert, so inline depth does not set `MsRandI`'s order there.
+- MapObjSirena: retail pools `"_NEON_C"`, `"_NEON_B"`, `"_NEON_A"` (reverse initializer order) for `initNeonMatColor`'s local array; `[]`, `const` and `char*` spellings are inert.
+- MarioRun: retail requests `doBraking(4.0f)`'s 4.0f before the body's 0.0f in moveMain's expansion, and `doBraking` is 4 bytes short of its map size, so its real body is the lead.
+- BathWaterManager (not TU-local): the zero object is `@1490` in 220 retail TUs, so its header comes early in a common include chain, not from the message's header.
+- BathWaterManager is the only TU that has the message first; there, the message's header was included before that chain and pulled the zero object in seven ids later.
+- So `System/DummyStrings.hpp` should define the message before it includes `DummyMactorString.hpp`, and the 186 TUs that include it would need the zero object from their common early header; that is a header round.
+- `tools/rodata-order.py` no longer roots liveness on map names like `@NNNN` or `name$NNNN`: when renumbering made one of our ids equal a retail name, a discarded weak `TUtil<f>::sqrt` copy's 3.0f looked live in gesso, hinokuri2, telesa and koopajr.
+- Unlinked units after this batch: `.sdata2` order 23 (was 25), diff 4; `.data` order 0 (was 6), diff 1.
