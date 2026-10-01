@@ -159,12 +159,13 @@ int TMapCollisionData::checkWallList(const TBGCheckList* param_1,
 int TMapCollisionData::checkWalls(TBGWallCheckRecord* param_1) const
 {
 	param_1->mResultWallsNum = 0;
-	if (param_1->mCenter.x < -mGridExtentX || mGridExtentX <= param_1->mCenter.x
+	if (param_1->mCenter.x < -getGridExtentX()
+	    || getGridExtentX() <= param_1->mCenter.x
 	    || param_1->mCenter.z < -mGridExtentY
 	    || mGridExtentY <= param_1->mCenter.z)
 		return 0;
 
-	int gridX = (param_1->mCenter.x + mGridExtentX) * (1.0f / 1024);
+	int gridX = (param_1->mCenter.x + getGridExtentX()) * (1.0f / 1024);
 	int gridZ = (param_1->mCenter.z + mGridExtentY) * (1.0f / 1024);
 
 	int iVar6
