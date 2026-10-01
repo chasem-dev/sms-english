@@ -132,9 +132,11 @@ void OSGetSaveRegion(void** start, void** end)
 	*end   = SaveEnd;
 }
 
-// TODO: OSGetSavedRegion (UNUSED, 0x14) belongs here. Reading the
-// BOOT_REGION words that __OSReboot fills is 0x18 (one lis, two absolute
-// loads), so retail's two loads are small-data ones: presumably OS.c's
-// __OSSavedRegionStart/End, which the map has global. Dropping their
-// `static` there makes this exactly 0x14 but moves both after
-// __OSStartTime in OS.c's .sbss and breaks the DOL.
+extern void* __OSSavedRegionStart;
+extern void* __OSSavedRegionEnd;
+
+void OSGetSavedRegion(void** start, void** end)
+{
+	*start = __OSSavedRegionStart;
+	*end   = __OSSavedRegionEnd;
+}
