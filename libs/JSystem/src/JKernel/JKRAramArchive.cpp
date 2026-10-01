@@ -54,12 +54,12 @@ JKRAramArchive::~JKRAramArchive()
 	}
 }
 
-// UNUSED; JKRMemArchive::fixedInit's body over the same JKRArchive fields,
-// at the same 0x40.
+// UNUSED; JKRMemArchive::fixedInit's body over the same JKRArchive fields
+// with this class's mount mode (0x40: the 2 shares _54's register).
 void JKRAramArchive::fixedInit(s32 entryNum)
 {
 	mIsMounted  = false;
-	mMountMode  = 1;
+	mMountMode  = MOUNT_ARAM;
 	mMountCount = 1;
 	_54         = 2;
 	mHeap       = JKRHeap::sCurrentHeap;
