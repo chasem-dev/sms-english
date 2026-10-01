@@ -110,3 +110,18 @@ Yoshi (3 -> 2): `startVoice` is `gpMSound->startMarioVoice(id, 1, 1)` (0x2c), th
 Rejected: `TWatermelon::control` and `TWoodBarrel::control` share 0xa4 but not a base class; `getAnmEnd` (TKoopa and TLimitKoopa, 0x48) stays 0x2c..0x40 in every bool spelling although its inlined copies are exact; `TGraphGroup`'s destructor freeing the ctor's webs is 0xc0..0xc8, not 0x94.
 `TExPane(JUTTexture*, GXCullMode)` around the UNUSED `J2DPicture(JUTTexture*)` and `setCullBack` reaches 0xec of 0xf0 and is left as a TODO.
 No scored function changed and the DOL stayed byte-identical.
+
+## UNUSED restoration c-u8 (2026-10-01)
+
+c-u6's bosstelesa lead does not hold as stated: calling `isRollDrum` from `slotStop` gives 0xd4 (map 0xa8) and calling `getSlotResult` from `checkSlotResult` gives 0x38 (map 0x4c).
+`slotStop` reaches 0xa8 only if the nerve push is a call as well, and no out-of-line push symbol exists in the map, so that reading is rejected; the UNUSED `fanfale` expands `getSlotResult` three times at its map size, so depth alone does not explain `checkSlotResult` either.
+Both, and `isInDamage` (the 0x8c of `TBossEel::isValidToothDamage`'s single nerve test, nerve unknown), carry TODOs; bosstelesa stays at 9 mismatches.
+`tools/unused-siblings.py` looks for library objects under `build/GMSE01/libs/...`, where none exist, so every JSystem stub reads `ours=-` and verified JSystem siblings never count; mapping `libs/<Lib>/src/` to `src/<Lib>/` cuts the filtered list from 112 to 50 real hits.
+Of the nerve destructors, all five UNUSED ones are at their map sizes and every scored one is exact, so no other wrong base was found.
+ParamInst (3 missing -> 0): `TParamT<u16>` and the two `TParamT<TFlagT>` loads are explicit instantiations in the map's reversed order.
+ToolData (11 missing -> 1): `Hash` (0x54) and `SearchItemInfo` (0x8c) are the header's hash and item search made real members, which the scored GetValues still expand exactly; the u32 read applies the item's mask and shift (0xe0), the bool read the mask alone (0xe4), the float read takes the field whole (0xcc); four FindElement overloads land with one loop, and the float one is 0x5c of 0x80.
+JKRAramArchive (9 -> 3): `fixedInit` is JKRMemArchive's with `MOUNT_ARAM`, and the address getters are the fetchResources' `mDataOffset + mBlock->getAddress()` behind a null test over the JKRArchive finds.
+JKRDvdArchive (5 -> 4) and JKRCompArchive (4 -> 3): the same `fixedInit` with modes 3 and 4 is 0x44, since only a mode of 1 or 2 shares a register with the other stores.
+J2DTextBox (6 -> 1): `setFontSize` is J2DPrint's (0x60), `setLineSpace` its leading half (0x48), `getString` a strcpy (0x2c), and the font-name constructors look the font up with `JKRGetNameResource(name, nullptr)` (exactly three instructions).
+JASSystemHeap (9 -> 0): the DRAM and ARAM accessors read the heap or variable their names give.
+No scored function changed and the DOL stayed byte-identical.

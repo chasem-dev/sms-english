@@ -1861,7 +1861,9 @@ void TBossTelesa::setBckAnm(int index)
 	setAnmSound(table == nullptr ? nullptr : table[index]);
 }
 
-// TODO: incorrect size. Map records 140 bytes.
+// TODO: incorrect size. Map records 140 bytes, the size of
+// TBossEel::isValidToothDamage's single current-nerve test against an inlined
+// theNerve(); which nerve counts as damage is not recoverable from the size.
 bool TBossTelesa::isInDamage() { return false; }
 
 // The named first speed puts both TMsRange locals at the ROM's 0x50/0x48, and
@@ -1918,6 +1920,11 @@ void TBossTelesa::slotStart()
 	mTelesaManager->telesaForceKill();
 }
 
+// TODO: 0x114 out of line, the map records 0xa8; the inlined copy in
+// TNerveBossTelesaSlotStart matches, with isRollDrum called there. Calling
+// isRollDrum here as well gives 0xd4, so that is not the whole difference:
+// 0xa8 is reached only if the nerve push is a call too, and no out-of-line
+// push symbol exists in the map, so that reading is rejected.
 bool TBossTelesa::slotStop()
 {
 	if (!mSlot->isRollDrum() && unk18C) {
@@ -1929,6 +1936,10 @@ bool TBossTelesa::slotStop()
 	return false;
 }
 
+// TODO: 0xa0 out of line (getSlotResult expanded), the map records 0x4c;
+// calling getSlotResult instead gives 0x38. The UNUSED fanfale expands
+// getSlotResult three times at its map size, so retail's body is not a lone
+// `getSlotResult() == 0` at depth 1 either; five instructions are unknown.
 bool TBossTelesa::checkSlotResult()
 {
 	if (mSlot->getSlotResult() == 0)
