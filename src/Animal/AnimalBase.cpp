@@ -220,10 +220,9 @@ void TAnimalBase::perform(u32 cue, JDrama::TGraphics* graphics)
 				srcArrays[1] = (Mtx*)shared->getWeightAnmMtx(0);
 
 				for (u16 i = 0; i < count; ++i) {
-					MTXConcat(world,
-					          srcArrays[data->getDrawMtxFlag(i)]
-					                   [data->getDrawMtxIndex(i)],
-					          model->getDrawMtx(i));
+					u8 flag   = data->getDrawMtxFlag(i);
+					u16 index = data->getDrawMtxIndex(i);
+					MTXConcat(world, srcArrays[flag][index], model->getDrawMtx(i));
 				}
 
 				model->calcNrmMtx();
