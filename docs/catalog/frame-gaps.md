@@ -2979,3 +2979,19 @@ In progress; results are appended below as they are measured.
 - CPolarSubCamera `execGroundCheck_`: a named lerp ratio adds an instruction; named lerp endpoints cost +8.
 - TLightCommon `perform`: the 12 bytes sit between `light` and the getLightColor return temporary, below every named object and above every inline one; retail calls getLightPosition three times, so any named copy changes the code and only an unused `Vec` fits (as cc37 found).
 - Already recorded as deep searches and not retried: TLampSeesawMain `loadAfter`, THamuKuri `jumpToSearchActor`, TBathtubData `getGravityDir`, `decideNextStage`, TMenuBase `perform`, TMario `slopeProcess`, the `operator-` binds (coasterkiller, koopajr, limitkoopa) and TLeanMirror `loadAfter`/TBathtub `quake` (`a = b - c`).
+
+## Closure batch c-k28 (2026-10-01)
+
+- Targets: c-t4's three leads (TSamboHead `attackToMario`, MSRandPlay `randPlay`, TMapObjBase `emitAndSRT`), then the one-function units beam, boid and feetinv; one function closed, one improved, no unit linked.
+- TSamboHead `attackToMario` (hanasambo) 99.95 -> 100: the rebound direction is spelled `const TVec3& marioPos = SMS_GetMarioPos(); f32 dx = ...; f32 dy = 10.0f; f32 dz = ...; TVec3 away(dx, dy, dz);`.
+- The debugger dump shows marioPos, dx and dy homed above `away` (0x50, 0x4c, 0x48) and dz in a register, every mapped slot at retail's offset, frame 0x60.
+- So a named constant component is homed like a named load: its store has no aliasing source, so the c-t4 exception never blocks it, and it is the honest third word c-t4 was missing.
+- A by-value `TVec3 marioPos` copy is not scalarised here (90.1, the copy stays in the code); `*gpMarioPos` instead of SMS_GetMarioPos() changes the code.
+- TNerveSamboHeadAttack `execute` (hanasambo) 99.86 -> 99.96, frame 0x118 against 0x120: `s32 prepareTime = head->mSaveParams->mSLJumpPrepareTime.get();` (a condition use, so homed) and the attackToMario marioPos/dx/dz spelling for goal.set put goal, the calcVelocityToJumpToY result and the three TVec3 temporaries at retail's offsets.
+- Retail homes one more word above goal; `f32 dy = 0.0f` lands the frame but adds a fourth word below goal, a named `const TVec3& point` for goal's copy removes a low word, and marioPos above goal changes the code.
+- MSRandPlay `randPlay` (open): all 35 placements of `u32 id` and `const Vec* trans` over the switch, both calls and the actor give only c-t4's code-identical form (actor 4 low).
+- The two dead words below actor are the JAIActor constructor's first two argument bindings (copies of the third after CSE); std::max/std::min for the wait clamps add code (MSL's `const T&` parameters make temporaries), and SMSGetMSound() reads gpMSound, not MSGMSound.
+- TMapObjBase `emitAndSRT` (open): emitAndSRT is static (no `this` slot); retail's locals end in (0x20, 0x28], ours at 0x1e with only x homed.
+- A `TVec3<s16> rot` assigned member by member scalarises to identical code but homes rot plus the three setRotation argument bindings (0x58; 0x60 with a constructor), so retail has fewer than that; reversed declarations, f32/s32 locals and direct or vector setRotation arguments change the code.
+- Skipped as recorded deep searches tied to the by-value operator class: beam `calcVertices`, boid `calcBoids`; feetinv `FeetInvCalc` also differs by five instructions (scheduling and the reload-x register pattern), so the layout mapper cannot run on it.
+- hsearch `dbg` adds the J3DModel/J3DJoint includes a hanasambo dump needs; `tools/mwcc-stack/dbg.sh` on the bare source fails there, so prefix those two includes to a scratch copy when the raw dump is needed.

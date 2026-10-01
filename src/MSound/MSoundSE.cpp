@@ -155,6 +155,9 @@ MSRandPlay::MSRandPlay(u32 sound_id, s32 wait_min, s32 wait_max,
 // Retail's 4-byte slot at 0x24 (between actor and the fctiwz temp) is what a
 // named `u32 id = mSoundID;` switch operand takes; with `const Vec* trans`
 // for the actor arguments (-8 low) actor lands at 0x10, 4 short of 0x14.
+// c-k28: the 35 placements of `id` and `trans` over the two calls, the switch
+// and the actor give no other code-identical form; std::max/std::min for the
+// wait clamps change the code (96.9) and SMSGetMSound() names gpMSound.
 void MSRandPlay::randPlay(u32 vec_idx)
 {
 	MSRandPlayVec* vec = &mRandPlayVecs[vec_idx];

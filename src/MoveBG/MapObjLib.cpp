@@ -958,6 +958,10 @@ void TMapObjBase::emitColumnWater()
 // The angles are converted into named s16 locals before setRotation, as in
 // emitAndRotateScale.
 // TODO: 99.7%, every instruction in place; the fctiwz slots still differ.
+// Retail's locals end in (0x20, 0x28], ours at 0x1e (only x is homed). c-k28:
+// a TVec3<s16> rot scalarises to identical code but homes rot plus three
+// setRotation bindings (0x58, 0x60 with its constructor); reversed
+// declarations, f32 or s32 locals and direct arguments change the code.
 void TMapObjBase::emitAndSRT(s32 param_1, u8 param_2,
                              const JGeometry::TVec3<f32>* param_3,
                              const JGeometry::TVec3<f32>& param_4,
