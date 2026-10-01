@@ -91,15 +91,18 @@ class TKukku : public TSmallEnemy {
 public:
 	TKukku(const char* name);
 
-	// Declared in vtable order; TKukku adds no new slots to TSmallEnemy.
+	// Overrides only; TKukku adds no new slots to TSmallEnemy.
 	virtual ~TKukku() { }
+	// getBasNameTable is declared first so that it is the key function (the
+	// first non-inline virtual): it is defined after the manager, and retail
+	// emits this vtable after the manager's (c-u12).
+	virtual const char** getBasNameTable() const;
 	virtual void perform(u32 cue, JDrama::TGraphics* graphics);
 	virtual BOOL receiveMessage(THitActor* sender, u32 message);
 	virtual void init(TLiveManager*);
 	virtual void calcRootMatrix();
 	virtual void control();
 	virtual void bind();
-	virtual const char** getBasNameTable() const;
 	virtual void reset();
 	virtual void behaveToWater(THitActor*);
 	virtual void setDeadAnm();

@@ -64,11 +64,14 @@ public:
 	TYumbo(const char* name);
 
 	virtual ~TYumbo() { }
+	// getBasNameTable is declared first so that it is the key function (the
+	// first non-inline virtual): it is defined after the manager, and retail
+	// emits this vtable after the manager's (c-u12).
+	virtual const char** getBasNameTable() const;
 	virtual void perform(u32 cue, JDrama::TGraphics* graphics);
 	virtual BOOL receiveMessage(THitActor* sender, u32 message);
 	virtual void init(TLiveManager*);
 	virtual void moveObject();
-	virtual const char** getBasNameTable() const;
 	virtual void reset();
 	virtual void behaveToWater(THitActor*);
 	virtual void setDeadAnm();

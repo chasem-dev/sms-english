@@ -191,9 +191,12 @@ public:
 
 	// Declared in vtable order; TTinKoopa adds no new slots.
 	virtual ~TTinKoopa() { }
+	// init is declared first so that it is the key function (the first
+	// non-inline virtual): defined before the parts' bodies, it makes retail
+	// emit this vtable after theirs (c-u12).
+	virtual void init(TLiveManager*);
 	virtual void perform(u32 cue, JDrama::TGraphics* graphics);
 	virtual BOOL receiveMessage(THitActor* sender, u32 message);
-	virtual void init(TLiveManager*);
 	virtual BOOL hasMapCollision() const { return TRUE; }
 	virtual const char** getBasNameTable() const;
 	virtual void reset();
