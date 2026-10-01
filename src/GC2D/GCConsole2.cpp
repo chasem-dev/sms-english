@@ -3463,9 +3463,6 @@ void TGCConsole2::drawJuice(J2DOrthoGraph& graph, u32 color)
 
 void TGCConsole2::drawWater(J2DOrthoGraph& graph)
 {
-	static const f32 height[2]  = { 0.16099999845f, 0.12999999523f };
-	static const s16 topDiff[2] = { 7, 10 };
-
 	Mtx mtx;
 	MTXIdentity(mtx);
 	GXLoadPosMtxImm(mtx, 0);
@@ -3488,6 +3485,11 @@ void TGCConsole2::drawWater(J2DOrthoGraph& graph)
 	                             + ((u32)unk9A.b << 8));
 	unk2EC[2] = JUtility::TColor(((u32)unk9E.r << 24) + ((u32)unk9E.g << 16)
 	                             + ((u32)unk9E.b << 8));
+
+	// Declared here, after the ambient colour's compound literal and before
+	// `alpha`: retail's .sdata2 holds the two in that order around them (c-u12).
+	static const f32 height[2]  = { 0.16099999845f, 0.12999999523f };
+	static const s16 topDiff[2] = { 7, 10 };
 
 	u8 alpha[3] = { 0 };
 	alpha[1]    = unk9A.a;
