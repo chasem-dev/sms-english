@@ -3107,3 +3107,44 @@ In progress; results are appended below as they are measured.
 - TVec2::rotate, TRotation3::mult33, TMatrix33::mult(v) and TMatrix34::mult/concat pass arithmetic of their parameters, and a written-out body would change their results when the source and destination alias, so they were not respelled.
 - The game headers (MathUtil, MtxUtil, DrawUtil, Camera, LiveActor, BathWaterManager) and the J3D/JDrama/J2D/JUtility headers have no other inline body that passes its own locals to an inline setter; their remaining setter calls take parameters, members or constants.
 - TMapWire::init (0x180 against retail 0x1b0) is short by eleven words below initTipPoints' half-wire vector, all in the low region before it; no header body tried here moves it.
+
+## Research batch c-r38 (2026-10-01): the JGadget pool words are other statements' depth, not the iterator
+
+Question: which construct behind the "JGadget pool word" blocks the last function of MarDirectorSetupObjects, SelectDir, PerformList, MirrorActor and gatekeeper?
+Answer: the iterator groups are depth markers, and the words between them belong to other expansions; nothing in `std-list.hpp` is wrong for these sites.
+Nothing was committed apart from this entry, the two TODO notes and the frame-model rule.
+
+### Method
+
+- `python3 -m tools.hsearch dbg` (with `--file` variants) for the layout distance, `tools/mwcc-stack/dbg.sh` dumps for object identities, and a scratch tagger that prints, for each homed `@N`, its type and the source line of the statement that first references it (`c-r38/tag.py` in the session scratchpad).
+- One `TList_pointer::push_back` expansion spans three depths: the `end()` result, `where` and the discarded result at depth 1; the base slice, the `insert` result and the `Base it` copy at depth 2; `TList::end()`'s result and the `iterator(Base)` parameter at depth 3 (c-r4's list).
+- Because the inliner expands breadth-first over the whole function, every other statement's depth-k objects are created between push_back's depth-k and depth-(k+1) groups.
+
+### TMirrorActor::init: the call after the push_back is one level deeper in retail
+
+- Tagged, our words between the pairs are: `@505` (push_back's discarded result), entryMirrorDrawBufferAlways's `dbOpa`/`dbXlu` (depth 1) and the mirror search's `TNameRefGen` binding (depth 2) above pair 2; push_back's `Base it`, and the entry body's two search bindings and two `J3DDrawBuffer*` results (depth 2) above pair 3; the entry body's depth-3 objects below.
+- Retail has 2 fewer above pair 2, 2 fewer above pair 3 and 4 more below: exactly the entry expansion moved one level down (its locals between pair 2 and pair 3, its search objects below pair 3).
+- `static inline void f(J3DModel* m) { TMirrorActor::entryMirrorDrawBufferAlways(m); }` called as `f(getUnk14())` is byte-exact (gap 0, misplaced 0); its `m` binding takes a register at depth 1, which is what keeps the search root in r30.
+- That is a pass-through helper, so it was not applied.
+- A `this`-taking helper holding the whole `if` lands every slot but colours the search root r29 (3 markers); with the raw `unk14` either helper loses 8 bytes; `f(unk1A, getUnk14())` with the test inside changes code.
+- Inert: `this->`, `TMirrorActor::` or `(*this).` on the call, `this->getUnk14()`, the raw `unk14` argument without a helper, and defining entryMirrorDrawBufferAlways after `init` (which also swaps their text order against the map).
+- Changing code: `mirrorScene->insert(this)` and the unnamed search with `->insert(this)` (88%, 87%).
+- Open: retail's real inline around the call; nothing in the map or the other TUs names one.
+
+### TPerformList::perform: the c-r37 rule inside the iterator bodies
+
+- On c-r32's direct site (`forEachPerform(begin(), end(), graphics, cue)`), retail's three words between the `!=` and `==` copy pairs are depth-3 objects of the loop body created before `==`'s copies: the body's `perform` receiver `it->` and the increment's `++*this` are expanded at depth 3 ahead of `!=`'s `==`.
+- A named local in `TSingleLinkList::iterator::operator->` (`TSingleLinkListNode* node = Base::operator->(); return Element_getValue(node);`) adds exactly one word there, and Element_getValue's binding of it (c-r37: a callee local is not a simple argument) one at the bottom.
+- With `node` and a named `T* value` result in `operator->`, plus `bool equal = a == b; return !equal;` in the same derived iterator's `operator!=` (the base iterator's is worse), every inline object of the direct site is on retail's relative order (hsearch dbg `gap 12`, all of it 12 words below the last copy pair), at identical instructions; `forEachPerform` stays 0xa4.
+- The bottom 12 words are IRO territory (ours: 14 P, 4 F, 2 S dead); each further named local in the base `operator->`, `Element_getValue` or base `operator==` adds one or two there (best 8 short), which is tuning, not evidence, so no header was applied.
+- On today's `getChildren()` site the same header leaves the two `getChildren()` receiver bindings above (c-r32) and 8 words short below.
+
+### gatekeeper, SelectDir, setupObjects
+
+- `TBiancoGateKeeper::init` pairs the same way: the mapped iterator groups of its own push_back and of the two inlined constructors' push_backs are each one word off at nine group boundaries, and the movable words are other statements' depth-1 objects and the three search chains' `TNameRefGen` bindings (retail has none of those three at depths 3/4), plus 13 words below.
+- So each gatekeeper boundary is a separate statement's depth, as cc39 concluded per site; it is not one header shape.
+- rsetup and setupObjects were not re-mapped; under this reading their "per-expansion pad" (rsetup's five padded first expansions, setupObjects' nine words above the iterator groups) is the depth of the `new X(...)` constructor expansions between the pushes, and the place to look is which of those constructors retail reached one level deeper.
+
+### Rule for the next agent
+
+- Before trying any JGadget header shape, tag the words between push_back's depth groups with the statements that made them; the residue names a statement, and the fix is that statement's depth.

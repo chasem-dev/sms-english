@@ -562,3 +562,10 @@ Their named locals are kept, and so is each initialiser's inline expansion with 
 - The out-of-line copy of the same body does not show it, because there the locals are real named locals and the arguments are simple.
 - So a header body that calls `setXDir(x, y, z)`-style setters is three words per call heavier wherever it is inlined than one that writes the stores out; check the inlined copies, not only the weak copy, before choosing (TRotation3::setEular, c-r37).
 - The MSL `sin(float)`/`cos(float)` wrapper locals (homed because they hold the wrapper's forced-load result, c-k30) are homed in every context and are not a lever by themselves.
+
+## Iterator groups as depth markers (research c-r38, 2026-10-01)
+
+- An inlined JGadget `push_back` leaves homed iterator objects at depths 1, 2 and 3, so in a function with other inline statements its groups bracket every other statement's depth-1, depth-2 and depth-3 objects (rule 7).
+- A word retail has more or fewer between two such groups is therefore another statement's object at that depth, and a run of matching gaps shifted by one group means that statement's whole expansion sits one level deeper or shallower in retail.
+- `TMirrorActor::init` shows it: retail expands the `entryMirrorDrawBufferAlways` call after the push_back one level deeper, and a forwarding level around that call alone makes every slot exact.
+- The c-r37 rule holds inside iterator operators: a named local in an inlined `operator->` body is created at that body's depth, after the previous depth's comparison copies and before the next depth's.

@@ -73,6 +73,12 @@ void TPerformList::forEachPerform(
 // keeps our grouping ([it b0 b1] 4 [e0 e1] 8 [!= ==] for retail's
 // [it b0 b1 e0 e1] 4 [!=] 12 [==]); a named bool in the test adds one of the
 // three dead words retail has between the two comparison pairs, never more.
+// c-r38 (dbg, not applied): those three words are depth-3 objects of the loop
+// body created before `==`'s copies. With the direct `begin()`/`end()` site,
+// named `node` and `value` locals in TSingleLinkList::iterator::operator->
+// plus a named bool in its `operator!=` put every inline object in retail's
+// order at identical instructions (forEachPerform still 0xa4); only 12 IRO
+// words at the bottom remain (frame 0xb8). No evidence pins those spellings.
 void TPerformList::perform(u32 cue, JDrama::TGraphics* graphics)
 {
 	forEachPerform(getChildren().begin(), getChildren().end(), graphics, cue);

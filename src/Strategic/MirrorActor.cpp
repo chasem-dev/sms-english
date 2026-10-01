@@ -151,6 +151,15 @@ void TMirrorActor::entryMirrorDrawBufferAlways(J3DModel* model)
 // named/unnamed modelData x five getSDLModelData spellings: nothing exact;
 // best is an unnamed TU-local search fork (pairs 0x8c/0x88, 0xa8/0xa4,
 // 0xc0/0xbc for retail's 0x94/0x90, 0xa8/0xa4, 0xb8/0xb4).
+// c-r38 (dbg): the pairs are push_back's depth-1/2/3 iterator objects, and
+// the words between them are entryMirrorDrawBufferAlways's: retail expands
+// that call one inline level deeper (its dbOpa/dbXlu between the depth-2 and
+// depth-3 pairs, its search bindings below them). A one-line inline taking
+// the J3DModel* (called with getUnk14()) around the call is byte-exact, but
+// it is a pass-through; a this-taking helper holding the whole `if` lands
+// every slot and swaps the search root to r29. Retail's enclosing inline is
+// not identified. Inert: `this->`/qualified call, raw unk14, entry defined
+// after init (also breaks map order); `insert(this)` changes code.
 void TMirrorActor::init(J3DModel* param_1, u16 param_2)
 {
 	unk1A = param_2;
