@@ -140,3 +140,23 @@ Rejected: `JKRDvdRipper::doneProcess` matches JKRDvdFile's 0x30 in size only, an
 `JUTResFont()` (0x60) is, by instruction count, one word longer than the scored constructor's base call, vtable, three null stores and one further call, `TDLTexQuadMulti::createDLBuffer` shares 0xa0 only with TDLTexQuad's unrelated `createBuffer`, and JAIBasic's getters and `stopPlayingCategorySe` name no field or list the binary confirms.
 The std-list and singlelinklist hits sit in TUs whose UNUSED members are still largely unwritten, so they are left for a structural pass.
 No scored function changed and the DOL stayed byte-identical.
+
+## Symbol-order cleanup c-u10 (2026-10-01)
+
+Units failing `tools/validate-symbol-order.py` went from 142 to 120 (map symbols missing from our objects: 854 -> 806), with no new failure and the DOL byte-identical.
+Every fix is an UNUSED body with a sibling or an exact inlined copy, or an existing body moved out of line; no scored function changed.
+coasterkiller: both params constructors leave the header for the `.cpp` at their map place, and `load` still expands them.
+liveactor: `calcVelocityToJumpToXZ` is the Y variant without its -40 literal (0x50), and `getJointTransByName` is `getJointTransByIndex` on the joint-name lookup behind the same null-MActor fallback, returning int (0xec; the void reading is 0xe4).
+JUTRect: the `JUTPoint` overloads of `add` and `move` read the point's members directly; aliasing reloads make both 0x44, while forwarding to the int pair is 0x2c.
+J3DMaterial: `J3DGDSetZCompLoc` moves out of `JRenderer.hpp` into the `.cpp` (only J3DMaterial used it), and its four loads still expand it.
+J3DTransform: `J3DPSMtx23Copy` takes `Mtx33`-row pointers (the map's `PA3_f`) and copies six floats in three paired-single moves (0x1c).
+JPAEmitter: `__dt__7JPADrawFv` is emitted beside the emitter constructor's JSUList and JSULink member destructors only when JPADraw has a user-declared constructor as well as the destructor; both are empty.
+JSUOutputStream (3 -> 2): `poke` is `peek` with `writeData` (both 0xbc); `align` (0x9c/0x8c against 0x80) and `write(const char*)` (0xac against 0xfc) carry TODOs.
+MSL: `ctype.c` defines the eleven classifiers out of line (0x1c each) behind a `_MSL_CTYPE_C` guard on the header's inline copies; `__memrchr` is `memchr` run backwards; `asinf` is `acosf` without the subtraction; `clearerr`, `feof`, `ferror` read the file-state bytes; `__init_critical_regions` is empty; `__init_uart_console` is a plain static.
+`perror` follows the standard and is 0x8c against 0x74, so misc_io passes with a size warning.
+SDK: `GDGetOverflowCallback`, `__DSPGetCurrentTask`, `CARDGetXferredBytes` and the empty `GXSetTevClampMode` read or are what their names say; `OSJamMessage` is `OSSendMessage` at the queue head; `CARDCheckEx` is CARDCheck with the count passed in (hence CARDCheck's `&xferBytes == NULL` test); `__CARDFreeBlock` is `__CARDAllocBlock` reversed (0x9c first try); `__CARDFormatRegion` and `CARDFormatAsync` are CARDFormat's two halves.
+Padclamp's `ClampTrigger`, OSFont's four helpers, OSReboot's `ReadApploader` and OSReset's `__OSCallResetFunctions` and `KillThreads` were `inline` in our tree where the map keeps an UNUSED out-of-line copy; plain definitions in map order still expand at every site.
+OSReset's fabricated static `CallResetFunctions` is gone: both reset loops expand `__OSCallResetFunctions`, instruction-exact, but the frame is 0x10 short without the existing `trash[0x10]`, which stays with a TODO.
+OSReboot's `OSGetSavedRegion` (0x14) wants OS.c's `__OSSavedRegionStart/End`, which the map has global; dropping their `static` lands the size but reorders OS.c's `.sbss` and breaks the DOL, so it is a TODO.
+Left: gesso's `checkDropInWater` is called, not expanded, once it is out of line (79% on the Freeze nerve); MapWireManager, NpcNerve, bossgesso and pakkun miss weak symbols that retail calls from scored functions (inline-depth problems); AnimalBase, tinkoopa, LodAnm and PollutionEvent need the unreconstructed UNUSED bodies that call them; ShadowUtil's local-class names differ only in the `$NNNN` counter.
+`newLight`, `JMADeleteSinTable`, `TRandom_enough_::get`, the JSGLight direction setters, JUTDirectFile's readers and most of the SDK and MSL gaps have no sibling or inlined copy to fix their bodies.
