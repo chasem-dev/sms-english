@@ -253,9 +253,9 @@ void TKazekun::setDeadAnm()
 // subsets overshoot or are inert (2026-09-23).
 void TKazekun::flyAroundMario()
 {
-	JGeometry::TVec3<f32> toMario(*gpMarioPos);
-	toMario.y += getSaveParams()->mTurnOffsetY.value;
-	toMario.sub(mPosition);
+	JGeometry::TVec3<f32> toMario(SMS_GetMarioPos());
+	toMario.y += getSaveParams()->mTurnOffsetY.get();
+	toMario.sub(getPosition());
 
 	f32 f31 = (toMario.y < -400.0f
 	               ? -400.0f
@@ -272,7 +272,7 @@ void TKazekun::flyAroundMario()
 	quat.rotate(vel, vel);
 	vel.y = f31;
 	vel.scale(1.0f + fabsf(f31));
-	vel.scale(getSaveParams()->mAroundSpeed.value);
+	vel.scale(getSaveParams()->mAroundSpeed.get());
 	mLinearVelocity = vel;
 }
 
