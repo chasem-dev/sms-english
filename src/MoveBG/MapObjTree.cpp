@@ -27,12 +27,13 @@
 #include <MSound/MSSetSound.hpp>
 #include <MSound/MSoundBGM.hpp>
 
-static int sWaitTime                      = 1;
-f32 TMapObjTreeScale::mScaleMin           = 0.1f;
-f32 TMapObjTreeScale::mScaleSpeedXZ       = 0.007f;
-f32 TMapObjTreeScale::mStatusChangeScaleY = 0.3f;
-f32 TMapObjTreeScale::mScaleSpeedY        = 0.005f;
+// .sdata order follows marioUS.MAP.
 f32 TMapObjTree::mBananaTreeJumpPower     = 1000.0f;
+f32 TMapObjTreeScale::mScaleSpeedY        = 0.005f;
+f32 TMapObjTreeScale::mStatusChangeScaleY = 0.3f;
+f32 TMapObjTreeScale::mScaleSpeedXZ       = 0.007f;
+f32 TMapObjTreeScale::mScaleMin           = 0.1f;
+static int sWaitTime                      = 1;
 
 TMapObjLeaf::TMapObjLeaf()
     : mAngle(0.0f)

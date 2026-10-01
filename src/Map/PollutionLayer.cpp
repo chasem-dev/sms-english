@@ -20,9 +20,10 @@
 #include <MSound/MSSetSound.hpp>
 #include <MSound/MSoundBGM.hpp>
 
-int TPollutionLayer::mEffectTime   = 15;
+// .sdata order follows marioUS.MAP.
 f32 TPollutionLayerWave::mInterval = 300.0f;
 u8 TPollutionLayerWave::mAlpha     = 0xE6;
+int TPollutionLayer::mEffectTime   = 15;
 
 void TPollutionLayerWave::initGX() const
 {

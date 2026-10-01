@@ -36,13 +36,14 @@
 #include <M3DUtil/InfectiousStrings.hpp>
 #include <Map/MapCollisionEntry.hpp>
 
+// .data order: sFrameRate before sScale (marioUS.MAP).
+f32 TBossManta::sFrameRate[6] = { 0.3f, 0.5f, 1.2f, 2.0f, 5.0f, 5.3f };
 f32 TBossManta::sScale[] = { 20.0f, 10.0f, 5.0f, 2.0f, 1.0f, 1.0f };
 int TBossManta::sCenterJointIndex;
 int TBossManta::sBodyJointIndex;
 int TBossManta::sRwingJointIndex;
 int TBossManta::sLwingJointIndex;
 u8 TBossManta::sEscapeFromMario;
-f32 TBossManta::sFrameRate[6] = { 0.3f, 0.5f, 1.2f, 2.0f, 5.0f, 5.3f };
 
 namespace {
 

@@ -1,29 +1,38 @@
 #!/usr/bin/env python3
-"""Compare the data sections of our objects with retail's, byte for byte.
+"""Compare the data sections of our objects with retail's, before linking.
 
 objdiff matches data objects by symbol name and ignores their order, so a unit
-can score 100% data and still change the linked DOL. This compares the raw
-section contents of build/GMSE01/src/<unit>.o against the split retail object
-build/GMSE01/obj/<unit>.o (trailing zero padding stripped) and classifies each
-section:
+can score 100% data and still change the linked DOL. This compares
+build/GMSE01/src/<unit>.o against the split retail object build/GMSE01/obj/<unit>.o
+section by section and classifies each one:
 
-  same   identical bytes
-  order  the same bytes in a different order (sorted bytes agree): usually an
-         include-order fix, since headers such as Map/MapCollisionEntry.hpp,
-         System/DummyStrings.hpp or M3DUtil/InfectiousStrings.hpp emit their
-         literals where they are first included
-  diff   different content
-  ours/retail  the section exists on one side only
+  same    identical
+  order   the same contents in a different order: in .rodata usually an
+          include-order fix, since Map/MapCollisionEntry.hpp (setUpTrans's
+          zero and one vectors), System/DummyStrings.hpp,
+          M3DUtil/InfectiousStrings.hpp and Player/MarioDirtyStrings.hpp emit
+          their literals where they are first included; in .sdata2 the order
+          in which code first requests each float constant
+  diff    different contents
+  ours / retail   the section has live contents on one side only
 
-.rodata and .sdata2 are compared as raw bytes (the offset after "@" is the first
-differing byte). .data and .sdata are compared as sequences of symbol contents
-with weak symbols left out, since retail keeps each weak vtable in one unit only,
-and with our unreferenced local objects left out, since the linker strips them
-(the number after "@" is then a symbol index); relocated words read as zero on
-both sides, so a pointer to the wrong target is not caught.
+The number after "@" is the first differing byte offset (.rodata) or the index
+of the first differing object (the other sections).
+
+The linker strips each unreferenced data object on its own (the map's UNUSED
+rows), so sections are compared as sequences of live objects. The exception is
+a .rodata block that live code or data addresses through its `...rodata.0`
+label (the map's `...rodata.0 (entry of .rodata)` row): the linker keeps it whole, and it is
+compared as raw bytes with trailing zero padding stripped. Our
+side keeps only the objects retail could keep: those the map places in this
+unit, and those reachable through relocations from them. So a float that only
+an UNUSED helper or a discarded weak copy (JGeometry::TUtil<f>::sqrt's 0.5f
+and 3.0f, say) refers to does not count, and a weak vtable the map gives to
+another unit does not either. Relocated words read as zero on both sides, so a
+pointer to the wrong target is not caught.
 
   tools/rodata-order.py                      every unlinked unit, summary table
-  tools/rodata-order.py -u Enemy/smallEnemy  one unit, with a per-symbol listing
+  tools/rodata-order.py -u Enemy/smallEnemy  one unit, with a per-object listing
   tools/rodata-order.py --all                linked units too
   tools/rodata-order.py -s .rodata -s .sdata2
 
@@ -32,16 +41,16 @@ Run it from the repository root (or a worktree) after building the objects.
 
 import argparse
 import json
+import re
 import signal
 import struct
 import sys
+from collections import defaultdict
 from pathlib import Path
 
 SECTIONS = [".rodata", ".sdata2", ".data", ".sdata"]
-# Weak objects (template vtables, ...) live in whichever unit the linker kept them
-# from, so these sections are compared symbol by symbol with weak ones left out.
-SYMBOL_SECTIONS = {".data", ".sdata"}
 VERSION = "GMSE01"
+MAP = Path("orig") / VERSION / "files" / "marioUS.MAP"
 
 
 class Elf:
@@ -52,8 +61,15 @@ class Elf:
         shoff, = struct.unpack_from(">I", raw, 0x20)
         shentsize, shnum, shstrndx = struct.unpack_from(">HHH", raw, 0x2E)
         self.shdrs = [struct.unpack_from(">IIIIIIIIII", raw, shoff + i * shentsize) for i in range(shnum)]
-        strtab = self.shdrs[shstrndx]
-        self.names = [self._str(strtab, sh[0]) for sh in self.shdrs]
+        self.names = [self._str(self.shdrs[shstrndx], sh[0]) for sh in self.shdrs]
+        # (index, name, value, size, type, bind, shndx) of every symbol
+        self.syms = []
+        for sh in self.shdrs:
+            if sh[1] == 2:  # SHT_SYMTAB
+                strsh = self.shdrs[sh[6]]
+                for k in range(sh[5] // 16):
+                    name, value, size, info, _, ndx = struct.unpack_from(">IIIBBH", raw, sh[4] + k * 16)
+                    self.syms.append((k, self._str(strsh, name), value, size, info & 0xF, info >> 4, ndx))
 
     def _str(self, sh, off):
         start = sh[4] + off
@@ -68,85 +84,107 @@ class Elf:
                 return i, self.raw[sh[4]:sh[4] + sh[5]]
         return None, None
 
-    def symbols(self, shndx):
-        out = []
-        for sh in self.shdrs:
-            if sh[1] != 2:  # SHT_SYMTAB
-                continue
-            strsh = self.shdrs[sh[6]]
-            for k in range(sh[5] // 16):
-                name, value, size, info, other, ndx = struct.unpack_from(">IIIBBH", self.raw, sh[4] + k * 16)
-                if ndx == shndx and (info & 0xF) == 1:  # STT_OBJECT
-                    out.append((value, size, self._str(strsh, name), info >> 4, k))
-        return sorted(out)
+    def objects(self, shndx):
+        """(offset, size, name, bind, index) of the data objects in a section."""
+        return sorted((v, s, n, b, k) for k, n, v, s, t, b, x in self.syms if x == shndx and t == 1)
 
-    def referenced(self):
-        """Indices of the symbols some relocation points at."""
-        out = set()
+    def live(self, placed):
+        """Symbol indices the linker could keep: those whose names the map
+        places in this unit, and everything relocations reach from them
+        without passing through a weak symbol the map places elsewhere."""
+        by_section = defaultdict(list)
+        for k, n, v, s, t, b, x in self.syms:
+            if t in (1, 2) and s:  # objects and functions
+                by_section[x].append((v, s, k))
+        edges = defaultdict(set)
         for sh in self.shdrs:
-            if sh[1] == 4:  # SHT_RELA
-                for k in range(sh[5] // 12):
-                    out.add(struct.unpack_from(">I", self.raw, sh[4] + k * 12 + 4)[0] >> 8)
-        return out
+            if sh[1] != 4:  # SHT_RELA
+                continue
+            spans = by_section.get(sh[7], [])
+            for r in range(sh[5] // 12):
+                off, info = struct.unpack_from(">II", self.raw, sh[4] + r * 12)
+                owner = next((k for v, s, k in spans if v <= off < v + s), None)
+                edges[owner].add(info >> 8)
+        # A weak symbol the map gives to another unit is that unit's copy; ours
+        # is discarded along with whatever only it refers to.
+        foreign = {k for k, n, v, s, t, b, x in self.syms if b == 2 and n not in placed}
+        todo = [k for k, n, v, s, t, b, x in self.syms if n in placed] + list(edges[None])
+        seen = set()
+        while todo:
+            k = todo.pop()
+            if k not in seen and k not in foreign:
+                seen.add(k)
+                todo.extend(edges[k])
+        return seen, foreign
+
+
+def read_map(path):
+    """{source file stem: set of names the map places (not UNUSED) for it}."""
+    placed = defaultdict(set)
+    if not path.exists():
+        return placed
+    row = re.compile(r"^\s+[0-9a-f]{8} [0-9a-f]{6} [0-9a-f]{8}\s+\d+ (\S+)\s+(?:\S+\.a )?(\S+)\.(?:cpp|cp|c|s)\s*$")
+    in_layout = False
+    for line in path.read_text(encoding="latin-1").splitlines():
+        if line.endswith("section layout"):
+            in_layout = True
+            continue
+        if in_layout:
+            m = row.match(line)
+            if m:
+                placed[m.group(2)].add(m.group(1))
+    return placed
 
 
 def strip(data):
     return data.rstrip(b"\0") if data is not None else None
 
 
-def blobs(elf, name, skip, live=None):
-    """The section as a list of its symbols' bytes, leaving out weak symbols,
-    dtk gap fillers and (given `live`) local symbols nothing refers to."""
+def first_difference(a, b):
+    return next((i for i in range(min(len(a), len(b))) if a[i] != b[i]), min(len(a), len(b)))
+
+
+def object_list(elf, name, keep):
     shndx, data = elf.section(name)
     if shndx is None or not data:
-        return None
-    return [data[off:off + size] for off, size, nm, bind, idx in elf.symbols(shndx)
-            if bind != 2 and nm not in skip and not nm.startswith("gap_")
-            and (live is None or bind != 0 or idx in live)]
+        return []
+    return [(nm, data[off:off + size]) for off, size, nm, bind, idx in elf.objects(shndx)
+            if not nm.startswith("gap_") and keep(idx)]
 
 
-def classify_symbols(oe, re_, name):
-    oi = oe.section(name)[0]
-    weak = {sym[2] for sym in oe.symbols(oi) if sym[3] == 2} if oi is not None else set()
-    # The linker drops unreferenced local objects (the pointer statics of the
-    # rogue string headers, unused vector literals), so retail never has them.
-    a, b = blobs(oe, name, weak, oe.referenced()), blobs(re_, name, weak)
-    if not a and not b:
+def pooled(elf, name, live):
+    """Whether the linker keeps the section whole: live code or data addresses
+    it through its `...rodata.0`/`...data.0` label or the section symbol."""
+    shndx = elf.section(name)[0]
+    return any(t in (0, 3) and x == shndx and k in live[0] for k, n, v, s, t, b, x in elf.syms)
+
+
+def keeper(elf, name, live):
+    """Which of our objects in the section survive the link, or None to
+    compare the section as raw bytes."""
+    if live is None:
+        return None if name == ".rodata" else (lambda idx: True)
+    seen, foreign = live
+    if pooled(elf, name, live):
+        return None if name == ".rodata" else (lambda idx: idx not in foreign)
+    return lambda idx: idx in seen
+
+
+def compare(oe, re_, name, live):
+    keep = keeper(oe, name, live)
+    if keep is None:
+        a, b = strip(oe.section(name)[1]) or None, strip(re_.section(name)[1]) or None
+    else:
+        a = [blob for _, blob in object_list(oe, name, keep)] or None
+        b = [blob for _, blob in object_list(re_, name, lambda idx: True)] or None
+    if a is None and b is None:
         return "-", None
-    if not a:
-        return "retail", None
-    if not b:
-        return "ours", None
+    if a is None or b is None:
+        return ("retail" if a is None else "ours"), None
     if a == b:
         return "same", None
-    first = next((i for i in range(min(len(a), len(b))) if a[i] != b[i]), min(len(a), len(b)))
-    if sorted(a) == sorted(b):
-        return "order", first
-    return "diff", first
-
-
-def classify(ours, retail):
-    ours = ours or None
-    retail = retail or None
-    if ours is None and retail is None:
-        return "-", None
-    if ours is None:
-        return "retail", None
-    if retail is None:
-        return "ours", None
-    a, b = strip(ours), strip(retail)
-    if a == b:
-        return "same", None
-    first = next((i for i in range(min(len(a), len(b))) if a[i] != b[i]), min(len(a), len(b)))
-    if sorted(a) == sorted(b):
-        return "order", first
-    return "diff", first
-
-
-def compare(oe, re_, name):
-    if name in SYMBOL_SECTIONS:
-        return classify_symbols(oe, re_, name)
-    return classify(oe.section(name)[1], re_.section(name)[1])
+    kind = "order" if sorted(a) == sorted(b) else "diff"
+    return kind, first_difference(a, b)
 
 
 def units(root, everything):
@@ -161,30 +199,42 @@ def units(root, everything):
             yield unit
 
 
-def show(unit, oe, re_, name):
-    oi, od = oe.section(name)
-    ri, rd = re_.section(name)
-    print(f"{name}: ours {len(strip(od)) if od is not None else '-'} bytes, retail {len(strip(rd)) if rd is not None else '-'} bytes")
-    osyms = oe.symbols(oi) if oi is not None else []
-    rsyms = re_.symbols(ri) if ri is not None else []
+def describe(name, size, blob):
+    text = blob.rstrip(b"\0")
+    if size not in (4, 8) and len(text) >= 2 and all(0x20 <= c < 0x7F or c >= 0x80 for c in text):
+        return repr(text.decode("shift_jis", "replace")[:28])
+    if size == 4:
+        return f"{blob.hex()} {struct.unpack('>f', blob)[0]:.7g}f"
+    if size == 8 and blob[:4] != b"\x43\x30\x00\x00":
+        return f"{blob.hex()} {struct.unpack('>d', blob)[0]:.10g}"
+    return blob[:12].hex()
 
-    def fmt(sym, data):
-        if sym is None:
+
+def show(oe, re_, name, live):
+    keep = keeper(oe, name, live)
+    if keep is not None:
+        a = object_list(oe, name, keep)
+        b = object_list(re_, name, lambda idx: True)
+        print(f"{name}: {len(a)} live objects ours, {len(b)} retail")
+    else:
+        oi, od = oe.section(name)
+        ri, rd = re_.section(name)
+        a = [(nm, od[off:off + size]) for off, size, nm, _, _ in oe.objects(oi)] if oi is not None else []
+        b = [(nm, rd[off:off + size]) for off, size, nm, _, _ in re_.objects(ri)] if ri is not None else []
+        print(f"{name}: ours {len(strip(od)) if od is not None else '-'} bytes, "
+              f"retail {len(strip(rd)) if rd is not None else '-'} bytes")
+
+    def fmt(entry):
+        if entry is None:
             return "-"
-        off, size, nm = sym[:3]
-        blob = data[off:off + size]
-        text = blob.rstrip(b"\0")
-        if text and all(0x20 <= c < 0x7F or c >= 0x80 for c in text) and len(text) >= 2:
-            body = repr(text.decode("shift_jis", "replace")[:28])
-        else:
-            body = blob[:12].hex()
-        return f"{off:5x} {size:4x} {nm[:22]:22s} {body}"
+        nm, blob = entry
+        return f"{len(blob):4x} {nm[:24]:24s} {describe(nm, len(blob), blob)}"
 
-    for i in range(max(len(osyms), len(rsyms))):
-        x = osyms[i] if i < len(osyms) else None
-        y = rsyms[i] if i < len(rsyms) else None
-        same = x and y and od[x[0]:x[0] + x[1]] == rd[y[0]:y[0] + y[1]]
-        print(("  " if same else "* ") + fmt(x, od).ljust(72) + " | " + fmt(y, rd))
+    for i in range(max(len(a), len(b))):
+        x = a[i] if i < len(a) else None
+        y = b[i] if i < len(b) else None
+        same = x and y and x[1] == y[1]
+        print(("  " if same else "* ") + fmt(x).ljust(66) + " | " + fmt(y))
 
 
 def main():
@@ -193,16 +243,17 @@ def main():
     ap.add_argument("-u", "--unit", action="append", help="unit path without extension, e.g. Enemy/smallEnemy (repeatable)")
     ap.add_argument("-s", "--section", action="append", help=f"section to compare (repeatable; default {' '.join(SECTIONS)})")
     ap.add_argument("--all", action="store_true", help="include units already linked (in objects.json)")
-    ap.add_argument("-q", "--quiet", action="store_true", help="list only units with an order or diff section")
+    ap.add_argument("-q", "--quiet", action="store_true", help="list only units with a section that is not same")
     ap.add_argument("--root", default=".", help="repository root or worktree (default .)")
     args = ap.parse_args()
     root = Path(args.root)
     sections = args.section or SECTIONS
     build = root / "build" / VERSION
+    placed = read_map(root / MAP)
     todo = [u.removeprefix("mario/") for u in args.unit] if args.unit else list(units(root, args.all))
 
-    counts = {s: {} for s in sections}
-    print(f"{'unit':44s} " + " ".join(f"{s:>14s}" for s in sections))
+    counts = {s: defaultdict(int) for s in sections}
+    print(f"{'unit':44s} " + " ".join(f"{s:>12s}" for s in sections))
     for unit in todo:
         ours_path, retail_path = build / "src" / f"{unit}.o", build / "obj" / f"{unit}.o"
         if not retail_path.exists():
@@ -212,18 +263,18 @@ def main():
             print(f"{unit:44s} (not built)")
             continue
         oe, re_ = Elf(ours_path), Elf(retail_path)
-        cells, interesting = [], False
-        for s in sections:
-            kind, first = compare(oe, re_, s)
-            counts[s][kind] = counts[s].get(kind, 0) + 1
-            interesting |= kind not in ("same", "-")
-            cells.append(kind if first is None else f"{kind}@{first:x}")
-        if interesting or not args.quiet:
-            print(f"{unit:44s} " + " ".join(f"{c:>14s}" for c in cells))
+        names = placed.get(Path(unit).name)
+        live = oe.live(names) if names else None
+        results = [compare(oe, re_, s, live) for s in sections]
+        for s, (kind, _) in zip(sections, results):
+            counts[s][kind] += 1
+        if not args.quiet or any(kind not in ("same", "-") for kind, _ in results):
+            cells = [kind if first is None else f"{kind}@{first:x}" for kind, first in results]
+            print(f"{unit:44s} " + " ".join(f"{c:>12s}" for c in cells))
         if args.unit:
-            for s in sections:
-                if compare(oe, re_, s)[0] not in ("same", "-"):
-                    show(unit, oe, re_, s)
+            for s, (kind, _) in zip(sections, results):
+                if kind not in ("same", "-"):
+                    show(oe, re_, s, live)
     if not args.unit:
         print()
         for s in sections:
