@@ -576,3 +576,5 @@ Their named locals are kept, and so is each initialiser's inline expansion with 
 - Copy-initialisation (`T v = a - b;`) is not hoisted: the operator body is depth 1 there.
 - So a by-value operator's live object is a depth-2 object at copy-outs and a depth-1 object at copy-initialisations; read the per-line map with that in mind before counting words between statements.
 - Under that header retail has one more dead word per `operator=` copy-out of such a temporary, created after the depth-2 objects, and none at `+=` consumption or copy-initialisation (frame-gaps.md, "Research batch c-r39").
+- Research c-r40 measured the consumer side under that header and found nothing: no `operator=` body, destination cast, copy constructor, return type or parameter passing creates any object after the live `r` at a copy-out, copy-initialisation or `+=` (frame-gaps.md, "Research batch c-r40").
+- A comma written around a by-value operator result at the site is dropped by the front end, so a P temporary there has to come from an `ECOMMA` inside an inlined body.

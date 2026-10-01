@@ -3287,3 +3287,43 @@ Committed: this entry, the frame-model rule and a TODO line in keepDistance.
 
 - The migration is unchanged: it needs the copy-out word, and with it the bind family, CameraDemo, wireBinder and enemyAttachment would close; keepDistance closes with its site fix.
 - Look for the word in what IRO does with the `@tmp = r; m = @tmp` chain when the destination is under an `ETYPCON` (the uncast `operator=`), not in operator bodies (c-r34's grammar) or in operator= shapes that bind or convert the source (c-r2's grid and the three above).
+
+## Research batch c-r40 (2026-10-01): the copy-out word is not made by `operator=`, the copy constructor or the destination cast
+
+Question: under c-r39's by-value header V1s, which construct in the `@tmp = r; m = @tmp` copy-out chain gives retail its one late word per site (wireBinder, enemyAttachment, CameraDemo, the coaster and the rest of the bind family)?
+Answer: none was found; no header changed and nothing landed.
+The search ruled out the whole consumer side and weakens c-r39's "per consumer" reading of the word.
+
+### Method
+
+- A scratch TU with three functions, dumped with a private patched debugger (`tools/mwcc-stack/dbg.sh` with a header overlay, then `iro.py`): `f` has two copy-outs (`unk124 = o + p; unk148 = o + q;`, CameraDemo's shape), `g` two copy-initialisations each followed by a plain lvalue assignment, `h` one `+=` of a by-value result.
+- Each header variant is scored by the dead objects in list order per function and a hash of the final code with slot names and `r1` offsets normalised, so a variant must add a late word to `f` only, leave `g` and `h` alone and keep the code.
+- Calibration: c-r34's comma body (`return ((void)0, r);`) adds a P temporary per site in all three functions, and c-r33's C2 adds an inliner word plus an F per site in all three; V1s adds none anywhere.
+- The drivers (`pdbg.sh`, `vt.py`, `mkv.py`, `mkops.py`, `cc.sh`, `t4.sh`) are in the session scratchpad `c-r40/`.
+
+### Ruled out (no late object in any of `f`, `g`, `h`)
+
+- `operator=(const TVec3&)` bodies with V1s's uncast source: `static_cast<Vec&>(*this) = other`, `(Vec&)*this = other`, `((Vec*)this)[0] = other`, `*static_cast<Vec*>(this)`, `*(Vec*)&x`, `*(Vec*)&this->x`, `*(Vec*)(void*)this`, a `void` return (same mangled name), and the implicit operator (MWCC generates it as an inline function with its own exit label, then emits the same code).
+- Source spellings that cast or convert `other` (`(const Vec&)other`, `static_cast<const Vec&>(other)`, `*(const Vec*)&other.x`, `*static_cast<const Vec*>(&other)`, the conversion operator `*(const Vec*)other`): no word, and the copy-out loses its elision (the stock header's code).
+- A named `Vec& self = *this;` adds its word to every assignment, plain ones included; `Vec::operator=(other)` does not compile under MWCC.
+- Copy constructors: implicit, `: Vec((const Vec&)o)`, `: Vec(*(const Vec*)&o)`, `: Vec(static_cast<const Vec&>(o))` (copy-outs unchanged, copy-initialisation loses its elision, as c-r39 found), `{ *(Vec*)this = o; }` and `{ *this = o; }` (both lose the elision); both special members implicit together.
+- `operator+` (the probe's operator) as the local-`r` form, with a `const TVec3` return, with a by-value first parameter, with both, or as a const member: no word.
+  The stock reference return (`const TVec3& operator+(TVec3 fst, ...)`) gives three P temporaries per site at all three consumers.
+- A comma around the operand at the site (`unk124 = ((void)0, o + p);`) is dropped by the front end, at copy-outs, copy-initialisations and `+=` alike.
+- A plain `Vec` destination (c-k17's lead for CameraDemo's `unk124`) makes the built-in assignment expand `operator+` in expression mode: six P temporaries per site and `+=`'s `add` expanded inline, so the code changes.
+- The compiler is not the variable: the coaster `bind` under V1s is 0x38 with GC/1.0, 1.1, 1.2.5 and 1.2.5n (0x30 with 1.1p1); retail is 0x40.
+
+### What the dumps add
+
+- GC/1.1's IRO comma routine (0x431330) makes a temporary for every non-void `ECOMMA` it is handed in value context, so a P word needs an `ECOMMA` that survives the front end; under V1s the hoisted operator body leaves none, whatever `operator=` and the copy constructor look like.
+- The copy-initialisation chain is the same shape as the copy-out (`@tmp = r; v = @tmp`, `@tmp` propagated and dead); only the destination differs, as c-r39 said.
+- `TMario::moveRequest`'s copy-initialisation (`offset = pos - mPosition`) has the coaster's residue under V1s: every mapped slot one word low and one retail word below the live `r`.
+  keepDistance's copy-initialisation has none, so the word is not tied to `operator=`; but moveRequest's word could also be a depth-2 object of the later `checkRideReCalc()`, so this is a doubt, not a refutation.
+- `TLeanMirror::loadAfter` (`mToStone = mShiningStone->mPosition - mPosition`, a non-simple left operand) has two retail words below `r` under V1s, where our only object there is the operand's binding.
+- Tongue's retail `(tpos - mTipPos) * k` (`__ct`, `__ami__`, `__ct`, an inline copy, `scale`) is reproduced by every by-value shape once the site is written `JGeometry::TVec3<f32>(tpos - mTipPos) * k`, and by none without it (V1s and the by-value shapes call only `sub`; the stock header only `__ami__`); this is c-r20's wrapper observation, now checked against nine mixes of the local-`r`, by-value, `const`-return, member and stock forms for `-`, `+` and `*`.
+
+### Rule for the next agent
+
+- Do not look for the copy-out word in `operator=`, the copy constructor, the operator return type or parameter passing: with V1s's bodies none of them creates any object after the live `r`, at any consumer.
+- The remaining places are the operator bodies themselves (c-r34's grammar found only the meaningless comma) and the sites: a per-site source construct that leaves an `ECOMMA` or an inliner binding after the hoisted body (c-r20's counts 0, 1 and 2 per site, LeanMirror's two words, moveRequest's word at a copy-initialisation).
+- Before another header round, settle moveRequest: if its word is `checkRideReCalc`'s, the per-consumer reading stands; if not, the word is per site and no header can supply it.
