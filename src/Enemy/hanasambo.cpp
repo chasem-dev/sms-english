@@ -1266,18 +1266,19 @@ static inline TSpineBase<TLiveActor>* SamboHeadAtkSpine(const TSamboHead* p)
 	return spine;
 }
 
-// TODO: retail reserves 0x10 above `away` (its slot is exact here); the
-// missing block is an inlined callee's own class object, not caller pool.
-// A named `const TVec3& marioPos = *gpMarioPos` is +8 above away (not +0x10);
-// two named refs are also +8; getPosition() at both sites +0x10 of low region.
-// Also (c-c4): setVelocity(away) and a C-style away + set() inert; the away
-// build as a by-value TU-local helper is 82.9%.
+// The rebound direction is built from three named components: the marioPos
+// reference, dx and dy are homed as retail's three words above `away`; dz feeds
+// the constructor's last store, after the x and y stores, so it keeps a
+// register (c-t4's aliasing exception).
 void TSamboHead::attackToMario()
 {
 	sendAttackMsgToMario();
 	if (checkLiveFlag2(LIVE_FLAG_AIRBORNE)) {
-		JGeometry::TVec3<f32> away(mPosition.x - gpMarioPos->x, 10.0f,
-		                           mPosition.z - gpMarioPos->z);
+		const JGeometry::TVec3<f32>& marioPos = SMS_GetMarioPos();
+		f32 dx = mPosition.x - marioPos.x;
+		f32 dy = 10.0f;
+		f32 dz = mPosition.z - marioPos.z;
+		JGeometry::TVec3<f32> away(dx, dy, dz);
 		MsVECNormalize(&away, &away);
 		away.scale(8.0f);
 		mVelocity = away;
