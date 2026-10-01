@@ -1115,10 +1115,9 @@ static int SamboHeadRollCallback(J3DNode* node, int param)
 		                           anmMtx[2][1]);
 		f32 angle = gpCurSamboHead->mRollAngle;
 
-		f32 pz = SamboProject(axis, colZ);
-		f32 py = SamboProject(axis, colY);
-		f32 px = SamboProject(axis, colX);
-		JGeometry::TVec3<f32> localAxis(px, py, pz);
+		JGeometry::TVec3<f32> localAxis(SamboProject(axis, colX),
+		                                SamboProject(axis, colY),
+		                                SamboProject(axis, colZ));
 
 		MTXRotAxisRad(roll, &localAxis, 0.017453292f * angle);
 		MTXConcat(anmMtx, roll, anmMtx);
