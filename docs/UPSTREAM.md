@@ -96,3 +96,17 @@ fireWanwan (22 -> 21): `emitTailHitEffect` (0x54) is the Fly nerve's `li r3, 9 .
 Rejected: TKoopaParts::set with TLimitKoopaParts' `height <= 0` default reaches the map's 0x84 but adds six instructions to TKoopa::setUpHitActors (98.1 -> 94.1), so retail's has none.
 No scored function changed and unit data stayed at 100%.
 MarioMove's 13 stubs and fireWanwan's `calcShadowPos`, `clipNodes` and `receiveMessageFromTail` have no call site or inlined copy; they carry TODOs with their map sizes.
+
+## UNUSED restoration c-u7 (2026-10-01)
+
+`tools/unused-siblings.py` lists, for every UNUSED map function that is a stub or mis-sized in our objects, the map functions with the same method name, signature and size whose body is verified (scored exact, or UNUSED at its map size); `--fuzzy` adds same-size names sharing the first and last camel-case words.
+Seven UNUSED symbols reached their map sizes, from siblings of that kind or from inlined copies in scored functions.
+tamaNoko (2 -> 1): `TTamaNokoFlower::setBckAnm` is TCannonDom's 0xa8 TSharedParts body, which passes the index to `setBckFromIndex` where ours passed 0.
+koopajr (5 -> 3): `getBathtubY` is TBathtubKiller's 0x34 read of the same TBathtub's root joint height, and `startKoopaJrMessage` is `TTinKoopa::startTinKoopaMessage` (0x2c, inlined at its exact balloon sites).
+limitkoopajr (3 -> 2): `startKoopaJrMessage` is the same balloon call.
+DrawUtil (13 -> 12): `TSilhouette::calcSilhouetteBorder` is `TLightWithDBSetManager::calcLightBorder` (both 0x134) over unk24's distances; `loadAfter` keeps its spelled-out copy, since calling the helper leaves the frame 0x10 short (more markers, same 99.7%).
+limitkoopa (13 -> 12): the flame nerve's UNUSED 0x6c destructor is the size of the ones that walk TNerveLimitKoopaTurn, as TNerveKoopaFlame derives from TNerveKoopaTurn; with that base `stagger` reaches its 0x240 only with the Flame test first, as in TKoopa, which settles the position c-u6 left open.
+Yoshi (3 -> 2): `startVoice` is `gpMSound->startMarioVoice(id, 1, 1)` (0x2c), the call `movement` makes for the dismount voice; calling it there compiles to the same code.
+Rejected: `TWatermelon::control` and `TWoodBarrel::control` share 0xa4 but not a base class; `getAnmEnd` (TKoopa and TLimitKoopa, 0x48) stays 0x2c..0x40 in every bool spelling although its inlined copies are exact; `TGraphGroup`'s destructor freeing the ctor's webs is 0xc0..0xc8, not 0x94.
+`TExPane(JUTTexture*, GXCullMode)` around the UNUSED `J2DPicture(JUTTexture*)` and `setCullBack` reaches 0xec of 0xf0 and is left as a TODO.
+No scored function changed and the DOL stayed byte-identical.
