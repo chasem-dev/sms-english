@@ -2925,3 +2925,21 @@ In progress; results are appended below as they are measured.
 - Other regsweep single-move readings that this lever cannot reach: Bird @1917, MapObjTree @1209, SMS_UnifyMaterial @818 and TBathtub::perform @3341/@3250 (an `@` object that must be coloured later, so it would have to stop being an `@` object), TFerrisWheel `sound`, tinkoopa `tinKoopa` and hinokuri2 `transMtx` (a named local that must be coloured earlier), and bossManta @2837 (degree 33 where retail needs 31).
 - Small gains not committed (under 0.1% and no frame change): Bird `getMyMarchSpeed` (doFlyToCurPathNode), Kukku `isDead`/`isFindOutMario` (GraphWander), MarioMove `getDizzyAngle`/`getDizzyPower` (checkController).
 
+
+## Closure batch c-k26 (2026-10-01)
+
+- Targets: the five non-exact functions left in C units (GC2D/hx_wiper.c and MetroTRK Portable/support.c); two closed, neither unit links yet.
+- Rule (C units, MWCC GC/1.1 debugger dumps): a named local or inline argument binding that copy propagation removes keeps its 4-byte stack slot, in declaration order with the other stack-homed locals.
+- So a frame hole with no stores in retail can be a single-use named value: `cx = hx.width >> 1` already did this in Hxs_Logo_TexDraw, and an expanded `GXTexCoord2f32(a + b, ...)` keeps one slot for its propagated first argument.
+- hx_wiper `Hx_Test5` 99.82 -> 100: `u32 timer = Hx_GetTimer(); f32 rate = (f32)timer / 20.0f;` declared at function scope ahead of `obj` fills retail's 8 unused bytes above obj.
+- Spill slots follow virtual-register order (named locals number in reverse declaration order), so declaring `mag_out, mag_in` before the first-vertex locals puts their spills above that block, as retail has them.
+- hx_wiper `Hxs_Logo_TexDraw` 96.37 -> 100, in three steps.
+- Dividing the corner arguments in place (`x1 /= sx`) instead of naming `u1 = x1 / sx` gives retail's saved-FPR colouring: arguments colour last, last-declared first, so y2/x2/y1/x1 take f25-f22.
+- Single-use `u32 w, h` (screen size) and `f32 du, dv` (segment delta, matching the existing "(-dv, du)" comment) supply retail's 0x10 of low region under `d`.
+- `sx` computed before `sy` fixes the divisor loads' volatile registers, and `py` declared before `px` fixes the first vertex's sums.
+- Inert on TexDraw before the slot finding: declaration order (12 orders), direct GX calls (right frame, wrong store order), Hx_TexVtx with a z, colour, swapped or split-offset parameter list.
+- hx_wiper `Hxs_GameOver` (99.66, open): retail's named block is obj, st, fadeColor, axis, six 4-byte slots, rotMtx.
+- Lead: keeping fadeColor in its own block and opening a second block at `aspect` that declares axis, aspect, texAspect, `u32 w, h, tw, th` (screen and texture sizes, all copy-propagated) and rotMtx reproduces that order and the hole; the whole frame is then uniformly 0xc short (0x180 against 0x188).
+- The missing 0xc is three more low slots below the sqrtf ones, which are the GX vertex argument bindings; vertex 0's `st[0].x` (offset 0, so no binding) and the two `(f32)hx.height` conversions (registers, not propagated) are the candidates. Not committed (no fuzzy gain alone).
+- hx_wiper `Hxs2_Circle` (99.65, open): the dump shows `color` reaching its first-sweep turn with 27 of K = 29 left, so it colours after the centerX/centerY address temporaries; retail needs two more neighbours or an `@` binding. Moving `color = alpha` within the prologue, an initialiser, and declaration order are inert or worse.
+- MetroTRK `TRKSuppAccessFile` (99.64, open): re-confirmed that no single-local move of `done` or `replyBuffer` among the ten declarations, and no loop-body or need_reply-block scoping, reaches retail; the recorded "one more web live with done only" lead stands.
