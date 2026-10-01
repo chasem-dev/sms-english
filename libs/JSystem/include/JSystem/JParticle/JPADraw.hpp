@@ -113,6 +113,13 @@ public:
 
 class JPADraw {
 public:
+	// The map's UNUSED 0x40 __dt__7JPADrawFv sits in JPAEmitter.cpp between
+	// the JSUList and JSULink member destructors the emitter constructor
+	// emits for cleanup. MWCC emits it there only when JPADraw has a
+	// user-declared constructor as well as the destructor; both are empty.
+	JPADraw() { }
+	~JPADraw() { }
+
 	/* 0x00 */ JPADrawExecEmitterVisitor* mpExecEmtrVis[1];
 	/* 0x04 */ JPADrawExecEmitterVisitor* mpExecEmtrPVis[5];
 	/* 0x18 */ JPADrawExecEmitterVisitor* mpExecEmtrCVis[3];
