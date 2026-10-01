@@ -930,8 +930,8 @@ void MSStageCubeFadeDouble::proc()
 	if (sound1 == nullptr)
 		return;
 
-	Vec local_170 = *gpMarioPos;
-	local_170.y   = 75.0f + gpCubeSoundChange->unk14->begin()[0]->unkC.y;
+	Vec local_170 = SMS_GetMarioPos();
+	local_170.y   = 75.0f + gpCubeSoundChange->getCubeInfo(0)->unkC.y;
 
 	unk4 = gpCubeSoundChange->getInCubeNo(local_170);
 
@@ -952,8 +952,8 @@ void MSStageCubeFadeDouble::proc()
 		f32 ratio = calcParamRatioInCube(unk4);
 		gpMSound->unk9C->xFadeBgm(ratio);
 		if (MSMainProc::MSStageInfo::cubeFadeUsePan != 0) {
-			Vec local_160 = gpCubeSoundChange->unk14->begin()[unk4]->unkC;
-			Vec local_154 = *gpMarioPos;
+			Vec local_160 = gpCubeSoundChange->getCubeInfo(unk4)->unkC;
+			Vec local_154 = SMS_GetMarioPos();
 
 			local_160.y = local_154.y;
 
