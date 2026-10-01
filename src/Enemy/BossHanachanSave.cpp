@@ -1,6 +1,7 @@
 #include <Enemy/BossHanachan.hpp>
 
 // Shared literals present before the parameter names in the original object.
+#include <System/DummyMactorString.hpp>
 #include <System/DummyStrings.hpp>
 
 TBossHanachanCommonSaveParams::TBossHanachanCommonSaveParams(const char* prm)

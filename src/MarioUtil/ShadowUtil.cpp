@@ -25,6 +25,7 @@
 
 // rogue include: the 12 zero bytes and the Shift-JIS memory-error string are
 // the object's first two .rodata entries (@1490/@1809).
+#include <System/DummyMactorString.hpp>
 #include <System/DummyStrings.hpp>
 
 TMBindShadowParts::TMBindShadowParts(J3DModel* param_1, u8 param_2,

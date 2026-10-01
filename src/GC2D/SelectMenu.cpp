@@ -36,6 +36,7 @@
 #include <MSound/MSoundBGM.hpp>
 // Retail .rodata carries only the DummyStrings pair (@1490/@2111), not the
 // four InfectiousStrings mtx-calc names, and its .data has no MtxCalcTypeName.
+#include <System/DummyMactorString.hpp>
 #include <System/DummyStrings.hpp>
 
 TSelectGrad::TSelectGrad(const char* pName)

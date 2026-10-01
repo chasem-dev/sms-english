@@ -25,6 +25,7 @@
 // rogue includes needed for matching sinit & bss
 #include <MSound/MSSetSound.hpp>
 #include <MSound/MSoundBGM.hpp>
+#include <System/DummyMactorString.hpp>
 #include <System/DummyStrings.hpp>
 
 /// Frames left before the guide archive is swapped in. In .sbss, so it

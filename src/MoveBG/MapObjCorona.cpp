@@ -1,4 +1,5 @@
 #include <MoveBG/MapObjCorona.hpp>
+#include <System/DummyMactorString.hpp>
 #include <System/DummyStrings.hpp>
 #include <GC2D/GCConsole2.hpp>
 #include <System/MarDirector.hpp>

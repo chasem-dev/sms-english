@@ -17,6 +17,7 @@
 // rogue includes needed for matching sinit & bss
 #include <MSound/MSSetSound.hpp>
 #include <MSound/MSoundBGM.hpp>
+#include <System/DummyMactorString.hpp>
 #include <System/DummyStrings.hpp>
 // After the no-memory message: retail's .rodata has setUpTrans's zero and one
 // literals between it and this unit's own data (c-r35).

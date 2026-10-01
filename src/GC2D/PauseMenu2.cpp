@@ -34,6 +34,7 @@ extern JPAEmitterManager* gpEmitterManager4D2;
 // rogue includes needed for matching sinit & bss
 #include <MSound/MSSetSound.hpp>
 #include <MSound/MSoundBGM.hpp>
+#include <System/DummyMactorString.hpp>
 #include <System/DummyStrings.hpp>
 
 // fabricated: the draw switch, inlined at each perform site (retail lays the

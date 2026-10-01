@@ -11,6 +11,7 @@
 #include <version.h>
 
 #ifdef VERSION_GMSP01
+#include <System/DummyMactorString.hpp>
 #include <System/DummyStrings.hpp>
 #endif
 

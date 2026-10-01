@@ -1,14 +1,26 @@
 #ifndef SYSTEM_DUMMY_STRINGS_HPP
 #define SYSTEM_DUMMY_STRINGS_HPP
 
-// Every retail TU carrying this message also carries the zero object in
-// System/DummyMactorString.hpp, and always ahead of it, so that header comes
-// first here; see it for the evidence that the two are separate headers.
+// The message comes before the zero object of System/DummyMactorString.hpp,
+// which this header includes after it. 220 retail TUs number that zero object
+// @1490, so an early common include emits it long before this header comes
+// in (the message ids vary from @1525 to @2421); only BathWaterManager includes
+// this header first, and there the message is @1900 and the zero object @1907.
+// So a TU that carries the zero object ahead of the message (every other one)
+// must include System/DummyMactorString.hpp earlier itself.
 //
 // TODO: still no idea what header this actually was.
-#include <System/DummyMactorString.hpp>
-
+//
+// TODO: the map lists this 4-byte pointer in .sdata2, always UNUSED, in all
+// 292 retail TUs that carry it, so retail spelled it `const char* const` (a
+// `char* const` would look the same). That spelling links to the same DOL,
+// but the extra leading .sdata2 object shifts objdiff's pairing of the
+// anonymous .sdata2 objects against the split retail objects, whose copy was
+// dead-stripped: 18 matched units drop in matched_data (Total 99.84% ->
+// 88.54%). Kept non-const until objdiff scores that section without it.
 static const char* SMS_NO_MEMORY_MESSAGE = "メモリが足りません\n";
+
+#include <System/DummyMactorString.hpp>
 
 // The `cDirtyFileName`/`cDirtyTexName` pollution-texture pair is a third
 // member of this family, `(object,local)` in twenty retail TUs (MarNameRefGen,

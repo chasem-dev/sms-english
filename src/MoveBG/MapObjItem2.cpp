@@ -19,6 +19,7 @@
 // The .rodata order fixes these three: retail's blob is the DummyStrings zero
 // object and no-memory message, then setUpTrans's (Vec){0,0,0}/(Vec){1,1,1}
 // literals from MapCollisionEntry.hpp, then the four mtx-calc names (c-k29).
+#include <System/DummyMactorString.hpp>
 #include <System/DummyStrings.hpp>
 #include <Map/MapCollisionManager.hpp>
 #include <Map/MapCollisionEntry.hpp>

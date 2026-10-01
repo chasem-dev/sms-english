@@ -3,6 +3,7 @@
 // strings; without all three blocks every string offset in the factory is
 // 0x34 or 0xE0 low.
 // rogue includes needed for matching the .rodata string pool and __sinit
+#include <System/DummyMactorString.hpp>
 #include <System/DummyStrings.hpp>
 
 // TODO: retail has these two as (object,local) in MarNameRefGen.cpp,

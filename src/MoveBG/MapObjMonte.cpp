@@ -1,4 +1,5 @@
 #include <MoveBG/MapObjMonte.hpp>
+#include <System/DummyMactorString.hpp>
 #include <System/DummyStrings.hpp>
 #include <M3DUtil/InfectiousStrings.hpp>
 #include <Map/MapCollisionManager.hpp>

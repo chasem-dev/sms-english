@@ -21,6 +21,7 @@
 #include <System/FlagManager.hpp>
 #include <System/MarioGamePad.hpp>
 #include <System/Resolution.hpp>
+#include <System/DummyMactorString.hpp>
 #include <System/DummyStrings.hpp>
 
 // rogue includes needed for matching sinit & bss

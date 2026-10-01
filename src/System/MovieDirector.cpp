@@ -24,6 +24,7 @@
 // rogue includes needed for matching sinit & bss
 #include <MSound/MSSetSound.hpp>
 #include <MSound/MSoundBGM.hpp>
+#include <System/DummyMactorString.hpp>
 #include <System/DummyStrings.hpp>
 
 class TEndingString : public JDrama::TViewObj {

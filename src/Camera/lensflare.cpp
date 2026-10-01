@@ -1,3 +1,4 @@
+#include <System/DummyMactorString.hpp>
 #include <System/DummyStrings.hpp>
 #include <Camera/LensFlare.hpp>
 #include <JSystem/J3D/J3DGraphAnimator/J3DModel.hpp>

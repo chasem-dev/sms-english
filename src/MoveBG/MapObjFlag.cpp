@@ -16,6 +16,7 @@
 #include <string.h>
 
 // rogue includes needed for matching sinit & bss
+#include <System/DummyMactorString.hpp>
 #include <System/DummyStrings.hpp>
 #include <MSound/MSSetSound.hpp>
 #include <MSound/MSoundBGM.hpp>

@@ -312,3 +312,16 @@ Moving the `changeByJuice` override above `isEatenByYosshi` fixed the pair; the 
 - So `System/DummyStrings.hpp` should define the message before it includes `DummyMactorString.hpp`, and the 186 TUs that include it would need the zero object from their common early header; that is a header round.
 - `tools/rodata-order.py` no longer roots liveness on map names like `@NNNN` or `name$NNNN`: when renumbering made one of our ids equal a retail name, a discarded weak `TUtil<f>::sqrt` copy's 3.0f looked live in gesso, hinokuri2, telesa and koopajr.
 - Unlinked units after this batch: `.sdata2` order 23 (was 25), diff 4; `.data` order 0 (was 6), diff 1.
+
+## Dummy strings c-r36 (2026-10-01): the no-memory message comes before the zero object
+
+- Retail split objects: in every TU whose `.rodata` survives with the 12-byte zero object and the no-memory message, the zero object comes first, except BathWaterManager (message `@1900`, zero `@1907`).
+- The zero object is `@1490` in 220 retail TUs while the message's id varies from `@1525` to `@2421`, so an early common include emits it; its pointer has no row in any section of the map, so the header that owns it is still unidentified.
+- `System/DummyStrings.hpp` now defines the message and then includes `System/DummyMactorString.hpp`, which reproduces BathWaterManager's `@1900`/`@1907` adjacency.
+- Every other carrier includes the zero object's header first: `M3DUtil/InfectiousStrings.hpp` includes it ahead of `DummyStrings.hpp`, and the 33 TUs that include `DummyStrings.hpp` before (or without) `InfectiousStrings.hpp` include it on the line above.
+- BathWaterManager includes `DummyStrings.hpp` above `InfectiousStrings.hpp`; its `.rodata` is now `same`, and no other object's zero/message/mtx-name order changed.
+- `tools/rodata-order.py --all`: `.rodata` order 1 -> 0; `.sdata2`, `.data` and `.sdata` unchanged; symbol-order FAIL set unchanged at 116 units; DOL identical; `changes_all` zero.
+- `SMS_NO_MEMORY_MESSAGE` is a 4-byte UNUSED row in `.sdata2` in all 292 retail TUs that list it, so retail spelled it `const char* const` (`char* const` is indistinguishable).
+- That spelling links to the same DOL, but the extra leading `.sdata2` object breaks objdiff's pairing of anonymous `.sdata2` objects against the split retail objects, whose copy was dead-stripped: 18 matched units drop in `matched_data` (Total 99.84% -> 88.54%).
+- So the header keeps the non-const pointer with a TODO; landing the const needs objdiff to score `.sdata2` without the stripped object.
+- BathWaterManager's `.sdata2` is still `order@2`: retail requests `0x78fa1400` (`@2724`) after the zero floats, ours requests it first (`@892`).

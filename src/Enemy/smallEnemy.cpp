@@ -2,6 +2,7 @@
 // Rogue include: retail's .rodata opens with this header's zero object and
 // no-memory message, ahead of setUpTrans's zero and one literals from
 // Map/MapCollisionEntry.hpp (c-r35).
+#include <System/DummyMactorString.hpp>
 #include <System/DummyStrings.hpp>
 #include <Enemy/Graph.hpp>
 #include <Enemy/Conductor.hpp>

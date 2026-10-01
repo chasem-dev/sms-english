@@ -18,6 +18,7 @@
 #include <stdio.h>
 
 // rogue include needed for matching the .rodata string pool prefix
+#include <System/DummyMactorString.hpp>
 #include <System/DummyStrings.hpp>
 
 JUTPoint TConsoleStr::cShineGetRight1(150, -50);

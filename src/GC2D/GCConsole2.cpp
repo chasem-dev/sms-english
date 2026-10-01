@@ -45,6 +45,7 @@ extern JPAEmitterManager* gpEmitterManager4D2;
 // rogue includes needed for matching sinit & bss
 #include <MSound/MSSetSound.hpp>
 #include <MSound/MSoundBGM.hpp>
+#include <System/DummyMactorString.hpp>
 #include <System/DummyStrings.hpp>
 
 JUTPoint TGCConsole2::cDownTopPoint(0, -100);

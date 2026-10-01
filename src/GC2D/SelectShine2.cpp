@@ -14,6 +14,7 @@
 #include <JSystem/JParticle/JPAEmitterManager.hpp>
 
 // rogue include needed for matching the .rodata string pool prefix
+#include <System/DummyMactorString.hpp>
 #include <System/DummyStrings.hpp>
 
 JGeometry::TVec3<f32> TSelectShineManager::cCenter(300.0f, 160.0f, -9000.0f);

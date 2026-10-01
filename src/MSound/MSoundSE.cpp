@@ -11,6 +11,7 @@
 
 // rogue
 #include <MSound/MSoundBGM.hpp>
+#include <System/DummyMactorString.hpp>
 #include <System/DummyStrings.hpp>
 
 using namespace MSoundSESystem;

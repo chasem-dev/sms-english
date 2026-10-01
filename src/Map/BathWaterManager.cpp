@@ -27,6 +27,8 @@
 // rogue includes needed for matching sinit & bss
 #include <MSound/MSSetSound.hpp>
 #include <MSound/MSoundBGM.hpp>
+// The only retail TU with the no-memory message ahead of the zero object.
+#include <System/DummyStrings.hpp>
 #include <M3DUtil/InfectiousStrings.hpp>
 
 // NOTE: the main tragedy of this file is that it looks like a bunch of classes

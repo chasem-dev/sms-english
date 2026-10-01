@@ -1,6 +1,7 @@
 #include <Camera/LensGlow.hpp>
 // Rogue include: retail's .rodata opens with this header's zero object and
 // no-memory message, ahead of SunModel.hpp's volume names.
+#include <System/DummyMactorString.hpp>
 #include <System/DummyStrings.hpp>
 #include <JSystem/J3D/J3DGraphAnimator/J3DMaterialAnm.hpp>
 #include <JSystem/J3D/J3DGraphAnimator/J3DModel.hpp>

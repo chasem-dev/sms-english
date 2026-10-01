@@ -12,6 +12,7 @@
 // The DummyStrings pair has to precede the dirty-texture names: retail's
 // .rodata opens with its 12- and 20-byte strings and only then cDirtyFileName,
 // which is what puts cDirtyTexName at 0x44 instead of 0x24.
+#include <System/DummyMactorString.hpp>
 #include <System/DummyStrings.hpp>
 #include <Player/MarioDirtyStrings.hpp>
 

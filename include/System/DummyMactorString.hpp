@@ -9,7 +9,10 @@
 // (@1490 against @2110 in MarDirectorSetupObjects) rather than adjacent.
 // Scanning retail's .rodata for a leading 12-zero object finds those 186 TUs
 // and only those three lack the message, so the message's header includes this
-// one and never the reverse.
+// one and never the reverse, after its message: BathWaterManager, the one
+// retail TU that includes the message's header first, has the message @1900
+// and this object @1907. Everywhere else this object comes from an earlier
+// include, so a TU includes this header itself ahead of the message's.
 //
 // This object is also separate from the MActor mtx-calc type names in
 // M3DUtil/InfectiousStrings.hpp. Scanning the retail objects for the literals:

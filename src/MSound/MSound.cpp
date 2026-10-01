@@ -24,6 +24,7 @@
 #include <math.h>
 
 // rogue
+#include <System/DummyMactorString.hpp>
 #include <System/DummyStrings.hpp>
 
 // TODO: place in correct header
