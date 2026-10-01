@@ -750,7 +750,7 @@ inline void TBaseNPC::performMove_()
 
 void TBaseNPC::perform(u32 cue, JDrama::TGraphics* graphics)
 {
-	if (mActorType == 0x400001C) {
+	if (getActorType() == 0x400001C) {
 		if (!(cue & CUE_MOVE))
 			return;
 
@@ -763,7 +763,7 @@ void TBaseNPC::perform(u32 cue, JDrama::TGraphics* graphics)
 		return;
 	}
 
-	if (mActorType == 0x400001D) {
+	if (getActorType() == 0x400001D) {
 		if (checkLiveFlag(LIVE_FLAG_UNK200 | LIVE_FLAG_DEAD))
 			return;
 
@@ -782,9 +782,9 @@ void TBaseNPC::perform(u32 cue, JDrama::TGraphics* graphics)
 	} else if ((cue & (CUE_CALC_VIEW | CUE_ENTRY))
 	           && checkLiveFlag(LIVE_FLAG_CLIPPED_OUT | LIVE_FLAG_HIDDEN)) {
 		bVar5 = false;
-	} else if ((cue & CUE_MOVE) && mHolder == nullptr && !isAirborne()
+	} else if ((cue & CUE_MOVE) && getHolder() == nullptr && !isAirborne()
 	           && !belongToGround() && mSpine->getTime() != 0
-	           && mActorType != 0x4000018 && isNerveMaybeDontMovement()
+	           && getActorType() != 0x4000018 && isNerveMaybeDontMovement()
 	           && !checkLiveFlag(TBaseNPC::LIVE_FLAG_SINK_BOTTOM)) {
 		TNPCManager* manager = (TNPCManager*)mManager;
 		f32 farClip          = gpConductor->unk84.mEnemyFarClip.get();
@@ -834,7 +834,7 @@ void TBaseNPC::perform(u32 cue, JDrama::TGraphics* graphics)
 
 	if ((cue & CUE_CALC_ANIM) && mMultiMtxEffect != nullptr) {
 		mMultiMtxEffect->setUserArea();
-		if (mActorType == 0x4000018 && mHolder != nullptr) {
+		if (getActorType() == 0x4000018 && getHolder() != nullptr) {
 			mMultiMtxEffect->flagOn(0x2);
 		}
 	}
