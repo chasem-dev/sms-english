@@ -101,22 +101,22 @@ void TCoasterEnemy::makeCoasterGoalPath()
 	unk12C = 0.0f;
 }
 
-// TODO: 96.0%, frame 0x208 agrees (setLength(1.0f) and the in-order speed
-// through get(); either alone is off by 8). Left: one extra callee-saved FPR
-// (f20), retail keeping delta.y/z in volatiles through the first setRotate()
-// cross product, and retail's `mr r4, r0` loading the graph before the index
-// in getCurrentPos(). Inert or worse after the TQuat4::mul rewrite
+// TODO: frame 0x1f0 against retail's 0x208; getPathDir() and both speeds
+// through get() are +0x10, setLength(1.0f) is needed. Left: one extra
+// callee-saved FPR (f20), retail keeping delta.y/z in volatiles through the
+// first setRotate() cross product, and retail's `mr r4, r0` loading the
+// graph before the index in getCurrentPos(). Inert or worse after the TQuat4::mul rewrite
 // (2026-09-23): indexToPoint() spelled directly, direct/assigned delta,
 // mVelocity.scale(t, delta), mVelocity = delta, up before forward, steer
-// before up, the speed block after the rotation, both params through get().
+// before up, the speed block after the rotation.
 void TCoasterEnemy::moveCoaster()
 {
 	JGeometry::TVec3<f32> delta = unk124->getCurrentPos();
 	delta -= getPosition();
 	delta.setLength(1.0f);
 
-	f32 t = mPathDir == 0 ? getSaveParam2()->mSLCoasterSpeedInOrder.get()
-	                          : getSaveParam2()->mSLCoasterSpeedReverse.value;
+	f32 t = getPathDir() == 0 ? getSaveParam2()->mSLCoasterSpeedInOrder.get()
+	                          : getSaveParam2()->mSLCoasterSpeedReverse.get();
 	mVelocity.set(delta);
 	mVelocity.scale(t);
 
