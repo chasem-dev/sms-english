@@ -61,14 +61,45 @@ void AIInitDMA(u32 start_addr, u32 length)
 	OSRestoreInterrupts(old);
 }
 
+BOOL AIGetDMAEnableFlag(void) { return (__DSPRegs[27] >> 15) & 1; }
+
 void AIStartDMA(void) { __DSPRegs[27] = __DSPRegs[27] | 0x8000; }
+
+void AIStopDMA(void) { __DSPRegs[27] = __DSPRegs[27] & ~0x8000; }
+
+u32 AIGetDMABytesLeft(void) { return (__DSPRegs[29] & 0x7FFF) << 5; }
+
+u32 AIGetDMAStartAddr(void)
+{
+	return ((__DSPRegs[24] & 0x3FF) << 16) | (__DSPRegs[25] & 0xFFE0);
+}
+
+u32 AIGetDMALength(void) { return (__DSPRegs[27] & 0x7FFF) << 5; }
+
+BOOL AICheckInit(void) { return __AI_init_flag; }
+
+AISCallback AIRegisterStreamCallback(AISCallback callback)
+{
+	AISCallback old_callback;
+	BOOL old;
+
+	old_callback   = __AIS_Callback;
+	old            = OSDisableInterrupts();
+	__AIS_Callback = callback;
+	OSRestoreInterrupts(old);
+	return old_callback;
+}
+
+u32 AIGetStreamSampleCount(void) { return __AIRegs[2]; }
 
 void AIResetStreamSampleCount(void)
 {
 	__AIRegs[0] = (__AIRegs[0] & ~0x20) | 0x20;
 }
 
-inline void AISetStreamTrigger(u32 trigger) { __AIRegs[3] = trigger; }
+void AISetStreamTrigger(u32 trigger) { __AIRegs[3] = trigger; }
+
+u32 AIGetStreamTrigger(void) { return __AIRegs[3]; }
 
 void AISetStreamPlayState(u32 state)
 {
@@ -139,6 +170,11 @@ void AISetStreamSampleRate(u32 rate)
 	OSReport("AISetStreamSampleRate(): OBSOLETED. Only 48KHz streaming from "
 	         "disk is supported!\n");
 #endif
+}
+
+void __AI_DEBUG_set_stream_sample_rate(u32 rate)
+{
+	__AI_set_stream_sample_rate(rate);
 }
 
 static void __AI_set_stream_sample_rate(u32 rate)
@@ -216,6 +252,8 @@ void AIInit(u8* stack)
 		__AI_init_flag = TRUE;
 	}
 }
+
+void AIReset(void) { __AI_init_flag = FALSE; }
 
 static void __AISHandler(__OSInterrupt interrupt, OSContext* context)
 {
