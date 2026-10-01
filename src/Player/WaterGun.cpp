@@ -737,20 +737,21 @@ void TNozzleTrigger::emit(int param_1)
 			f32 reactionPowMin = mEmitParams.mReactionPowMin.get();
 			f32 reactionPow    = mEmitParams.mReactionPow.get();
 
-			f32 reaction
-			    = pressure * (reactionPow - reactionPowMin) + reactionPowMin;
-
-			// TODO: frame 0xd8 against retail's 0x178; retail re-derives the
+			// TODO: frame 0x108 against retail's 0x178; retail re-derives the
 			// sin/cos table index twice (two `sraw`, no CSE), holds emitInfo
 			// in r30 and the pow reference in r31, and depleteWater indexes
 			// the nozzle list through `add` rather than `lwzx`.
 			JGeometry::TVec3<f32> const& dirVec = emitInfo->mDir.get();
-			f32 dirScale = -dirVec.x * JMASSin(mFludd->mMario->mFaceAngle.y)
-			               - dirVec.z * JMASCos(mFludd->mMario->mFaceAngle.y);
-			mFludd->mMario->addVelocity(dirScale * (reaction * refEmitPow));
+			f32 sinY = JMASSin(mFludd->getMario()->mFaceAngle.y);
+			f32 cosY = JMASCos(mFludd->getMario()->mFaceAngle.y);
+			f32 dirScale = -dirVec.x * sinY - dirVec.z * cosY;
+			mFludd->getMario()->addVelocity(
+			    dirScale
+			    * ((pressure * (reactionPow - reactionPowMin) + reactionPowMin)
+			       * refEmitPow));
 
 			f32 accelY = -dirVec.y * refEmitPow * mEmitParams.mReactionY.get();
-			mFludd->mMario->mVel.y += accelY;
+			mFludd->getMario()->mVel.y += accelY;
 		}
 	}
 }
