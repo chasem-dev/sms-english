@@ -256,3 +256,21 @@ The other accepted edits are header accessors at every read of a member in the f
 As in c-hs7, scoring the accessor set alone kept most of hsearch's gain; the rest usually came from a machine extract or a lone named value.
 Rejected: machine extracts with no UNUSED of their shape (12, one matching UNUSED `JPABaseEmitter::deleteParticle` by size only), accessors the file never uses (8), lone named values or hoists (6), trades (3), and one frame-plus-registers trade that `ninja changes_all` scored as a regression (`TBWLeashNode::calcMatrix`'s getRope()).
 Tool note: `ninja changes_all` scores fuzzy match, so an edit that gains frame but loses registers can read as a regression; score candidates with `hsearch score` first and still gate on changes_all.
+
+## hsearch sweep c-hs9
+
+The resumed c-hs5 list (`scratchpad/hs5/targets.tsv`, 200 s per function, `-j 2`, one foreground call per row) ran rows 246 to 301 across two container restarts; rows 302 onward are unsearched.
+Search gave 39 candidates (two exact, 37 improved) and 17 rows with no gain.
+Review accepted 19 of the rows and rejected 20, plus one sibling applied by hand each way (the whole c-hs5 list so far: 98 accepted, 128 rejected).
+No function became byte-exact and no unit was linked.
+`TPakkunSeed::rebirth` is the closest: the file's short `startSoundActor` at both sink sounds and `getGroundPlane()` clear all eight instruction mismatches (98.45 -> 99.93%), leaving the frame 8 short; exact needs a 0xa8 machine extract with no UNUSED of that size.
+Landed on the retail frame: `TBathtubKiller::isAboided`, `TBeeHive::receiveMessage` and `TMapObjTurn::control`.
+`TNozzleTrigger::animation` loses 15 register mismatches by declaring the start and swap indices before the idle ones; the same order is inert in `TNozzleBase::animation`.
+`TGuide::placeMario` gains by computing x right after the pane width (width, x, height, y); hsearch's C-style hoists and int/s32 flips were rejected as machine order.
+`MSStageCubeFadeDouble::proc` lands 0x148 with the spelling `MSStageCubeFade::proc` already uses (`SMS_GetMarioPos()`, `getCubeInfo(i)->unkC`), better than hsearch's `getUnkC()`.
+The same spelling in `MSStageCubeFadeMonte::proc` (0x118 -> 0x148) shifts `MSStageCubeFade::setBgmVolumeForce`'s stack by 4 and unlinks it from 100%, so it was not kept.
+`TModelGate::perform`'s `getTexture()` also gains 8 in `loadAfter`, applied by hand.
+The other accepted edits are header accessors at every read in the function where the file or class already uses them: getUnkCD(), getPosition(), SMS_GetMarioPos(), getPicket(), getMapObjData(), getHolder(), getUnk2C(), getScaling(), getCollision(), getRotation(), getGridExtentX(), getTracer() and the save-param get().
+Rejected: machine extracts with no UNUSED of their shape (7), lone named values or receivers (6), spellings at odds with the rest of the file (4: a lone `!= nullptr`, raw `mData` beside `end()`, one commuted store of a parallel pair, raw `.value` at three of five reads), accessors the file never uses (2), and trades (2).
+`MSSeCallBack::setParameterSeqSync`'s raw `mChildren[i]->mChildren[j]` drops the `mr` (18 instructions) but `ninja changes_all` reads it as 98.75 -> 98.32%, and `zigzagToCurPathNode`'s earlier `fVar2` declaration (insn 36 -> 10) reads 97.96 -> 97.62%: both are recorded in review.log, not kept.
+Lead: `TKoopaHead::receiveMessage` lands its frame with `&sender->getPosition()` (the MapObjBlock and bossgesso water-hit spelling), but Koopa.cpp never uses getPosition().
