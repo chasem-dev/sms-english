@@ -649,7 +649,8 @@ DEFINE_NERVE(TNerveAmiNokoWalkOnFence, TLiveActor)
 		}
 	}
 
-	JGeometry::TVec3<f32> toGoal = amiNoko->unkF4.getPoint();
+	const JGeometry::TVec3<f32>& goal = amiNoko->unkF4.getPoint();
+	JGeometry::TVec3<f32> toGoal = goal;
 	toGoal.sub(amiNoko->mPosition);
 	if (AmiNokoSqrt(toGoal.squared()) < 1.5f
 	    && amiNoko->checkCurAnmEnd(0)) {
