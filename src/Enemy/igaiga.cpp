@@ -1038,7 +1038,7 @@ void TGorogoroManager::perform(u32 cue, JDrama::TGraphics* graphics)
 			// which is this spelling (+2.5% over a bare inArea call).
 			if (unk70 ? (inArea(SMS_GetMarioPos()) ? TRUE : FALSE) : TRUE) {
 				for (int i = 0; i < getActiveObjNum(); ++i) {
-					TGorogoro* goro = (TGorogoro*)unk18[i];
+					TGorogoro* goro = (TGorogoro*)getObj(i);
 					if (!goro->checkLiveFlag(LIVE_FLAG_DEAD))
 						continue;
 
@@ -1051,30 +1051,34 @@ void TGorogoroManager::perform(u32 cue, JDrama::TGraphics* graphics)
 
 							goro->reset();
 							JGeometry::TVec3<f32> point;
-							goro->unk124->unk0->unk0[10].getPoint((Vec*)&point);
-							goro->mPosition        = point;
-							goro->unk124->mCurrIdx = 10;
-							goro->unk124->mPrevIdx = 9;
-							goro->unk124->unk0->unk0[11].getPoint((Vec*)&point);
-							JGeometry::TVec3<f32> dir(point.x - goro->mPosition.x,
-							                          0.0f,
-							                          point.z - goro->mPosition.z);
+							goro->getTracer()->getGraph()->getGraphNode(10).getPoint(
+							    (Vec*)&point);
+							goro->mPosition             = point;
+							goro->getTracer()->mCurrIdx = 10;
+							goro->getTracer()->mPrevIdx = 9;
+							goro->getTracer()->getGraph()->getGraphNode(11).getPoint(
+							    (Vec*)&point);
+							JGeometry::TVec3<f32> dir(
+							    point.x - goro->getPosition().x, 0.0f,
+							    point.z - goro->getPosition().z);
 							goro->mRotation.y = wrapAngle(MsGetRotFromZaxisY(dir));
 							TPathNode goal(point);
 							goro->unkF4  = goal;
 							goro->unk104 = goal;
 							goro->unk114.clear();
 
-							TGorogoro* second = (TGorogoro*)unk18[1];
+							TGorogoro* second = (TGorogoro*)getObj(1);
 							second->reset();
-							second->unk124->unk0->unk0[16].getPoint((Vec*)&point);
-							second->mPosition        = point;
-							second->unk124->mCurrIdx = 16;
-							second->unk124->mPrevIdx = 15;
-							second->unk124->unk0->unk0[17].getPoint((Vec*)&point);
+							second->getTracer()->getGraph()->getGraphNode(16).getPoint(
+							    (Vec*)&point);
+							second->mPosition             = point;
+							second->getTracer()->mCurrIdx = 16;
+							second->getTracer()->mPrevIdx = 15;
+							second->getTracer()->getGraph()->getGraphNode(17).getPoint(
+							    (Vec*)&point);
 							JGeometry::TVec3<f32> dir2(
-							    point.x - second->mPosition.x, 0.0f,
-							    point.z - second->mPosition.z);
+							    point.x - second->getPosition().x, 0.0f,
+							    point.z - second->getPosition().z);
 							second->mRotation.y = wrapAngle(MsGetRotFromZaxisY(dir2));
 							TPathNode goal2(point);
 							second->unkF4  = goal2;
