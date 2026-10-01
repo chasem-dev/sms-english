@@ -1946,8 +1946,8 @@ void TGCConsole2::drawWaterBack()
 	                  GX_FALSE, GX_PTIDENTITY);
 	GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR_NULL);
 
-	TWaterGun* waterGun = gpMarioOriginal->mWaterGun;
-	JUTRect bounds(((J2DPicture*)unk26C->getPane())->mBounds);
+	TWaterGun* waterGun = gpMarioOriginal->getFludd();
+	JUTRect bounds(((J2DPicture*)unk26C->getPane())->getBounds());
 	GXSetTevColor(GX_TEVREG0, JUtility::TColor(0x0000ff78));
 	GXSetTevColor(GX_TEVREG1, JUtility::TColor(0x0000ff00));
 
@@ -3964,7 +3964,7 @@ static inline void updateConsole(TGCConsole2* console)
 		++console->unk5C;
 	}
 
-	TWaterGun* waterGun = gpMarioOriginal->mWaterGun;
+	TWaterGun* waterGun = gpMarioOriginal->getFludd();
 	s32 currentWater    = waterGun->mCurrentWater;
 	s32 maxWater        = waterGun->getMaxWater();
 	int currentNozzle   = waterGun->mCurrentNozzle;
