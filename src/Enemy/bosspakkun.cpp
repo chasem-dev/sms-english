@@ -518,8 +518,9 @@ TBPHeadHit::TBPHeadHit(TBossPakkun* owner, const char* name)
 	offHitFlag(HIT_FLAG_NO_COLLISION);
 }
 
-// TODO: 98.4%. Frame 0xb8 against the ROM's 0x110: the ROM's 0x58 extra is
-// all dead low region (nothing below toMario at 0xdc is touched). Also left:
+// TODO: 98.4%. Frame 0xd8 against the ROM's 0x110 (SMS_GetMarioPos(),
+// getPosition() and getRotation() give 0x20 of the 0x58 dead low region;
+// nothing below toMario at 0xdc is touched). Also left:
 // the state byte and actor type swap r3/r4, and the angle difference lands
 // in f0 then f31 instead of f31 directly. Inert: s8 state, no state local,
 // the operand order of the two actor-type tests.
@@ -552,15 +553,15 @@ BOOL TBPHeadHit::receiveMessage(THitActor* sender, u32 message)
 
 	if (sender->getActorType() == 0x1000001
 	    && message == HIT_MESSAGE_SPRAYED_BY_WATER) {
-		JGeometry::TVec3<f32> toMario = *gpMarioPos;
-		toMario.x -= mPosition.x;
-		toMario.y -= mPosition.y;
-		toMario.z -= mPosition.z;
+		JGeometry::TVec3<f32> toMario = SMS_GetMarioPos();
+		toMario.x -= getPosition().x;
+		toMario.y -= getPosition().y;
+		toMario.z -= getPosition().z;
 
 		// The wrapped value is overwritten before it is ever read: the ROM
 		// computes the head-to-Mario yaw twice here.
 		f32 angle = MsWrap(MsGetRotFromZaxisY(toMario), 0.0f, 360.0f);
-		angle     = MsAngleDiff(MsGetRotFromZaxisY(toMario), mOwner->mRotation.y);
+		angle     = MsAngleDiff(MsGetRotFromZaxisY(toMario), mOwner->getRotation().y);
 
 		if (fabsf(angle) < mOwner->getSaveParam2()->mSLDamageAngle.get() / 2.0f) {
 			mOwner->gotWaterDamage();
