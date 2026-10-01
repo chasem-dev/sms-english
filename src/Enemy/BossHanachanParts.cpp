@@ -2,7 +2,6 @@
 #include <Camera/cameralib.hpp>
 #include <M3DUtil/MActor.hpp>
 #include <M3DUtil/MActorAnm.hpp>
-#include <Map/MapCollisionEntry.hpp>
 #include <MarioUtil/MapUtil.hpp>
 #include <MarioUtil/DrawUtil.hpp>
 #include <MarioUtil/ShadowUtil.hpp>
@@ -21,6 +20,9 @@
 #include <MSound/MSSetSound.hpp>
 #include <MSound/MSoundBGM.hpp>
 #include <M3DUtil/InfectiousStrings.hpp>
+// After the mtx-calc names: retail's .rodata has setUpTrans's zero and one
+// literals between them and the collision file names (c-k29).
+#include <Map/MapCollisionEntry.hpp>
 
 const char* cMapCollisionJointName = "center";
 const char* cBodyMapCollisionFileName = "/scene/bosshanachan/hanabody_col.col";

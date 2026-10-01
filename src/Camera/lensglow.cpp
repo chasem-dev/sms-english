@@ -1,4 +1,7 @@
 #include <Camera/LensGlow.hpp>
+// Rogue include: retail's .rodata opens with this header's zero object and
+// no-memory message, ahead of SunModel.hpp's volume names.
+#include <System/DummyStrings.hpp>
 #include <JSystem/J3D/J3DGraphAnimator/J3DMaterialAnm.hpp>
 #include <JSystem/J3D/J3DGraphAnimator/J3DModel.hpp>
 #include <JSystem/J3D/J3DGraphBase/J3DMaterial.hpp>
@@ -15,9 +18,6 @@
 #include <Camera/SunModel.hpp>
 #include <System/Resolution.hpp>
 #include <stdio.h>
-
-static const char* dummyMactorStringValue1 = "\0\0\0\0\0\0\0\0\0\0\0";
-static const char* SMS_NO_MEMORY_MESSAGE   = "メモリが足りません\n";
 
 TLensGlow::TLensGlow(bool param_1, const char* name)
     : JDrama::TViewObj(name)

@@ -4,8 +4,6 @@
 #include <Enemy/Conductor.hpp>
 #include <Enemy/Graph.hpp>
 #include <M3DUtil/MActor.hpp>
-#include <Map/MapCollisionEntry.hpp>
-#include <Map/MapCollisionManager.hpp>
 #include <MarioUtil/MathUtil.hpp>
 #include <MSound/MSound.hpp>
 #include <MSound/SoundEffects.hpp>
@@ -24,6 +22,10 @@
 #include <MSound/MSoundBGM.hpp>
 
 #include <Player/MarioDirtyStrings.hpp>
+// After the dirty-texture pair: retail's .rodata has setUpTrans's zero and
+// one literals between it and this unit's own strings (c-k29).
+#include <Map/MapCollisionEntry.hpp>
+#include <Map/MapCollisionManager.hpp>
 
 BOOL TFence::receiveMessage(THitActor* sender, u32 message)
 {

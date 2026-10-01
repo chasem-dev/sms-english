@@ -2,11 +2,6 @@
 #include <M3DUtil/MActor.hpp>
 #include <MarioUtil/MathUtil.hpp>
 #include <Map/Map.hpp>
-// Nothing here names a collision type, but TMapCollisionBase::setUpTrans emits
-// the {0,0,0} and {1,1,1} vector literals that sit between the
-// InfectiousStrings block and this unit's own strings in .rodata (map @2852 and
-// @2854). Without it every string offset in the unit is 0x18 too low.
-#include <Map/MapCollisionManager.hpp>
 #include <MoveBG/MapObjCorona.hpp>
 #include <Player/MarioAccess.hpp>
 #include <Strategic/LiveActor.hpp>
@@ -19,6 +14,12 @@
 
 // rogue includes needed for matching sinit & bss
 #include <M3DUtil/InfectiousStrings.hpp>
+// Nothing here names a collision type, but TMapCollisionBase::setUpTrans emits
+// the {0,0,0} and {1,1,1} vector literals that sit between the
+// InfectiousStrings block and this unit's own strings in .rodata (map @2852 and
+// @2854), so it comes after InfectiousStrings.hpp (c-k29). Without it every
+// string offset in the unit is 0x18 too low.
+#include <Map/MapCollisionManager.hpp>
 #include <MSound/MSSetSound.hpp>
 #include <MSound/MSoundBGM.hpp>
 
