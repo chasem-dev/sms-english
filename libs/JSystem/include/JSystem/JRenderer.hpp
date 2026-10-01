@@ -249,11 +249,7 @@ void JRNISetFogRangeAdj(GXBool enable, u16 center, GXFogAdjTable* table);
  * @brief Sets whether the depth test happens before the texture lookup.
  * @see GXSetZCompLoc
  */
-inline void J3DGDSetZCompLoc(u32 compLocEnable)
-{
-	J3DGDWriteBPCmdCheck(0xFE000040);
-	J3DGDWriteBPCmdCheck(compLocEnable << 6 | 0x43 << 24);
-}
+void J3DGDSetZCompLoc(u32 compLocEnable);
 
 /**
  * @brief Sets the constant colour selection and the swap table of two TEV
