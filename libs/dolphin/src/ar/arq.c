@@ -15,7 +15,7 @@ static ARQCallback __ARQCallbackLo;
 static u32 __ARQChunkSize;
 static int __ARQ_init_flag;
 
-inline void __ARQPopTaskQueueHi(void)
+static void __ARQPopTaskQueueHi(void)
 {
 	if (__ARQRequestQueueHi) {
 		if (__ARQRequestQueueHi->type == 0) {
@@ -98,6 +98,8 @@ void ARQInit(void)
 	}
 }
 
+void ARQReset(void) { __ARQ_init_flag = 0; }
+
 void ARQPostRequest(struct ARQRequest* request, u32 owner, u32 type,
                     u32 priority, u32 source, u32 dest, u32 length,
                     ARQCallback callback)
@@ -148,3 +150,14 @@ void ARQPostRequest(struct ARQRequest* request, u32 owner, u32 type,
 	}
 	OSRestoreInterrupts(level);
 }
+
+void ARQSetChunkSize(u32 size)
+{
+	if (size & 0x1F) {
+		__ARQChunkSize = (size & ~0x1F) + 0x20;
+	} else {
+		__ARQChunkSize = size;
+	}
+}
+
+u32 ARQGetChunkSize(void) { return __ARQChunkSize; }
