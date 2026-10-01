@@ -432,22 +432,14 @@ void TFenceWater::initMapObj()
 	group->getChildren().push_back(mMessenger);
 }
 
-// TODO: 99.6%, frame 0x30 *long* (0x128 vs 0xf8), instruction-exact: the two
-// matrices sit 0x30 high because our pool below them is 0x84 against
-// retail's 0x54. Deleting either setEular (TRotation3.hpp, shared) drops
-// 0x38/0x40, so the excess is setEular's expansion pool. Inert (cc37): raw
-// `.mMtx` arguments to MTXConcat/MTXCopy, dropping the MtxPtr local, both
-// matrices as TPosition3, declaring both at the top in either order.
-// c-k30: the 12 extra words are setEular's own f3..f8 locals, homed in both
-// expansions because each holds the forced-load result of the MSL `sin`/`cos`
-// wrapper. With JGRotation3.hpp's setEular(f32) calling sinf/cosf directly
-// this function is byte-exact (0xf8), but MapObjLib's out-of-line
-// TRotation3<TMatrix33>::setEular copy then loses the same six words (0x78
-// against retail's 0x90), so retail's header body does use the wrappers and
-// something unmodelled keeps them unhomed here. Inert or worse: named angles
-// at either call, operand order, a depth-2 wrapper (not inlined), a non-inline
-// template member (not inlined), and `float r = sinf(x); return r;` wrappers
-// (both contexts grow).
+// Invented name: one inline level that turns the model's degrees into radians.
+// Its argument binding and forced-load result are three dead words per
+// rotation, which retail's frame has and the bare product does not (research
+// c-r37: with JGRotation3.hpp's setEular storing the matrix directly, the
+// spelled-out product leaves the frame 0x18 short, a named radian local is
+// inert, and the getRotation() accessor gives one word per site).
+static inline f32 FenceDegToRad(f32 degrees) { return 0.017453294f * degrees; }
+
 void TFenceWaterH::control()
 {
 	TMapObjBase::control();
@@ -458,12 +450,12 @@ void TFenceWaterH::control()
 	JGeometry::TPosition3<JGeometry::TMatrix34<JGeometry::SMatrix34C<f32> > >
 	    mtx;
 	mtx.identity();
-	mtx.setEular(0.0f, 0.017453294f * mRotation.y, 0.0f);
+	mtx.setEular(0.0f, FenceDegToRad(mRotation.y), 0.0f);
 
 	JGeometry::TRotation3<JGeometry::TMatrix34<JGeometry::SMatrix34C<f32> > >
 	    spin;
 	spin.identity();
-	spin.setEular(0.0f, 0.0f, 0.017453294f * mRotation.z);
+	spin.setEular(0.0f, 0.0f, FenceDegToRad(mRotation.z));
 
 	MTXConcat(mtx, spin, mtx);
 	mtx.setTrans(mPosition.x, mPosition.y, mPosition.z);

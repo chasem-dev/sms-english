@@ -303,6 +303,7 @@
     "MoveBG/MapObjBase.cpp",
     "MoveBG/MapObjBlock.cpp",
     "MoveBG/MapObjEx.cpp",
+    "MoveBG/MapObjFence.cpp",
     "MoveBG/MapObjFloat.cpp",
     "MoveBG/MapObjGrass.cpp",
     "MoveBG/MapObjHide.cpp",
