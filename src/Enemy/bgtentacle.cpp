@@ -267,13 +267,17 @@ BOOL TBGTakeHit::moveRequest(const JGeometry::TVec3<f32>& where_to)
 	gpMap->isTouchedOneWallAndMoveXZ(&local_EC.x, local_EC.y, &local_EC.z,
 	                                 150.0f);
 
-	// TODO: 99.1%, frame exact at 0x110 (getOwner + save-params binder).
-	// Residue: delta 4 high, fromPolar/local_44 8 high, stretch/mag FPR
-	// swap, and an extra lwz of mOwner before incDamage (r30 not kept).
-	// A block-scoped owner for that load cost -8 and kept the extra insn.
+	// TODO: frame exact at 0x110 (getOwner + save-params binder). The
+	// named bossPos reference put delta, local_44 and the fromPolar temp at
+	// retail's slots (c-t6, 36 -> 20 markers); retail has a word between
+	// local_EC and delta where ours is above local_EC (local_EC 4 low). Also
+	// a stretch/mag FPR swap and an extra lwz of mOwner before incDamage
+	// (r30 not kept). A block-scoped owner for that load cost -8 and kept
+	// the extra insn; `ten` declared above delta changes the code.
 	JGeometry::TVec3<f32> delta = local_EC;
 	TBGTentacle* ten            = mOwner;
-	delta -= ten->getOwner()->getPosition();
+	const JGeometry::TVec3<f32>& bossPos = ten->getOwner()->getPosition();
+	delta -= bossPos;
 	f32 totalLenLimit = ten->getParams()->mTotalLenLimit.get();
 
 	if (delta.length() > totalLenLimit) {

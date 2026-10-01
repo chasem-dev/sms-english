@@ -353,9 +353,11 @@ BOOL TNerveBubbleLive::execute(TSpineBase<TLiveActor>* spine) const
 	}
 
 	// TODO: frame 0xf8 exact; the getVelocity() copy sits in the named block
-	// (0xb8) where retail has it in the low region (0x8c), pushing the zero
-	// velocity temp and the setGoalPathMario node down. Inert: a const
-	// reference, `damped = ...`, a set() over a TVec3 temporary.
+	// (0xb4) where retail has it in the low region (0x8c), pushing the zero
+	// velocity temp down (0xa8, retail 0xb8). Naming the getVelocity()
+	// reference first put the setGoalPathMario node at retail's 0x98 (c-t6,
+	// 27 -> 12 markers). Inert: `damped = ...`, a set() over a TVec3
+	// temporary, a named zero.
 	// Closest shape: `damped.set(TVec3<f32>(getVelocity()))` plus a named
 	// `zero` for the reset reproduces the ROM's named block order (damped
 	// then zero, copy unnamed) but is 8 short (0xf0) and still 0xc low.
@@ -368,7 +370,8 @@ BOOL TNerveBubbleLive::execute(TSpineBase<TLiveActor>* spine) const
 	} else {
 		if (spine->getTime() > 40 && bubble->mHasInitialVelocity) {
 			JGeometry::TVec3<f32> damped;
-			JGeometry::TVec3<f32> velocity = bubble->getVelocity();
+			const JGeometry::TVec3<f32>& vel = bubble->getVelocity();
+			JGeometry::TVec3<f32> velocity = vel;
 			damped.set(velocity.x, velocity.y, velocity.z);
 			damped.scale(0.98f);
 			bubble->setVelocity(damped);

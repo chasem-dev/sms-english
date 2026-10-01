@@ -639,7 +639,8 @@ void TSpineEnemy::doShortCut()
 	if (unk114.size() <= 0)
 		return;
 
-	if ((unkF4.getPoint() - mPosition).length() < getBodyRadius()) {
+	const JGeometry::TVec3<f32>& goal = unkF4.getPoint();
+	if ((goal - mPosition).length() < getBodyRadius()) {
 		if (!unk114.empty())
 			unkF4 = unk114.pop();
 		return;
@@ -652,11 +653,13 @@ void TSpineEnemy::doShortCut()
 	// the node (a null owner and a zero point) before the four-word copy.
 	//
 	// TODO: the frame is exact now (the TU-local raw getPoint below is -0x10),
-	// but every temporary sits 0x10 above retail's slot, so retail reserves
-	// 0x10 more below them than we do. Retail's slots (frame 0xb0): node
-	// 0x94, local_28 0x88, first diff 0x70, first pop 0x60, second pop 0x48,
-	// sub temp 0x38 -- the second pop is allocated before the sub temp, ours
-	// the other way round. switchNextGoalPath() at either or both pop sites
+	// and with the goal reference named above node and local_28 sit at
+	// retail's slots (c-t6), but every temporary sits 0xc above retail's
+	// slot, so retail reserves 0xc more below them than we do. Retail's
+	// slots (frame 0xb0): node 0x94, local_28 0x88, first diff 0x70, first
+	// pop 0x60, second pop 0x48, sub temp 0x38 -- the second pop is
+	// allocated before the sub temp, ours the other way round. A named
+	// node.getPointRaw() reference moves local_28 down a word instead. switchNextGoalPath() at either or both pop sites
 	// is +8 frame each, and node.getPoint() at the second site +0x10.
 	TPathNode node;
 	node = unk114.top();
