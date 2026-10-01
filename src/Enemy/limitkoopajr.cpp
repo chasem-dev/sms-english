@@ -13,6 +13,8 @@
 #include <Strategic/ObjManager.hpp>
 #include <Strategic/ObjModel.hpp>
 #include <Strategic/Spine.hpp>
+#include <System/MarDirector.hpp>
+#include <GC2D/GCConsole2.hpp>
 #include <math.h>
 
 // rogue includes needed for matching sinit & bss
@@ -170,12 +172,11 @@ void TLimitKoopaJr::calcRootMatrix()
 	getModel()->setBaseScale(mScaling);
 }
 
-// TODO: incorrect size. Map records 44 bytes and this is 60; the body is a
-// guess -- mKoopa is the only thing a "start message" would forward to, and
-// the ROM has no call site left to read the argument's meaning from.
+// UNUSED, 0x2c in the map: TTinKoopa::startTinKoopaMessage is the same size
+// and is inlined at its exact balloon sites.
 void TLimitKoopaJr::startKoopaJrMessage(u32 message)
 {
-	mKoopa->receiveMessage(this, message);
+	SMSGetMarDirector()->getConsole()->startAppearBalloon(message, true);
 }
 
 void TLimitKoopaJr::emitKoopaJrEffects() { }
