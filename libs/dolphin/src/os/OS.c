@@ -60,15 +60,17 @@ static volatile u32* BI2DebugFlag;
 static u32* BI2DebugFlagHolder;
 static f64 ZeroPS;
 static f64 ZeroF;
-static BOOL __OSIsGcam;
+// Defined, not tentative: MWCC emits tentative globals after the statics,
+// where the map keeps these four in declaration order among them.
+BOOL __OSIsGcam = 0;
 static BOOL AreWeInitialized;
 
 typedef void (*OSExceptionHandler)(u8, struct OSContext*);
 static OSExceptionHandler* OSExceptionTable;
 
-static void* __OSSavedRegionEnd;
-static void* __OSSavedRegionStart;
-static BOOL __OSInIPL;
+void* __OSSavedRegionEnd = 0;
+void* __OSSavedRegionStart = 0;
+BOOL __OSInIPL = 0;
 OSTime __OSStartTime;
 
 static DVDDriveInfo DriveInfo __attribute__((aligned(0x20)));
