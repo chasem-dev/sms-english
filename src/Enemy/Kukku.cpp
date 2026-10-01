@@ -550,8 +550,9 @@ static inline JGeometry::TVec3<f32> KukkuVecFromRotY(f32 length, f32 rot_y)
 // The rotates are rotateQ(), the one-level member-read body JGQuat4.hpp's
 // TODO proposes for rotate(v, rDest): frame 0x1f0 -> 0x168 (retail 0x158),
 // 86.4 -> 86.5. Spell them rotate() again once that header change lands.
-// TODO: 96.6%. The frame is 0x10 too big and the coin loop keeps
-// &mPosition in r28 (retail r27 = 0); see the rotateQ note above.
+// Both translations read mPosition raw: getPosition() kept &mPosition in
+// r28 across the coin loop, and the copy-constructed velocity was 0x10 of
+// frame.
 void TKukku::dropCoins()
 {
 	if (mDroppedCoins > 10)
@@ -561,7 +562,7 @@ void TKukku::dropCoins()
 	if (mDroppedCoins == 10 && mOneUp) {
 		mDroppedCoins++;
 		mOneUp->appear();
-		mOneUp->JSGSetTranslation(getPosition());
+		mOneUp->JSGSetTranslation(mPosition);
 		// Retail reloads mOneUp before each of the three calls above (they
 		// clobber it) but holds it across the three velocity stores and the
 		// flag clear, which needs a pointer local declared exactly here: the
@@ -588,10 +589,8 @@ void TKukku::dropCoins()
 	JGeometry::TQuat4<f32> pitch;
 	pitch.setEulerX(3.1415927f * getSaveParams()->getDropAngleX());
 
-	JGeometry::TVec3<f32> forward
+	JGeometry::TVec3<f32> velocity
 	    = KukkuVecFromRotY(getSaveParams()->getDropSpeed(), mRotation.y);
-
-	JGeometry::TVec3<f32> velocity(forward);
 	pitch.rotateQ(velocity, velocity);
 	spin.rotateQ(velocity, velocity);
 
@@ -601,7 +600,7 @@ void TKukku::dropCoins()
 			break;
 
 		coin->appear();
-		coin->JSGSetTranslation(getPosition());
+		coin->JSGSetTranslation(mPosition);
 		coin->mVelocity.set(velocity);
 		coin->offLiveFlag(LIVE_FLAG_UNK10);
 
