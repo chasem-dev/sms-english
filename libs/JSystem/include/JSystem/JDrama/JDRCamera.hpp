@@ -70,9 +70,13 @@ public:
 
 class TLookAtCamera : public TCamera {
 public:
+	// Parameter order position, up, target (the JSG accessor order and the
+	// member order): TSelectDir::rsetup, the only caller, creates its three
+	// TVec3 temporaries in that order in retail (slots high to low) and gets
+	// retail's f2/f3/f4 constant registers only this way (c-k31).
 	TLookAtCamera(const JGeometry::TVec3<f32>& position,
-	              const JGeometry::TVec3<f32>& target,
-	              const JGeometry::TVec3<f32>& up, f32 fovy, f32 aspect,
+	              const JGeometry::TVec3<f32>& up,
+	              const JGeometry::TVec3<f32>& target, f32 fovy, f32 aspect,
 	              const char* name, f32 near = 50.0f, f32 far = 10000.0f)
 	    : TCamera(near, far, name)
 	{

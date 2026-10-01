@@ -138,6 +138,20 @@ int TSelectDir::rsetup()
 	// untouched (their low blocks still 4 short each, their upper blocks 4
 	// long each); descent over binder/pointer/pointer-then-reference/named-
 	// group forks at all twenty sites finds nothing better. Not applied.
+	// c-k31 (dbg slot map): retail's three depth-1 words between the
+	// seventh and eighth push are the getGamePad()/getSelectMenu() reads of
+	// the gamepad stores, and the TLookAtCamera vectors are created in
+	// position/up/target order (see JDRCamera.hpp): gap 34 -> 14, webs 2 -> 0,
+	// frame 0x638. The rest is the `stageDisp->getUnk14()->getChildren()`
+	// site: retail binds the list's getChildren() one level below the
+	// TDStageDisp receiver (one word moves from depth 2 to depth 3 at all
+	// five screen pushes). A TDStageDisp accessor returning
+	// `((TViewObjPtrListT<TViewObj>*)unk14)->getChildren()` lands it (gap 4,
+	// 263 markers) and moves the same boundary in MenuDir, MovieDirector and
+	// GCLogoDir, but GCLogoDir::setup then drops 29 -> 62 markers; parked
+	// for the owner (docs/catalog/frame-gaps.md, closure c-k31). Still open
+	// after it: one word above group3D, one depth-2 word between the
+	// seventh and eighth push, two depth-2 words after the last push.
 	void* arcData = SMSLoadArchive("/data/select.arc", 0, 0, 0);
 
 	JKRMemArchive* archive = new JKRMemArchive;
@@ -174,8 +188,8 @@ int TSelectDir::rsetup()
 	group3D->getChildren().push_back(unk28);
 	groupGrad->getChildren().push_back(unk24);
 
-	unk18->mFlags   = 1;
-	unk20->mGamePad = unk18;
+	getGamePad()->mFlags      = 1;
+	getSelectMenu()->mGamePad = getGamePad();
 
 	JPAResourceManager* resourceManager2D = new JPAResourceManager(9, 0x200, 0);
 	JPAResourceManager* resourceManager3D = new JPAResourceManager(9, 0x200, 0);
@@ -227,8 +241,8 @@ int TSelectDir::rsetup()
 
 	JDrama::TLookAtCamera* camera3D = new JDrama::TLookAtCamera(
 	    JGeometry::TVec3<f32>(300.0f, 240.0f, 1300.0f),
-	    JGeometry::TVec3<f32>(300.0f, 240.0f, 0.0f),
-	    JGeometry::TVec3<f32>(0.0f, 1.0f, 0.0f), 30.0f, 1.3333334f,
+	    JGeometry::TVec3<f32>(0.0f, 1.0f, 0.0f),
+	    JGeometry::TVec3<f32>(300.0f, 240.0f, 0.0f), 30.0f, 1.3333334f,
 	    "<TLookAtCamera>");
 	group3D->getChildren().push_back(camera3D);
 
