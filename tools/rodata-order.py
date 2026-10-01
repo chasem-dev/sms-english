@@ -131,7 +131,10 @@ def read_map(path):
             continue
         if in_layout:
             m = row.match(line)
-            if m:
+            # Compiler-numbered names (@NNNN, name$NNNN) are not comparable
+            # with ours: an id that happens to equal a retail one would keep
+            # an object of ours alive by accident.
+            if m and not re.search(r"(^@|\$)\d+$", m.group(1)):
                 placed[m.group(2)].add(m.group(1))
     return placed
 
