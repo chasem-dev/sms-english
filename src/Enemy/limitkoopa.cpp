@@ -691,8 +691,14 @@ void TLimitKoopa::setUpHitActors()
 	mHead->set(headPos, headRadius, 0.0f);
 }
 
-// TODO: UNUSED (0x70), body not reconstructed.
-void TLimitKoopa::setAnimationIndex(int) { }
+// UNUSED (0x70). The same body as TKoopaJr's, TKoopaJrSubmarine's and
+// TLimitKoopaJr's setAnimationIndex, which are 0x70 in the map too.
+void TLimitKoopa::setAnimationIndex(int index)
+{
+	getMActor()->setBckFromIndex(index);
+	const char** table = getBasNameTable();
+	setAnmSound(table == nullptr ? nullptr : table[index]);
+}
 
 // UNUSED (0x78). Every nerve in this unit selects its animation through this,
 // which is why the pattern below repeats in each execute().
@@ -746,8 +752,19 @@ BOOL TLimitKoopa::isFlaming() const
 // model, so this one does too.
 f32 TLimitKoopa::getNeckFocus() const { return 0.0f; }
 
-// TODO: UNUSED (0x2a0), body not reconstructed.
-void TLimitKoopa::getDown() { }
+// UNUSED (0x2a0): TKoopa::getDown without its Fall and Provoke tests, the two
+// getShowered drops from TKoopa's too.
+void TLimitKoopa::getDown()
+{
+	if (&TNerveLimitKoopaTumble::theNerve() == mSpine->getCurrentNerve())
+		return;
+
+	if (&TNerveLimitKoopaStagger::theNerve() == mSpine->getCurrentNerve())
+		mSpine->setNext(&TNerveLimitKoopaGetDown::theNerve());
+	if (&TNerveLimitKoopaGetShowered::theNerve() == mSpine->getCurrentNerve())
+		mSpine->setNext(&TNerveLimitKoopaGetDown::theNerve());
+	mSpine->pushNerve(&TNerveLimitKoopaGetDown::theNerve());
+}
 
 // The push is one level below getShowered(): retail calls pushNerve out of
 // line while the setNext beside it is expanded.
@@ -776,8 +793,23 @@ void TLimitKoopa::getShowered()
 	LimitKoopaPushShowered(this);
 }
 
-// TODO: UNUSED (0x240), body not reconstructed.
-void TLimitKoopa::stagger(bool) { }
+// UNUSED (0x240): TKoopa::stagger without the Fall and Provoke tests, as
+// getShowered and getDown above are TKoopa's without them.
+// TODO: the Flame test's place is unproven. Any position after the Tumble test
+// compiles to the map's 0x240; first, as in TKoopa, it is 0x234.
+void TLimitKoopa::stagger(bool force)
+{
+	if (&TNerveLimitKoopaTumble::theNerve() == mSpine->getCurrentNerve())
+		return;
+	if (!force
+	    && mSpine->getCurrentNerve() == &TNerveLimitKoopaFlame::theNerve())
+		return;
+	if (&TNerveLimitKoopaGetDown::theNerve() == mSpine->getCurrentNerve())
+		return;
+	if (&TNerveLimitKoopaGetShowered::theNerve() == mSpine->getCurrentNerve())
+		return;
+	mSpine->pushNerve(&TNerveLimitKoopaStagger::theNerve());
+}
 
 // UNUSED (0x8).
 BOOL TLimitKoopa::isTumbling() const { return FALSE; }
