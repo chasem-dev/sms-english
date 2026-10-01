@@ -81,9 +81,10 @@ f32 MSMarioPosVolume::getDistFromMario(const Vec& pos)
 	// is shared with every linked unit, so it is not touched here.
 	if (MSGMSound->cameraLooksAtMario()) {
 		const Vec* mario = MSGMSound->unkAC[0].mPosition;
-		return std::sqrtf(std::powf(pos.x - mario->x, 2.0f)
+		f32 dist = std::sqrtf(std::powf(pos.x - mario->x, 2.0f)
 		                  + std::powf(pos.y - mario->y, 2.0f)
 		                  + std::powf(pos.z - mario->z, 2.0f));
+		return dist;
 	}
 
 	return 0.0f;
@@ -169,11 +170,12 @@ void MAnmSoundNPC::startAnimSound(void* interface, u32 sound_id,
 			if (*out_handle != nullptr
 			    && !(ptr->mEntries[mDataCounter].unk10 & 0x8000)) {
 
-				// TODO: 99.5%, frame and every stack slot exact. Left: a
-				// colouring rotation over the distance -- retail keeps
-				// the volume in f31 and the two first powf results in
-				// f29/f30, the translation pointer in r27 and Mario's in
-				// r29; ours f29, f30/f31, r29, r27. Inert: declaring
+				// TODO: 99.7%, frame and every stack slot exact. Left:
+				// the translation pointer is r29 and Mario's r27, retail
+				// r27 and r29. The FPR rotation (volume f31, powf
+				// results f29/f30) closed with the named `dist` result
+				// inside getDistFromMario (c-k25): its extra web is the
+				// 32nd FPR neighbour c-k2 asked for. Older notes: Inert: declaring
 				// either float at the top of the function or block, a
 				// ternary or if/else, `const`, a named sound pointer, a
 				// `const Vec&` Mario, a named sum, `x + (y + z)`, and a
