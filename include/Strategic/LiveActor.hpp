@@ -91,10 +91,11 @@ public:
 	void setAnmSound(const char* path);
 	void initAnmSound();
 	int getJointTransByIndex(int, JGeometry::TVec3<f32>*) const;
-	void getJointTransByName(const char*, JGeometry::TVec3<f32>*) const;
+	int getJointTransByName(const char*, JGeometry::TVec3<f32>*) const;
 	JGeometry::TVec3<f32> calcVelocityToJumpToY(const JGeometry::TVec3<f32>&,
 	                                            f32 speed, f32 gravity) const;
-	void calcVelocityToJumpToXZ(const JGeometry::TVec3<f32>&, f32, f32) const;
+	JGeometry::TVec3<f32> calcVelocityToJumpToXZ(const JGeometry::TVec3<f32>&,
+	                                             f32 speed, f32 gravity) const;
 	void perform(u32 cue, JDrama::TGraphics* graphics);
 	void load(JSUMemoryInputStream&);
 	void initLodAnm(const TLodAnmIndex*, int, f32);

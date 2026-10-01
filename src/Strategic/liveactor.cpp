@@ -446,6 +446,15 @@ void TLiveActor::performOnlyDraw(u32 param_1, JDrama::TGraphics* param_2)
 }
 
 JGeometry::TVec3<f32>
+TLiveActor::calcVelocityToJumpToXZ(const JGeometry::TVec3<f32>& param_1,
+                                   f32 speed, f32 gravity) const
+{
+	JGeometry::TVec3<f32> vec;
+	SMSCalcJumpVelocityXZ(param_1, mPosition, speed, gravity, &vec);
+	return vec;
+}
+
+JGeometry::TVec3<f32>
 TLiveActor::calcVelocityToJumpToY(const JGeometry::TVec3<f32>& param_1,
                                   f32 speed, f32 gravity) const
 {
@@ -459,6 +468,21 @@ f32 TLiveActor::getGravityY() const { return mGravity; }
 BOOL TLiveActor::hasMapCollision() const
 {
 	return mMapCollisionManager ? 1 : 0;
+}
+
+// UNUSED. getJointTransByIndex on the model's joint-name lookup, behind the
+// same null-MActor fallback and -1 result; this reading is 0xec, the map size.
+int TLiveActor::getJointTransByName(const char* name,
+                                     JGeometry::TVec3<f32>* out) const
+{
+	if (mMActor == nullptr) {
+		*out = mPosition;
+		return -1;
+	}
+
+	return getJointTransByIndex(
+	    mMActor->getModel()->getModelData()->getJointName()->getIndex(name),
+	    out);
 }
 
 int TLiveActor::getJointTransByIndex(int param_1,
