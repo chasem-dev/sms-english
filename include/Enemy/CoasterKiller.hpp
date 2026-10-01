@@ -10,15 +10,7 @@
 
 class TCoasterEnemyParams : public TWalkerEnemyParams {
 public:
-	TCoasterEnemyParams(const char* path)
-	    : TWalkerEnemyParams(path)
-	    , PARAM_INIT(mSLCoasterSpeedInOrder, 20.0f)
-	    , PARAM_INIT(mSLCoasterSpeedReverse, 20.0f)
-	{
-		TParams::load(mPrmPath);
-		mSLCoasterSpeedInOrder.set(20.0f);
-		mSLCoasterSpeedReverse.set(16.0f);
-	}
+	TCoasterEnemyParams(const char* path);
 
 	/* 0x338 */ TParamRT<f32> mSLCoasterSpeedInOrder;
 	/* 0x34C */ TParamRT<f32> mSLCoasterSpeedReverse;
@@ -26,12 +18,7 @@ public:
 
 class TCoasterKillerSaveLoadParams : public TCoasterEnemyParams {
 public:
-	TCoasterKillerSaveLoadParams(const char* path)
-	    : TCoasterEnemyParams(path)
-	    , PARAM_INIT(mSLBombRange, 300.0f)
-	{
-		TParams::load(mPrmPath);
-	}
+	TCoasterKillerSaveLoadParams(const char* path);
 
 	/* 0x360 */ TParamRT<f32> mSLBombRange;
 };
