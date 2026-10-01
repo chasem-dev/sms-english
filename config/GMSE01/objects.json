@@ -427,6 +427,7 @@
     "System/TimeRec.cpp",
     "System/ZBufferCatch.cpp",
     "System/marerr.cpp",
+    "THPPlayer/THPAudioDecode.c",
     "THPPlayer/THPDraw.c",
     "THPPlayer/THPPlayer.c",
     "THPPlayer/THPRead.c",
