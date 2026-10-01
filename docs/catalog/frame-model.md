@@ -554,3 +554,11 @@ Their named locals are kept, and so is each initialiser's inline expansion with 
 - `const TVec3& marioPos = *gpMarioPos;` is homed as well, but the simple argument also removes sub()'s binding, so every object below it moves 4 down; the two spellings are a 4-byte knob on the low region under a fixed named block.
 - A named constant passed straight to an out-of-line call (`f32 height = 50.0f; calcVelocityToJumpToY(v, height, g)`) changes the code: the literal's load is scheduled earlier (TNerveBGDie, `<1 >4`), so the constant rule is for constants that feed stores or inline arguments only.
 - The frame moves only when the locals cross the 8-byte boundary of the first backend temporary above them: TPakkunSeed::rebirth's int-to-float temporary sits at 0x60 above locals ending at 0x5c, so one more homed word (0x60) leaves the frame at 0x70 and only a second one reaches retail's 0x78.
+
+## Setters inside inline bodies (research c-r37, 2026-10-01)
+
+- An inlined callee's own locals are not simple arguments for the next inline level: a setter called inside an inline body with those locals (or arithmetic of them) binds every argument, and each binding dies into its store.
+- Scratch probe, three-argument store setter `set3(p, a, b, c)`: called from an inline body with `s`, `c`, `s` or `s * c, s + c, s - c` it costs three dead words per expansion; the same call written at depth 0 with named locals costs none, and so do the inline body's own direct stores, constants and the caller's parameters passed through.
+- The out-of-line copy of the same body does not show it, because there the locals are real named locals and the arguments are simple.
+- So a header body that calls `setXDir(x, y, z)`-style setters is three words per call heavier wherever it is inlined than one that writes the stores out; check the inlined copies, not only the weak copy, before choosing (TRotation3::setEular, c-r37).
+- The MSL `sin(float)`/`cos(float)` wrapper locals (homed because they hold the wrapper's forced-load result, c-k30) are homed in every context and are not a lever by themselves.

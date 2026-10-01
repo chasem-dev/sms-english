@@ -432,22 +432,17 @@ void TFenceWater::initMapObj()
 	group->getChildren().push_back(mMessenger);
 }
 
-// TODO: 99.6%, frame 0x30 *long* (0x128 vs 0xf8), instruction-exact: the two
-// matrices sit 0x30 high because our pool below them is 0x84 against
-// retail's 0x54. Deleting either setEular (TRotation3.hpp, shared) drops
-// 0x38/0x40, so the excess is setEular's expansion pool. Inert (cc37): raw
-// `.mMtx` arguments to MTXConcat/MTXCopy, dropping the MtxPtr local, both
-// matrices as TPosition3, declaring both at the top in either order.
-// c-k30: the 12 extra words are setEular's own f3..f8 locals, homed in both
-// expansions because each holds the forced-load result of the MSL `sin`/`cos`
-// wrapper. With JGRotation3.hpp's setEular(f32) calling sinf/cosf directly
-// this function is byte-exact (0xf8), but MapObjLib's out-of-line
-// TRotation3<TMatrix33>::setEular copy then loses the same six words (0x78
-// against retail's 0x90), so retail's header body does use the wrappers and
-// something unmodelled keeps them unhomed here. Inert or worse: named angles
-// at either call, operand order, a depth-2 wrapper (not inlined), a non-inline
-// template member (not inlined), and `float r = sinf(x); return r;` wrappers
-// (both contexts grow).
+// TODO: frame 0x18 *short* (0xe0 vs 0xf8), instruction-exact, since
+// JGRotation3.hpp's setEular(f32) writes its matrix stores out (c-r37; the
+// old setter calls cost nine dead binding words per inlined expansion). The
+// missing six words are three per rotation at the two setEular call sites:
+// a one-line TU-local inline returning `0.017453294f * degrees`, applied to
+// mRotation.y and mRotation.z, supplies them (argument binding plus forced
+// load) and makes this exact, but its name is invented and it exists only for
+// those words, so it is parked on branch parked/c-r37-fence-helper for the
+// owner. Inert or wrong: a named radian local, `getRotation().y` (1 word per
+// site), the converter over getRotation() (4 per site), setTrans(mPosition),
+// MTXCopy without the MtxPtr local, a named model pointer.
 void TFenceWaterH::control()
 {
 	TMapObjBase::control();

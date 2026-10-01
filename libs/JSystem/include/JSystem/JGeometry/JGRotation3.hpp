@@ -95,9 +95,23 @@ public:
 		f32 f10 = f3 * f5;
 		f32 f11 = f6 * f4;
 
-		setXDir(f7 * f8, f7 * f4, -f5);
-		setYDir(f10 * f8 - f11, f10 * f4 + f9, f3 * f7);
-		setZDir(f9 * f5 + f3 * f4, f11 * f5 - f3 * f8, f6 * f7);
+		// The nine stores are written out, not setXDir/setYDir/setZDir calls
+		// (research c-r37): inlined into a caller, each call binds its three
+		// arguments and homes them, nine dead words per expansion, which
+		// TMapObjBase::rotateVecByAxisY (MapObjLib) does not have; the
+		// out-of-line copy in MapObjLib is exact either way. The wrapper
+		// `sin`/`cos` locals are homed in every context and are retail's.
+		this->ref(0, 0) = f7 * f8;
+		this->ref(1, 0) = f7 * f4;
+		this->ref(2, 0) = -f5;
+
+		this->ref(0, 1) = f10 * f8 - f11;
+		this->ref(1, 1) = f10 * f4 + f9;
+		this->ref(2, 1) = f3 * f7;
+
+		this->ref(0, 2) = f9 * f5 + f3 * f4;
+		this->ref(1, 2) = f11 * f5 - f3 * f8;
+		this->ref(2, 2) = f6 * f7;
 	}
 	void setLookDir(const JGeometry::TVec3<f32>& param_1,
 	                const JGeometry::TVec3<f32>& param_2)
