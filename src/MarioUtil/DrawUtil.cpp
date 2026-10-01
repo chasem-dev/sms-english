@@ -207,7 +207,30 @@ void TSilhouette::perform(u32 cue, JDrama::TGraphics* graphics)
 	}
 }
 
-void TSilhouette::calcSilhouetteBorder() { }
+// UNUSED (0x134): TLightWithDBSetManager::calcLightBorder (LightUtil.cpp) is
+// the same three-point attenuation fit at the same size; loadAfter carries its
+// copy over the distances in unk24.
+void TSilhouette::calcSilhouetteBorder()
+{
+	f32 a[3] = { 0.9f, 0.5f, 0.05f };
+	f32 b[3];
+	b[0] = unk24[0];
+	b[1] = unk24[1];
+	b[2] = unk24[2];
+
+	f32 P[2];
+	f32 Q[2];
+	f32 R[2];
+	for (int i = 0; i < 2; ++i) {
+		P[i] = a[i + 1] * (a[i] * (b[i] * b[i] - b[i + 1] * b[i + 1]));
+		Q[i] = a[i + 1] * (a[i] * (b[i] - b[i + 1]));
+		R[i] = a[i + 1] - a[i];
+	}
+
+	unk38 = (R[0] * Q[1] - R[1] * Q[0]) / (P[0] * Q[1] - P[1] * Q[0]);
+	unk34 = (R[0] - P[0] * unk38) / Q[0];
+	unk30 = a[0] - (unk38 * (b[0] * b[0]) + b[0] * unk34);
+}
 
 void TTrembleModelEffect::init(J3DModel* model)
 {
