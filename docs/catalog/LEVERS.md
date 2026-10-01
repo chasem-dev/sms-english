@@ -41,6 +41,7 @@ Prices are per site unless stated; always measure, since every price below has e
 18. An inlined callee's class-object locals form their own block above the caller's named locals; the only knob is which body declares the object.
 19. Declare a named local after the expression that first produces its value (earlier costs an `fmr`); reuse an existing local instead of naming a second one to drop 8 bytes and an `fmr`.
 20. Uninitialised locals retail declared reserve slots with no code (`Mtx` 48, `TVec3` 12): name them only when the binary shows the slot is used; a dead local added only to fill frame is refused.
+    Naming an existing callee's return value (`f32 r = expr; return r;` in a real function or UNUSED helper, never a new forwarder) is the legal form of the binder price: +8 per expanding caller, or +0 with one extra coalesced web when the value goes straight into a call argument or comes from a call (`d2r` into `calcNearerDirection`, c-t3; `getDistFromMario`, c-k25). Sweep every short `return expr;` body of the unit before reaching for binders (frame-gaps.md, "Lever sweep c-t3").
 
 ## Registers
 

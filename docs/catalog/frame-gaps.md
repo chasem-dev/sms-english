@@ -2906,3 +2906,22 @@ In progress; results are appended below as they are measured.
 - JDRFrmGXSet `perform` (96.8, open): the seven `setBit` lines as a `for` loop are not unrolled (46%), so retail's late read of `cue` is not a loop.
 - JAIGFrameSequence `checkPlayingSeqTrack` (99.6, open): `*(mTrackPortData + j)`, `&[0][0] + j * 16`, a row pointer and no `ports` at all are inert or worse on retail's `seqParam + j * 32` base.
 - Skipped as recorded known-open classes with nothing new to try: JDREfbSetting, NpcCallback, CameraJetCoaster, feetinv, NpcInitPrg, BathtubBinder, MapObjPollution, NpcWalkTurn.
+
+## Lever sweep c-t3 (2026-10-01)
+
+- Lever: name the return value inside a callee that returns an expression (`f32 r = expr; return r;`), from c-k25's `getDistFromMario`.
+- Selection: 47 functions whose only differences are register numbers (objdiff operand diffs with every `r1` offset equal), run through `regsweep.py`; then a mechanical sweep that names the result of every short `return expr;` body in 163 non-exact units and scores each unit's functions with objdiff (464 variants in about 6 minutes, script-driven).
+- Paid, no regressions, DOL unchanged:
+- koopajr `TDirectionCalc::d2r` (UNUSED 0x14, still 0x14): `makeRelativeAngle` keeps every register right (frame still 0xe8 against 0xf0) and its expansion in `checkNerve` loses everything but the by-value copy's slot (16 markers to 5). The name coalesces into `calcNearerDirection`'s f1 and costs no frame.
+- MarioRun `slipFore` (UNUSED 0xc8, unchanged): `TMario::moveMain` exact (frame 0x58 -> 0x60). `slipBack` named instead is byte-identical; both together overshoot to 0x68.
+- SelectShine2 `makeNewPosition` (UNUSED 0x2c, unchanged): `TSelectShine::move` lands retail's 0x158 frame (from 0x148, 58 markers to 21); the four 0.9f operand swaps and one copy slot remain.
+- fireWanwan `FireWanwanRotFromZ`: naming the back half's `180.0f - theta` lands the Recover nerve's 0xf0 frame (88 markers to 68). Naming the whole difference without theta, or the front half's return, is inert.
+- When it does not help: on a register-only residue with an exact frame the name nearly always costs a slot.
+- Named `getIntendedYaw` (Mario.hpp) and `fromPolar` (MathUtil.hpp) results cost `TBGBeakHit::moveRequest` +8 and +0x10 of frame.
+- Named `JUTRect::getHeight`/`getWidth` results moved `TCardSave::perform`'s graph object 4 bytes or added markers.
+- Named `TUtil<f32>::sqrt` and `isUnk18Present` results cost `TMammaMirrorMapOperator::perform` +8.
+- So the lever is a frame lever with a register side effect, except when the named value goes straight into a call argument or comes out of a call (d2r here, `sqrtf` in c-k25), where it adds only one coalesced web.
+- Deferral readings (regsweep, K = 29 GPR): `TCardSave::perform` `graphics` and `TMammaMirrorMapOperator::perform` `camPos` both reach their first-sweep turn at 28 left, one ghost short of retail's deferral. Neither function inlines a callee whose named result would interfere with that web without a slot. In CardSave the ghosts are the CSE'd x1/y1 loads of `setScissor` (r3/r4); in Mamma they are the `getMesh()` arguments of `show`/`hide` (r3).
+- Other regsweep single-move readings that this lever cannot reach: Bird @1917, MapObjTree @1209, SMS_UnifyMaterial @818 and TBathtub::perform @3341/@3250 (an `@` object that must be coloured later, so it would have to stop being an `@` object), TFerrisWheel `sound`, tinkoopa `tinKoopa` and hinokuri2 `transMtx` (a named local that must be coloured earlier), and bossManta @2837 (degree 33 where retail needs 31).
+- Small gains not committed (under 0.1% and no frame change): Bird `getMyMarchSpeed` (doFlyToCurPathNode), Kukku `isDead`/`isFindOutMario` (GraphWander), MarioMove `getDizzyAngle`/`getDizzyPower` (checkController).
+
