@@ -425,7 +425,8 @@ void TCannon::init(TLiveManager* manager)
 	mMarioParts = new TSharedParts(this, 0, marioData, 3, "<TSharedParts>");
 	for (u8 i = 0; i < getModel()->getModelData()->getJointNum(); ++i) { }
 
-	entryObjCollision();
+	mObjCollision = new TMapCollisionMove;
+	mObjCollision->init(2, 0, 0, nullptr);
 }
 
 void TCannon::reset()
@@ -508,17 +509,17 @@ void TCannon::calcObjCollision()
 		mObjVertices[i].x += 200.0f * xzTable[i][0];
 		mObjVertices[i].z += 200.0f * xzTable[i][1];
 	}
+}
+
+// UNUSED, 0x58 in the map: the quad's two triangles, as in
+// TMameGesso::entryObjCollision (also 0x58). With them here calcObjCollision
+// is the map's 0x12c; the collision's allocation stays in init.
+void TCannon::entryObjCollision()
+{
 	mObjCollision->setVertexData(0, mObjVertices[2], mObjVertices[1],
 	                             mObjVertices[0]);
 	mObjCollision->setVertexData(1, mObjVertices[0], mObjVertices[3],
 	                             mObjVertices[2]);
-}
-
-// UNUSED, 0x58 in the map.
-void TCannon::entryObjCollision()
-{
-	mObjCollision = new TMapCollisionMove;
-	mObjCollision->init(2, 0, 0, nullptr);
 }
 
 const char** TCannon::getBasNameTable() const { return cannon_bastable; }
@@ -616,8 +617,10 @@ void TCannon::perform(u32 cue, JDrama::TGraphics* graphics)
 // up, sat 0x24-0x28 low.
 void TCannon::calcRootMatrix()
 {
-	if (getSpine()->getCurrentNerve() != &TNerveCannonObject::theNerve())
+	if (getSpine()->getCurrentNerve() != &TNerveCannonObject::theNerve()) {
 		calcObjCollision();
+		entryObjCollision();
+	}
 
 	if (mHolder) {
 		MtxPtr mtx = mHolder->getTakingMtx();
