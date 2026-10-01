@@ -1300,40 +1300,36 @@ static inline void Hx_TexVtx(f32 x, f32 y, f32 u, f32 v)
 	GXTexCoord2f32(u, v);
 }
 
-// TODO: the saved-FPR colouring differs (retail: dx/dy f31/f30, ox/oy
-// f29/f28, sy/sx f27/f26, v2/u2/v1/u1 f25-f22) and retail's low region is
-// 0x10 larger (d at 0x38, ours 0x28). Routing the vertices through
-// Hx_TexVtx fixed the instruction order; retail colouring dx/dy first reads
-// like parameters of a further inline level (an inlined callee's temporaries
-// take the saved FPRs first), not yet found. Before the helper: declaration
-// order (thirty orders), dx..py in the if block and in-place division of
-// x1..y2 were all inert. c-gc2d3: moving the quad into a static inline
-// taking d (by pointer and/or dx/dy by value, either order) moves the frame
-// (0xb0-0xc8) but never gives retail's colouring (d.y takes f31).
+// Dividing the corner arguments in place gives retail's saved-FPR colouring:
+// arguments colour last, last-declared first, so y2/x2/y1/x1 take f25-f22
+// below the named dx, dy, ox, oy, sy, sx (f31-f26) in declaration order.
+// TODO: retail's low region is 0x10 larger (d at 0x38, ours 0x28) and three
+// volatile pairs differ (the sy/sx divisor loads, the 0.5f/magic-double
+// order, the first vertex's sums). Calling GXPosition3f32/GXColor1u32/
+// GXTexCoord2f32 directly gives retail's frame (each texcoord call's
+// propagated first-argument binding keeps a 4-byte slot) but reorders the
+// vertex stores; Hx_TexVtx with a z, colour or swapped parameter list is
+// inert, as is reassigning px/py per vertex.
 static void Hxs_Logo_TexDraw(f32 x1, f32 y1, f32 x2, f32 y2, f32 wd, f32 ht)
 {
 	Vec d;
-	f32 sy;
-	f32 sx;
-	f32 v1;
-	f32 v2;
-	f32 u1;
-	f32 u2;
-	f32 cx;
-	f32 cy;
-	f32 ox;
-	f32 oy;
 	f32 dx;
 	f32 dy;
+	f32 ox;
+	f32 oy;
+	f32 sy;
+	f32 sx;
+	f32 cx;
+	f32 cy;
 	f32 px;
 	f32 py;
 
 	sy = ht / 1.924138f;
 	sx = wd / 1.9230769f;
-	v1 = y1 / sy;
-	v2 = y2 / sy;
-	u1 = x1 / sx;
-	u2 = x2 / sx;
+	y1 /= sy;
+	y2 /= sy;
+	x1 /= sx;
+	x2 /= sx;
 	cx = hx.width >> 1;
 	cy = hx.height >> 1;
 	ox = cx - (sx / 2.0f);
@@ -1341,8 +1337,8 @@ static void Hxs_Logo_TexDraw(f32 x1, f32 y1, f32 x2, f32 y2, f32 wd, f32 ht)
 
 	// The pen stroke is a quad two units wide around the segment, so the
 	// offset is the segment's normal: (-dv, du).
-	d.y = u2 - u1;
-	d.x = -(v2 - v1);
+	d.y = x2 - x1;
+	d.x = -(y2 - y1);
 	d.z = 0.0f;
 
 	if ((0.0f != d.y) || (0.0f != d.x)) {
@@ -1350,16 +1346,16 @@ static void Hxs_Logo_TexDraw(f32 x1, f32 y1, f32 x2, f32 y2, f32 wd, f32 ht)
 		VECScale(&d, &d, 0.08f);
 		dx = d.x;
 		dy = d.y;
-		px = u1 + dx;
-		py = v1 + dy;
+		px = x1 + dx;
+		py = y1 + dy;
 		px = (sx * px) + ox;
 		py = (sy * py) + oy;
 
 		GXBegin(GX_QUADS, GX_VTXFMT0, 4);
-		Hx_TexVtx(px, py, u1 + d.x, v1 + d.y);
-		Hx_TexVtx((sx * (u2 + dx)) + ox, (sy * (v2 + dy)) + oy, u2 + d.x, v2 + d.y);
-		Hx_TexVtx((sx * (u2 - dx)) + ox, (sy * (v2 - dy)) + oy, u2 - d.x, v2 - d.y);
-		Hx_TexVtx((sx * (u1 - dx)) + ox, (sy * (v1 - dy)) + oy, u1 - d.x, v1 - d.y);
+		Hx_TexVtx(px, py, x1 + d.x, y1 + d.y);
+		Hx_TexVtx((sx * (x2 + dx)) + ox, (sy * (y2 + dy)) + oy, x2 + d.x, y2 + d.y);
+		Hx_TexVtx((sx * (x2 - dx)) + ox, (sy * (y2 - dy)) + oy, x2 - d.x, y2 - d.y);
+		Hx_TexVtx((sx * (x1 - dx)) + ox, (sy * (y1 - dy)) + oy, x1 - d.x, y1 - d.y);
 	}
 }
 
