@@ -5,7 +5,6 @@
 #include <M3DUtil/MActorAnm.hpp>
 #include <MarioUtil/MathUtil.hpp>
 #include <Map/Map.hpp>
-#include <Map/MapCollisionManager.hpp>
 #include <Player/MarioAccess.hpp>
 #include <Strategic/LiveActor.hpp>
 #include <Strategic/ObjModel.hpp>
@@ -24,6 +23,9 @@
 
 // rogue includes needed for matching sinit & bss
 #include <M3DUtil/InfectiousStrings.hpp>
+// After the mtx-calc names: retail's .rodata has setUpTrans's zero and one
+// literals between them and this unit's own strings (c-r35).
+#include <Map/MapCollisionManager.hpp>
 #include <MSound/MSSetSound.hpp>
 #include <MSound/MSoundBGM.hpp>
 

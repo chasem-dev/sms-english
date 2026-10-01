@@ -7,7 +7,6 @@
 #include <Strategic/ObjModel.hpp>
 #include <Strategic/Strategy.hpp>
 #include <MoveBG/MapObjManager.hpp>
-#include <Map/MapCollisionEntry.hpp>
 #include <Map/Map.hpp>
 #include <Map/MapData.hpp>
 #include <M3DUtil/SDLModel.hpp>
@@ -39,6 +38,9 @@
 #include <MSound/MSoundBGM.hpp>
 #include <MSound/MSModBgm.hpp>
 #include <M3DUtil/InfectiousStrings.hpp>
+// After the mtx-calc names: retail's .rodata has setUpTrans's zero and one
+// literals between them and this unit's own strings (c-r35).
+#include <Map/MapCollisionEntry.hpp>
 
 const char* cSandPillarModelName = "sunabashira.bmd";
 const char* cHitPoint1_RailName = "bosshanachan2";

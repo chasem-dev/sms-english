@@ -1,6 +1,5 @@
 #include <Map/MapEventSink.hpp>
 #include <Map/PollutionManager.hpp>
-#include <Map/MapCollisionEntry.hpp>
 #include <Map/MapStaticObject.hpp>
 #include <MoveBG/MapObjBase.hpp>
 #include <MoveBG/ItemManager.hpp>
@@ -24,6 +23,9 @@
 #include <MSound/MSSetSound.hpp>
 #include <MSound/MSoundBGM.hpp>
 #include <M3DUtil/InfectiousStrings.hpp>
+// After the mtx-calc names: retail's .rodata has setUpTrans's zero and one
+// literals between them and this unit's own strings (c-r35).
+#include <Map/MapCollisionEntry.hpp>
 
 u32 TMapEventSink::mCleanedDegree = 10;
 

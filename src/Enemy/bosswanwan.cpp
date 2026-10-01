@@ -14,6 +14,10 @@
 #include <MarioUtil/RumbleMgr.hpp>
 #include <Map/Map.hpp>
 #include <Map/MapData.hpp>
+// Rogue include: retail's .rodata opens with this header's zero object and
+// no-memory message, ahead of setUpTrans's zero and one literals and the
+// mtx-calc names (c-r35).
+#include <System/DummyStrings.hpp>
 #include <Map/MapCollisionManager.hpp>
 #include <Map/MapCollisionEntry.hpp>
 #include <MoveBG/ItemManager.hpp>

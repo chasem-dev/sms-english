@@ -9,7 +9,6 @@
 #include <JSystem/J3D/J3DGraphLoader/J3DModelLoaderFlags.hpp>
 #include <JSystem/JMath.hpp>
 #include <Camera/CubeMapTool.hpp>
-#include <Map/MapCollisionEntry.hpp>
 #include <MarioUtil/MathUtil.hpp>
 #include <MarioUtil/ModelUtil.hpp>
 #include <MoveBG/MapObjManager.hpp>
@@ -19,6 +18,9 @@
 #include <MSound/MSSetSound.hpp>
 #include <MSound/MSoundBGM.hpp>
 #include <System/DummyStrings.hpp>
+// After the no-memory message: retail's .rodata has setUpTrans's zero and one
+// literals between it and this unit's own data (c-r35).
+#include <Map/MapCollisionEntry.hpp>
 
 TMapWirePoint::TMapWirePoint()
 {
