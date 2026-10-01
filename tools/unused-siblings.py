@@ -117,7 +117,12 @@ def main():
     def our_sizes(unit):
         if unit in sizes_cache:
             return sizes_cache[unit]
-        obj = "build/GMSE01/" + os.path.splitext(unit[1])[0] + ".o"
+        src = os.path.splitext(unit[1])[0]
+        # Library sources live at libs/<Lib>/src/... but build to src/<Lib>/...
+        m = re.match(r"libs/([^/]+)/src/(.*)", src)
+        if m:
+            src = "src/%s/%s" % m.groups()
+        obj = "build/GMSE01/" + src + ".o"
         d = {}
         if os.path.exists(obj):
             r = subprocess.run([NM, "-S", obj], capture_output=True, text=True)
