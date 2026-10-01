@@ -46,7 +46,7 @@ static inline void setGateTexRes(ResTIMG* res, u16 width, u16 height)
 	res->height = height;
 }
 
-// TODO: frame is 0x48 short (0x268 vs retail 0x2b0); every instruction
+// TODO: frame is 0x40 short (0x270 vs retail 0x2b0); every instruction
 // matches. Slot map (c-d11): retail has 12 bytes of named locals between
 // videoInfo (0x188) and mtx (0x14c) that ours lacks, then +2/-5/+3 words
 // around the push_back iterators (JGadget stride class) and +15 below.
@@ -85,7 +85,7 @@ void TModelGate::loadAfter()
 		THPPlayerGetVideoInfo(&videoInfo);
 		u16 width       = videoInfo.xSize;
 		u16 height      = videoInfo.ySize;
-		J3DTexture* tex = unk78->getModel()->getModelData()->unkAC;
+		J3DTexture* tex = unk78->getModel()->getModelData()->getTexture();
 		setGateTexRes(&tex->mResources[0], width, height);
 		setGateTexRes(&tex->mResources[1], width >> 1, height >> 1);
 		setGateTexRes(&tex->mResources[2], width >> 1, height >> 1);
