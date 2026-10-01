@@ -2893,3 +2893,16 @@ In progress; results are appended below as they are measured.
 - A comma in `*` as well (`return ((void)0, r)`) is worse (55 markers).
 - So at keepDistance retail has no late word for `operator-`, and at the coaster it has one: the count is per site (c-r20 already found 0, 1 and 2), and no single operator body can supply it.
 - Caveat: the bottom words are dead, so which one retail lacks is inferred from the count, not read from a slot reference; what is certain is that retail has one word more above `operator*`'s return temporary and one fewer somewhere below it.
+
+## Closure batch c-k25 (2026-10-01)
+
+- MAnmSound `MAnmSoundNPC::startAnimSound` 99.50 -> 99.73: naming the result inside the inlined `getDistFromMario` (`f32 dist = std::sqrtf(...); return dist;`) gives the volume the 32nd FPR neighbour c-k2's replay asked for, so retail's f31 volume and f29/f30 powf results are exact at the same frame and the same 0x104 UNUSED size.
+- Rule: a named result local inside an inlined callee adds one coalesced web, and that is a legal "ghost" when a replay says one web is a single neighbour short of being deferred.
+- Not closed there: 8 operands, the translation pointer r29 and Mario's r27 against retail r27/r29.
+- The translation's parameter object is the dead stack slot the MarioDistance level pays for, so its register is the IRO temp @417, which is coloured after the inlined `mario` local; retail colours it first.
+- Inert or worse for that pair: non-const or reference `mario`, declare-then-assign `mario`, a `VecDistance(a, b)` level under getDistFromMario (+8 frame, registers unchanged), and any MarioDistance taking the position (getDistFromMario stops inlining, 78%).
+- JAIGFrameSe `checkNextFrameSe` (99.3, open): on top of c-k4's top declarations the replay lets the missing ghost web neighbour everything except `it`, `l` and the else-branch `k` split (@254).
+- Inert there: all 107 reassignments of j/k/l across the eight loops (85 markers each), a `head` copy of mUsedHead, local `s` copies of a candidate or track sound (72-85, whole rotation), a bVar18 hop for the second `num`.
+- JDRFrmGXSet `perform` (96.8, open): the seven `setBit` lines as a `for` loop are not unrolled (46%), so retail's late read of `cue` is not a loop.
+- JAIGFrameSequence `checkPlayingSeqTrack` (99.6, open): `*(mTrackPortData + j)`, `&[0][0] + j * 16`, a row pointer and no `ports` at all are inert or worse on retail's `seqParam + j * 32` base.
+- Skipped as recorded known-open classes with nothing new to try: JDREfbSetting, NpcCallback, CameraJetCoaster, feetinv, NpcInitPrg, BathtubBinder, MapObjPollution, NpcWalkTurn.

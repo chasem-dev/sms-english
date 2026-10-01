@@ -175,7 +175,16 @@ void MAnmSoundNPC::startAnimSound(void* interface, u32 sound_id,
 				// r27 and r29. The FPR rotation (volume f31, powf
 				// results f29/f30) closed with the named `dist` result
 				// inside getDistFromMario (c-k25): its extra web is the
-				// 32nd FPR neighbour c-k2 asked for. Older notes: Inert: declaring
+				// 32nd FPR neighbour c-k2 asked for. The GPR pair is
+				// colouring order: `pos`'s parameter object is the dead
+				// stack slot the MarioDistance level pays for, so its
+				// register is the IRO temp @417, coloured after the
+				// inlined `mario` local; retail colours pos first.
+				// Inert or worse (c-k25): non-const or reference mario,
+				// a declare-then-assign mario, a `VecDistance(a, b)`
+				// level under getDistFromMario (+8 frame, registers
+				// unchanged), and any MarioDistance taking the position
+				// (getDistFromMario stops inlining). Older notes: Inert: declaring
 				// either float at the top of the function or block, a
 				// ternary or if/else, `const`, a named sound pointer, a
 				// `const Vec&` Mario, a named sum, `x + (y + z)`, and a

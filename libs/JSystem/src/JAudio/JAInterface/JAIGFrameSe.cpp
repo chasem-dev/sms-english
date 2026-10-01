@@ -31,6 +31,13 @@
 // with that ghost misses 0 webs. So retail has one extra coalesced copy (an
 // IRO split temp like `snd`'s @242, or an argument copy) live across the i
 // loop outside the `while (it)` loop; which statement carries it is unknown.
+// c-k25 (replay with c-k4's top declarations): the ghost may neighbour every
+// web except `it`, `l` and the F-loop `k` split (@254), so it is live outside
+// `while (it)`, the `l` loop and the `else` branch's `k` loop. Inert on top of
+// those declarations: all 107 reassignments of j/k/l across the eight loops
+// (85 markers each), a `head` copy of mUsedHead, local `s` copies of
+// candidates[k].sound or mSeTrack[i][j].mSound (72-85, whole rotation), a
+// bVar18 hop for the second `num`, and `k == (u8)num`.
 // Older readings: batch 145 (25 declaration orders, eight relocations into
 // the `for (i...)` body) and c-jai (ternary `fVar3`/`fVar1`, a named `s16
 // adjust`) were all measured against the split `maxPlaying` and are void now.
