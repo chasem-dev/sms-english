@@ -125,3 +125,18 @@ JKRDvdArchive (5 -> 4) and JKRCompArchive (4 -> 3): the same `fixedInit` with mo
 J2DTextBox (6 -> 1): `setFontSize` is J2DPrint's (0x60), `setLineSpace` its leading half (0x48), `getString` a strcpy (0x2c), and the font-name constructors look the font up with `JKRGetNameResource(name, nullptr)` (exactly three instructions).
 JASSystemHeap (9 -> 0): the DRAM and ARAM accessors read the heap or variable their names give.
 No scored function changed and the DOL stayed byte-identical.
+
+## UNUSED restoration c-u9 (2026-10-01)
+
+With library objects visible to `tools/unused-siblings.py`, the JSystem hits were worked through; three units gained their UNUSED symbols.
+JSUFileStream (10 -> 2): `JSUFileOutputStream` is restored whole, since its map sizes repeat JSUFileInputStream's member for member (ctor 0x44, seekPos 0xe8, dtor 0x74, getLength 0x30, getPosition 0x8) and its 0x28 vtable is JSURandomOutputStream's eight slots.
+Its `writeData` is readData without the clamp to the file size (0x6c; dropping the `count > 0` test as well gives 0x64), and both classes' `close` is the single virtual call through mFile that getLength also is (0x30).
+Both `open`s (0x4c) carry TODOs: nothing in the binary shows what they do beyond the call they presumably forward.
+J3DTevs (11 -> 1, symbol order now passes): the nine UNUSED 0x4 loaders are empty bodies, `J3DLoadCPCmd` is the 0x18 CP write J3DLoadArrayBasePtr spells out, and `J3DGDSetTexLookupMode` moves to the map's place after `J3DTexMtx::load` without moving a byte of the DOL.
+`J3DIndTexCoordScale::load` leaves its header for the .cpp, as nothing calls it; J3DGDSetTexLookupMode stays 4 bytes long out of line (reg2 is built in r0 and copied to r31, where loadTexNo's inlined copy uses r31 directly).
+JUTNameTab (1 -> 0): `getResNameTable` is defined out of line at the map's place; nothing called the in-class inline.
+Rejected: `JKRDvdRipper::doneProcess` matches JKRDvdFile's 0x30 in size only, and the ripper's async path (JKRDMCommand, sync) is unimplemented, so where it posts is unknown.
+`J3DDeformer::clear` (0x20) has room for four zeroed pointers and one non-zero flag word, and `J3DDeformData::clear` equals its 0x20 constructor (the constructor calls it), but neither the flag value nor which six of DeformData's twelve fields are cleared is settled by anything in the binary.
+`JUTResFont()` (0x60) is, by instruction count, one word longer than the scored constructor's base call, vtable, three null stores and one further call, `TDLTexQuadMulti::createDLBuffer` shares 0xa0 only with TDLTexQuad's unrelated `createBuffer`, and JAIBasic's getters and `stopPlayingCategorySe` name no field or list the binary confirms.
+The std-list and singlelinklist hits sit in TUs whose UNUSED members are still largely unwritten, so they are left for a structural pass.
+No scored function changed and the DOL stayed byte-identical.
