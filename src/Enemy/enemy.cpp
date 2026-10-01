@@ -591,12 +591,12 @@ void TSpineEnemy::walkToCurPathNode(f32 march_speed, f32 turn_speed,
 void TSpineEnemy::zigzagToCurPathNode(f32 march_speed, f32 turn_speed,
                                       f32 cycle, f32 angle)
 {
-	if (unk124->unk10 == 0.0f) {
+	if (getTracer()->unk10 == 0.0f) {
 		walkToCurPathNode(march_speed, turn_speed, 0.0f);
 		return;
 	}
 
-	f32 f29 = angle * unk124->unk10;
+	f32 f29 = angle * getTracer()->unk10;
 
 	f32 dVar9 = (unkF4.getPoint() - mPosition).length();
 
