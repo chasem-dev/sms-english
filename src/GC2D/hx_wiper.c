@@ -1995,19 +1995,21 @@ static void Hx_Test4(void)
 
 // The finished step 2 shares the default's body (retail's second `b` ahead of
 // case 0), and the timer read through Hx_GetTimer puts GXTexObj at 0xc.
-// TODO: every instruction matches; retail's frame is still 8 larger: 8
-// unused bytes sit above obj, and the mag_out/mag_in spills land above the
-// first-vertex block (ours below). Declaring them in case 1, in either order,
-// or accessor compares on dir/width/height are all inert.
+// The timer and its 0..1 rate are named at function scope ahead of obj: both
+// are single-use, so copy propagation removes them but each keeps the 4-byte
+// slot retail has above obj. mag_out/mag_in declared first put their spill
+// slots above the first-vertex block, as in retail.
 static void Hx_Test5(void)
 {
+	u32 timer;
+	f32 rate;
 	GXTexObj obj;
+	f32 mag_out;
+	f32 mag_in;
 	f32 firstU;
 	f32 firstV;
 	f32 firstX;
 	f32 firstY;
-	f32 mag_in;
-	f32 mag_out;
 	u32 x;
 	u32 y;
 	u32 i;
@@ -2044,7 +2046,9 @@ static void Hx_Test5(void)
 		GXInitTexObjLOD(&obj, GX_LINEAR, GX_LINEAR, 0.0f, 10.0f, 0.0f,
 		                GX_FALSE, GX_TRUE, GX_ANISO_1);
 
-		t       = 1.41f * ((f32)Hx_GetTimer() / 20.0f);
+		timer   = Hx_GetTimer();
+		rate    = (f32)timer / 20.0f;
+		t       = 1.41f * rate;
 		mag_out = 1.41f - t;
 		mag_in  = 0.1f + t;
 
