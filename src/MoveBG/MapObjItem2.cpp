@@ -3,8 +3,6 @@
 #include <M3DUtil/MActor.hpp>
 #include <Map/Map.hpp>
 #include <Map/MapData.hpp>
-#include <Map/MapCollisionManager.hpp>
-#include <Map/MapCollisionEntry.hpp>
 #include <MSound/MSound.hpp>
 #include <MSound/MSoundSE.hpp>
 #include <Player/MarioAccess.hpp>
@@ -18,6 +16,12 @@
 // rogue includes needed for matching sinit & bss
 #include <MSound/MSSetSound.hpp>
 #include <MSound/MSoundBGM.hpp>
+// The .rodata order fixes these three: retail's blob is the DummyStrings zero
+// object and no-memory message, then setUpTrans's (Vec){0,0,0}/(Vec){1,1,1}
+// literals from MapCollisionEntry.hpp, then the four mtx-calc names (c-k29).
+#include <System/DummyStrings.hpp>
+#include <Map/MapCollisionManager.hpp>
+#include <Map/MapCollisionEntry.hpp>
 #include <M3DUtil/InfectiousStrings.hpp>
 
 // Parked: a binding level over TMarDirector's frame counter. The map shows no
@@ -302,6 +306,18 @@ void TJumpBase::calcRootMatrix()
 //     `mVelocity.set(...)` were inert or worse.
 // Closure batch 128 restored the ground-plane `unk13C = 0; unk138 = 2;` pair
 // at the end of the function (not case 5).
+// c-k29: case 5 is byte-exact (frame 0x88, every slot on retail's) with
+//   s16 sinAngle = SMS_GetMarioAngleY();
+//   s16 cosAngle = SMS_GetMarioAngleY();
+//   mVelocity = TVec3<f32>(JMASSin(sinAngle), 0.0f, JMASCos(cosAngle));
+//   mPosition += TVec3<f32>(mVelocity);
+// hsearch dbg: the two s16 locals are homed and packed into the one word
+// retail has between the conversion slot and the vector (0x6c-0x70), and two
+// separate reads keep the two index derivations that one named angle merges.
+// With it the unit links (DOL SHA-1 unchanged, symbol order PASS). Not
+// applied: two locals holding the same angle may read as a dummy copy, so it
+// waits for an owner decision. One named angle, a reference or pointer to
+// gpMarioAngleY, or a named angle mixed with one accessor are all worse.
 void TJumpBase::control()
 {
 	int prevState = unk138;
