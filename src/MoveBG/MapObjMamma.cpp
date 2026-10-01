@@ -900,7 +900,7 @@ void TLeanMirror::controlGoTarget()
 void TLeanMirror::controlShake()
 {
 	if (enemyIsOn() && mBgmStarted && SMS_IsMarioTouchGround4cm()
-	    && SMS_GetMarioGrPlane()->mActor != this) {
+	    && SMS_GetMarioGrPlane()->getActor() != this) {
 		// TODO: the argument order below is what the ROM passes; it disagrees
 		// with the parameter names guessed in MSound/MSoundBGM.hpp.
 		MSBgm::stopTrackBGM(1, 0xA);
