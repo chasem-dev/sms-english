@@ -139,6 +139,13 @@ void CPolarSubCamera::updateDemoCamera_(bool param_1)
 				// or early-declared offset fixes the swap. Pool levels
 				// around the angle, the adds or the origin read, and a
 				// rotate-about-origin helper, all leave (1) in place.
+				// c-k32 (dbg --by-line, patched debugger): our bottom
+				// 19 words are IRO temporaries (the angle's comma, the
+				// eight JMASCos/JMASSin forced loads, three commas per
+				// `origin + offset`); retail has the same total but 9 of
+				// them above the two temporaries, so (1) is the creation
+				// time of those temporaries (TVec3 operator+ shape), not
+				// a missing object. A `Vec&` store to unk124/unk148 is 58%.
 				f32 upX = mUp.x;
 				mUp.x   = upX * JMASCos(angle) + mUp.z * JMASSin(angle);
 				mUp.z   = -upX * JMASSin(angle) + mUp.z * JMASCos(angle);

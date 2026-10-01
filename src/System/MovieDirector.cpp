@@ -201,6 +201,16 @@ void TMovieDirector::setup(JDrama::TDisplay* param_1, TMarioGamePad* param_2)
 // DVD entry number for the condition, a named `new u8[]` buffer, a named
 // THPPlayerPrepare result; a named `TMovieSubTitle* subTitle` is homed but
 // lands between thpRender and stageDisp, where retail has nothing.
+// c-k32 (hsearch dbg --by-line): the word between group2d and thpRender is
+// a named movie number; `u32 movieNo = gpApplication.getMovie();` in the
+// movie-name block, passed to getStreamMovieName, homes it there and drops
+// the inlined `idx` binding ours has at depth 1 (gap 14 -> 12), but alone it
+// is 99.72 -> 99.70. With the first switch's operand named as well and
+// THPPlayerOpen's result named (`BOOL opened = ...`, unused, so not taken)
+// the named block and the frame (0x318) are exact at 99.8%. Left in the
+// inline region: one more depth-1 word in retail before the first push and
+// one around the second switch, c-k31's TDStageDisp screen-list site, and
+// four words at the bottom.
 int TMovieDirector::rsetup()
 {
 	void* subtitleArcBlob
