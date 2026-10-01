@@ -2173,13 +2173,28 @@ static TMapObjData barrel_oil_data = {
 	0x00000000,
 };
 
+// The block collision tables are defined together, in retail's .sdata2
+// order (c-u12).
 static const TMapObjCollisionData warp_block_map_collision_data[] = {
 	{ "lower_block", 2 },
 };
 
+static const TMapObjCollisionInfo warp_block_map_collision_info
+    = { 1, 1, warp_block_map_collision_data };
+
+static const TMapObjCollisionData move_block_map_collision_data[] = {
+	{ "lower_block", 1 },
+};
+
+static const TMapObjCollisionInfo move_block_map_collision_info
+    = { 1, 1, move_block_map_collision_data };
+
 static const TMapObjCollisionData move_block_center_map_collision_data[] = {
 	{ "center_block", 1 },
 };
+
+static const TMapObjCollisionInfo move_block_center_map_collision_info
+    = { 1, 1, move_block_center_map_collision_data };
 
 static const TMapObjAnimData breakable_block_anim_data[] = {
 	{ "breakable_block.bmd", nullptr, 0, nullptr, nullptr },
@@ -2226,9 +2241,6 @@ static TMapObjData breakable_block_data = {
 static const TMapObjHitInfo supermario_block_obj_hit_info
     = { 0x1, 0x80000000, -10.0f, breakable_block_hit_data_table };
 
-static const TMapObjCollisionInfo warp_block_map_collision_info
-    = { 1, 1, warp_block_map_collision_data };
-
 static TMapObjData supermario_block_data = {
 	"supermario_block",
 	0x400002BC,
@@ -2246,13 +2258,6 @@ static TMapObjData supermario_block_data = {
 	0x00002005,
 	0x00000000,
 };
-
-static const TMapObjCollisionData move_block_map_collision_data[] = {
-	{ "lower_block", 1 },
-};
-
-static const TMapObjCollisionInfo move_block_map_collision_info
-    = { 1, 1, move_block_map_collision_data };
 
 static TMapObjData move_block_data = {
 	"move_block",
@@ -2416,9 +2421,6 @@ static TMapObjData sand_block_data = {
 	0x00002007,
 	0x00000000,
 };
-
-static const TMapObjCollisionInfo move_block_center_map_collision_info
-    = { 1, 1, move_block_center_map_collision_data };
 
 static TMapObjData water_power_lift_data = {
 	"water_power_lift",
