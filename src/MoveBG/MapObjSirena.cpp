@@ -602,13 +602,15 @@ u32 TItemSlotDrum::touchWater(THitActor* water)
 
 // TODO: 96.1%, frame size agrees. Left: the Telesa arm's MsMtxSetRotY loads
 // its 0.0f/1.0f/300.0f literals late in retail (the MathUtil.hpp header note);
-// every named slot sits 4 lower than retail's; and the GPR colouring differs
+// the GPR colouring differs
 // (retail: this r29, getSlotResult's temps r25/r26/r30, coin-loop &m r25).
 // Both rotations go through a named MtxPtr for MsMtxSetRotY and MTXMultVec
 // (94.5 -> 96.0); either site alone is 95.6/94.9, and a TMtx34f or passing
 // the array to MTXMultVec is inert.
 // getDrumResult naming the angle keeps getResultFromAng a `bl` here and in
 // getSlotResult (both now at their map sizes), as in retail.
+// The named `pos` reference for makeOneEnemyAppear puts every stack slot at
+// retail's offset (they sat 4 low with `getPosition()` in the call; c-t6).
 void TItemSlotDrum::generateItem()
 {
 	if (getSlotResult() == 0) {
@@ -617,8 +619,9 @@ void TItemSlotDrum::generateItem()
 		return;
 	}
 	if (getSlotResult() == 1) {
+		const JGeometry::TVec3<f32>& pos = getPosition();
 		TTelesa* item = (TTelesa*)gpConductor->makeOneEnemyAppear(
-		    getPosition(), "テレサマネージャー", 1);
+		    pos, "テレサマネージャー", 1);
 		if (item != nullptr) {
 			Mtx m;
 			MtxPtr mp = m;

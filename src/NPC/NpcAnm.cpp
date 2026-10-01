@@ -896,8 +896,10 @@ bool TBaseNPC::npcMadding()
 			// TODO: frame exact, but retail ranks the three vectors the
 			// other way round (axis lowest at 0x68, copy 0x88, copy2 0x98),
 			// so retail's `axis` is an inlined callee's object, not a local
-			// of this body.
-			JGeometry::TVec3<f32> axis = SMS_GetMarioPos();
+			// of this body. The named marioPos reference (c-t5's lever)
+			// only lands copy on retail's 0x88 (c-t6, 23 -> 17 markers).
+			const JGeometry::TVec3<f32>& marioPos = SMS_GetMarioPos();
+			JGeometry::TVec3<f32> axis = marioPos;
 			axis -= getPosition();
 			JGeometry::TVec3<f32> copy;
 			copy = axis;

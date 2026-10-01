@@ -1321,17 +1321,17 @@ DEFINE_NERVE(TNerveTobiPukuPrepareFly, TLiveActor)
 	return FALSE;
 }
 
-// TODO: incorrect size. Map records 0x254 (596 bytes).
-// TODO: 88.2% of 596 bytes. Structure and call order match. The remaining
-// difference is that the original *calls* JGeometry::TVec3<f>::sub out of line
-// where ours inlines its three fsubs; both use the same header inline, so what
-// makes MWCC emit the call here has not been identified.
+// TODO: frame 0x70 exact; the named padPos reference is retail's word above
+// dir (c-t6), so dir sits at retail's 0x58. The inline temporaries below it
+// are still placed differently (retail has 5 more words between the first
+// two and 6 fewer below them).
 DEFINE_NERVE(TNerveTobiPukuReturnLaunch, TLiveActor)
 {
 	TTobiPuku* puku = (TTobiPuku*)spine->getBody();
 
 	if (spine->getTime() == 0) {
-		puku->setGoalPath(puku->mLaunchPad->getPosition());
+		const JGeometry::TVec3<f32>& padPos = puku->mLaunchPad->getPosition();
+		puku->setGoalPath(padPos);
 		puku->setSwimAnm();
 		puku->mSwimBaseY = puku->mPosition.y;
 	}

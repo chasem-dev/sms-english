@@ -374,17 +374,20 @@ void TMapWire::move()
 
 f32 TMapWire::getPosInWire(const JGeometry::TVec3<f32>& point) const
 {
-	// TODO: frame and instructions match; flatStart and flatEnd sit 0xc high
-	// (0x9c/0x90 vs retail 0x90/0x84).
+	// TODO: frame, instructions and named block match: retail's perpPoint is
+	// the top named slot (0x9c), so it is declared first and assigned later
+	// (c-t6; named getStartPoint/getEndPoint references are worse). Left:
+	// the two length temporaries of the return swap places (retail's first
+	// at 0x54, its second at 0x60); a named denominator moves the frame.
 
 	// Position here is only considered in the horizontal plane
+	JGeometry::TVec3<f32> perpPoint;
 	JGeometry::TVec3<f32> flatStart = getStartPoint();
 	JGeometry::TVec3<f32> flatEnd   = getEndPoint();
 	flatStart.y                     = 0.0f;
 	flatEnd.y                       = 0.0f;
 
-	JGeometry::TVec3<f32> perpPoint
-	    = MsPerpendicFootToLineR(flatStart, flatEnd, point);
+	perpPoint = MsPerpendicFootToLineR(flatStart, flatEnd, point);
 
 	return JGeometry::TVec3<f32>(perpPoint - flatStart).length()
 	     / JGeometry::TVec3<f32>(flatEnd - flatStart).length();
