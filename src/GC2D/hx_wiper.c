@@ -757,6 +757,9 @@ static void Hxs1_Circle(f32 r)
 // colour r26); instructions and stack slots are otherwise exact. Passing
 // alpha (or a u8 colour) to Hx_LineVtx gets r28 but sinks the clrlwi past
 // the loop setup and moves alpha to r27; the colour/ri2 order is inert.
+// c-k27: naming the mirrored row (`u32 yb = hx.height - y`) or the centre
+// (`u32 cx = hx.centerX`) only renames IRO temps: colour keeps degree 28 and
+// 27 left at its turn. Chained stores and an Hx_Line pair helper are worse.
 static void Hxs2_Circle(u8 alpha, f32 r_in, f32 r_out)
 {
 	u32 color;
@@ -956,6 +959,12 @@ static void Hx_Door(void)
 // field-wise assignment of an uninitialised fadeColor, a block reaching to
 // the end of the function (with or without the other locals inside) and a
 // non-constant initialiser at function scope are inert or worse.
+// c-k27 (debugger, c-k26's two-block lead): ours has 9 dead GX argument
+// bindings under the fourth sqrtf's volatile slot, retail 12. The vertex 2
+// and 3 (f32)hx.height bindings stay in registers because their load cannot
+// be forward-substituted past the volatile FIFO store of x; Hx_TexVtx with a
+// `Vec*` texcoord gives vertex 0's st[0].x a binding (10), and the four-float
+// Hx_TexVtx or u32 positions are inert or worse.
 static void Hxs_GameOver(u8 fade_alpha, f32 scale, f32 rotation)
 {
 	GXTexObj obj;

@@ -41,6 +41,12 @@
    loop, or after it) gives 91/29 < 88/28 and retail's colouring. Inert:
    `done = error = 0`, a `for` init, reordered inits, `exit == FALSE`,
    `&data[done]`. */
+/* c-k27 neighbour lists (GC/1.1p1 dump): replyBuffer alone neighbours the
+   precheck's `*count` load and the `*io_result` zero (it is upward-exposed,
+   so live from entry), done alone the coalesced TRKGetBuffer copy. The 12
+   initialiser orders with `done = 0` ahead of the zero store score 12-14:
+   scheduling hoists the zero store anyway. Melee's public decomp (same
+   body, `(0, TRKRequestSend(...))`) is inert here too. */
 DSError TRKSuppAccessFile(u32 file_handle, u8* data, size_t* count,
                           DSIOResult* io_result, BOOL need_reply, BOOL read)
 {

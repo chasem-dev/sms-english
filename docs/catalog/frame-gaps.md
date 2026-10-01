@@ -2943,3 +2943,18 @@ In progress; results are appended below as they are measured.
 - The missing 0xc is three more low slots below the sqrtf ones, which are the GX vertex argument bindings; vertex 0's `st[0].x` (offset 0, so no binding) and the two `(f32)hx.height` conversions (registers, not propagated) are the candidates. Not committed (no fuzzy gain alone).
 - hx_wiper `Hxs2_Circle` (99.65, open): the dump shows `color` reaching its first-sweep turn with 27 of K = 29 left, so it colours after the centerX/centerY address temporaries; retail needs two more neighbours or an `@` binding. Moving `color = alpha` within the prologue, an initialiser, and declaration order are inert or worse.
 - MetroTRK `TRKSuppAccessFile` (99.64, open): re-confirmed that no single-local move of `done` or `replyBuffer` among the ten declarations, and no loop-body or need_reply-block scoping, reaches retail; the recorded "one more web live with done only" lead stands.
+
+## Closure batch c-k27 (2026-10-01)
+
+- Targets: the three open C-unit functions c-k26 left (hx_wiper `Hxs_GameOver` and `Hxs2_Circle`, MetroTRK `TRKSuppAccessFile`), then c-hs11's Bird lead; none closed, no unit linked, TODOs updated with the measurements.
+- C units can be dumped with the MWCC debugger using the unit's own flags (GC/1.1 for hx_wiper with `-lang=c -inline noauto`, GC/1.1p1 for MetroTRK); both give our 1.2.5 frames.
+- Rule (C, inline argument bindings): a binding whose value is a global load (`(f32)hx.height`) is not forward-substituted past a volatile store, so a binding evaluated before an earlier argument's FIFO store (`y` of `GXPosition3f32(x, y, z)`, arguments bind right to left) keeps a register and no stack slot; a binding of a local array element dies across the same store and keeps its slot.
+- A texcoord argument at offset 0 of a local array (`st[0].x`) is simple and makes no binding; reading it through a `Vec*` helper parameter makes one.
+- hx_wiper `Hxs_GameOver` (99.66, open): with c-k26's two-block declarations the dump shows 9 dead GX bindings below the fourth sqrtf's volatile slot against retail's 12 (everything above is uniformly 0xc low).
+- Of the 11 bindings, the vertex 2 and 3 `(f32)hx.height` ones are registers by the rule above; Hx_TexVtx with a `Vec*` texcoord reaches 10, the existing four-float Hx_TexVtx is identical to direct calls, and u32 position parameters are worse (an instruction changes).
+- hx_wiper `Hxs2_Circle` (99.65, open): naming the mirrored row (`u32 yb`) or the centre (`u32 cx`) only replaces IRO address temps with named webs, so `color` keeps degree 28 and 27 left at its turn; chained stores and a two-vertex `Hx_Line` helper are worse.
+- MetroTRK `TRKSuppAccessFile` (99.64, open): the neighbour lists differ in three webs only.
+- replyBuffer is upward-exposed, so it is live from entry and alone neighbours the precheck's `*count` load and the `*io_result` zero; done alone neighbours the coalesced TRKGetBuffer copy.
+- The 12 initialiser orders with `done = 0` ahead of the zero store score 12-14 markers, since scheduling hoists the zero store anyway, and Melee's public decomp body (including its `(0, TRKRequestSend(...))`) is inert.
+- Bird `doFlyToCurPathNode` (95.4, open): `toGoal.sub(getPosition())` fixes the slots (90 markers to 54) but Bird.cpp reads mPosition raw everywhere; `-=` is inert and a two-argument `sub` is worse. The remaining 54 markers are the quaternion's register numbering, so the function would not close on the slot fix alone.
+- Not started: `TBossGesso::changeAllTentacleState`, whose comment block records a deep fold search.
