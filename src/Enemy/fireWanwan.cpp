@@ -1023,6 +1023,9 @@ void TFireWanwan::decideTarget(const JGeometry::TVec3<f32>& param_1)
 // statement too many for the inliner inside doAdjustTarget (depth 2), where
 // retail expands it. As a header change it costs MsIsInSight,
 // TBGKMtxCalc::calc and walkToCurPathNode (see MathUtil.hpp).
+// The named back-half result (c-t3) is 8 bytes of the Recover nerve's frame
+// (0xe8 -> retail's 0xf0); naming the whole difference instead of theta, or
+// the front-half return, is inert.
 static inline f32 FireWanwanRotFromZ(const JGeometry::TVec3<f32>& axis)
 {
 	if (axis.z == 0.0f)
@@ -1030,7 +1033,8 @@ static inline f32 FireWanwanRotFromZ(const JGeometry::TVec3<f32>& axis)
 	if (axis.z >= 0.0f)
 		return (360.0f / 65536.0f) * matan(axis.z, axis.x);
 	f32 theta = matan(-axis.z, axis.x) * (360.0f / 65536.0f);
-	return 180.0f - theta;
+	f32 rot = 180.0f - theta;
+	return rot;
 }
 
 void TFireWanwan::doAdjustTarget()
@@ -2172,8 +2176,9 @@ DEFINE_NERVE(TNerveFireWanwanTired, TLiveActor)
 	return false;
 }
 
-// TODO: every instruction matches; the frame is 8 short (0xe8 vs 0xf0).
-// Naming the target point or the timer is inert on the frame.
+// TODO: every instruction matches and the frame is retail's 0xf0 since
+// FireWanwanRotFromZ names its result (c-t3); the stack slots below 0xc8 are
+// still placed differently. Naming the target point or the timer was inert.
 DEFINE_NERVE(TNerveFireWanwanRecoverGraph, TLiveActor)
 {
 	TFireWanwan* self = (TFireWanwan*)spine->getBody();
