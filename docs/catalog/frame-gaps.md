@@ -3198,3 +3198,47 @@ None closed; SelectDir's rsetup moved 99.63 -> 99.67 (frame 0x618 -> 0x638 of 0x
 
 - Join the statement tagger to `hsearch dbg` output from the same dump before reading a gap: the per-line attribution named both rsetup fixes in two runs.
 - A one-word move between depth bands at every site of one accessor is that accessor's real shape; check the accessor's other users and their percentages before applying it.
+
+## Closure batch c-k32 (2026-10-01): the slot map as a tool, and the named words it finds
+
+Targets: the last open function of CameraDemo, BossHanachanEffect, lensflare, MapObjFlag, BathtubPeach, NpcInitPrg, MovieDirector, gatekeeper and GCLogoDir.
+None closed; BossHanachan's emitParticle_ moved 0x10 of frame at identical instructions.
+
+### The tool
+
+- c-k31's scratch wrapper is now `python3 -m tools.hsearch dbg ... --by-line`: per object, retail's displacement in words and the source line and type of the first statement that references it, read from the same dump.
+- `--keep DIR` keeps the dump, our object, the variant text and `meta.json`; `--load DIR` re-prints a kept dump without compiling or running the debugger; `--timeout` sets the debugger's limit (default 300 s, setupObjects needs about 600).
+- With a private copy of the debugger patched by `tools/mwcc-stack/patch-debugger.py` (MWCC_DEBUGGER pointed at the copy), the kind column names the IR optimiser's F/P/S temporaries and the F/P ones get `iro.py`'s statement line (`~` marks iro.py's approximate pairing); `iro.py`'s attribution is now the function `fp_lines`.
+- Back-end int/float temporaries and spills print `(back-end temp)`; dead objects an unpatched dump cannot label print `?`.
+- Usage is in `tools/hsearch/README.md`, "The per-statement slot map".
+
+### BossHanachan emitParticle_ (applied)
+
+- The class's existing `getHead()`, `getChangeParams()` and `getMarchSpeed()` accessors in place of the raw members take the frame 0xa8 -> 0xb8 at the same 44 markers (layout gap 10 -> 6; getHead() alone +8, the other two alone inert).
+- Left: 5 words below `position` in retail, and no existing accessor for the unk178, mBodies and gpSunMgr chains.
+
+### MovieDirector rsetup (owner decision)
+
+- The map names the word retail has between group2d and thpRender: a homed movie number.
+- `u32 movieNo = gpApplication.getMovie();` inside the movie-name block, then `getStreamMovieName(movieNo)`, homes it there and removes the inlined `idx` binding ours has at depth 1 (gap 14 -> 12), but alone it is 99.72 -> 99.70 (markers 149 -> 156), so it was not applied.
+- Adding `u32 movie0 = gpApplication.getMovie(); switch (movie0)` for the first switch and `BOOL opened = THPPlayerOpen(movie, 0);` makes the named block exact and the frame 0x318 (99.8%, 108 markers, gap 10); `opened` is never read, so it is a dummy local and was not applied.
+- Inert or worse: movieNo at function scope or shared with either switch (96.5-99.0, code changes), a named `new u8[]` buffer, `audioTrack` before `mem`, the buffer size unnamed, `new TEndingString("EndingString")` (91%, the constructor inlines).
+- c-k31's `getUnk14Children()` accessor leaves these counts unchanged.
+- Left in the inline region: one more depth-1 word in retail before the first push group and one before the `mEndingString` push, c-k31's TDStageDisp screen-list boundary, and four words at the bottom.
+
+### CameraDemo updateDemoCamera_
+
+- With the patched debugger our 19 bottom words are IRO temporaries: the angle's comma, the eight JMASCos/JMASSin forced loads and three commas per `origin + offset`.
+- Retail has the same total with 9 of those words above the two `origin + offset` temporaries, so residue (1) is when those temporaries are created (the TVec3 operator+ shape of research batches 116 and cc23), not a missing object.
+- A `(Vec&)unk124 = ...` probe of c-k17's plain-`Vec` lead changes code (58%).
+
+### The others
+
+- MapObjFlag draw: ours homes only `x` of each GXPosition3f32 (c-t4's aliasing exception keeps y and z in registers); retail's 20 extra words are dead and below every referenced slot, so the map cannot attribute them.
+- gatekeeper init: the IRO view shows each search chain's nine or ten F/P temporaries; retail has 13 more words in that region, on top of c-k31's per-depth boundaries.
+- lensflare perform is 32 words short and BathtubPeach's escape nerve 56 (and its .sdata2 is open); NpcInitPrg's function differs in instruction count, so the map does not apply; GCLogoDir has three other open functions.
+
+### Rule for the next agent
+
+- A word retail has inside the named block is a named local whose value was propagated (c-t4); look for a quantity the code reads twice or passes to an inline (here the movie number) before trying new locals.
+- Patch a private debugger copy before mapping: without names.txt the IRO temporaries at the bottom are anonymous, and they are often the words that move.
