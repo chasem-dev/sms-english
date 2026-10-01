@@ -335,10 +335,11 @@ TSelectShine::TSelectShine(J3DModelData* model_data, J3DAnmColor* anm_color,
 }
 
 // TODO: the inlined middle product multiplies 0.9f first (retail: the
-// height first, four sites) and the frame is 0x148, retail 0x158.
+// height first, four sites), and the mPosition + mOffset copy sits at 0x54
+// where retail has 0xac. The frame is retail's 0x158 since makeNewPosition
+// names its result (c-t3; it was 0x148).
 // c-h18 inert: `0.9f * h`, `(f32)0.9`; a named `height` local is worse (96.0).
-// c-hs7: getModel() is +8; the rest of the frame needs a machine extract of
-// the alpha/emitter block (0xd4, no UNUSED of that size).
+// c-hs7: getModel() is +8.
 void TSelectShine::move()
 {
 	f32 newY;
@@ -429,5 +430,8 @@ void TSelectShine::move()
 f32 TSelectShine::makeNewPosition(f32 t, f32 start, f32 middle, f32 end)
 {
 	f32 s = 1.0f - t;
-	return start * (s * s) + middle * (2.0f * s * t) + end * (t * t);
+	// Named: the result is one more slot in move's four expansions (0x10 of
+	// its frame); the UNUSED copy keeps its 0x2c.
+	f32 result = start * (s * s) + middle * (2.0f * s * t) + end * (t * t);
+	return result;
 }
