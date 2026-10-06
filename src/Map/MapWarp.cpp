@@ -189,19 +189,15 @@ void loadWarpPointPos(JSUMemoryInputStream& stream, int num, Vec* positions)
 	}
 }
 
-// TODO: 99.8%, frame and every instruction exact. The name loop is
+// TODO: 99.9%, frame and every instruction exact. The name loop is
 // loadWarpPointPos's own body (its UNUSED map size 0x12c pins the loop, the
 // readString and the getWarpPointNo lookup inside it; `name` and `no` named,
 // `cnt` named at the call). The stack arrays go positions/warp/dest; the four
 // pre-loop reads share the named `u32 data`; six chained `>>` continuations.
-// Residue: the third loop's reused values (retail local_180[i] r19 /
-// local_1d0[i] r12, ours swapped) and the negations' `add r8, r8, r5` (ours
-// r9). All-raw negations fix the r8 but lose 0x10 of frame, which the two
+// Residue: the negations' `add r8, r8, r5` (ours r9).
+// All-raw negations fix the r8 but lose 0x10 of frame, which the two
 // getUnk8() sites were filling; retail's 0x10 has another source (not the
 // other accessor placements, nor named u32 copies of the two values).
-// c-k5: regalloc.py names the swapped webs as the local_180[i]/local_1d0[i]
-// CSE temporaries (@913/@914); named `warp`/`kind` copies in either order and
-// reading the second pair back from unk4[2 * i] are all worse (97.8/94.4).
 void TMapWarp::init(JSUMemoryInputStream& stream)
 {
 	u32 data;
@@ -240,8 +236,9 @@ void TMapWarp::init(JSUMemoryInputStream& stream)
 		unk4[2 * i + 1].unk8.y = -unk4[2 * i].getUnk8().y;
 		unk4[2 * i + 1].unk8.z = -unk4[2 * i].unk8.z;
 
-		unk4[2 * i + 1].unk0 = local_180[i];
-		unk4[2 * i + 1].unk4 = local_1d0[i];
+		// The return warp reverses both the displacement and the model pair.
+		unk4[2 * i + 1].unk0 = local_1d0[i];
+		unk4[2 * i + 1].unk4 = local_180[i];
 	}
 
 	if (SMSGetMarDirector()->mMap == 4) {
