@@ -1,3 +1,9 @@
+<p align="center">
+  <a href="https://discord.gg/97sVPsbxsY"><img src="https://invidget.switchblade.xyz/97sVPsbxsY" alt="Join the Super Mario Sunshine Discord server"></a>
+  <br>
+  <a href="https://discord.gg/97sVPsbxsY"><img src="https://img.shields.io/badge/Discord-Join%20the%20server-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="Join our Discord"></a>
+</p>
+
 # Super Mario Sunshine — North American decompilation
 
 This is a hobby fork of [doldecomp/sms](https://github.com/doldecomp/sms) focused on `GMSE01` (USA Rev 0).
